@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { assets, AssetData } from '@/data/mockData';
+import { AssetData } from '@/data/mockData';
+import { useLiveAssets } from '@/hooks/useLiveAssets';
 
 function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
   const chartData = data.map((v, i) => ({ i, v }));
@@ -65,6 +66,8 @@ function AssetCard({ asset, index }: { asset: AssetData; index: number }) {
 }
 
 export default function KeyAssets() {
+  const { assets } = useLiveAssets();
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 30 }}
