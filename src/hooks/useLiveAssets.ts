@@ -41,7 +41,9 @@ export function useLiveAssets(): {
 
     load();
 
-    const interval = setInterval(load, 120_000);
+    // Обновление раз в 5 минут — стабильно, без лимитов, без спешки.
+    // Данные в промежутке показываются из кэша (уже загруженные).
+    const interval = setInterval(load, 300_000);
 
     return () => {
       isMounted.current = false;
