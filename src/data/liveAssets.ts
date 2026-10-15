@@ -135,18 +135,17 @@ async function fetchBTC(): Promise<AssetData> {
 
 export async function fetchLiveAssets(): Promise<AssetData[]> {
   // СТРАТЕГИЯ: медленно, но стабильно.
-  // Twelve Data даёт 8 запросов/мин — делаем 4 запроса с паузами по 15 сек.
-  // Общая загрузка ~45 секунд, но без ошибок 429 и без «мелькания».
-  // USD/EUR и BTC идут первыми — они от разных API, лимит не тратят.
+  // USD/EUR и BTC — от разных API, без лимитов.
+  // SPY, USO, GLD — Twelve Data, между ними пауза 15 сек (лимит 8/мин).
 
   const usdEur = await fetchUsdEur();
   const btc = await fetchBTC();
 
   const sp500 = await fetchTwelve('SPY', 'sp500', 'S&P 500', 'index');
-  await sleep(15_000);
+  await sleep(15000);
 
   const brent = await fetchTwelve('USO', 'brent', 'Brent', 'currency');
-  await sleep(15_000);
+  await sleep(15000);
 
   const gold = await fetchTwelve('GLD', 'gold', 'Gold', 'currency');
 
