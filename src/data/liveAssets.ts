@@ -4,7 +4,8 @@ import { AssetData, assets as fallbackAssets } from './mockData';
 
 function calcChange(current: number, previous: number): number {
   if (previous === 0) return 0;
-  return ((current - previous) / previous) * 100;
+  const raw = ((current - previous) / previous) * 100;
+  return Math.round(raw * 10) / 10; // округление до 1 знака
 }
 
 function formatPrice(value: number, type: 'currency' | 'index' | 'rate'): string {
