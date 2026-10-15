@@ -17,6 +17,7 @@ function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
           stroke={color}
           strokeWidth={1.8}
           dot={false}
+          activeDot={false}
           isAnimationActive={true}
         />
       </LineChart>
@@ -50,7 +51,7 @@ function AssetCard({ asset, index }: { asset: AssetData; index: number }) {
             <TrendingDown className="w-3.5 h-3.5" />
           )}
           {positive ? '+' : ''}
-          {asset.change}%
+          {asset.change.toFixed(1)}%
         </div>
       </div>
 
