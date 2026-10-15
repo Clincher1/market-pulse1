@@ -30,6 +30,10 @@ function lastN<T>(arr: T[], n: number): T[] {
   return arr.slice(arr.length - n);
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function fetchTwelve(
   symbol: string,
   id: string,
@@ -69,7 +73,6 @@ async function fetchTwelve(
 
 async function fetchUsdEur(): Promise<AssetData> {
   try {
-    // Frankfurter через прокси (иначе CORS блокирует)
     const res = await fetch(
       proxyUrl('https://api.frankfurter.app/latest?from=USD&to=EUR')
     );
@@ -131,10 +134,21 @@ async function fetchBTC(): Promise<AssetData> {
 }
 
 export async function fetchLiveAssets(): Promise<AssetData[]> {
+  // СТРАТЕГИЯ: медленно, но стабильно.
+  // Twelve Data даёт 8 запросов/мин — делаем 4 запроса с паузами по 15 сек.
+  // Общая загрузка ~45 секунд, но без ошибок 429 и без «мелькания».
+  // USD/EUR и BTC идут первыми — они от разных API, лимит не тратят.
+
   const usdEur = await fetchUsdEur();
-  const sp500 = await fetchTwelve('SPY', 'sp500', 'S&P 500', 'index');
-  const brent = await fetchTwelve('USO', 'brent', 'Brent', 'currency');
-  const gold = await fetchTwelve('GLD', 'gold', 'Gold', 'currency');
   const btc = await fetchBTC();
+
+  const sp500 = await fetchTwelve('SPY', 'sp500', 'S&P 500', 'index');
+  await sleep(15_000);
+
+  const brent = await fetchTwelve('USO', 'brent', 'Brent', 'currency');
+  await sleep(15_000);
+
+  const gold = await fetchTwelve('GLD', 'gold', 'Gold', 'currency');
+
   return [usdEur, sp500, brent, gold, btc];
 }
