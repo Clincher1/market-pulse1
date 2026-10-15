@@ -41,7 +41,7 @@ export function useLiveAssets(): {
 
     load();
 
-    const interval = setInterval(load, 60_000);
+    const interval = setInterval(load, 120_000);
 
     return () => {
       isMounted.current = false;
