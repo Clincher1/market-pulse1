@@ -69,7 +69,10 @@ async function fetchTwelve(
 
 async function fetchUsdEur(): Promise<AssetData> {
   try {
-    const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=EUR');
+    // Frankfurter через прокси (иначе CORS блокирует)
+    const res = await fetch(
+      proxyUrl('https://api.frankfurter.app/latest?from=USD&to=EUR')
+    );
     if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
     const data = await res.json();
     const current = data.rates.EUR as number;
@@ -79,7 +82,7 @@ async function fetchUsdEur(): Promise<AssetData> {
     const dateStr = d.toISOString().slice(0, 10);
 
     const histRes = await fetch(
-      `https://api.frankfurter.app/${dateStr}..?from=USD&to=EUR`
+      proxyUrl(`https://api.frankfurter.app/${dateStr}..?from=USD&to=EUR`)
     );
     const histData = await histRes.json();
     const entries = Object.entries(histData.rates) as [string, { EUR: number }][];
@@ -128,8 +131,6 @@ async function fetchBTC(): Promise<AssetData> {
 }
 
 export async function fetchLiveAssets(): Promise<AssetData[]> {
-  // ВАЖНО: последовательно, а не Promise.all — чтобы не превысить лимит 8 запросов/мин.
-  // ETF вместо индексов/сырья: SPY → S&P 500, USO → Brent, GLD → Gold
   const usdEur = await fetchUsdEur();
   const sp500 = await fetchTwelve('SPY', 'sp500', 'S&P 500', 'index');
   const brent = await fetchTwelve('USO', 'brent', 'Brent', 'currency');
