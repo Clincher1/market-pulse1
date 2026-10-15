@@ -74,7 +74,7 @@ async function fetchBTC(): Promise<AssetData> {
       id: 'btc',
       name: 'BTC',
       price: formatPrice(current, 'currency'),
-      change: calcChange(current, weekAgo),
+      change: Number(calcChange(current, weekAgo).toFixed(1)),
       sparkline,
     };
   } catch {
@@ -103,7 +103,7 @@ async function fetchUsdEur(): Promise<AssetData> {
       id: 'usd-eur',
       name: 'USD/EUR',
       price: formatPrice(current, 'rate'),
-      change: calcChange(current, weekAgo),
+      change: Number(calcChange(current, weekAgo).toFixed(1)),
       sparkline: interpolate(11, weekAgo, current),
     };
   } catch {
@@ -138,7 +138,7 @@ async function fetchSp500(): Promise<AssetData> {
       id: 'sp500',
       name: 'S&P 500',
       price: formatPrice(current, 'index'),
-      change: calcChange(current, weekAgo),
+      change: Number(calcChange(current, weekAgo).toFixed(1)),
       sparkline: lastN(closes, 11).map((v) => Math.round(v)),
     };
   } catch {
@@ -159,7 +159,7 @@ async function fetchBrent(): Promise<AssetData> {
       id: 'brent',
       name: 'Brent',
       price: formatPrice(current, 'currency'),
-      change: calcChange(current, weekAgo),
+      change: Number(calcChange(current, weekAgo).toFixed(1)),
       sparkline: lastN(closes, 11).map((v) => Math.round(v * 100) / 100),
     };
   } catch {
