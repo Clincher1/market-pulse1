@@ -1,15 +1,11 @@
 import { AssetData, assets as fallbackAssets } from './mockData';
 
-// ── Config ─────────────────────────────────────────────────────────────
-
 const TWELVE_KEY = '8ca1f1f0bbb7485e86c954e04bdfb70f';
 const PROXY_BASE = 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/proxy';
 
 function proxyUrl(target: string): string {
   return `${PROXY_BASE}?url=${encodeURIComponent(target)}`;
 }
-
-// ── Utilities ──────────────────────────────────────────────────────────
 
 function calcChange(current: number, previous: number): number {
   if (previous === 0) return 0;
@@ -34,13 +30,6 @@ function lastN<T>(arr: T[], n: number): T[] {
   return arr.slice(arr.length - n);
 }
 
-// ── Twelve Data — универсальный fetcher (акции, нефть, золото) ─────────
-
-type TwelveEntry = {
-  datetime: string;
-  close: string;
-};
-
 async function fetchTwelve(
   symbol: string,
   id: string,
@@ -58,10 +47,9 @@ async function fetchTwelve(
     if (data.status === 'error') throw new Error(data.message || 'Twelve error');
     if (!data.values || data.values.length === 0) throw new Error('no values');
 
-    const values: TwelveEntry[] = data.values; // от свежих к старым
+    const values = data.values as { datetime: string; close: string }[];
     const latest = parseFloat(values[0].close);
     const weekAgo = parseFloat(values[values.length - 1].close);
-
     const sparkline = values
       .slice()
       .reverse()
@@ -79,8 +67,6 @@ async function fetchTwelve(
   }
 }
 
-// ── Frankfurter (USD/EUR) ──────────────────────────────────────────────
-
 async function fetchUsdEur(): Promise<AssetData> {
   try {
     const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=EUR');
@@ -88,9 +74,9 @@ async function fetchUsdEur(): Promise<AssetData> {
     const data = await res.json();
     const current = data.rates.EUR as number;
 
-    const dateWeekAgo = new Date();
-    dateWeekAgo.setDate(dateWeekAgo.getDate() - 7);
-    const dateStr = dateWeekAgo.toISOString().slice(0, 10);
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    const dateStr = d.toISOString().slice(0, 10);
 
     const histRes = await fetch(
       `https://api.frankfurter.app/${dateStr}..?from=USD&to=EUR`
@@ -118,8 +104,6 @@ async function fetchUsdEur(): Promise<AssetData> {
   }
 }
 
-// ── CoinGecko (BTC) ────────────────────────────────────────────────────
-
 async function fetchBTC(): Promise<AssetData> {
   try {
     const res = await fetch(
@@ -143,15 +127,13 @@ async function fetchBTC(): Promise<AssetData> {
   }
 }
 
-// ── Main export ────────────────────────────────────────────────────────
-
 export async function fetchLiveAssets(): Promise<AssetData[]> {
-  const [usdEur, sp500, brent, gold, btc] = await Promise.all([
-    fetchUsdEur(),
-    fetchTwelve('SPX', 'sp500', 'S&P 500', 'index'),
-    fetchTwelve('BRENT', 'brent', 'Brent', 'currency'),
-    fetchTwelve('XAU/USD', 'gold', 'Gold', 'currency'),
-    fetchBTC(),
-  ]);
+  // ВАЖНО: последовательно, а не Promise.all — чтобы не превысить лимит 8 запросов/мин.
+  // ETF вместо индексов/сырья: SPY → S&P 500, USO → Brent, GLD → Gold
+  const usdEur = await fetchUsdEur();
+  const sp500 = await fetchTwelve('SPY', 'sp500', 'S&P 500', 'index');
+  const brent = await fetchTwelve('USO', 'brent', 'Brent', 'currency');
+  const gold = await fetchTwelve('GLD', 'gold', 'Gold', 'currency');
+  const btc = await fetchBTC();
   return [usdEur, sp500, brent, gold, btc];
 }
