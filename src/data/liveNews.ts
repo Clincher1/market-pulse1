@@ -23,7 +23,7 @@ async function analyzeWithGroq(text: string): Promise<{ sentiment: number; impor
       body: JSON.stringify({
         targetUrl: 'https://api.groq.com/openai/v1/chat/completions',
         payload: {
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b', // <-- АКТУАЛЬНАЯ МОДЕЛЬ
           messages: [{ role: 'user', content: prompt }],
           response_format: { type: 'json_object' },
           temperature: 0.1,
