@@ -6,55 +6,107 @@ function proxyUrl(target: string): string {
   return `${PROXY_BASE}?url=${encodeURIComponent(target)}`;
 }
 
-// Простейший парсер XML для браузера (без внешних библиотек)
-function parseRSS(xmlText: string, sourceName: string): NewsItem[] {
+// Функция для анализа текста через Groq
+async function analyzeWithGroq(text: string): Promise<{ sentiment: number; importance: number; impacts: { asset: string; direction: 'up' | 'down' }[] }> {
+  const prompt = `Ты — финансовый аналитик. Проанализируй эту новость и верни СТРОГО JSON без лишнего текста:
+{
+  "sentiment": число от -1 (очень негативно) до 1 (очень позитивно),
+  "importance": число от 1 до 10 (насколько новость важна для рынка),
+  "impacts": массив активов и направления их движения (asset: "S&P 500" | "Gold" | "Brent" | "USD" | "BTC", direction: "up" | "down")
+}
+Новость: "${text}"`;
+
+  try {
+    const res = await fetch(PROXY_BASE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, // Прокси в Supabase сам добавит Authorization
+      body: JSON.stringify({
+        targetUrl: 'https://api.groq.com/openai/v1/chat/completions',
+        payload: {
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.1,
+        },
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Groq ${res.status}`);
+    const data = await res.json();
+    const content = data.choices[0].message.content;
+    const parsed = JSON.parse(content);
+    
+    return {
+      sentiment: parsed.sentiment ?? 0,
+      importance: parsed.importance ?? 5,
+      impacts: parsed.impacts ?? [],
+    };
+  } catch (e) {
+    console.error('Groq analysis failed:', e);
+    // Если ИИ не ответил, возвращаем заглушку
+    return { sentiment: 0, importance: 5, impacts: [{ asset: 'S&P 500', direction: 'up' }] };
+  }
+}
+
+// Парсер RSS с вызовом ИИ для каждой новости
+async function parseRSS(xmlText: string, sourceName: string): Promise<NewsItem[]> {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, "text/xml");
   const items = xmlDoc.querySelectorAll("item");
   
   const news: NewsItem[] = [];
+  const promises: Promise<void>[] = [];
 
   items.forEach((item, index) => {
-    // Ограничимся 5 новостями с каждого источника
-    if (index >= 5) return;
+    // Берем только 5 новостей, чтобы не превысить бесплатные лимиты Groq
+    if (index >= 5) return; 
 
     const title = item.querySelector("title")?.textContent || "Без заголовка";
     const description = item.querySelector("description")?.textContent || "";
+    const pubDateRaw = item.querySelector("pubDate")?.textContent || "";
     
-    // Очищаем описание от HTML-тегов (часто в RSS они есть)
     const cleanSummary = description.replace(/<[^>]*>?/gm, '').slice(0, 200) + '...';
 
-    // Пока ставим заглушки для ИИ-параметров (тональность 0, важность 5)
-    // В следующем шаге мы заменим это на реальный вызов Groq
-    news.push({
-      id: Date.now() + index, // Уникальный ID на основе времени
-      source: sourceName,
-      time: 'Только что', // Позже сделаем парсинг даты
-      title: title,
-      summary: cleanSummary,
-      impacts: [{ asset: 'S&P 500', direction: 'up' }], // Заглушка
-      sentiment: 0,
-      importance: 5,
-      topic: 'Экономика' // Заглушка
+    let timeStr = 'Недавно';
+    if (pubDateRaw) {
+      const diff = Date.now() - new Date(pubDateRaw).getTime();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      if (hours === 0) timeStr = 'Меньше часа назад';
+      else if (hours < 24) timeStr = `${hours} ч. назад`;
+      else timeStr = `${Math.floor(hours / 24)} дн. назад`;
+    }
+
+    // Асинхронно отправляем текст в ИИ
+    const p = analyzeWithGroq(`${title}. ${cleanSummary}`).then((analysis) => {
+      news.push({
+        id: Date.now() + index,
+        source: sourceName,
+        time: timeStr,
+        title: title,
+        summary: cleanSummary,
+        impacts: analysis.impacts.length > 0 ? analysis.impacts : [{ asset: 'S&P 500', direction: 'up' }],
+        sentiment: analysis.sentiment,
+        importance: analysis.importance,
+        topic: 'Экономика'
+      });
     });
+    promises.push(p);
   });
 
-  return news;
+  // Ждем, пока ИИ проанализирует все новости
+  await Promise.all(promises);
+  
+  // Сортируем, чтобы порядок был стабильным
+  return news.sort((a, b) => a.id - b.id);
 }
 
 export async function fetchLiveNews(): Promise<NewsItem[]> {
   try {
-    // Запрашиваем новости BBC Business через наш прокси
     const res = await fetch(proxyUrl('https://feeds.bbci.co.uk/news/business/rss.xml'));
     if (!res.ok) throw new Error(`BBC ${res.status}`);
     
     const xmlText = await res.text();
-    const bbcNews = parseRSS(xmlText, 'BBC');
-
-    // Можно добавить другие источники, используя Promise.all
-    // Но для начала хватит и одного
-    
-    return bbcNews;
+    return await parseRSS(xmlText, 'BBC');
   } catch (error) {
     console.error('Ошибка загрузки новостей:', error);
     return [];
