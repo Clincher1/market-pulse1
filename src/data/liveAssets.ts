@@ -1,7 +1,8 @@
 import { AssetData, assets as fallbackAssets } from './mockData';
 
-const TWELVE_KEY = '8ca1f1f0bbb7485e86c954e04bdfb70f';
-const PROXY_BASE = 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/proxy';
+// Читаем из переменных окружения Vercel. Если их нет — используем запасные значения.
+const TWELVE_KEY = (import.meta.env.VITE_TWELVE_KEY as string) || '8ca1f1f0bbb7485e86c954e04bdfb70f';
+const PROXY_BASE = (import.meta.env.VITE_PROXY_BASE as string) || 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/proxy';
 
 function proxyUrl(target: string): string {
   return `${PROXY_BASE}?url=${encodeURIComponent(target)}`;
