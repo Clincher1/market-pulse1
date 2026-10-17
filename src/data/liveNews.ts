@@ -2,7 +2,7 @@ import { NewsItem } from './mockData';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://hekzplfftannlzwvgwwm.supabase.co';
-const supabaseKey = 'sb_publishable_FPAh2Z30aCCKpbfDdDrM_g_urRwk8r-f'; // Тот же, что и в liveAssets.ts
+const supabaseKey = 'sb_publishable_FPAh2Z30aCCKpbfDdDrM_g_urRwk8r-'; // Тот же, что и в liveAssets.ts
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
