@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart } from 'lucide-react';
 import {
-  newsItems,
   newsSources,
   newsTopics,
   newsSentiments,
   NewsItem,
 } from '@/data/mockData';
+import { useLiveNews } from '@/hooks/useLiveNews';
 
 function sentimentLabel(value: number): string {
   if (value < -0.3) return 'негатив';
@@ -46,7 +46,6 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
       transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.4) }}
       className="bg-bg-card rounded-xl2 p-5 lg:p-6 border border-border-subtle shadow-lg hover:border-accent/30 hover:bg-bg-card-hover transition-all duration-300"
     >
-      {/* Source + time */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="px-2.5 py-1 bg-accent/10 text-accent text-xs font-bold rounded-md">
@@ -59,12 +58,10 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
         </div>
       </div>
 
-      {/* Title */}
       <h3 className="text-base lg:text-lg font-bold leading-snug mb-3 text-text-primary">
         {item.title}
       </h3>
 
-      {/* Impact row */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <span className="text-xs text-text-secondary font-medium">Влияние:</span>
         <div className="flex items-center gap-2 flex-wrap">
@@ -86,12 +83,10 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
         </div>
       </div>
 
-      {/* Summary */}
       <p className="text-sm text-text-secondary leading-relaxed mb-4">
         {item.summary}
       </p>
 
-      {/* Metrics row */}
       <div className="flex items-center gap-5 pt-4 border-t border-border-subtle flex-wrap">
         <div className="flex items-center gap-1.5">
           <Heart className="w-3.5 h-3.5 text-text-secondary" />
@@ -119,6 +114,8 @@ type FilterState = {
 };
 
 export default function NewsFeed() {
+  const { news: liveNews, loading, error } = useLiveNews();
+  
   const [filters, setFilters] = useState<FilterState>({
     source: 'Все источники',
     topic: 'Все темы',
@@ -126,14 +123,14 @@ export default function NewsFeed() {
   });
 
   const filteredNews = useMemo(() => {
-    return newsItems.filter((item) => {
+    return liveNews.filter((item) => {
       const sourceMatch =
         filters.source === 'Все источники' || item.source === filters.source;
       const topicMatch = filters.topic === 'Все темы' || item.topic === filters.topic;
       const sentimentMatch = sentimentMatches(item.sentiment, filters.sentiment);
       return sourceMatch && topicMatch && sentimentMatch;
     });
-  }, [filters]);
+  }, [filters, liveNews]);
 
   const selectClass =
     'bg-bg-card border border-border-subtle text-text-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none';
@@ -151,7 +148,6 @@ export default function NewsFeed() {
         <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Лента новостей</h2>
       </div>
 
-      {/* Filters */}
       <div className="bg-bg-card rounded-xl2 p-4 lg:p-5 border border-border-subtle mb-6 flex flex-col sm:flex-row gap-3 lg:gap-4">
         <div className="flex items-center gap-2 text-text-secondary shrink-0">
           <Filter className="w-4 h-4" />
@@ -163,9 +159,7 @@ export default function NewsFeed() {
           onChange={(e) => setFilters({ ...filters, source: e.target.value })}
         >
           {newsSources.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
         <select
@@ -174,9 +168,7 @@ export default function NewsFeed() {
           onChange={(e) => setFilters({ ...filters, topic: e.target.value })}
         >
           {newsTopics.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
+            <option key={t} value={t}>{t}</option>
           ))}
         </select>
         <select
@@ -185,17 +177,26 @@ export default function NewsFeed() {
           onChange={(e) => setFilters({ ...filters, sentiment: e.target.value })}
         >
           {newsSentiments.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
         <span className="text-sm text-text-secondary self-center ml-auto hidden lg:block">
-          {filteredNews.length} из {newsItems.length}
+          {filteredNews.length} из {liveNews.length}
         </span>
       </div>
 
-      {/* News grid */}
+      {loading && liveNews.length === 0 && (
+        <div className="text-center py-16 text-text-secondary">
+          Загрузка новостей...
+        </div>
+      )}
+
+      {error && (
+        <div className="text-center py-8 text-negative">
+          Ошибка: {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <AnimatePresence mode="popLayout">
           {filteredNews.map((item, i) => (
@@ -204,7 +205,7 @@ export default function NewsFeed() {
         </AnimatePresence>
       </div>
 
-      {filteredNews.length === 0 && (
+      {!loading && filteredNews.length === 0 && !error && (
         <div className="text-center py-16 text-text-secondary">
           Нет новостей, соответствующих выбранным фильтрам
         </div>
