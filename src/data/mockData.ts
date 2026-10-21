@@ -36,7 +36,7 @@ export interface NewsItem {
 export interface ForecastData {
   id: string;
   asset: string;
-  direction: 'up' | 'down';
+  direction: 'up' | 'down' | 'none';
   probability: number;
   time_window: string;
   confidence: 'Низкая' | 'Средняя' | 'Высокая';

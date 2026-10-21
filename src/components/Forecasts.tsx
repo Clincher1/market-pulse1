@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowUpCircle,
   ArrowDownCircle,
+  MinusCircle,
   AlertTriangle,
   Clock,
   Target,
@@ -25,7 +26,24 @@ function confidenceBg(confidence: string): string {
 }
 
 function ForecastCard({ forecast, index }: { forecast: ForecastData; index: number }) {
-  const isUp = forecast.direction === 'up';
+  // Защитный порог и на фронте: даже если старая строка бэкенда ещё
+  // содержит up/down при балансе ниже 60/40, направленный вывод не показываем.
+  const hasSignal = forecast.direction !== 'none' && forecast.probability >= 60;
+  const isUp = hasSignal && forecast.direction === 'up';
+  const isWeakTilt = hasSignal && forecast.probability < 70;
+  const directionLabel = !hasSignal
+    ? 'Нет сигнала'
+    : isWeakTilt
+      ? `Слабый перекос ${isUp ? 'вверх' : 'вниз'}`
+      : isUp
+        ? 'Вверх'
+        : 'Вниз';
+  const signalColor = !hasSignal
+    ? 'text-text-secondary'
+    : isUp
+      ? 'text-positive'
+      : 'text-negative';
+  const barColor = !hasSignal ? 'bg-neutral' : isUp ? 'bg-positive' : 'bg-negative';
 
   return (
     <motion.div
@@ -36,20 +54,18 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
       className="bg-bg-card rounded-xl2 p-6 lg:p-7 border border-border-subtle shadow-lg hover:border-accent/30 transition-all duration-300"
     >
       {/* Asset + Direction */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6">
         <span className="text-lg font-bold text-text-primary">{forecast.asset}</span>
-        <div
-          className={`flex items-center gap-2 ${
-            isUp ? 'text-positive' : 'text-negative'
-          }`}
-        >
-          {isUp ? (
-            <ArrowUpCircle className="w-7 h-7" />
+        <div className={`flex items-center gap-2 text-right ${signalColor}`}>
+          {!hasSignal ? (
+            <MinusCircle className="w-7 h-7 shrink-0" />
+          ) : isUp ? (
+            <ArrowUpCircle className="w-7 h-7 shrink-0" />
           ) : (
-            <ArrowDownCircle className="w-7 h-7" />
+            <ArrowDownCircle className="w-7 h-7 shrink-0" />
           )}
           <span className="text-sm font-bold uppercase tracking-wide">
-            {isUp ? 'Вверх' : 'Вниз'}
+            {directionLabel}
           </span>
         </div>
       </div>
@@ -58,16 +74,14 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-text-secondary">Баланс сигналов</span>
-          <span
-            className={`text-2xl font-bold tabular-nums ${
-              isUp ? 'text-positive' : 'text-negative'
-            }`}
-          >
+          <span className={`text-2xl font-bold tabular-nums ${signalColor}`}>
             {forecast.probability}%
           </span>
         </div>
         <p className="text-xs text-text-secondary leading-relaxed mb-3">
-          Доля взвешенных новостных сигналов на стороне стрелки. 50% — перевеса нет; это не шанс движения цены.
+          {hasSignal
+            ? 'Доля взвешенных новостных сигналов на стороне стрелки. 50% — перевеса нет; это не шанс движения цены.'
+            : 'Доля взвешенных сигналов на большей стороне. Ниже порога 60% сигналы считаются шумом, поэтому направленный вывод не делается.'}
         </p>
         <div className="relative">
           <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
@@ -76,9 +90,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
               whileInView={{ width: `${forecast.probability}%` }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.3 + index * 0.1, ease: 'easeOut' }}
-              className={`h-full rounded-full ${
-                isUp ? 'bg-positive' : 'bg-negative'
-              }`}
+              className={`h-full rounded-full ${barColor}`}
             />
           </div>
           <div className="absolute left-1/2 -top-[3px] h-[14px] w-[2px] -translate-x-1/2 rounded bg-white/90" />
@@ -97,7 +109,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
           <div>
             <div className="text-xs text-text-secondary mb-0.5">Окно</div>
             <div className="text-sm font-semibold text-text-primary">
-              {forecast.time_window}
+              {hasSignal ? forecast.time_window : '—'}
             </div>
           </div>
         </div>
@@ -106,11 +118,13 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
           <div>
             <div className="text-xs text-text-secondary mb-0.5">Уверенность</div>
             <span
-              className={`inline-block text-sm font-semibold px-2 py-0.5 rounded-md ${confidenceBg(
-                forecast.confidence
-              )} ${confidenceColor(forecast.confidence)}`}
+              className={`inline-block text-sm font-semibold px-2 py-0.5 rounded-md ${
+                hasSignal
+                  ? `${confidenceBg(forecast.confidence)} ${confidenceColor(forecast.confidence)}`
+                  : 'bg-neutral/10 text-text-secondary'
+              }`}
             >
-              {forecast.confidence}
+              {hasSignal ? forecast.confidence : 'Нет вывода'}
             </span>
           </div>
         </div>

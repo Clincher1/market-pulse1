@@ -24,6 +24,11 @@ function normalizeConfidence(value: string): ForecastData['confidence'] {
     : 'Низкая';
 }
 
+function normalizeDirection(value: string): ForecastData['direction'] {
+  if (value === 'up' || value === 'down' || value === 'none') return value;
+  return 'none';
+}
+
 /**
  * Загружает прогнозы из cached_forecasts и приводит строки базы
  * к типу ForecastData (поле в базе и в типе называется одинаково:
@@ -43,7 +48,7 @@ export async function fetchLiveForecasts(): Promise<ForecastData[]> {
     return (data as ForecastRow[]).map((item) => ({
       id: item.id,
       asset: item.asset,
-      direction: item.direction === 'down' ? 'down' : 'up',
+      direction: normalizeDirection(item.direction),
       probability: Math.min(100, Math.max(0, item.probability ?? 0)),
       time_window: item.time_window,
       confidence: normalizeConfidence(item.confidence),
