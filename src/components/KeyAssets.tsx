@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { BookOpen, TrendingUp, TrendingDown } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { AssetData } from '@/data/mockData';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
@@ -87,6 +87,14 @@ export default function KeyAssets() {
             обновление…
           </span>
         )}
+        <a
+          href="#guide-assets"
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-text-primary transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          <span className="hidden sm:inline">Цена, % и график</span>
+          <span className="sm:hidden">Справка</span>
+        </a>
       </div>
 
       {error && (

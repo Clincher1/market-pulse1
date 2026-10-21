@@ -6,10 +6,15 @@ const navLinks = [
   { label: 'Дашборд', href: '#dashboard' },
   { label: 'Новости', href: '#news' },
   { label: 'Прогнозы', href: '#forecasts' },
+  { label: 'Как читать', href: '#guide' },
   { label: 'О проекте', href: '#footer' },
 ];
 
-export default function Header() {
+type HeaderProps = {
+  activeView?: 'dashboard' | 'guide';
+};
+
+export default function Header({ activeView = 'dashboard' }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -42,16 +47,29 @@ export default function Header() {
         </a>
 
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-200 relative group"
-            >
-              {link.label}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300 rounded-full" />
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const isGuideLink = link.href === '#guide';
+            const isActive = isGuideLink && activeView === 'guide';
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={`text-sm font-medium transition-colors duration-200 relative group ${
+                  isActive
+                    ? 'text-text-primary'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {link.label}
+                <span
+                  className={`absolute -bottom-1 left-0 h-0.5 bg-accent transition-all duration-300 rounded-full ${
+                    isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}
+                />
+              </a>
+            );
+          })}
         </nav>
 
         <button
@@ -72,16 +90,24 @@ export default function Header() {
           className="md:hidden bg-bg-primary/95 backdrop-blur-md border-b border-border-subtle overflow-hidden"
         >
           <div className="px-6 py-4 flex flex-col gap-4">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = link.href === '#guide' && activeView === 'guide';
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-text-primary'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </div>
         </motion.nav>
       )}

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, ShieldQuestion } from 'lucide-react';
+import { BookOpen, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, ShieldQuestion } from 'lucide-react';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 
@@ -221,6 +221,14 @@ export default function NewsFeed() {
     >
       <div className="flex items-center gap-3 mb-6">
         <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Лента новостей</h2>
+        <a
+          href="#guide-news"
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-text-primary transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          <span className="hidden sm:inline">Тональность, важность, уверенность</span>
+          <span className="sm:hidden">Справка</span>
+        </a>
       </div>
 
       <div className="bg-bg-card rounded-xl2 p-4 lg:p-5 border border-border-subtle mb-6 flex flex-col sm:flex-row gap-3 lg:gap-4">

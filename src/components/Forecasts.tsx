@@ -7,6 +7,7 @@ import {
   Clock,
   Target,
   ShieldQuestion,
+  BookOpen,
 } from 'lucide-react';
 import { ForecastData } from '@/data/mockData';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
@@ -56,7 +57,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
       {/* Probability bar */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-text-secondary">Вероятность</span>
+          <span className="text-sm text-text-secondary">Баланс сигналов</span>
           <span
             className={`text-2xl font-bold tabular-nums ${
               isUp ? 'text-positive' : 'text-negative'
@@ -65,16 +66,27 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
             {forecast.probability}%
           </span>
         </div>
-        <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            whileInView={{ width: `${forecast.probability}%` }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.3 + index * 0.1, ease: 'easeOut' }}
-            className={`h-full rounded-full ${
-              isUp ? 'bg-positive' : 'bg-negative'
-            }`}
-          />
+        <p className="text-xs text-text-secondary leading-relaxed mb-3">
+          Доля взвешенных новостных сигналов на стороне стрелки. 50% — перевеса нет; это не шанс движения цены.
+        </p>
+        <div className="relative">
+          <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: `${forecast.probability}%` }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: 0.3 + index * 0.1, ease: 'easeOut' }}
+              className={`h-full rounded-full ${
+                isUp ? 'bg-positive' : 'bg-negative'
+              }`}
+            />
+          </div>
+          <div className="absolute left-1/2 -top-[3px] h-[14px] w-[2px] -translate-x-1/2 rounded bg-white/90" />
+        </div>
+        <div className="mt-1.5 flex justify-between text-[10px] font-medium text-text-secondary">
+          <span>0%</span>
+          <span>50% — нет перевеса</span>
+          <span>100%</span>
         </div>
       </div>
 
@@ -161,6 +173,14 @@ export default function Forecasts() {
     >
       <div className="flex items-center gap-3 mb-6">
         <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Прогнозы</h2>
+        <a
+          href="#guide-forecasts"
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-text-primary transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          <span className="hidden sm:inline">Что значит процент</span>
+          <span className="sm:hidden">Справка</span>
+        </a>
       </div>
 
       {loading ? (

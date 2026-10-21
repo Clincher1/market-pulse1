@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Flame, Snowflake, Thermometer } from 'lucide-react';
+import { Activity, BookOpen, Flame, Snowflake, Thermometer } from 'lucide-react';
 import {
   XAxis,
   YAxis,
@@ -60,6 +60,14 @@ export default function TensionScale() {
         <h2 className="text-xl lg:text-2xl font-bold tracking-tight">
           Шкала напряжённости мира
         </h2>
+        <a
+          href="#guide-tension"
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-text-primary transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          <span className="hidden sm:inline">Как читать шкалу</span>
+          <span className="sm:hidden">Справка</span>
+        </a>
       </div>
 
       <div className="bg-bg-card rounded-xl2 p-6 lg:p-8 border border-border-subtle shadow-xl relative">
