@@ -5,7 +5,7 @@ import { TrendingUp, Menu, X } from 'lucide-react';
 const navLinks = [
   { label: 'Дашборд', href: '#dashboard' },
   { label: 'Новости', href: '#news' },
-  { label: 'Отчёты', href: '#forecasts' },
+  { label: 'Прогнозы', href: '#forecasts' },
   { label: 'О проекте', href: '#footer' },
 ];
 
@@ -15,6 +15,7 @@ export default function Header() {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -56,7 +57,8 @@ export default function Header() {
         <button
           className="md:hidden text-text-secondary hover:text-text-primary transition-colors"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
+          aria-label="Открыть меню"
+          aria-expanded={menuOpen}
         >
           {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>

@@ -26,7 +26,8 @@ function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
 }
 
 function AssetCard({ asset, index }: { asset: AssetData; index: number }) {
-  const positive = asset.change >= 0;
+  const change = asset.change ?? 0;
+  const positive = change >= 0;
 
   return (
     <motion.div
@@ -51,7 +52,7 @@ function AssetCard({ asset, index }: { asset: AssetData; index: number }) {
             <TrendingDown className="w-3.5 h-3.5" />
           )}
           {positive ? '+' : ''}
-          {asset.change.toFixed(1)}%
+          {change.toFixed(1)}%
         </div>
       </div>
 
@@ -60,14 +61,14 @@ function AssetCard({ asset, index }: { asset: AssetData; index: number }) {
       </div>
 
       <div className="mt-2 -mx-1">
-        <Sparkline data={asset.sparkline} positive={positive} />
+        <Sparkline data={asset.sparkline ?? []} positive={positive} />
       </div>
     </motion.div>
   );
 }
 
 export default function KeyAssets() {
-  const { assets } = useLiveAssets();
+  const { assets, loading, error } = useLiveAssets();
 
   return (
     <motion.section
@@ -81,7 +82,18 @@ export default function KeyAssets() {
         <h2 className="text-xl lg:text-2xl font-bold tracking-tight">
           Ключевые активы
         </h2>
+        {loading && (
+          <span className="text-sm text-text-secondary animate-pulse">
+            обновление…
+          </span>
+        )}
       </div>
+
+      {error && (
+        <div className="mb-4 text-sm text-warning">
+          Живые цены временно недоступны — показаны последние доступные значения.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {assets.map((asset, i) => (

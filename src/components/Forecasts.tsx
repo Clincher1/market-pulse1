@@ -85,7 +85,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
           <div>
             <div className="text-xs text-text-secondary mb-0.5">Окно</div>
             <div className="text-sm font-semibold text-text-primary">
-              {forecast.window}
+              {forecast.time_window}
             </div>
           </div>
         </div>
@@ -123,14 +123,31 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
 export default function Forecasts() {
   const [forecasts, setForecasts] = useState<ForecastData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function load() {
       const live = await fetchLiveForecasts();
-      setForecasts(live);
+      if (!isMounted) return;
+
+      if (live.length > 0) {
+        setForecasts(live);
+        setError(null);
+      } else {
+        // Не затираем уже показанные прогнозы пустым результатом.
+        setError('Не удалось загрузить прогнозы');
+      }
       setLoading(false);
     }
+
     load();
+    const interval = setInterval(load, 300_000); // обновление каждые 5 минут
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -150,12 +167,23 @@ export default function Forecasts() {
         <div className="text-center py-16 text-text-secondary animate-pulse">
           Загрузка прогнозов...
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
-          {forecasts.map((f, i) => (
-            <ForecastCard key={f.id} forecast={f} index={i} />
-          ))}
+      ) : forecasts.length === 0 ? (
+        <div className="text-center py-16 text-text-secondary">
+          Прогнозы временно недоступны
         </div>
+      ) : (
+        <>
+          {error && (
+            <div className="mb-4 text-sm text-warning">
+              Не удалось обновить прогнозы — показаны последние доступные.
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+            {forecasts.map((f, i) => (
+              <ForecastCard key={f.id} forecast={f} index={i} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Disclaimer */}

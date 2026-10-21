@@ -1,11 +1,4 @@
-import { TrendingUp, Github, Twitter, Linkedin, Send } from 'lucide-react';
-
-const socialLinks = [
-  { icon: Twitter, href: '#', label: 'Twitter' },
-  { icon: Github, href: '#', label: 'GitHub' },
-  { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  { icon: Send, href: '#', label: 'Telegram' },
-];
+import { TrendingUp, Github } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -22,20 +15,19 @@ export default function Footer() {
           </div>
 
           <div className="text-sm text-text-secondary">
-            © 2026 Market Pulse. Все права защищены.
+            © {new Date().getFullYear()} Market Pulse. Все права защищены.
           </div>
 
           <div className="flex items-center gap-3">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                aria-label={link.label}
-                className="w-9 h-9 rounded-lg bg-bg-card border border-border-subtle flex items-center justify-center text-text-secondary hover:text-accent hover:border-accent/30 transition-all duration-200"
-              >
-                <link.icon className="w-4 h-4" />
-              </a>
-            ))}
+            <a
+              href="https://github.com/Clincher1/market-pulse1"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              className="w-9 h-9 rounded-lg bg-bg-card border border-border-subtle flex items-center justify-center text-text-secondary hover:text-accent hover:border-accent/30 transition-all duration-200"
+            >
+              <Github className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </div>

@@ -35,10 +35,10 @@ export default function TensionScale() {
     };
   }, []);
 
-  const value = data.current;
-  
-  // Исправленная позиция маркера
-  const markerPosition = `${Math.min(100, Math.max(0, value * 1.5))}%`;
+  const value = Math.min(100, Math.max(0, data.current));
+
+  // Позиция маркера строго соответствует значению: 43 -> 43% шкалы.
+  const markerPosition = `${value}%`;
 
   const getStatusIcon = () => {
     if (value < 30) return <Snowflake className="w-5 h-5 text-blue-400" />;
@@ -127,7 +127,8 @@ export default function TensionScale() {
             <div className="text-sm text-text-secondary font-medium">
               Изменение за последние 7 дней
             </div>
-            {/* ЧЕСТНАЯ ПОДПИСЬ */}
+            {/* Честная подпись, если реальных дней в истории меньше 7
+                (дубли одного дня схлопываются в liveTension.ts) */}
             {data.history.length < 7 && (
               <div className="text-xs text-warning font-medium">
                 Накоплено {data.history.length} из 7 дней
@@ -183,7 +184,7 @@ export default function TensionScale() {
         <div className="mt-6 pt-5 border-t border-border-subtle text-sm text-text-secondary">
           На основе анализа{' '}
           <span className="text-text-primary font-semibold">
-            {data.newsCount.toLocaleString('ru-RU')}
+            {(data.newsCount ?? 0).toLocaleString('ru-RU')}
           </span>{' '}
           новостей за сутки
         </div>

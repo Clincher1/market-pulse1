@@ -13,4 +13,18 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Выносим тяжёлые библиотеки в отдельные чанки:
+        // браузер кэширует их отдельно от кода приложения,
+        // а основной бандл перестаёт быть одним файлом на 800+ КБ.
+        manualChunks: {
+          charts: ['recharts'],
+          animation: ['framer-motion'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
+    },
+  },
 });
