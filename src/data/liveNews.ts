@@ -1,28 +1,58 @@
 import { NewsItem } from './mockData';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
-const supabaseUrl = 'https://hekzplfftannlzwvgwwm.supabase.co';
-const supabaseKey = 'sb_publishable_FPAh2Z30aCCKpbfDdDrM_g_urRwk8r-'; 
+/**
+ * Декодирует HTML-сущности в тексте из базы
+ * (например, "OpenAI&apos;s" -> "OpenAI's").
+ * В идеале сущности должен декодировать бэкенд при записи в базу,
+ * но фронт страхуется сам.
+ */
+function decodeHtmlEntities(value: string): string {
+  if (!value || !value.includes('&')) return value;
+  if (typeof document === 'undefined') {
+    return value
+      .replace(/&apos;/g, "'")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  }
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = value;
+  return textarea.value;
+}
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
+/**
+ * Загружает новости из кэша Supabase (таблица cached_news),
+ * newest-first по дате публикации. При ошибке возвращает
+ * пустой массив — хук useLiveNews превращает это в error-состояние,
+ * сохраняя уже показанные новости.
+ */
 export async function fetchRawNews(): Promise<NewsItem[]> {
   try {
     const { data, error } = await supabase
       .from('cached_news')
-      .select('*')
-      .order('id', { ascending: false }); 
+      .select(
+        'id, source, time, title, summary, url, published_at, impacts, sentiment, importance, confidence, topic'
+      )
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(50);
 
-    if (error || !data || data.length === 0) throw new Error('Нет новостей в кэше');
+    if (error || !data || data.length === 0) {
+      throw new Error('Нет новостей в кэше');
+    }
 
-    return data as NewsItem[];
+    return (data as NewsItem[]).map((item) => ({
+      ...item,
+      title: decodeHtmlEntities(item.title ?? ''),
+      summary: decodeHtmlEntities(item.summary ?? ''),
+      impacts: item.impacts ?? [],
+      sentiment: item.sentiment ?? 0,
+      importance: item.importance ?? 0,
+    }));
   } catch (e) {
     console.error('Ошибка загрузки новостей из базы:', e);
     return [];
   }
-}
-
-// Заглушка
-export async function analyzeNewsWithGroq() {
-  return { sentiment: 0, importance: 5, impacts: [{ asset: 'S&P 500', direction: 'up' as const }] };
 }

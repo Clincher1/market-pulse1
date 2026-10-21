@@ -1,4 +1,7 @@
-// Types
+// Типы данных приложения и резервные (fallback) значения.
+// Резервные значения показываются только до первой успешной загрузки
+// или если живые данные из Supabase недоступны (в этом случае UI
+// честно показывает предупреждение — см. useLiveAssets / KeyAssets).
 
 export interface TensionData {
   current: number;
@@ -23,11 +26,11 @@ export interface NewsItem {
   impacts: { asset: string; direction: 'up' | 'down' }[];
   sentiment: number;
   importance: number;
-  confidence?: number; // <-- ДОБАВИЛИ
+  confidence?: number;
   summary: string;
   topic: string;
-  url?: string;        // <-- ДОБАВИЛИ
-  published_at?: string; // <-- ДОБАВИЛИ
+  url?: string;
+  published_at?: string;
 }
 
 export interface ForecastData {
@@ -35,13 +38,13 @@ export interface ForecastData {
   asset: string;
   direction: 'up' | 'down';
   probability: number;
-  time_window: string; // <-- ПЕРЕИМЕНОВАЛИ из window
+  time_window: string;
   confidence: 'Низкая' | 'Средняя' | 'Высокая';
   reason: string;
   updated_at?: string;
 }
 
-// Mock data
+// --- Fallback-данные (не живые цены!) ---
 
 export const tensionData: TensionData = {
   current: 67,
@@ -93,184 +96,5 @@ export const assets: AssetData[] = [
     price: '$67,240',
     change: -2.1,
     sparkline: [69200, 68800, 68500, 68200, 67800, 67500, 67400, 67300, 67240, 67240, 67240],
-  },
-];
-
-export const newsSources = ['Все источники', 'Reuters', 'Bloomberg', 'BBC', 'CNBC', 'РБК', 'MarketWatch', 'GDELT (Global)'];
-export const newsTopics = ['Все темы', 'Экономика', 'Геополитика', 'Энергетика', 'Технологии', 'Финансы'];
-export const newsSentiments = ['Любая', 'Позитивная', 'Нейтральная', 'Негативная'];
-
-export const newsItems: NewsItem[] = [
-  {
-    id: 1,
-    source: 'Reuters',
-    time: '12 мин назад',
-    title: 'ФРС США сохраняет ставку на уровне 5.25–5.50%, сигнализирует о осторожности',
-    impacts: [
-      { asset: 'USD', direction: 'up' },
-      { asset: 'S&P 500', direction: 'down' },
-      { asset: 'Gold', direction: 'up' },
-    ],
-    sentiment: -0.3,
-    importance: 9,
-    summary: 'Федеральная резервная система оставила ключевую ставку без изменений. Рынки восприняли это как сигнал о задержке смягчения монетарной политики.',
-    topic: 'Экономика',
-  },
-  {
-    id: 2,
-    source: 'Bloomberg',
-    time: '34 мин назад',
-    title: 'ОПЕК+ обсуждает продление сокращения добычи нефти до конца Q1 2026',
-    impacts: [
-      { asset: 'Brent', direction: 'up' },
-      { asset: 'USD', direction: 'down' },
-    ],
-    sentiment: 0.4,
-    importance: 8,
-    summary: 'Картель рассматривает продление добровольных ограничений добычи. Аналитики ожидают краткосрочный рост цен на нефть в случае согласования.',
-    topic: 'Энергетика',
-  },
-  {
-    id: 3,
-    source: 'BBC',
-    time: '1 час назад',
-    title: 'Переговоры по торговому соглашению между ЕС и Китаем возобновились',
-    impacts: [
-      { asset: 'S&P 500', direction: 'up' },
-      { asset: 'BTC', direction: 'up' },
-    ],
-    sentiment: 0.5,
-    importance: 7,
-    summary: 'Европейский союз и Китай возобновили торговые переговоры после полугодового перерыва. Стороны обсудили снижение пошлин на электронику.',
-    topic: 'Геополитика',
-  },
-  {
-    id: 4,
-    source: 'CNBC',
-    time: '2 часа назад',
-    title: 'Bitcoin упал ниже $67,500 на фоне оттока капитала из спотовых ETF',
-    impacts: [
-      { asset: 'BTC', direction: 'down' },
-      { asset: 'Gold', direction: 'up' },
-    ],
-    sentiment: -0.7,
-    importance: 8,
-    summary: 'Отток средств из биткоин-ETF продолжается четвёртую сессию подряд. Инвесторы перераспределяют капитал в защитные активы.',
-    topic: 'Финансы',
-  },
-  {
-    id: 5,
-    source: 'РБК',
-    time: '3 часа назад',
-    title: 'ЦБ РФ может повысить ключевую ставку на следующем заседании',
-    impacts: [
-      { asset: 'USD', direction: 'up' },
-      { asset: 'Gold', direction: 'up' },
-    ],
-    sentiment: -0.4,
-    importance: 6,
-    summary: 'Регулятор рассматривает возможность ужесточения монетарной политики на фоне инфляционного давления. Решение ожидается 25 октября.',
-    topic: 'Экономика',
-  },
-  {
-    id: 6,
-    source: 'Bloomberg',
-    time: '4 часа назад',
-    title: 'Apple объявила о рекордной выручке за квартал — $94.9 млрд',
-    impacts: [
-      { asset: 'S&P 500', direction: 'up' },
-      { asset: 'USD', direction: 'up' },
-    ],
-    sentiment: 0.8,
-    importance: 7,
-    summary: 'Apple превзошла ожидания аналитиков благодаря сильным продажам iPhone 16 и росту доходов от сервисов. Акции выросли в премаркете.',
-    topic: 'Технологии',
-  },
-  {
-    id: 7,
-    source: 'Reuters',
-    time: '5 часов назад',
-    title: 'Напряжённость на Ближнем Востоке выросла после инцидента в Красном море',
-    impacts: [
-      { asset: 'Brent', direction: 'up' },
-      { asset: 'Gold', direction: 'up' },
-      { asset: 'S&P 500', direction: 'down' },
-    ],
-    sentiment: -0.8,
-    importance: 10,
-    summary: 'Атаки на торговые суда в Красном море усилились. Эксперты предупреждают о риске перебоев с поставками через Суэцкий канал.',
-    topic: 'Геополитика',
-  },
-  {
-    id: 8,
-    source: 'CNBC',
-    time: '6 часов назад',
-    title: 'NVIDIA представила новый чип Blackwell B300 с производительностью 20 PFLOPS',
-    impacts: [
-      { asset: 'S&P 500', direction: 'up' },
-      { asset: 'BTC', direction: 'up' },
-    ],
-    sentiment: 0.6,
-    importance: 6,
-    summary: 'NVIDIA анонсировала следующее поколение ускорителей для ИИ. Новинка обещает двукратный прирост производительности при меньшем энергопотреблении.',
-    topic: 'Технологии',
-  },
-  {
-    id: 9,
-    source: 'BBC',
-    time: '8 часов назад',
-    title: 'Еврозона избежала рецессии — ВВП вырос на 0.4% в Q3',
-    impacts: [
-      { asset: 'USD', direction: 'down' },
-      { asset: 'S&P 500', direction: 'up' },
-    ],
-    sentiment: 0.5,
-    importance: 6,
-    summary: 'Экономика еврозоны продемонстрировала умеренный рост вопреки ожиданиям аналитиков. Основной вклад внесли Германия и Франция.',
-    topic: 'Экономика',
-  },
-  {
-    id: 10,
-    source: 'РБК',
-    time: '10 часов назад',
-    title: 'Золото обновило исторический максимум на фоне геополитической неопределённости',
-    impacts: [
-      { asset: 'Gold', direction: 'up' },
-      { asset: 'BTC', direction: 'down' },
-    ],
-    sentiment: 0.3,
-    importance: 5,
-    summary: 'Цена золота достигла нового рекорда, превысив $2,645 за унцию. Спрос на защитные активы растёт на фоне глобальных рисков.',
-    topic: 'Финансы',
-  },
-];
-
-export const forecasts: ForecastData[] = [
-  {
-    id: 'usd-eur-forecast',
-    asset: 'USD/EUR',
-    direction: 'up',
-    probability: 72,
-    time_window: '1–3 дня',
-    confidence: 'Средняя',
-    reason: '8 из 10 похожих событий в прошлом дали рост',
-  },
-  {
-    id: 'brent-forecast',
-    asset: 'Brent',
-    direction: 'up',
-    probability: 65,
-    time_window: '1–7 дней',
-    confidence: 'Средняя',
-    reason: 'Сокращение добычи ОПЕК+ исторически даёт рост',
-  },
-  {
-    id: 'btc-forecast',
-    asset: 'BTC',
-    direction: 'down',
-    probability: 58,
-    time_window: '1–3 дня',
-    confidence: 'Низкая',
-    reason: 'Рост ставки ФРС давит на рисковые активы',
   },
 ];

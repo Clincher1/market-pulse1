@@ -1,48 +1,45 @@
 import { AssetData } from './mockData';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
-const supabaseUrl = 'https://hekzplfftannlzwvgwwm.supabase.co';
-const supabaseKey = 'sb_publishable_FPAh2Z30aCCKpbfDdDrM_g_urRwk8r-'; 
+const ASSET_ORDER = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'];
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
+/**
+ * Загружает активы из кэша Supabase (таблица cached_assets).
+ *
+ * ВАЖНО: цены показываются ровно так, как они лежат в базе.
+ * Никакого умножения на фронте быть не должно: если источник цен
+ * отдаёт значение в другом масштабе, это исправляется на стороне
+ * бэкенда, который заполняет cached_assets, а не здесь.
+ *
+ * При ошибке возвращает пустой массив — вызывающий код (useLiveAssets)
+ * в этом случае сохраняет fallback-активы и показывает предупреждение.
+ */
 export async function fetchLiveAssets(): Promise<AssetData[]> {
   try {
     const { data, error } = await supabase
       .from('cached_assets')
-      .select('*');
+      .select('id, name, price, change, sparkline');
 
     if (error || !data || data.length === 0) {
       throw new Error('Нет данных в кэше');
     }
 
-    const order = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'];
-    const sortedData = order
-      .map(id => data.find(d => d.id === id))
-      .filter(Boolean) as AssetData[];
+    const rows = data as AssetData[];
 
-    // УМНОЖАЕМ ПРЯМО ЗДЕСЬ
-    return sortedData.map(asset => {
-      if (asset.id === 'sp500') {
-        const rawPrice = parseFloat(asset.price.replace(/,/g, ''));
-        return {
-          ...asset,
-          price: (rawPrice * 10).toLocaleString('en-US', { maximumFractionDigits: 0 }),
-          sparkline: asset.sparkline.map(v => v * 10),
-        };
-      }
-      if (asset.id === 'gold') {
-        const rawPrice = parseFloat(asset.price.replace('$', '').replace(/,/g, ''));
-        return {
-          ...asset,
-          price: '$' + (rawPrice * 10).toLocaleString('en-US', { maximumFractionDigits: 0 }),
-          sparkline: asset.sparkline.map(v => v * 10),
-        };
-      }
-      return asset;
-    });
+    const sorted = ASSET_ORDER
+      .map((id) => rows.find((d) => d.id === id))
+      .filter((row): row is AssetData => Boolean(row));
+
+    // Активы, которых нет в ASSET_ORDER, не теряем — добавляем в конец.
+    const extras = rows.filter((row) => !ASSET_ORDER.includes(row.id));
+
+    return [...sorted, ...extras].map((asset) => ({
+      ...asset,
+      change: asset.change ?? 0,
+      sparkline: asset.sparkline ?? [],
+    }));
   } catch (e) {
-    console.error('Ошибка загрузки кэша:', e);
+    console.error('Ошибка загрузки кэша активов:', e);
     return [];
   }
 }

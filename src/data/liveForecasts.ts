@@ -1,29 +1,54 @@
 import { ForecastData } from './mockData';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
-const supabaseUrl = 'https://hekzplfftannlzwvgwwm.supabase.co';
-const supabaseKey = 'sb_publishable_FPAh2Z30aCCKpbfDdDrM_g_urRwk8r-';
+interface ForecastRow {
+  id: string;
+  asset: string;
+  direction: string;
+  probability: number;
+  time_window: string;
+  confidence: string;
+  reason: string;
+  updated_at?: string;
+}
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const ALLOWED_CONFIDENCE: ForecastData['confidence'][] = [
+  'Низкая',
+  'Средняя',
+  'Высокая',
+];
 
+function normalizeConfidence(value: string): ForecastData['confidence'] {
+  return (ALLOWED_CONFIDENCE as string[]).includes(value)
+    ? (value as ForecastData['confidence'])
+    : 'Низкая';
+}
+
+/**
+ * Загружает прогнозы из cached_forecasts и приводит строки базы
+ * к типу ForecastData (поле в базе и в типе называется одинаково:
+ * time_window). При ошибке возвращает пустой массив — компонент
+ * Forecasts показывает в этом случае предупреждение.
+ */
 export async function fetchLiveForecasts(): Promise<ForecastData[]> {
   try {
     const { data, error } = await supabase
       .from('cached_forecasts')
-      .select('*');
+      .select('id, asset, direction, probability, time_window, confidence, reason, updated_at');
 
     if (error || !data || data.length === 0) {
       throw new Error('Нет прогнозов в кэше');
     }
 
-    return data.map((item: any) => ({
+    return (data as ForecastRow[]).map((item) => ({
       id: item.id,
       asset: item.asset,
-      direction: item.direction,
-      probability: item.probability,
-      window: item.time_window, 
-      confidence: item.confidence,
+      direction: item.direction === 'down' ? 'down' : 'up',
+      probability: Math.min(100, Math.max(0, item.probability ?? 0)),
+      time_window: item.time_window,
+      confidence: normalizeConfidence(item.confidence),
       reason: item.reason,
+      updated_at: item.updated_at,
     }));
   } catch (e) {
     console.error('Ошибка загрузки прогнозов:', e);
