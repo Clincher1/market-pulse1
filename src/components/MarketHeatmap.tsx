@@ -1,5 +1,6 @@
 import { Grid2x2, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { AssetData } from '@/data/mockData';
+import GuideLink from './GuideLink';
 
 /**
  * Временные визуальные шкалы насыщенности, в процентах изменения.
@@ -119,12 +120,11 @@ export default function MarketHeatmap({
             относительно обычной шкалы конкретного актива.
           </p>
         </div>
-        <a
+        <GuideLink
           href="#guide-assets"
-          className="ml-auto text-sm font-bold text-accent transition-colors hover:text-text-primary"
-        >
-          Как читать карту
-        </a>
+          label="Как читать карту"
+          mobileLabel="Справка"
+        />
       </div>
 
       {loading ? (

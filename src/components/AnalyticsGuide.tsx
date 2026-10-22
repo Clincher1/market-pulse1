@@ -8,6 +8,7 @@ import {
   BookOpen,
   Calculator,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Database,
   Gauge,
@@ -83,15 +84,23 @@ function Callout({
 
 function FormulaDetails({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <details className="group rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
-      <summary className="cursor-pointer list-none flex items-center justify-between gap-4 text-sm font-bold text-text-primary">
-        <span className="flex items-center gap-2">
-          <Calculator className="w-4 h-4 text-accent" />
-          {title}
+    <details className="group overflow-hidden rounded-2xl border border-accent/35 bg-bg-primary/70 shadow-[0_12px_32px_rgba(0,0,0,0.16)]">
+      <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 bg-accent/10 px-4 py-3 text-sm font-extrabold text-text-primary transition-colors hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:px-5 [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-md shadow-accent/25">
+            <Calculator className="h-4 w-4" />
+          </span>
+          <span>{title}</span>
         </span>
-        <span className="text-accent transition-transform group-open:rotate-45 text-xl leading-none">+</span>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/45 bg-bg-primary/70 px-3 py-1.5 text-xs font-extrabold text-blue-100">
+          <span className="group-open:hidden">Показать</span>
+          <span className="hidden group-open:inline">Скрыть</span>
+          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+        </span>
       </summary>
-      <div className="mt-4 text-sm leading-relaxed text-text-secondary space-y-3">{children}</div>
+      <div className="space-y-3 border-t border-white/10 px-4 pb-5 pt-4 text-sm leading-relaxed text-text-secondary sm:px-5">
+        {children}
+      </div>
     </details>
   );
 }
@@ -109,13 +118,13 @@ function QuickStep({ number, title, text }: { number: number; title: string; tex
 }
 
 const quickLinks = [
-  { label: 'Порядок чтения', href: '#guide-start' },
-  { label: 'Tension и график', href: '#guide-tension' },
-  { label: 'Активы', href: '#guide-assets' },
-  { label: 'Новости', href: '#guide-news' },
-  { label: 'Прогнозы', href: '#guide-forecasts' },
-  { label: 'Свежесть и ограничения', href: '#guide-data-quality' },
-  { label: 'Частые вопросы', href: '#guide-faq' },
+  { label: 'Порядок чтения', href: '#guide-start', icon: MousePointerClick },
+  { label: 'Tension и график', href: '#guide-tension', icon: Activity },
+  { label: 'Активы', href: '#guide-assets', icon: LineChart },
+  { label: 'Новости', href: '#guide-news', icon: Newspaper },
+  { label: 'Прогнозы', href: '#guide-forecasts', icon: Target },
+  { label: 'Свежесть и ограничения', href: '#guide-data-quality', icon: RefreshCw },
+  { label: 'Частые вопросы', href: '#guide-faq', icon: ShieldQuestion },
 ];
 
 export default function AnalyticsGuide() {
@@ -163,16 +172,36 @@ export default function AnalyticsGuide() {
           />
         </div>
 
-        <nav aria-label="Разделы инструкции" className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {quickLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="whitespace-nowrap rounded-full border border-border-subtle bg-bg-primary/70 px-4 py-2 text-sm font-semibold text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
+        <nav
+          aria-label="Разделы инструкции"
+          className="rounded-2xl border border-white/10 bg-bg-primary/60 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-4"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3 px-1">
+            <span className="text-xs font-extrabold uppercase tracking-[0.14em] text-blue-200">
+              Перейти к разделу
+            </span>
+            <span className="hidden text-xs font-medium text-text-secondary sm:block">
+              Нажмите на кнопку — страница прокрутится к объяснению
+            </span>
+          </div>
+          <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide lg:flex-wrap lg:overflow-visible">
+            {quickLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-accent/45 bg-accent/15 py-1.5 pl-1.5 pr-3 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-card active:translate-y-0"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors group-hover:bg-white group-hover:text-accent">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="whitespace-nowrap">{link.label}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-blue-200 transition-transform duration-200 group-hover:translate-y-0.5 group-hover:text-white" />
+                </a>
+              );
+            })}
+          </div>
         </nav>
       </motion.section>
 
@@ -606,12 +635,21 @@ export default function AnalyticsGuide() {
               a: 'Нет. Market Pulse — аналитический обзор и исследовательский прототип. Он помогает быстрее найти сюжеты и понять фон, но решение требует первоисточников, точной котировки, горизонта, размера позиции и управления риском.',
             },
           ].map((item) => (
-            <details key={item.q} className="group rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
-              <summary className="cursor-pointer list-none flex items-center justify-between gap-4 font-bold text-text-primary">
-                {item.q}
-                <span className="text-accent text-xl leading-none transition-transform group-open:rotate-45">+</span>
+            <details
+              key={item.q}
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-bg-primary/70 shadow-[0_10px_28px_rgba(0,0,0,0.14)] transition-colors open:border-accent/40"
+            >
+              <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-extrabold text-text-primary transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:px-5 [&::-webkit-details-marker]:hidden">
+                <span>{item.q}</span>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/45 bg-accent/15 px-3 py-1.5 text-xs font-extrabold text-blue-100">
+                  <span className="group-open:hidden">Ответ</span>
+                  <span className="hidden group-open:inline">Скрыть</span>
+                  <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+                </span>
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-text-secondary">{item.a}</p>
+              <p className="border-t border-white/10 px-4 pb-5 pt-4 text-sm leading-relaxed text-text-secondary sm:px-5">
+                {item.a}
+              </p>
             </details>
           ))}
         </div>

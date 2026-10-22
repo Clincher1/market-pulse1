@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { BookOpen, TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { AssetData } from '@/data/mockData';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import MarketHeatmap from './MarketHeatmap';
+import GuideLink from './GuideLink';
 
 function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
   const chartData = data.map((v, i) => ({ i, v }));
@@ -88,14 +89,11 @@ export default function KeyAssets() {
             обновление…
           </span>
         )}
-        <a
+        <GuideLink
           href="#guide-assets"
-          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-text-primary transition-colors"
-        >
-          <BookOpen className="w-4 h-4" />
-          <span className="hidden sm:inline">Цена, % и график</span>
-          <span className="sm:hidden">Справка</span>
-        </a>
+          label="Цена, % и график"
+          mobileLabel="Справка"
+        />
       </div>
 
       {error && (

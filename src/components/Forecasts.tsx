@@ -8,10 +8,10 @@ import {
   Clock,
   Target,
   ShieldQuestion,
-  BookOpen,
 } from 'lucide-react';
 import { ForecastData } from '@/data/mockData';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
+import GuideLink from './GuideLink';
 
 function confidenceColor(confidence: string): string {
   if (confidence === 'Высокая') return 'text-positive';
@@ -187,14 +187,11 @@ export default function Forecasts() {
     >
       <div className="flex items-center gap-3 mb-6">
         <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Прогнозы</h2>
-        <a
+        <GuideLink
           href="#guide-forecasts"
-          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-text-primary transition-colors"
-        >
-          <BookOpen className="w-4 h-4" />
-          <span className="hidden sm:inline">Что значит процент</span>
-          <span className="sm:hidden">Справка</span>
-        </a>
+          label="Что значит процент"
+          mobileLabel="Справка"
+        />
       </div>
 
       {loading ? (

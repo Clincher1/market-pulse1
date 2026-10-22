@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, ShieldQuestion } from 'lucide-react';
+import { ChevronDown, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, ShieldQuestion } from 'lucide-react';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
+import GuideLink from './GuideLink';
 
 const ALL_SOURCES = 'Все источники';
 const ALL_TOPICS = 'Все темы';
@@ -208,7 +209,7 @@ export default function NewsFeed() {
   }, [filters, liveNews]);
 
   const selectClass =
-    'bg-bg-card border border-border-subtle text-text-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none';
+    'min-h-11 w-full cursor-pointer appearance-none rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2.5 pr-10 text-sm font-semibold text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:border-accent/60 hover:bg-accent/10 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/40';
 
   return (
     <motion.section
@@ -221,14 +222,11 @@ export default function NewsFeed() {
     >
       <div className="flex items-center gap-3 mb-6">
         <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Лента новостей</h2>
-        <a
+        <GuideLink
           href="#guide-news"
-          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-text-primary transition-colors"
-        >
-          <BookOpen className="w-4 h-4" />
-          <span className="hidden sm:inline">Тональность, важность, уверенность</span>
-          <span className="sm:hidden">Справка</span>
-        </a>
+          label="Тональность и важность"
+          mobileLabel="Справка"
+        />
       </div>
 
       <div className="bg-bg-card rounded-xl2 p-4 lg:p-5 border border-border-subtle mb-6 flex flex-col sm:flex-row gap-3 lg:gap-4">
@@ -236,33 +234,45 @@ export default function NewsFeed() {
           <Filter className="w-4 h-4" />
           <span className="text-sm font-medium hidden sm:inline">Фильтры:</span>
         </div>
-        <select
-          className={selectClass}
-          value={filters.source}
-          onChange={(e) => setFilters({ ...filters, source: e.target.value })}
-        >
-          {sourceOptions.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select
-          className={selectClass}
-          value={filters.topic}
-          onChange={(e) => setFilters({ ...filters, topic: e.target.value })}
-        >
-          {topicOptions.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-        <select
-          className={selectClass}
-          value={filters.sentiment}
-          onChange={(e) => setFilters({ ...filters, sentiment: e.target.value })}
-        >
-          {SENTIMENT_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        <div className="relative flex-1">
+          <select
+            aria-label="Фильтр по источнику"
+            className={selectClass}
+            value={filters.source}
+            onChange={(e) => setFilters({ ...filters, source: e.target.value })}
+          >
+            {sourceOptions.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
+        </div>
+        <div className="relative flex-1">
+          <select
+            aria-label="Фильтр по теме"
+            className={selectClass}
+            value={filters.topic}
+            onChange={(e) => setFilters({ ...filters, topic: e.target.value })}
+          >
+            {topicOptions.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
+        </div>
+        <div className="relative flex-1">
+          <select
+            aria-label="Фильтр по тональности"
+            className={selectClass}
+            value={filters.sentiment}
+            onChange={(e) => setFilters({ ...filters, sentiment: e.target.value })}
+          >
+            {SENTIMENT_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
+        </div>
         <span className="text-sm text-text-secondary self-center ml-auto hidden lg:block">
           {filteredNews.length} из {liveNews.length}
         </span>
