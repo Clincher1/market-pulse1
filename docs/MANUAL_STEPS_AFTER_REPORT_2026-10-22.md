@@ -78,3 +78,14 @@ Change repository visibility → **Make private**.
 - Проверить 2FA: GitHub, Vercel, Supabase, Twelve, Groq.
 - Проверить лимиты/алерты Groq и автоматические бэкапы Supabase.
 - Свой домен: покупка и DNS — позже, код к этому готов.
+
+## Superseding update (2026-10-22 evening)
+
+Already done by the assistant after Supabase reconnect: Twelve recovery
+verified; `update-tension`, `update-forecasts`, and `update-assets` deployed
+with cron guards and tested; `proxy` hardened to GET-only; old `update-news`
+deleted and replaced by `update-news-v2` (cron job 2 retargeted). Ignore any
+earlier instruction in this file to patch `update-news` by hand or to delete
+`proxy`. Manual remainder: upload the current priority ZIP to GitHub if not
+done, wait for Vercel Ready, make the repo private again, and only later do
+the optional Vercel legacy-env cleanup listed above.

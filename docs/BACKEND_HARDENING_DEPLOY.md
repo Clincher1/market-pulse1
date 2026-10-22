@@ -61,3 +61,35 @@
   мог ходить без JWT, а авторизацию давал `x-cron-secret`.
 - Удаление дубля секрета `SERVICE_KEY` — после того, как убедимся, что все функции
   читают `SUPABASE_SERVICE_ROLE_KEY` (отдельная маленькая задача этапа 5).
+
+## Live completion — 2026-10-22 evening (Supabase connector)
+
+Reconnect verified (credential valid, project ACTIVE_HEALTHY). The following
+were deployed and runtime-tested with unauthenticated 401 + authorized pg_net
+calls using the Vault `cron_secret` (values never printed):
+
+- `update-tension` -> v13 (cron guard + server-side dedupe). Authorized test
+  returned HTTP 200.
+- `update-forecasts` -> v11 (cron guard + dedupe). Authorized test HTTP 200.
+- `update-assets` -> v15 (cron guard; canonical env-only Twelve writer).
+  Authorized test HTTP 200 and republished all five assets.
+- `proxy` -> v20 hardened GET-only RSS helper. The old public POST branch
+  that injected the server Groq key was removed. POST now 405, disallowed
+  hosts 403, allowed RSS 200. Do not delete: `update-news-v2` keeps it as a
+  fetch fallback.
+- Legacy `update-news` could not be safely patched from its truncated ESZIP
+  body, and gateway `verify_jwt=true` was proven insufficient because the
+  public publishable key still invoked it. It was replaced by
+  `update-news-v2` (in-code cron guard, dedupe before Groq, clamped output,
+  stop on Groq 429). pg_cron job 2 now calls `update-news-v2`; the old
+  `update-news` slug and the temporary dispatcher were deleted (404).
+- `update-gdelt` was inspected: already a no-op Stage-1 retirement stub
+  (no writes, no provider spend). Left as is.
+- Groq operational finding: the 120B model hit its 200k tokens/day cap
+  (429) during verification, largely because the old news writer re-analyzed
+  duplicates every run. `update-news-v2` dedupes by URL before Groq and
+  stops after the first 429. Until tokens roll off, news insertion can
+  legitimately return `updated: 0` with `groq_error` set.
+
+Uploading `supabase/functions/**` to GitHub remains provenance only; the
+functions above are already live in Supabase.

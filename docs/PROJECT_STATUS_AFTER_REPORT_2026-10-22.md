@@ -105,3 +105,14 @@ price snapshots до/после и явное окно реакции.
 Код домен не блокирует. После покупки нужно добавить домен в Vercel, настроить
 DNS, проверить HTTPS/redirect и обновить публичные URL в документации/OG при
 необходимости.
+
+## Update after Supabase reconnect (2026-10-22 evening)
+
+Backend hardening is now live, not merely packaged: tension/forecasts/assets
+require the cron secret in code; `proxy` is GET-only with the Groq-injecting
+POST branch removed; legacy public `update-news` was deleted and replaced by
+guarded `update-news-v2` on the same `cached_news` contract. `TWELVE_KEY`
+replacement is confirmed by asset updates. Remaining production risks are
+operational rather than public-writer exposure: Groq daily token cap,
+classification manual audit before shadow scheduling, and GitHub/Vercel
+upload of the frontend/toolchain package.
