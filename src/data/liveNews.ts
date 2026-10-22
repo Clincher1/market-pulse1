@@ -1,5 +1,6 @@
 import { NewsItem } from './mockData';
 import { supabase } from '@/lib/supabase';
+import { safeHttpUrl } from '@/lib/safeUrl';
 
 /**
  * Декодирует HTML-сущности в тексте из базы
@@ -47,6 +48,7 @@ export async function fetchRawNews(): Promise<NewsItem[]> {
       ...item,
       title: decodeHtmlEntities(item.title ?? ''),
       summary: decodeHtmlEntities(item.summary ?? ''),
+      url: safeHttpUrl(item.url),
       impacts: item.impacts ?? [],
       sentiment: item.sentiment ?? 0,
       importance: item.importance ?? 0,
