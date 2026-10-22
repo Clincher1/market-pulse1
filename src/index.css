@@ -60,8 +60,29 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
+
   * {
     box-sizing: border-box;
+  }
+
+  /* Insurance for any future native select: never fall back to a light popup
+     with inherited near-white text on this dark-only site. */
+  select {
+    color-scheme: dark;
+  }
+
+  select option,
+  select optgroup {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+
+  select option:checked {
+    background-color: #2563eb;
+    color: #ffffff;
   }
 
   body {

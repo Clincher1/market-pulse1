@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, ShieldQuestion } from 'lucide-react';
+import { Check, ChevronDown, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, ShieldQuestion } from 'lucide-react';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import GuideLink from './GuideLink';
@@ -178,6 +178,105 @@ type FilterState = {
   sentiment: string;
 };
 
+type FilterSelectProps = {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+};
+
+// Кастомный тёмный dropdown вместо нативного <select>:
+// браузерный popup на Windows игнорировал тёмную тему и рисовал белый список
+// со светлым унаследованным текстом. Здесь панель полностью контролируется сайтом.
+function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative flex-1">
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className={`min-h-11 w-full cursor-pointer rounded-xl border bg-white/6 px-3.5 py-2.5 text-left text-sm font-semibold text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent/40 ${
+          open
+            ? 'border-accent bg-accent/10 ring-2 ring-accent/40'
+            : 'border-white/15 hover:border-accent/60 hover:bg-accent/10'
+        }`}
+      >
+        <span className="flex items-center justify-between gap-3">
+          <span className="truncate">{value}</span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-blue-300 transition-transform duration-200 ${
+              open ? 'rotate-180' : ''
+            }`}
+          />
+        </span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            role="listbox"
+            aria-label={label}
+            initial={{ opacity: 0, y: -4, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.99 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+            className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-64 overflow-auto rounded-xl border border-white/12 bg-[#111827] p-1.5 shadow-2xl shadow-black/50 ring-1 ring-black/30"
+          >
+            {options.map((option) => {
+              const selected = option === value;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => {
+                    onChange(option);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-accent/50 ${
+                    selected
+                      ? 'bg-accent text-white'
+                      : 'text-text-primary hover:bg-white/10 hover:text-white focus:bg-white/10'
+                  }`}
+                >
+                  <span className="truncate">{option}</span>
+                  {selected && <Check className="h-4 w-4 shrink-0" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function NewsFeed() {
   const { news: liveNews, loading, error } = useLiveNews();
 
@@ -223,9 +322,6 @@ export default function NewsFeed() {
     });
   }, [filters, liveNews]);
 
-  const selectClass =
-    'min-h-11 w-full cursor-pointer appearance-none rounded-xl border border-white/15 bg-white/6 px-3.5 py-2.5 pr-10 text-sm font-semibold text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:border-accent/60 hover:bg-accent/10 focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent/40';
-
   return (
     <motion.section
       id="news"
@@ -244,50 +340,29 @@ export default function NewsFeed() {
         />
       </div>
 
-      <div className="bg-bg-card rounded-xl2 p-4 lg:p-5 border border-border-subtle mb-6 flex flex-col sm:flex-row gap-3 lg:gap-4">
+      <div className="relative z-30 bg-bg-card rounded-xl2 p-4 lg:p-5 border border-border-subtle mb-6 flex flex-col sm:flex-row gap-3 lg:gap-4">
         <div className="flex items-center gap-2 text-text-secondary shrink-0">
           <Filter className="w-4 h-4" />
           <span className="text-sm font-medium hidden sm:inline">Фильтры:</span>
         </div>
-        <div className="relative flex-1">
-          <select
-            aria-label="Фильтр по источнику"
-            className={selectClass}
-            value={filters.source}
-            onChange={(e) => setFilters({ ...filters, source: e.target.value })}
-          >
-            {sourceOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
-        </div>
-        <div className="relative flex-1">
-          <select
-            aria-label="Фильтр по теме"
-            className={selectClass}
-            value={filters.topic}
-            onChange={(e) => setFilters({ ...filters, topic: e.target.value })}
-          >
-            {topicOptions.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
-        </div>
-        <div className="relative flex-1">
-          <select
-            aria-label="Фильтр по тональности"
-            className={selectClass}
-            value={filters.sentiment}
-            onChange={(e) => setFilters({ ...filters, sentiment: e.target.value })}
-          >
-            {SENTIMENT_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
-        </div>
+        <FilterSelect
+          label="Фильтр по источнику"
+          value={filters.source}
+          options={sourceOptions}
+          onChange={(source) => setFilters((prev) => ({ ...prev, source }))}
+        />
+        <FilterSelect
+          label="Фильтр по теме"
+          value={filters.topic}
+          options={topicOptions}
+          onChange={(topic) => setFilters((prev) => ({ ...prev, topic }))}
+        />
+        <FilterSelect
+          label="Фильтр по тональности"
+          value={filters.sentiment}
+          options={SENTIMENT_OPTIONS}
+          onChange={(sentiment) => setFilters((prev) => ({ ...prev, sentiment }))}
+        />
         <span className="text-sm text-text-secondary self-center ml-auto hidden lg:block">
           {filteredNews.length} из {liveNews.length}
         </span>
