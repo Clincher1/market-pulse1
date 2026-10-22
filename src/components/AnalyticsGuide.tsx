@@ -158,7 +158,7 @@ export default function AnalyticsGuide() {
           <QuickStep
             number={2}
             title="Потом факты рынка"
-            text="Проверьте карточки активов: что цены уже сделали и не отыграл ли рынок новость до вас."
+            text="Проверьте плитки активов: что цены уже сделали и не отыграл ли рынок новость до вас."
           />
           <QuickStep
             number={3}
@@ -330,29 +330,32 @@ export default function AnalyticsGuide() {
 
       <GuideSection id="guide-assets" eyebrow="Рыночный контекст" title="Ключевые активы: тепловая карта, цена, процент и мини-график" icon={TrendingUp}>
         <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-6">
-          <div className="rounded-xl2 border border-border-subtle bg-bg-primary/60 p-6">
-            <div className="flex items-start justify-between mb-3">
-              <span className="text-sm font-semibold text-text-secondary">Пример карточки</span>
-              <span className="flex items-center gap-1 text-sm font-bold text-positive">
-                <ArrowUpRight className="w-4 h-4" /> +1.2%
-              </span>
+          <div className="rounded-xl2 border border-white/10 bg-emerald-600 p-6 text-white shadow-lg">
+            <div className="mb-3 flex items-start justify-between">
+              <span className="text-sm font-extrabold">Пример плитки актива</span>
+              <ArrowUpRight className="h-4 w-4" />
             </div>
-            <div className="text-3xl font-extrabold tabular-nums mb-4">$78.40</div>
-            <svg viewBox="0 0 260 72" className="w-full h-20" role="img" aria-label="Пример мини-графика цены">
-              <polyline points="0,58 32,52 64,55 96,42 128,46 160,31 192,34 224,20 260,14" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            <div className="text-3xl font-extrabold tabular-nums">$78.40</div>
+            <div className="mt-3 flex items-end justify-between gap-3">
+              <span className="text-base font-extrabold tabular-nums">+1.20%</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">шкала ±4%</span>
+            </div>
+            <svg viewBox="0 0 260 72" className="mt-4 h-20 w-full" role="img" aria-label="Пример мини-графика цены">
+              <polygon points="0,72 0,58 32,52 64,55 96,42 128,46 160,31 192,34 224,20 260,14 260,72" fill="rgba(255,255,255,0.14)" />
+              <polyline points="0,58 32,52 64,55 96,42 128,46 160,31 192,34 224,20 260,14" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <div className="mt-3 text-xs text-text-secondary">Карточка условная: цифры нужны только для объяснения элементов.</div>
+            <div className="mt-3 text-xs text-white/75">Плитка условная: цифры нужны только для объяснения элементов.</div>
           </div>
 
           <div className="space-y-4 text-sm leading-relaxed text-text-secondary">
             <p><strong className="text-text-primary">Крупная цена</strong> — последнее значение, которое сайт получил из кэша Supabase. Это не потоковая биржевая котировка в реальном времени.</p>
-            <p><strong className="text-text-primary">Процент справа</strong> — изменение относительно базы сравнения поставщика/кэша. Зелёный цвет означает положительное изменение, красный — отрицательное. В текущей карточке точный период изменения ещё не подписан, поэтому не называйте его автоматически «дневным», пока блок цен не перестроен на числовой ряд с явным инструментом и временем.</p>
-            <p><strong className="text-text-primary">Мини-график (спарклайн)</strong> показывает форму последовательности сохранённых точек. У него нет осей цены и времени, а вертикальный масштаб подстраивается под конкретный актив. Поэтому наклон линий разных карточек напрямую сравнивать нельзя: маленькое движение может выглядеть резким.</p>
-            <p><strong className="text-text-primary">Практический смысл:</strong> карточки активов нужны, чтобы проверить, отреагировал ли рынок уже сейчас. Если новость негативна, а цена давно упала до её появления в ленте, «новая» информация может быть уже в цене.</p>
+            <p><strong className="text-text-primary">Процент под ценой</strong> — изменение относительно базы сравнения поставщика/кэша. Зелёный цвет означает положительное изменение, красный — отрицательное. В текущей плитке точный период изменения ещё не подписан, поэтому не называйте его автоматически «дневным», пока блок цен не перестроен на числовой ряд с явным инструментом и временем.</p>
+            <p><strong className="text-text-primary">Мини-график (спарклайн)</strong> показывает форму последовательности сохранённых точек. У него нет осей цены и времени, а вертикальный масштаб подстраивается под конкретный актив. Поэтому наклон линий разных плиток напрямую сравнивать нельзя: маленькое движение может выглядеть резким.</p>
+            <p><strong className="text-text-primary">Практический смысл:</strong> плитки активов нужны, чтобы проверить, отреагировал ли рынок уже сейчас. Если новость негативна, а цена давно упала до её появления в ленте, «новая» информация может быть уже в цене.</p>
           </div>
         </div>
         <div className="mt-6 rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
-          <h3 className="font-bold text-text-primary mb-3">Тепловая карта рынка над карточками</h3>
+          <h3 className="font-bold text-text-primary mb-3">Тепловая карта рынка</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-sm leading-relaxed text-text-secondary">
             <div className="space-y-3">
               <p>
@@ -391,7 +394,7 @@ export default function AnalyticsGuide() {
 
         <div className="mt-5">
           <Callout variant="warning">
-            <strong>Ограничение текущей версии цен:</strong> точный биржевой инструмент, биржа, время котировки и период процента пока не отображаются в карточке.
+            <strong>Ограничение текущей версии цен:</strong> точный биржевой инструмент, биржа, время котировки и период процента пока не отображаются в плитке.
             Для торгового решения сверяйте цену в своём терминале. Перестройка блока на честные числовые инструменты и временные ряды — отдельный следующий этап.
           </Callout>
         </div>
@@ -628,7 +631,7 @@ export default function AnalyticsGuide() {
             },
             {
               q: 'Почему мини-график актива резко прыгает при маленьком проценте?',
-              a: 'Спарклайн не имеет фиксированной оси и растягивает диапазон точек на высоту карточки. Смотрите прежде всего цену и процент, а форму линии используйте только как контекст.',
+              a: 'Спарклайн не имеет фиксированной оси и растягивает диапазон точек на высоту мини-графика внутри плитки. Смотрите прежде всего цену и процент, а форму линии используйте только как контекст.',
             },
             {
               q: 'Можно ли торговать только по этим цифрам?',

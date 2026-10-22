@@ -1,6 +1,5 @@
 import { Grid2x2, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { AssetData } from '@/data/mockData';
-import GuideLink from './GuideLink';
 
 /**
  * Временные визуальные шкалы насыщенности, в процентах изменения.
@@ -45,6 +44,47 @@ function formatChange(change: number): string {
   return `${sign}${change.toFixed(2)}%`;
 }
 
+function TileSparkline({ values }: { values: number[] }) {
+  const points = values.filter((value) => Number.isFinite(value));
+
+  if (points.length < 2) {
+    return <div className="h-7 border-t border-white/20" aria-hidden="true" />;
+  }
+
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min;
+  const coordinates = points.map((value, index) => {
+    const x = (index / (points.length - 1)) * 100;
+    const y = range === 0 ? 14 : 3 + ((max - value) / range) * 22;
+    return { x, y };
+  });
+  const line = coordinates.map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+  const area = `0,28 ${line} 100,28`;
+  const last = coordinates[coordinates.length - 1];
+
+  return (
+    <svg
+      viewBox="0 0 100 28"
+      preserveAspectRatio="none"
+      className="h-7 w-full overflow-visible"
+      aria-hidden="true"
+    >
+      <polygon points={area} fill="rgba(255,255,255,0.14)" />
+      <polyline
+        points={line}
+        fill="none"
+        stroke="rgba(255,255,255,0.94)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <circle cx={last.x} cy={last.y} r="2.2" fill="white" />
+    </svg>
+  );
+}
+
 function HeatTile({ asset }: { asset: AssetData }) {
   const change = asset.change ?? 0;
   const cap = SATURATION_CAPS[asset.id] ?? 3;
@@ -53,13 +93,14 @@ function HeatTile({ asset }: { asset: AssetData }) {
   const tooltip =
     `${asset.name}: ${asset.price}, изменение ${formatChange(change)}. ` +
     `Насыщенность цвета нормирована к шкале ±${cap}% для этого актива. ` +
+    'Белая мини-линия показывает только форму последних сохранённых дневных значений без оси цены и времени. ' +
     'Площадь плитки одинакова для всех активов и ничего не кодирует.';
 
   return (
     <article
       title={tooltip}
       aria-label={tooltip}
-      className="min-h-[118px] rounded-xl border border-white/10 p-4 text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5"
+      className="flex min-h-[154px] flex-col rounded-xl border border-white/10 p-4 text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5"
       style={{ backgroundColor: tileColor(asset) }}
     >
       <div className="flex items-start justify-between gap-2">
@@ -79,6 +120,10 @@ function HeatTile({ asset }: { asset: AssetData }) {
           шкала ±{cap}%
         </span>
       </div>
+
+      <div className="mt-auto pt-3">
+        <TileSparkline values={asset.sparkline ?? []} />
+      </div>
     </article>
   );
 }
@@ -89,11 +134,12 @@ function SkeletonTiles() {
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="min-h-[118px] animate-pulse rounded-xl border border-border-subtle bg-bg-card p-4"
+          className="min-h-[154px] animate-pulse rounded-xl border border-border-subtle bg-bg-card p-4"
         >
           <div className="h-4 w-20 rounded bg-white/10" />
           <div className="mt-5 h-6 w-24 rounded bg-white/10" />
           <div className="mt-4 h-5 w-16 rounded bg-white/10" />
+          <div className="mt-5 h-7 rounded bg-white/10" />
         </div>
       ))}
     </div>
@@ -108,23 +154,17 @@ export default function MarketHeatmap({
   loading: boolean;
 }) {
   return (
-    <div className="mb-5 rounded-xl2 border border-border-subtle bg-bg-card p-4 shadow-lg sm:p-5">
-      <div className="mb-4 flex flex-wrap items-start gap-3">
-        <div>
-          <h3 className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary">
-            <Grid2x2 className="h-5 w-5 text-accent" />
-            Тепловая карта рынка
-          </h3>
-          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
-            Быстрый обзор пяти активов: цвет показывает знак изменения, насыщенность — его силу
-            относительно обычной шкалы конкретного актива.
-          </p>
-        </div>
-        <GuideLink
-          href="#guide-assets"
-          label="Как читать карту"
-          mobileLabel="Справка"
-        />
+    <div className="rounded-xl2 border border-border-subtle bg-bg-card p-4 shadow-lg sm:p-5">
+      <div className="mb-4">
+        <h3 className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary">
+          <Grid2x2 className="h-5 w-5 text-accent" />
+          Тепловая карта рынка
+        </h3>
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
+          Быстрый обзор пяти активов: цвет показывает знак изменения, насыщенность — его силу
+          относительно обычной шкалы конкретного актива, а белая линия внутри плитки — форму
+          последних сохранённых дневных значений.
+        </p>
       </div>
 
       {loading ? (
@@ -154,7 +194,8 @@ export default function MarketHeatmap({
         <p className="mt-3 text-xs leading-relaxed text-text-secondary">
           Площадь всех плиток одинакова: она не означает капитализацию, объём торгов или
           важность актива. Сравнивайте активы по напечатанному проценту; одинаковая насыщенность
-          у разных активов не обязательно означает одинаковое процентное движение.
+          у разных активов не обязательно означает одинаковое процентное движение. У мини-линии
+          нет оси цены и времени, поэтому её наклон между активами напрямую сравнивать нельзя.
         </p>
       </div>
     </div>
