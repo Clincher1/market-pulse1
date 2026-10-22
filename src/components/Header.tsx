@@ -4,6 +4,7 @@ import {
   BookOpen,
   ChevronRight,
   Info,
+  Landmark,
   LayoutDashboard,
   Menu,
   Newspaper,
@@ -18,6 +19,12 @@ const navLinks = [
     href: '#dashboard',
     description: 'Tension, активы и общий обзор',
     icon: LayoutDashboard,
+  },
+  {
+    label: 'Россия',
+    href: '#russia-business',
+    description: 'Курсы ЦБ, Мосбиржа и последствия для бизнеса',
+    icon: Landmark,
   },
   {
     label: 'Новости',

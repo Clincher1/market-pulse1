@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import TensionScale from '@/components/TensionScale';
+import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
 import NewsFeed from '@/components/NewsFeed';
 import Forecasts from '@/components/Forecasts';
@@ -58,7 +59,34 @@ function App() {
           <AnalyticsGuide />
         ) : (
           <>
+            <section className="mb-8 max-w-5xl lg:mb-10">
+              <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-accent">
+                Аналитика простым языком
+              </div>
+              <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+                Что произошло в мире — и что это значит для России и рынков
+              </h1>
+              <p className="mt-3 max-w-4xl text-base leading-relaxed text-text-secondary lg:text-lg">
+                За несколько минут: сначала общий новостной фон, затем российские курсы и последствия для бизнеса,
+                после этого фактическая реакция цен и только в конце — осторожная гипотеза, а не обещание прибыли.
+              </p>
+              <div className="mt-5 grid gap-2 text-sm font-semibold text-slate-200 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">1</span>
+                  Смотрите фон и российские индикаторы
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">2</span>
+                  Проверяйте цены и первоисточники
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">3</span>
+                  Отличайте факт от прогноза
+                </div>
+              </div>
+            </section>
             <TensionScale />
+            <RussiaBusiness />
             <KeyAssets />
             <NewsFeed />
             <Forecasts />

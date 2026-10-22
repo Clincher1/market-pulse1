@@ -14,6 +14,7 @@ import {
   Gauge,
   Heart,
   Info,
+  Landmark,
   LineChart,
   MousePointerClick,
   Newspaper,
@@ -121,6 +122,7 @@ const quickLinks = [
   { label: 'Порядок чтения', href: '#guide-start', icon: MousePointerClick },
   { label: 'Tension и график', href: '#guide-tension', icon: Activity },
   { label: 'Активы', href: '#guide-assets', icon: LineChart },
+  { label: 'Россия и бизнес', href: '#guide-russia', icon: Landmark },
   { label: 'Новости', href: '#guide-news', icon: Newspaper },
   { label: 'Прогнозы', href: '#guide-forecasts', icon: Target },
   { label: 'Свежесть и ограничения', href: '#guide-data-quality', icon: RefreshCw },
@@ -396,6 +398,66 @@ export default function AnalyticsGuide() {
           <Callout variant="warning">
             <strong>Ограничение текущей версии цен:</strong> точный биржевой инструмент, биржа, время котировки и период процента пока не отображаются в плитке.
             Для торгового решения сверяйте цену в своём терминале. Перестройка блока на честные числовые инструменты и временные ряды — отдельный следующий этап.
+          </Callout>
+        </div>
+      </GuideSection>
+
+      <GuideSection id="guide-russia" eyebrow="Российская линза" title="Пульс российского бизнеса: курсы, Мосбиржа и каналы влияния" icon={Landmark}>
+        <p className="text-text-secondary leading-relaxed mb-6">
+          Этот блок не является отдельной «российской версией» сайта. Он берёт единый поток мировых событий и показывает,
+          через какие каналы они могут затронуть бизнес в России: валюту и платежи, ставки и кредиты, сырьё и экспорт,
+          спрос, торговлю и санкции. Российские рыночные значения при этом подписаны источником, базисом и временем.
+        </p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
+            <h3 className="font-bold mb-3">Что является наблюдаемым фактом</h3>
+            <ul className="space-y-2 text-sm text-text-secondary leading-relaxed">
+              <li><strong className="text-text-primary">Банк России:</strong> официальные дневные курсы USD/RUB, EUR/RUB и CNY/RUB. Это не курс конкретной сделки и не внутридневная биржевая цена.</li>
+              <li><strong className="text-text-primary">Мосбиржа ISS:</strong> CNYRUB_TOM, IMOEX и RGBI. Публичный поток может быть задержан, поэтому время источника показано на плитке.</li>
+              <li><strong className="text-text-primary">Российские заголовки:</strong> «Коммерсантъ», «Ведомости» и Frank Media со ссылками на первоисточники. Заголовок ещё не является оценкой влияния.</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
+            <h3 className="font-bold mb-3">Что является аналитической интерпретацией</h3>
+            <ul className="space-y-2 text-sm text-text-secondary leading-relaxed">
+              <li>отбор мировых событий по важности, уверенности, свежести и каналам влияния;</li>
+              <li>текст «Что это значит для бизнеса в России» — объяснение возможного механизма, а не доказанный эффект;</li>
+              <li>статусы «Спокойно», «Внимание» и «Повышенное движение» — оперативные визуальные пороги по наблюдаемым ценам, а не прогноз.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+          <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
+            <h3 className="font-bold mb-3">Как отбираются главные события</h3>
+            <div className="space-y-2 text-sm text-text-secondary leading-relaxed">
+              <p>Кандидат должен иметь важность не ниже 5/10, уверенность классификации не ниже 40% и либо прямую связь с Россией, либо понятный канал влияния.</p>
+              <p>Ранг учитывает важность × уверенность × свежесть, прямую российскую связь, число каналов и совпадение с выбранным бизнес-профилем.</p>
+              <p>Профиль («Импортирую», «Есть кредиты», «Экспортирую» и т.д.) хранится только в браузере и меняет порядок, но не скрывает остальные данные и не превращает подборку в персональную финансовую рекомендацию.</p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
+            <h3 className="font-bold mb-3">Как читать RGBI и курсы</h3>
+            <div className="space-y-2 text-sm text-text-secondary leading-relaxed">
+              <p><strong className="text-text-primary">RGBI</strong> — ценовой индекс гособлигаций. Когда он растёт, цены облигаций в среднем растут, а доходности при прочих равных снижаются. Падение RGBI обычно означает рост доходностей и более жёсткий рыночный фон.</p>
+              <p><strong className="text-text-primary">USD/RUB и EUR/RUB ЦБ</strong> — официальные дневные значения. <strong className="text-text-primary">CNY/RUB Мосбиржи</strong> — биржевой инструмент CNYRUB_TOM. Разница между ними не ошибка: у них разный базис и время.</p>
+            </div>
+          </div>
+        </div>
+
+        <FormulaDetails title="Пороги статусов российского блока">
+          <p><strong className="text-text-primary">Валюта и платежи:</strong> берётся максимальное по модулю дневное изменение USD/RUB, EUR/RUB и CNY/RUB. До 0,4% — «Спокойно», от 0,4% до 1% — «Внимание», от 1% — «Повышенное движение».</p>
+          <p><strong className="text-text-primary">Рынок и стоимость денег:</strong> сравниваются нормированные движения IMOEX и RGBI: max(|IMOEX| / 1,5; |RGBI| / 0,6). До 0,5 — спокойно, 0,5–1 — внимание, выше 1 — повышенное движение.</p>
+          <p><strong className="text-text-primary">Сырьё и экспорт:</strong> Brent до 1% — спокойно, 1–2,5% — внимание, выше 2,5% — повышенное движение.</p>
+          <p><strong className="text-text-primary">Глобальный риск:</strong> учитываются движение S&amp;P 500 и доля негативных событий в тройке главных. Это индикатор фона для дальнейшей проверки, а не статистическая вероятность кризиса.</p>
+        </FormulaDetails>
+
+        <div className="mt-5">
+          <Callout variant="warning">
+            <strong>Граница текущей версии:</strong> российские рыночные данные и заголовки уже подключены, но новый событийный конвейер с кластеризацией,
+            независимыми подтверждениями и проверкой фактических исходов пока проходит shadow-тестирование. Поэтому блок объясняет возможные каналы влияния,
+            но не обещает направление рубля, Мосбиржи или результат для конкретной компании.
           </Callout>
         </div>
       </GuideSection>
