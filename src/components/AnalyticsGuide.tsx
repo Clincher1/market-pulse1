@@ -299,7 +299,7 @@ export default function AnalyticsGuide() {
         </FormulaDetails>
       </GuideSection>
 
-      <GuideSection id="guide-assets" eyebrow="Рыночный контекст" title="Ключевые активы: цена, процент и мини-график" icon={TrendingUp}>
+      <GuideSection id="guide-assets" eyebrow="Рыночный контекст" title="Ключевые активы: тепловая карта, цена, процент и мини-график" icon={TrendingUp}>
         <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-6">
           <div className="rounded-xl2 border border-border-subtle bg-bg-primary/60 p-6">
             <div className="flex items-start justify-between mb-3">
@@ -322,6 +322,44 @@ export default function AnalyticsGuide() {
             <p><strong className="text-text-primary">Практический смысл:</strong> карточки активов нужны, чтобы проверить, отреагировал ли рынок уже сейчас. Если новость негативна, а цена давно упала до её появления в ленте, «новая» информация может быть уже в цене.</p>
           </div>
         </div>
+        <div className="mt-6 rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
+          <h3 className="font-bold text-text-primary mb-3">Тепловая карта рынка над карточками</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-sm leading-relaxed text-text-secondary">
+            <div className="space-y-3">
+              <p>
+                <strong className="text-text-primary">Цвет</strong> кодирует только знак процента:
+                красный — снижение, нейтральный тёмный — около нуля, зелёный — рост.
+              </p>
+              <p>
+                <strong className="text-text-primary">Насыщенность</strong> показывает силу движения
+                относительно отдельной шкалы актива. Поэтому одинаковая яркость у разных активов
+                не обязательно означает одинаковый процент — точное значение всегда напечатано на плитке.
+              </p>
+              <p>
+                <strong className="text-text-primary">Площадь плиток одинакова</strong> и ничего не означает:
+                это не капитализация, не объём торгов и не «важность» актива.
+              </p>
+            </div>
+            <div>
+              <div className="mb-2 h-3 rounded-full" style={{ background: 'linear-gradient(90deg, rgb(220,38,38) 0%, rgb(30,41,59) 50%, rgb(5,150,105) 100%)' }} aria-hidden="true" />
+              <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider mb-4">
+                <span>сильнее вниз</span><span>0%</span><span>сильнее вверх</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span className="rounded-lg bg-bg-card px-3 py-2">USD/EUR · шкала ±0.8%</span>
+                <span className="rounded-lg bg-bg-card px-3 py-2">S&amp;P 500 · шкала ±2%</span>
+                <span className="rounded-lg bg-bg-card px-3 py-2">Gold · шкала ±2.5%</span>
+                <span className="rounded-lg bg-bg-card px-3 py-2">Brent · шкала ±4%</span>
+                <span className="rounded-lg bg-bg-card px-3 py-2">BTC · шкала ±6%</span>
+              </div>
+              <p className="mt-3">
+                Это временные визуальные пороги, выбранные из-за разной обычной волатильности активов.
+                После накопления честного числового ряда цен их должна заменить нормировка по фактической волатильности.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="mt-5">
           <Callout variant="warning">
             <strong>Ограничение текущей версии цен:</strong> точный биржевой инструмент, биржа, время котировки и период процента пока не отображаются в карточке.

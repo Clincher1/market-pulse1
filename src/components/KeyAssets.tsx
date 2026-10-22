@@ -3,6 +3,7 @@ import { BookOpen, TrendingUp, TrendingDown } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { AssetData } from '@/data/mockData';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
+import MarketHeatmap from './MarketHeatmap';
 
 function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
   const chartData = data.map((v, i) => ({ i, v }));
@@ -102,6 +103,8 @@ export default function KeyAssets() {
           Живые цены временно недоступны — показаны последние доступные значения.
         </div>
       )}
+
+      <MarketHeatmap assets={assets} loading={loading} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {assets.map((asset, i) => (
