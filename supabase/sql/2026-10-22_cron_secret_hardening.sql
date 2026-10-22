@@ -1,0 +1,120 @@
+-- ============================================================================
+-- Market Pulse — cron secret hardening (prepared 2026-10-22)
+-- ============================================================================
+-- PURPOSE
+--   Move the four public cache writers (update-news, update-assets,
+--   update-tension, update-forecasts) behind a shared `x-cron-secret`
+--   header. The matching guard is already added to the function sources
+--   (update-assets / update-tension / update-forecasts; update-news gets the
+--   same snippet when its deployed source is next edited — see
+--   docs/BACKEND_HARDENING_DEPLOY.md).
+--
+-- ⚠️ EXECUTION ORDER IS CRITICAL — DO NOT REORDER:
+--   STEP 0  Inspect current jobs (read-only).
+--   STEP 1  Create the vault secret.
+--   STEP 2  Copy the secret value into Supabase Edge Function secrets as
+--           CRON_SECRET (Dashboard → Edge Functions → Secrets). Do this in
+--           the dashboard; never paste the value into chat or git.
+--   STEP 3  Rewrite the pg_cron commands to send the header (Step 3 below).
+--           Old function code ignores the extra header, so automation keeps
+--           working at this point.
+--   STEP 4  Deploy the patched function code. From now on unauthenticated
+--           calls get 401 and cron calls (with header) keep working.
+--   STEP 5  Verify (queries at the bottom).
+--
+--   If STEP 4 happens before STEP 3, cron calls get 401 and the public
+--   caches simply stop refreshing (site stays up on stale data). Recovery:
+--   finish STEP 3.
+-- ============================================================================
+
+
+-- ----------------------------------------------------------------------------
+-- STEP 0 — inspect current jobs (READ-ONLY, run first, keep the output)
+-- ----------------------------------------------------------------------------
+-- select jobid, jobname, schedule, active, command
+-- from cron.job
+-- order by jobname;
+
+
+-- ----------------------------------------------------------------------------
+-- STEP 1 — create the shared secret in Vault (generates the value for you)
+-- ----------------------------------------------------------------------------
+-- select vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'cron_secret');
+--
+-- Read it back ONCE to paste into Edge Function secrets (STEP 2):
+-- select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret';
+
+
+-- ----------------------------------------------------------------------------
+-- STEP 3 — rewrite each writer job to send x-cron-secret.
+-- IMPORTANT: replace  '<EXISTING JOBNAME>'  and  '<EXISTING SCHEDULE>'
+-- with the exact values from STEP 0 output. cron.schedule() with an
+-- existing jobname updates that job in place.
+-- Keep any headers your current commands already send (apikey /
+-- Authorization) — the examples below include the minimal set; merge,
+-- don't blindly replace, if your current commands differ.
+-- ----------------------------------------------------------------------------
+-- Example for update-assets (repeat the pattern for update-news,
+-- update-tension, update-forecasts):
+--
+-- select cron.schedule(
+--   '<EXISTING JOBNAME>',
+--   '<EXISTING SCHEDULE>',
+--   $$
+--   select net.http_post(
+--     url := 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/update-assets',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+
+
+-- ----------------------------------------------------------------------------
+-- STEP 5 — verify after deployment
+-- ----------------------------------------------------------------------------
+-- 5a. Recent cron runs should be 'succeeded':
+-- select jobid, status, return_message, start_time
+-- from cron.job_run_details
+-- order by start_time desc
+-- limit 10;
+--
+-- 5b. Recent HTTP responses from the functions should be 200 for cron calls:
+-- select status_code, created
+-- from net._http_response
+-- order by created desc
+-- limit 10;
+--
+-- 5c. Manual negative test (from any shell, expect HTTP 401):
+-- curl -i -X POST https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/update-tension
+--
+-- 5d. Manual positive test (expect HTTP 200), run locally with your secret:
+-- curl -i -X POST -H "x-cron-secret: <VALUE FROM VAULT>" \
+--   https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/update-tension
+
+
+-- ============================================================================
+-- PART B — V2 shadow pipeline schedule  ❌ DO NOT ENABLE YET
+-- ============================================================================
+-- Gate (per IMPLEMENTATION_PLAN): small classification batches + manual
+-- quality audit first. Only after that audit passes may these be scheduled.
+-- Shadow functions already run with verify_jwt = true, so cron must send
+-- the service-role JWT. Store it once in Vault (dashboard → Vault, or SQL
+-- below with the value from Project Settings → API — never via chat/git):
+--
+-- select vault.create_secret('<SERVICE_ROLE_JWT>', 'service_role_key');
+--
+-- Then, as a STARTING POINT for review (staggered so stages don't overlap;
+-- cadence to be finalized against Groq free-tier quota):
+--
+-- select cron.schedule('v2-shadow-ingest',    '*/30 * * * *', $$ select net.http_post(url := 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/ingest-news-v2-shadow',    headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'service_role_key')), body := '{}'::jsonb); $$);
+-- select cron.schedule('v2-shadow-cluster',   '5,35 * * * *', $$ ... cluster-news-v2-shadow ... $$);
+-- select cron.schedule('v2-shadow-classify',  '10,40 * * * *', $$ ... classify-events-v2-shadow ... $$);
+-- select cron.schedule('v2-shadow-prices',    '15 * * * *',   $$ ... update-prices-v2-shadow ... $$);
+-- select cron.schedule('v2-shadow-forecasts', '20 * * * *',   $$ ... write-forecasts-v2-shadow ... $$);
+-- select cron.schedule('v2-shadow-eval-fc',   '30 3 * * *',   $$ ... evaluate-forecasts-v2-shadow ... $$);
+-- select cron.schedule('v2-shadow-eval-ev',   '40 3 * * *',   $$ ... evaluate-event-impacts-v2-shadow ... $$);
+-- ============================================================================

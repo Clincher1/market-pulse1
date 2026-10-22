@@ -154,7 +154,7 @@ const STATUS_META: Record<Status, { label: string; classes: string; dot: string 
   },
   unknown: {
     label: 'Нет данных',
-    classes: 'border-white/15 bg-white/[0.06] text-slate-300',
+    classes: 'border-white/15 bg-white/6 text-slate-300',
     dot: 'bg-slate-400',
   },
 };
@@ -226,7 +226,7 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
       href={indicator.sourceUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group rounded-2xl border border-white/10 bg-black/20 p-4 shadow-lg transition-all hover:-translate-y-0.5 hover:border-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="group rounded-2xl border border-white/10 bg-black/20 p-4 shadow-lg transition-all hover:-translate-y-0.5 hover:border-accent/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
       title={`${indicator.provider}: ${indicator.basis}`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -269,7 +269,7 @@ function ChannelCard({
 }) {
   const meta = STATUS_META[status];
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+    <div className="rounded-2xl border border-white/10 bg-white/4.5 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/20 text-blue-200">
@@ -354,7 +354,7 @@ function EventCard({ scored }: { scored: ScoredNews }) {
           {formatMoscowDateTime(item.published_at)}
         </span>
         {channels.slice(0, 3).map((channel) => (
-          <span key={channel} className="rounded-full border border-white/10 bg-white/[0.06] px-2 py-1 text-slate-200">
+          <span key={channel} className="rounded-full border border-white/10 bg-white/6 px-2 py-1 text-slate-200">
             {CHANNEL_LABELS[channel]}
           </span>
         ))}
@@ -402,7 +402,7 @@ function HeadlineRow({ headline }: { headline: RussiaHeadline }) {
       href={headline.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block rounded-xl border border-white/[0.07] bg-white/[0.035] px-3.5 py-3 transition-colors hover:border-accent/50 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="group block rounded-xl border border-white/[0.07] bg-white/[0.035] px-3.5 py-3 transition-colors hover:border-accent/50 hover:bg-accent/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
     >
       <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400">
         <span className="text-blue-200">{headline.source}</span>
@@ -589,7 +589,7 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className="mb-10 scroll-mt-24 lg:mb-12"
     >
-      <div className="overflow-hidden rounded-[28px] border border-accent/25 bg-gradient-to-br from-[#102747] via-bg-card to-[#281722] shadow-2xl">
+      <div className="overflow-hidden rounded-[28px] border border-accent/25 bg-linear-to-br from-[#102747] via-bg-card to-[#281722] shadow-2xl">
         <div className="flex h-1.5" aria-hidden="true">
           <div className="flex-1 bg-slate-100" />
           <div className="flex-1 bg-blue-600" />
@@ -634,10 +634,10 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
                     type="button"
                     aria-pressed={selected}
                     onClick={() => toggleProfile(profile.id)}
-                    className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-extrabold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                    className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-extrabold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
                       selected
                         ? 'border-accent bg-accent text-white shadow-lg shadow-accent/25'
-                        : 'border-white/15 bg-white/[0.06] text-slate-200 hover:border-accent/60 hover:bg-accent/15'
+                        : 'border-white/15 bg-white/6 text-slate-200 hover:border-accent/60 hover:bg-accent/15'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -662,7 +662,7 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
             {insightsLoading && indicators.length === 0 ? (
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="h-36 animate-pulse rounded-2xl border border-white/10 bg-white/[0.05]" />
+                  <div key={index} className="h-36 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
                 ))}
               </div>
             ) : indicators.length > 0 ? (
@@ -698,7 +698,7 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
 
       {globalMarkets}
 
-      <div className="overflow-hidden rounded-[28px] border border-accent/25 bg-gradient-to-br from-[#102747] via-bg-card to-[#281722] shadow-2xl">
+      <div className="overflow-hidden rounded-[28px] border border-accent/25 bg-linear-to-br from-[#102747] via-bg-card to-[#281722] shadow-2xl">
         <div className="p-5 sm:p-7 lg:p-8">
           <div className="mb-5 flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
             <span className="rounded-full border border-blue-300/25 bg-blue-400/10 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-100">

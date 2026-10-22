@@ -71,15 +71,15 @@ function App() {
                 после этого фактическая реакция цен и только в конце — осторожная гипотеза, а не обещание прибыли.
               </p>
               <div className="mt-5 grid gap-2 text-sm font-semibold text-slate-200 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                <div className="rounded-2xl border border-white/10 bg-white/4.5 px-4 py-3">
                   <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">1</span>
                   Смотрите фон и российские индикаторы
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                <div className="rounded-2xl border border-white/10 bg-white/4.5 px-4 py-3">
                   <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">2</span>
                   Проверяйте цены и первоисточники
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                <div className="rounded-2xl border border-white/10 bg-white/4.5 px-4 py-3">
                   <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">3</span>
                   Отличайте факт от прогноза
                 </div>

@@ -86,7 +86,7 @@ function Callout({
 function FormulaDetails({ title, children }: { title: string; children: ReactNode }) {
   return (
     <details className="group overflow-hidden rounded-2xl border border-accent/35 bg-bg-primary/70 shadow-[0_12px_32px_rgba(0,0,0,0.16)]">
-      <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 bg-accent/10 px-4 py-3 text-sm font-extrabold text-text-primary transition-colors hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:px-5 [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 bg-accent/10 px-4 py-3 text-sm font-extrabold text-text-primary transition-colors hover:bg-accent/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:px-5 [&::-webkit-details-marker]:hidden">
         <span className="flex min-w-0 items-center gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-md shadow-accent/25">
             <Calculator className="h-4 w-4" />
@@ -137,7 +137,7 @@ export default function AnalyticsGuide() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="scroll-mt-24 overflow-hidden rounded-xl2 border border-accent/25 bg-gradient-to-br from-accent/15 via-bg-card to-bg-card shadow-xl p-6 lg:p-10"
+        className="scroll-mt-24 overflow-hidden rounded-xl2 border border-accent/25 bg-linear-to-br from-accent/15 via-bg-card to-bg-card shadow-xl p-6 lg:p-10"
       >
         <div className="inline-flex items-center gap-2 rounded-full bg-accent/15 text-accent px-3 py-1.5 text-xs font-bold uppercase tracking-wider mb-5">
           <BookOpen className="w-4 h-4" />
@@ -193,7 +193,7 @@ export default function AnalyticsGuide() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-accent/45 bg-accent/15 py-1.5 pl-1.5 pr-3 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-card active:translate-y-0"
+                  className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-accent/45 bg-accent/15 py-1.5 pl-1.5 pr-3 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-card active:translate-y-0"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors group-hover:bg-white group-hover:text-accent">
                     <Icon className="h-4 w-4" />
@@ -495,7 +495,7 @@ export default function AnalyticsGuide() {
               Оценка эмоционального/рыночного знака новости от <strong className="text-text-primary">−1</strong> до <strong className="text-text-primary">+1</strong>. Это не процент и не ожидаемое изменение цены.
             </p>
             <div className="relative pt-1 pb-7">
-              <div className="h-3 rounded-full bg-gradient-to-r from-negative via-neutral to-positive" />
+              <div className="h-3 rounded-full bg-linear-to-r from-negative via-neutral to-positive" />
               <span className="absolute left-0 top-6 text-xs text-text-secondary">−1</span>
               <span className="absolute left-[35%] top-6 -translate-x-1/2 text-xs text-text-secondary">−0.3</span>
               <span className="absolute left-1/2 top-6 -translate-x-1/2 text-xs text-text-secondary">0</span>
@@ -578,7 +578,7 @@ export default function AnalyticsGuide() {
           <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-5">
             <h3 className="font-bold mb-4">Баланс сигналов: от чего считать</h3>
             <div className="relative pt-2 pb-8">
-              <div className="h-4 rounded-full bg-gradient-to-r from-negative via-border-subtle to-positive" />
+              <div className="h-4 rounded-full bg-linear-to-r from-negative via-border-subtle to-positive" />
               <div className="absolute left-1/2 top-0 h-7 w-0.5 bg-white" />
               <div className="absolute left-1/2 top-8 -translate-x-1/2 text-xs font-bold">50% — перевеса нет</div>
               <span className="absolute left-0 top-8 text-xs text-negative font-bold">больше вниз</span>
@@ -707,7 +707,7 @@ export default function AnalyticsGuide() {
               key={item.q}
               className="group overflow-hidden rounded-2xl border border-white/10 bg-bg-primary/70 shadow-[0_10px_28px_rgba(0,0,0,0.14)] transition-colors open:border-accent/40"
             >
-              <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-extrabold text-text-primary transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:px-5 [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-extrabold text-text-primary transition-colors hover:bg-white/4 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:px-5 [&::-webkit-details-marker]:hidden">
                 <span>{item.q}</span>
                 <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/45 bg-accent/15 px-3 py-1.5 text-xs font-extrabold text-blue-100">
                   <span className="group-open:hidden">Ответ</span>

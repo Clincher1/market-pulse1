@@ -31,6 +31,9 @@ export interface NewsItem {
   topic: string;
   url?: string;
   published_at?: string;
+  /** Filled by the frontend duplicate grouper; 1 means no collapsed copies. */
+  duplicateCount?: number;
+  duplicateSources?: string[];
 }
 
 export interface ForecastData {

@@ -102,7 +102,7 @@ export default function TensionScale() {
                 'linear-gradient(90deg, #3B82F6 0%, #3B82F6 30%, #F59E0B 50%, #EF4444 70%, #EF4444 100%)',
             }}
           >
-            <div className="h-full w-full bg-gradient-to-r from-blue-500/20 via-transparent to-transparent" />
+            <div className="h-full w-full bg-linear-to-r from-blue-500/20 via-transparent to-transparent" />
           </div>
           {/* Marker */}
           <motion.div
@@ -112,7 +112,7 @@ export default function TensionScale() {
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10"
           >
             <div className="w-1 h-12 bg-white rounded-full shadow-lg shadow-white/30" />
-            <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-white text-bg-primary text-xs font-bold rounded whitespace-nowrap">
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-white text-bg-primary text-xs font-bold rounded-sm whitespace-nowrap">
               {value}
             </div>
           </motion.div>

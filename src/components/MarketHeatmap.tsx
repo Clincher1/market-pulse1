@@ -136,10 +136,10 @@ function SkeletonTiles() {
           key={index}
           className="min-h-[154px] animate-pulse rounded-xl border border-border-subtle bg-bg-card p-4"
         >
-          <div className="h-4 w-20 rounded bg-white/10" />
-          <div className="mt-5 h-6 w-24 rounded bg-white/10" />
-          <div className="mt-4 h-5 w-16 rounded bg-white/10" />
-          <div className="mt-5 h-7 rounded bg-white/10" />
+          <div className="h-4 w-20 rounded-sm bg-white/10" />
+          <div className="mt-5 h-6 w-24 rounded-sm bg-white/10" />
+          <div className="mt-4 h-5 w-16 rounded-sm bg-white/10" />
+          <div className="mt-5 h-7 rounded-sm bg-white/10" />
         </div>
       ))}
     </div>
@@ -156,7 +156,7 @@ export default function MarketHeatmap({
   return (
     <div className="relative overflow-hidden rounded-xl2 border border-cyan-300/20 bg-[#0C1626] p-4 shadow-lg sm:p-5">
       <div
-        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-500"
+        className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-blue-500 via-cyan-400 to-emerald-500"
         aria-hidden="true"
       />
       <div className="mb-4">

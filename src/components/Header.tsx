@@ -99,10 +99,10 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
         <a
           href="#dashboard"
           onClick={() => setCurrentHash('#dashboard')}
-          className="group flex shrink-0 items-center gap-2.5 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+          className="group flex shrink-0 items-center gap-2.5 rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           aria-label="Market Pulse — на дашборд"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-hover shadow-lg shadow-accent/25 transition-shadow group-hover:shadow-accent/45">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-accent to-accent-hover shadow-lg shadow-accent/25 transition-shadow group-hover:shadow-accent/45">
             <TrendingUp className="h-5 w-5 text-white" strokeWidth={2.5} />
           </div>
           <span className="text-lg font-extrabold tracking-tight text-text-primary">
@@ -112,7 +112,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
 
         <nav
           aria-label="Основная навигация"
-          className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-md md:flex"
+          className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-md md:flex"
         >
           {navLinks.map((link) => {
             const Icon = link.icon;
@@ -123,7 +123,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
                 href={link.href}
                 onClick={() => setCurrentHash(link.href)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-extrabold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary lg:gap-2 lg:px-4 lg:text-sm ${
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-extrabold transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary lg:gap-2 lg:px-4 lg:text-sm ${
                   isActive
                     ? 'bg-accent text-white shadow-lg shadow-accent/30'
                     : 'text-slate-100 hover:bg-white/10 hover:text-white active:bg-accent/20'
@@ -142,7 +142,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
 
         <button
           type="button"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/[0.07] text-white shadow-[0_10px_26px_rgba(0,0,0,0.24)] transition-all hover:border-accent/65 hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] md:hidden"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/[0.07] text-white shadow-[0_10px_26px_rgba(0,0,0,0.24)] transition-all hover:border-accent/65 hover:bg-accent/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] md:hidden"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
           aria-expanded={menuOpen}
@@ -182,10 +182,10 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
                       setMenuOpen(false);
                     }}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.99] ${
+                    className={`group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.99] ${
                       isActive
-                        ? 'border-accent bg-gradient-to-r from-accent to-accent-hover text-white shadow-[0_14px_32px_rgba(37,99,235,0.32)]'
-                        : 'border-white/15 bg-white/[0.06] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-accent/65 hover:bg-accent/15 active:bg-accent/20'
+                        ? 'border-accent bg-linear-to-r from-accent to-accent-hover text-white shadow-[0_14px_32px_rgba(37,99,235,0.32)]'
+                        : 'border-white/15 bg-white/6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-accent/65 hover:bg-accent/15 active:bg-accent/20'
                     }`}
                   >
                     <span

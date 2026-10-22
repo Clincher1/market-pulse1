@@ -93,7 +93,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
               className={`h-full rounded-full ${barColor}`}
             />
           </div>
-          <div className="absolute left-1/2 -top-[3px] h-[14px] w-[2px] -translate-x-1/2 rounded bg-white/90" />
+          <div className="absolute left-1/2 top-[-3px] h-[14px] w-[2px] -translate-x-1/2 rounded-sm bg-white/90" />
         </div>
         <div className="mt-1.5 flex justify-between text-[10px] font-medium text-text-secondary">
           <span>0%</span>

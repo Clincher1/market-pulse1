@@ -1,6 +1,7 @@
 import { NewsItem } from './mockData';
 import { supabase } from '@/lib/supabase';
 import { safeHttpUrl } from '@/lib/safeUrl';
+import { dedupeNewsItems } from '@/lib/newsDedupe';
 
 /**
  * Декодирует HTML-сущности в тексте из базы
@@ -38,13 +39,15 @@ export async function fetchRawNews(): Promise<NewsItem[]> {
         'id, source, time, title, summary, url, published_at, impacts, sentiment, importance, confidence, topic'
       )
       .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(50);
+      // Fetch a little extra before conservative duplicate grouping so a
+      // collapsed republication does not unnecessarily shorten the feed.
+      .limit(80);
 
     if (error || !data || data.length === 0) {
       throw new Error('Нет новостей в кэше');
     }
 
-    return (data as NewsItem[]).map((item) => ({
+    const normalized = (data as NewsItem[]).map((item) => ({
       ...item,
       title: decodeHtmlEntities(item.title ?? ''),
       summary: decodeHtmlEntities(item.summary ?? ''),
@@ -53,6 +56,8 @@ export async function fetchRawNews(): Promise<NewsItem[]> {
       sentiment: item.sentiment ?? 0,
       importance: item.importance ?? 0,
     }));
+
+    return dedupeNewsItems(normalized).slice(0, 50);
   } catch (e) {
     console.error('Ошибка загрузки новостей из базы:', e);
     return [];

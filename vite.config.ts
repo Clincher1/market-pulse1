@@ -16,13 +16,25 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Выносим тяжёлые библиотеки в отдельные чанки:
-        // браузер кэширует их отдельно от кода приложения,
-        // а основной бандл перестаёт быть одним файлом на 800+ КБ.
-        manualChunks: {
-          charts: ['recharts'],
-          animation: ['framer-motion'],
-          supabase: ['@supabase/supabase-js'],
+        // Rolldown (Vite 8) принимает manualChunks только функцией.
+        // Состав чанков тот же, что был в объектной форме Rollup:
+        // тяжёлые библиотеки кэшируются отдельно от кода приложения.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined;
+          if (
+            /[\\/]node_modules[\\/](recharts|@reduxjs|react-redux|reselect|immer|victory-vendor|decimal\.js-light|es-toolkit|eventemitter3|tiny-invariant|use-sync-external-store|clsx)[\\/]/.test(
+              id
+            )
+          ) {
+            return 'charts';
+          }
+          if (/[\\/]node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/.test(id)) {
+            return 'animation';
+          }
+          if (id.includes('node_modules/@supabase/')) {
+            return 'supabase';
+          }
+          return undefined;
         },
       },
     },
