@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -437,7 +437,7 @@ function readProfiles(): ProfileId[] {
   }
 }
 
-export default function RussiaBusiness() {
+export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: ReactNode }) {
   const { news, loading: newsLoading } = useLiveNews();
   const { assets } = useLiveAssets();
   const [insights, setInsights] = useState<RussiaInsights>({
@@ -650,9 +650,14 @@ export default function RussiaBusiness() {
           </div>
 
           <div className="mt-6">
-            <div className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.12em] text-blue-200">
-              <Banknote className="h-4 w-4" />
-              Российские рынки и официальные курсы
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.12em] text-blue-200">
+                <Banknote className="h-4 w-4" />
+                Российские рынки и официальные курсы
+              </div>
+              <span className="ml-auto rounded-full border border-blue-300/25 bg-blue-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-blue-100">
+                Российский контур
+              </span>
             </div>
             {insightsLoading && indicators.length === 0 ? (
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
@@ -674,13 +679,40 @@ export default function RussiaBusiness() {
             )}
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-7 mb-3 flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.12em] text-blue-200">
+              <Landmark className="h-4 w-4" />
+              Каналы влияния на российский бизнес
+            </div>
+            <span className="text-xs font-medium text-slate-400">
+              Вывод по российским индикаторам и внешним драйверам ниже
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {channels.map((channel) => (
               <ChannelCard key={channel.title} {...channel} />
             ))}
           </div>
+        </div>
+      </div>
 
-          <div className="mt-7 grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      {globalMarkets}
+
+      <div className="overflow-hidden rounded-[28px] border border-accent/25 bg-gradient-to-br from-[#102747] via-bg-card to-[#281722] shadow-2xl">
+        <div className="p-5 sm:p-7 lg:p-8">
+          <div className="mb-5 flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
+            <span className="rounded-full border border-blue-300/25 bg-blue-400/10 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-100">
+              Российский блок · продолжение
+            </span>
+            <div>
+              <h3 className="text-lg font-extrabold text-white">Причины: события и российские первоисточники</h3>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+                Сначала выше вы увидели российские факты и внешний фон. Ниже — события, которые могут объяснять движение каналов.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <ShieldAlert className="h-5 w-5 text-blue-300" />

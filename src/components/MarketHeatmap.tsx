@@ -1,4 +1,4 @@
-import { Grid2x2, Minus, TrendingDown, TrendingUp } from 'lucide-react';
+import { Globe, Grid2x2, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { AssetData } from '@/data/mockData';
 
 /**
@@ -154,16 +154,27 @@ export default function MarketHeatmap({
   loading: boolean;
 }) {
   return (
-    <div className="rounded-xl2 border border-border-subtle bg-bg-card p-4 shadow-lg sm:p-5">
+    <div className="relative overflow-hidden rounded-xl2 border border-cyan-300/20 bg-[#0C1626] p-4 shadow-lg sm:p-5">
+      <div
+        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-500"
+        aria-hidden="true"
+      />
       <div className="mb-4">
-        <h3 className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary">
-          <Grid2x2 className="h-5 w-5 text-accent" />
-          Тепловая карта рынка
-        </h3>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
-          Быстрый обзор пяти активов: цвет показывает знак изменения, насыщенность — его силу
-          относительно обычной шкалы конкретного актива, а белая линия внутри плитки — форму
-          последних сохранённых дневных значений.
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary">
+            <Grid2x2 className="h-5 w-5 text-cyan-300" />
+            Тепловая карта мировых рынков
+          </h3>
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-cyan-100">
+            <Globe className="h-3.5 w-3.5" />
+            Глобальный контур
+          </span>
+        </div>
+        <p className="mt-1 max-w-4xl text-sm leading-relaxed text-text-secondary">
+          Внешние ориентиры, а не российские активы: цвет показывает знак изменения, насыщенность — его силу
+          относительно обычной шкалы конкретного актива, а белая линия внутри плитки — форму последних
+          сохранённых дневных значений. Сопоставляйте эту карту с российскими плитками выше: сначала внешний
+          драйвер, затем реакция рубля и Мосбиржи.
         </p>
       </div>
 

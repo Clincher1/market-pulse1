@@ -86,8 +86,7 @@ function App() {
               </div>
             </section>
             <TensionScale />
-            <RussiaBusiness />
-            <KeyAssets />
+            <RussiaBusiness globalMarkets={<KeyAssets />} />
             <NewsFeed />
             <Forecasts />
           </>
