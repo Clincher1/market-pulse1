@@ -8,6 +8,7 @@ export interface TensionData {
   label: string;
   history: { day: string; value: number }[];
   newsCount: number;
+  updatedAt?: string;
 }
 
 export interface AssetData {

@@ -1,11 +1,24 @@
 import { motion } from 'framer-motion';
-import { Globe } from 'lucide-react';
+import { AlertTriangle, Globe, RotateCcw } from 'lucide-react';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import MarketHeatmap from './MarketHeatmap';
 import GuideLink from './GuideLink';
+import { ErrorNotice } from './SectionFallback';
 
 export default function KeyAssets() {
-  const { assets, loading, error } = useLiveAssets();
+  const {
+    assets,
+    loading,
+    error,
+    hasLiveData,
+    fallbackAssetIds,
+    refresh,
+    isRefreshing,
+  } = useLiveAssets();
+
+  const fallbackNames = assets
+    .filter((asset) => fallbackAssetIds.includes(asset.id))
+    .map((asset) => asset.name);
 
   return (
     <motion.section
@@ -17,7 +30,7 @@ export default function KeyAssets() {
       className="my-6 scroll-mt-24"
     >
       <div className="mb-5">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div>
             <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-cyan-300">
               <Globe className="h-3.5 w-3.5" />
@@ -27,7 +40,7 @@ export default function KeyAssets() {
               Мировые рынки — внешний фон
             </h2>
           </div>
-          {loading && (
+          {(loading || isRefreshing) && (
             <span className="animate-pulse text-sm text-text-secondary">
               обновление…
             </span>
@@ -45,13 +58,51 @@ export default function KeyAssets() {
         </p>
       </div>
 
-      {error && (
-        <div className="mb-4 text-sm text-warning">
-          Живые цены временно недоступны — показаны последние доступные значения.
-        </div>
-      )}
+      {error && !hasLiveData && !loading ? (
+        <ErrorNotice
+          title="Живые мировые цены пока не получены"
+          message="Мы не показываем резервный демонстрационный набор под видом текущих котировок. Российский контур выше работает независимо; попробуйте обновить глобальные цены сейчас."
+          onRetry={() => void refresh()}
+          actionLabel={isRefreshing ? 'Загружаем…' : 'Повторить загрузку цен'}
+        />
+      ) : (
+        <>
+          {error && hasLiveData && (
+            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
+              <span className="min-w-0 flex-1">
+                Обновление мировых цен не удалось. Показаны последние успешно полученные значения.
+              </span>
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                disabled={isRefreshing}
+                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+              >
+                <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Проверяем…' : 'Повторить'}
+              </button>
+            </div>
+          )}
 
-      <MarketHeatmap assets={assets} loading={loading} />
+          {!error && hasLiveData && fallbackNames.length > 0 && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-2xl border border-amber-300/20 bg-amber-400/[0.08] px-4 py-3 text-sm leading-relaxed text-amber-100" role="status">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+              <span>
+                Часть плиток не получила свежую цену: {fallbackNames.join(', ')}.
+                Они помечены «нет свежей цены» и окрашены нейтрально, чтобы резервное
+                значение нельзя было спутать с текущей котировкой.
+              </span>
+            </div>
+          )}
+
+          <MarketHeatmap
+            assets={assets}
+            loading={loading}
+            fallbackAssetIds={fallbackAssetIds}
+          />
+        </>
+      )}
     </motion.section>
   );
 }

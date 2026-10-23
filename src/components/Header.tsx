@@ -10,9 +10,9 @@ import {
   Menu,
   Newspaper,
   Target,
-  TrendingUp,
   X,
 } from 'lucide-react';
+import BrandMark from './BrandMark';
 
 const navLinks = [
   {
@@ -53,10 +53,28 @@ const navLinks = [
   },
   {
     label: 'О проекте',
-    href: '#footer',
-    description: 'О проекте и исходный код',
+    href: '#about',
+    description: 'Архитектура, стек, ограничения и планы',
     icon: Info,
   },
+];
+
+const SECTION_IDS = [
+  'dashboard',
+  'russia-business',
+  'news',
+  'forecasts',
+  'market-memory',
+  'about',
+] as const;
+
+const mobileQuickLinks = [
+  { label: 'Обзор', href: '#dashboard', icon: LayoutDashboard },
+  { label: 'Россия', href: '#russia-business', icon: Landmark },
+  { label: 'Новости', href: '#news', icon: Newspaper },
+  { label: 'Сигналы', href: '#forecasts', icon: Target },
+  { label: 'Память', href: '#market-memory', icon: BrainCircuit },
+  { label: 'Гид', href: '#guide', icon: BookOpen },
 ];
 
 type HeaderProps = {
@@ -69,6 +87,11 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
   const [currentHash, setCurrentHash] = useState(() =>
     typeof window === 'undefined' ? '' : window.location.hash,
   );
+  const [activeSection, setActiveSection] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'dashboard';
+    const id = window.location.hash.replace('#', '');
+    return SECTION_IDS.includes(id as (typeof SECTION_IDS)[number]) ? id : 'dashboard';
+  });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -84,14 +107,55 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
     return () => window.removeEventListener('hashchange', syncHash);
   }, []);
 
+  // Scroll-spy: подсветка следует за реальной позицией страницы. Позиции
+  // перечитываются на каждом scroll-кадре, а не привязываются к конкретным
+  // DOM-узлам: отложенные секции сначала представлены placeholder-ом, а
+  // после загрузки тот же id получает уже настоящий элемент.
+  useEffect(() => {
+    if (activeView !== 'dashboard') return;
+
+    let rafId = 0;
+
+    const updateActiveSection = () => {
+      rafId = 0;
+      const probeY = window.scrollY + Math.min(360, window.innerHeight * 0.38);
+      let current: string = 'dashboard';
+
+      for (const id of SECTION_IDS) {
+        const element = document.getElementById(id);
+        if (!element) continue;
+        const top = element.getBoundingClientRect().top + window.scrollY;
+        if (top <= probeY) current = id;
+      }
+
+      setActiveSection((previous) => (previous === current ? previous : current));
+    };
+
+    const scheduleUpdate = () => {
+      if (!rafId) rafId = window.requestAnimationFrame(updateActiveSection);
+    };
+
+    updateActiveSection();
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    window.addEventListener('hashchange', scheduleUpdate);
+
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+      window.removeEventListener('hashchange', scheduleUpdate);
+    };
+  }, [activeView]);
+
   const isActiveLink = (href: string) => {
     if (href === '#guide') return activeView === 'guide';
     if (activeView === 'guide') return false;
-    if (href === '#dashboard') return !currentHash || currentHash === '#dashboard';
-    return currentHash === href;
+    return activeSection === href.replace('#', '') || currentHash === href && !activeSection;
   };
 
   return (
+    <>
     <motion.header
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -105,13 +169,14 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
       <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
         <a
           href="#dashboard"
-          onClick={() => setCurrentHash('#dashboard')}
+          onClick={() => {
+            setCurrentHash('#dashboard');
+            setActiveSection('dashboard');
+          }}
           className="group flex shrink-0 items-center gap-2.5 rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           aria-label="Market Pulse — на дашборд"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-accent to-accent-hover shadow-lg shadow-accent/25 transition-shadow group-hover:shadow-accent/45">
-            <TrendingUp className="h-5 w-5 text-white" strokeWidth={2.5} />
-          </div>
+          <BrandMark className="h-10 w-10 drop-shadow-[0_10px_22px_rgba(37,99,235,0.32)] transition-transform duration-200 group-hover:scale-[1.03]" />
           <span className="text-lg font-extrabold tracking-tight text-text-primary">
             Market Pulse
           </span>
@@ -128,7 +193,10 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
               <a
                 key={link.href}
                 href={link.href}
-                onClick={() => setCurrentHash(link.href)}
+                onClick={() => {
+                  setCurrentHash(link.href);
+                  setActiveSection(link.href.replace('#', ''));
+                }}
                 aria-current={isActive ? 'page' : undefined}
                 className={`inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-extrabold transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary lg:gap-2 lg:px-4 lg:text-sm ${
                   isActive
@@ -186,6 +254,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
                     href={link.href}
                     onClick={() => {
                       setCurrentHash(link.href);
+                      setActiveSection(link.href.replace('#', ''));
                       setMenuOpen(false);
                     }}
                     aria-current={isActive ? 'page' : undefined}
@@ -229,5 +298,39 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
         </motion.nav>
       )}
     </motion.header>
+
+      {/* Мобильная быстрая навигация — sibling шапки, а не её потомок:
+          backdrop-filter/transform на header создаёт containing block и
+          иначе «fixed bottom» внезапно считается от шапки, а не viewport. */}
+      <nav
+        aria-label="Быстрая мобильная навигация"
+        className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 grid grid-cols-6 rounded-2xl border border-white/12 bg-[#0B1222]/92 p-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-xl md:hidden"
+      >
+        {mobileQuickLinks.map((link) => {
+          const Icon = link.icon;
+          const isActive = isActiveLink(link.href);
+          return (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => {
+                setCurrentHash(link.href);
+                setActiveSection(link.href.replace('#', ''));
+                setMenuOpen(false);
+              }}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
+                isActive
+                  ? 'bg-accent text-white shadow-lg shadow-accent/25'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Icon className="h-4.5 w-4.5 shrink-0" />
+              <span className="max-w-full truncate">{link.label}</span>
+            </a>
+          );
+        })}
+      </nav>
+    </>
   );
 }

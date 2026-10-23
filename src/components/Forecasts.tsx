@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowUpCircle,
@@ -6,12 +6,14 @@ import {
   MinusCircle,
   AlertTriangle,
   Clock,
+  RotateCcw,
   Target,
   ShieldQuestion,
 } from 'lucide-react';
 import { ForecastData } from '@/data/mockData';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
 import GuideLink from './GuideLink';
+import { ErrorNotice } from './SectionFallback';
 
 function confidenceColor(confidence: string): string {
   if (confidence === 'Высокая') return 'text-positive';
@@ -149,32 +151,38 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
 export default function Forecasts() {
   const [forecasts, setForecasts] = useState<ForecastData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  const hasDataRef = useRef(false);
+
+  const load = useCallback(async () => {
+    if (hasDataRef.current) setIsRefreshing(true);
+    const live = await fetchLiveForecasts();
+    if (!mountedRef.current) return;
+
+    if (live.length > 0) {
+      hasDataRef.current = true;
+      setForecasts(live);
+      setError(null);
+    } else {
+      // Не затираем уже показанные сигналы пустым результатом: UI явно
+      // помечает их как последние доступные, а не обновлённые.
+      setError('Не удалось загрузить сигналы');
+    }
+    setLoading(false);
+    setIsRefreshing(false);
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function load() {
-      const live = await fetchLiveForecasts();
-      if (!isMounted) return;
-
-      if (live.length > 0) {
-        setForecasts(live);
-        setError(null);
-      } else {
-        // Не затираем уже показанные прогнозы пустым результатом.
-        setError('Не удалось загрузить прогнозы');
-      }
-      setLoading(false);
-    }
-
-    load();
-    const interval = setInterval(load, 300_000); // обновление каждые 5 минут
+    mountedRef.current = true;
+    void load();
+    const interval = setInterval(() => void load(), 300_000); // каждые 5 минут
     return () => {
-      isMounted = false;
+      mountedRef.current = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [load]);
 
   return (
     <motion.section
@@ -183,30 +191,65 @@ export default function Forecasts() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="mb-10 lg:mb-12"
+      className="mb-10 scroll-mt-24 lg:mb-12"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Прогнозы</h2>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Прогнозы</h2>
         <GuideLink
           href="#guide-forecasts"
           label="Что значит процент"
           mobileLabel="Справка"
         />
+        {isRefreshing && (
+          <span className="text-xs font-semibold text-slate-500">обновление…</span>
+        )}
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-text-secondary animate-pulse">
-          Загрузка прогнозов...
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-5" aria-busy="true" aria-label="Загрузка сигналов">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="min-h-72 rounded-xl2 border border-border-subtle bg-bg-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="h-6 w-24 animate-pulse rounded-sm bg-white/10" />
+                <div className="h-8 w-8 animate-pulse rounded-full bg-white/10" />
+              </div>
+              <div className="mt-10 h-8 w-20 animate-pulse rounded-sm bg-white/12" />
+              <div className="mt-4 h-2 animate-pulse rounded-full bg-white/[0.08]" />
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                <div className="h-12 animate-pulse rounded-xl bg-white/[0.06]" />
+                <div className="h-12 animate-pulse rounded-xl bg-white/[0.06]" />
+              </div>
+              <div className="mt-8 space-y-2">
+                <div className="h-4 animate-pulse rounded-sm bg-white/[0.07]" />
+                <div className="h-4 w-4/5 animate-pulse rounded-sm bg-white/[0.06]" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : forecasts.length === 0 ? (
-        <div className="text-center py-16 text-text-secondary">
-          Прогнозы временно недоступны
-        </div>
+        <ErrorNotice
+          title="Сигналы временно недоступны"
+          message="Не удалось прочитать публичный кэш прогнозов. Это не означает «нет сигнала» по рынку: направленный вывод просто не может быть показан без данных."
+          onRetry={() => void load()}
+          actionLabel={isRefreshing ? 'Проверяем…' : 'Повторить загрузку'}
+        />
       ) : (
         <>
           {error && (
-            <div className="mb-4 text-sm text-warning">
-              Не удалось обновить прогнозы — показаны последние доступные.
+            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
+              <span className="min-w-0 flex-1">
+                Не удалось обновить сигналы — показаны последние успешно загруженные.
+              </span>
+              <button
+                type="button"
+                onClick={() => void load()}
+                disabled={isRefreshing}
+                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+              >
+                <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Проверяем…' : 'Повторить'}
+              </button>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">

@@ -22,13 +22,15 @@ function dedupeHistory(
 
 /**
  * Загружает индекс напряжённости из cached_tension (строка id = 1).
- * При ошибке возвращает null — компонент сохраняет fallback-данные.
+ * При ошибке возвращает null: компонент обязан явно показать недоступность
+ * или пометить ранее полученные живые данные как устаревшие, а не молча
+ * подставлять демонстрационный fallback.
  */
 export async function fetchLiveTension(): Promise<TensionData | null> {
   try {
     const { data, error } = await supabase
       .from('cached_tension')
-      .select('value, label, history, news_count')
+      .select('value, label, history, news_count, updated_at')
       .eq('id', 1)
       .single();
 
@@ -39,6 +41,7 @@ export async function fetchLiveTension(): Promise<TensionData | null> {
       label: data.label ?? '',
       history: dedupeHistory(data.history),
       newsCount: data.news_count ?? 0,
+      updatedAt: data.updated_at ?? undefined,
     };
   } catch (e) {
     console.error('Ошибка загрузки напряжённости:', e);

@@ -85,7 +85,13 @@ function TileSparkline({ values }: { values: number[] }) {
   );
 }
 
-function HeatTile({ asset }: { asset: AssetData }) {
+function HeatTile({
+  asset,
+  isFallback = false,
+}: {
+  asset: AssetData;
+  isFallback?: boolean;
+}) {
   const change = asset.change ?? 0;
   const cap = SATURATION_CAPS[asset.id] ?? 3;
   const nearlyFlat = Math.abs(change) < 0.005;
@@ -94,19 +100,27 @@ function HeatTile({ asset }: { asset: AssetData }) {
     `${asset.name}: ${asset.price}, изменение ${formatChange(change)}. ` +
     `Насыщенность цвета нормирована к шкале ±${cap}% для этого актива. ` +
     'Белая мини-линия показывает только форму последних сохранённых дневных значений без оси цены и времени. ' +
-    'Площадь плитки одинакова для всех активов и ничего не кодирует.';
+    'Площадь плитки одинакова для всех активов и ничего не кодирует.' +
+    (isFallback
+      ? ' Внимание: свежая цена для этой плитки не получена, показано резервное значение — не используйте его как текущую котировку.'
+      : '');
 
   return (
     <article
       title={tooltip}
       aria-label={tooltip}
       className="flex min-h-[154px] flex-col rounded-xl border border-white/10 p-4 text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5"
-      style={{ backgroundColor: tileColor(asset) }}
+      style={{ backgroundColor: isFallback ? 'rgb(51, 65, 85)' : tileColor(asset) }}
     >
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-extrabold tracking-wide">{asset.name}</h3>
         <DirectionIcon className="h-4 w-4 shrink-0 opacity-90" aria-hidden="true" />
       </div>
+      {isFallback && (
+        <span className="mt-2 inline-flex w-fit rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-100">
+          нет свежей цены
+        </span>
+      )}
 
       <div className="mt-3 text-xl font-extrabold tabular-nums leading-none">
         {asset.price}
@@ -149,9 +163,11 @@ function SkeletonTiles() {
 export default function MarketHeatmap({
   assets,
   loading,
+  fallbackAssetIds = [],
 }: {
   assets: AssetData[];
   loading: boolean;
+  fallbackAssetIds?: string[];
 }) {
   return (
     <div className="relative overflow-hidden rounded-xl2 border border-cyan-300/20 bg-[#0C1626] p-4 shadow-lg sm:p-5">
@@ -183,7 +199,11 @@ export default function MarketHeatmap({
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {assets.map((asset) => (
-            <HeatTile key={asset.id} asset={asset} />
+            <HeatTile
+              key={asset.id}
+              asset={asset}
+              isFallback={fallbackAssetIds.includes(asset.id)}
+            />
           ))}
         </div>
       )}

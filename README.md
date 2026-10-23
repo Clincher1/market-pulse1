@@ -1,16 +1,21 @@
 # Market Pulse — аналитика новостей и рынков
 
-Одностраничный дашборд: шкала напряжённости мира, ключевые активы,
-AI-лента новостей (тональность / важность / уверенность) и прогнозы по активам.
+Одностраничный аналитический терминал: шкала напряжённости мира,
+российский контур для бизнеса, мировая тепловая карта, AI-лента новостей,
+осторожные сигналы по активам и «Память рынка», которая фиксирует события
+и позже проверяет гипотезы реальным движением цен.
 
 Живой сайт: https://market-pulse1-eta.vercel.app/
 
 ## Стек
 
 - Vite + React 18 + TypeScript
-- TailwindCSS, Recharts (графики), Framer Motion (анимации), Lucide (иконки)
-- Supabase — фронт читает готовый кэш из таблиц `cached_*`
-  (заполняет таблицы внешний бэкенд/расписание, его нет в этом репозитории)
+- TailwindCSS, Framer Motion (анимации), Lucide (иконки)
+- Лёгкие собственные SVG-графики вместо отдельной chart-библиотеки
+- Supabase Postgres + Edge Functions + pg_cron; фронт читает публичный кэш
+  `cached_*` и read-only views исследовательского контура V2
+- Vercel для фронтенда, GitHub Actions для ручного деплоя guarded
+  shadow-функций
 
 ## Запуск
 
@@ -52,32 +57,45 @@ VITE_SUPABASE_ANON_KEY=your_publishable_anon_key
 | `cached_tension` | строка `id = 1`: `value, label, history, news_count` |
 | `cached_forecasts` | `id, asset, direction, probability, time_window, confidence, reason, updated_at` |
 
-Фронт обновляет данные каждые 5 минут.
+«Память рынка» дополнительно читает только санитизированные read-only views
+`market_memory_*_v1`; базовые shadow-таблицы публичному ключу недоступны.
+Фронт обновляет данные каждые 5 минут и различает живые, устаревшие и
+недоступные состояния вместо молчаливой подстановки демонстрационных чисел.
 
 ## Структура
 
 ```
 src/
-  components/   Header, TensionScale, KeyAssets, NewsFeed, Forecasts, Footer
-  data/         mockData.ts (типы + fallback), live*.ts (загрузка из Supabase)
+  components/   Header, BrandMark, TensionScale, RussiaBusiness,
+                KeyAssets/MarketHeatmap, NewsFeed, Forecasts,
+                MarketMemory, AboutProject, AnalyticsGuide, Footer
+  data/         mockData.ts (типы + fallback), live*.ts (Supabase)
   hooks/        useLiveAssets, useLiveNews
-  lib/          supabase.ts — единый клиент Supabase
-public/         favicon.svg, og-image.png
+  lib/          supabase.ts, safeUrl.ts, newsDedupe.ts
+public/         favicon.svg, logo.svg, og-image.svg/png,
+                icon-192.png, icon-512.png, apple-touch-icon.png,
+                site.webmanifest
+supabase/       Edge Functions, миграции и SQL расписаний
+api/            Vercel-функция российского контура
 ```
 
-## Бэкенд (Supabase Edge Functions — кода в репозитории пока нет)
+Тяжёлые разделы ниже первого экрана (`NewsFeed`, `Forecasts`,
+`MarketMemory`, `AboutProject`, `AnalyticsGuide`) загружаются отдельными
+чанками по мере приближения или при прямом переходе по якорю.
 
-Таблицы заполняют 6 Edge Functions (`update-news`, `update-assets`,
-`update-tension`, `update-tension-index`, `update-forecasts`, `proxy`),
-которые существуют только в Supabase Dashboard. Полная карта бэкенда,
-подтверждённые проблемы в данных и пошаговый план починки:
-**`docs/SUPABASE_STEP_BY_STEP.md`**, диагностические SQL-запросы:
-**`supabase/diagnostics.sql`**.
+## Бэкенд и автономная работа
 
-Кратко о главном: фронт от проблем бэкенда защищается (дубли дней
-истории схлопываются в `liveTension.ts`, HTML-сущности декодируются
-в `liveNews.ts`, цены показываются как есть без пересчёта), но чинить
-их правильно — в функциях и миграциях, строго в порядке из плана.
+Исходники публичных и shadow Edge Functions находятся в
+`supabase/functions/`. Пишущие функции защищены серверной проверкой;
+публичный publishable-ключ не должен иметь права записи. Плановые задачи
+Supabase `pg_cron` обновляют новости, цены, индекс, события, классификации,
+снимки прогнозов и их исходы без ежедневного ручного обслуживания.
+
+Guarded shadow-функции деплоятся вручную workflow
+`.github/workflows/deploy-shadow.yml` только при изменениях бэкенда.
+Обычная загрузка фронтенда в GitHub не требует запуска этого workflow.
+Подробный статус и журнал внедрения: **`docs/MARKET_MEMORY_MANUAL_STEPS_2026-10-22.md`**
+и **`docs/BRANDING_UX_UPDATE_2026-10-23.md`**.
 
 ## Деплой
 

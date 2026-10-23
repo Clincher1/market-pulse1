@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowDownRight,
@@ -7,19 +7,22 @@ import {
   BrainCircuit,
   CheckCircle2,
   Clock3,
+  AlertTriangle,
   Database,
   ExternalLink,
+  Filter,
   GitBranch,
   History,
   Hourglass,
   Layers3,
   MinusCircle,
+  RotateCcw,
   Scale,
-  ShieldAlert,
   Target,
   XCircle,
 } from 'lucide-react';
 import GuideLink from './GuideLink';
+import { ErrorNotice } from './SectionFallback';
 import {
   fetchMarketMemory,
   type MarketMemoryData,
@@ -122,8 +125,8 @@ function sampleBadge(sampleSize: number): { label: string; className: string } {
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-bg-primary/55 p-4">
-      <div className="text-[11px] font-extrabold uppercase tracking-[0.13em] text-text-secondary">{label}</div>
+    <div className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-bg-primary/55 p-4">
+      <div className="break-words text-[10px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:text-[11px] sm:tracking-[0.13em]">{label}</div>
       <div className="mt-1.5 text-2xl font-extrabold tabular-nums text-text-primary">{value}</div>
       <div className="mt-1 text-xs leading-relaxed text-text-secondary">{hint}</div>
     </div>
@@ -436,37 +439,98 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
   );
 }
 
+type EventFilterOption = {
+  value: string;
+  label: string;
+  count: number;
+};
+
+function EventFilterRow({
+  title,
+  value,
+  options,
+  onChange,
+}: {
+  title: string;
+  value: string;
+  options: EventFilterOption[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.13em] text-text-secondary">
+        <Filter className="h-3.5 w-3.5" />
+        {title}
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {options.map((option) => {
+          const active = option.value === value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              aria-pressed={active}
+              className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
+                active
+                  ? 'bg-accent text-white shadow-lg shadow-accent/25'
+                  : 'border border-white/12 bg-white/[0.05] text-slate-200 hover:border-accent/50 hover:bg-accent/10'
+              }`}
+            >
+              <span>{option.label}</span>
+              <span className={active ? 'text-blue-100' : 'text-slate-500'}>{option.count}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function MarketMemory() {
   const [data, setData] = useState<MarketMemoryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<MemoryTab>('events');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [eventChannel, setEventChannel] = useState('all');
+  const [eventAsset, setEventAsset] = useState('all');
+  const mountedRef = useRef(true);
+  const hasDataRef = useRef(false);
 
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      try {
-        const next = await fetchMarketMemory();
-        if (!mounted) return;
-        setData(next);
-        setError(null);
-        setSelectedEventId((current) => current && next.events.some((event) => event.eventId === current)
-          ? current
-          : next.events[0]?.eventId ?? null);
-      } catch (e) {
-        if (mounted) setError(e instanceof Error ? e.message : 'Не удалось загрузить память рынка');
-      } finally {
-        if (mounted) setLoading(false);
+  const load = useCallback(async () => {
+    if (hasDataRef.current) setIsRefreshing(true);
+    try {
+      const next = await fetchMarketMemory();
+      if (!mountedRef.current) return;
+      hasDataRef.current = true;
+      setData(next);
+      setError(null);
+      setSelectedEventId((current) => current && next.events.some((event) => event.eventId === current)
+        ? current
+        : next.events[0]?.eventId ?? null);
+    } catch (e) {
+      if (mountedRef.current) {
+        setError(e instanceof Error ? e.message : 'Не удалось загрузить память рынка');
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+        setIsRefreshing(false);
       }
     }
-    load();
-    const interval = setInterval(load, 300_000);
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    void load();
+    const interval = setInterval(() => void load(), 300_000);
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [load]);
 
   const outcomesByEvent = useMemo(() => {
     const map = new Map<string, MemoryEventOutcome[]>();
@@ -477,6 +541,65 @@ export default function MarketMemory() {
     }
     return map;
   }, [data?.outcomes]);
+
+  const eventChannelOptions = useMemo<EventFilterOption[]>(() => {
+    const counts = new Map<string, number>();
+    for (const event of data?.events ?? []) {
+      counts.set(event.transmissionChannel, (counts.get(event.transmissionChannel) ?? 0) + 1);
+    }
+    const options = [...counts.entries()]
+      .map(([value, count]) => ({ value, label: channelLabel(value), count }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ru'));
+    return [{ value: 'all', label: 'Все каналы', count: data?.events.length ?? 0 }, ...options];
+  }, [data?.events]);
+
+  const eventAssetOptions = useMemo<EventFilterOption[]>(() => {
+    const counts = new Map<string, number>();
+    for (const event of data?.events ?? []) {
+      const uniqueAssets = new Set(event.impacts.map((impact) => impact.asset).filter(Boolean));
+      for (const asset of uniqueAssets) {
+        counts.set(asset, (counts.get(asset) ?? 0) + 1);
+      }
+    }
+    const options = [...counts.entries()]
+      .map(([value, count]) => ({ value, label: assetLabel(value), count }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ru'));
+    return [{ value: 'all', label: 'Все активы', count: data?.events.length ?? 0 }, ...options];
+  }, [data?.events]);
+
+  const filteredEvents = useMemo(() => {
+    return (data?.events ?? []).filter((event) => {
+      const channelMatch = eventChannel === 'all' || event.transmissionChannel === eventChannel;
+      const assetMatch =
+        eventAsset === 'all' || event.impacts.some((impact) => impact.asset === eventAsset);
+      return channelMatch && assetMatch;
+    });
+  }, [data?.events, eventAsset, eventChannel]);
+
+  const hasEventFilters = eventChannel !== 'all' || eventAsset !== 'all';
+  const resetEventFilters = useCallback(() => {
+    setEventChannel('all');
+    setEventAsset('all');
+  }, []);
+
+  useEffect(() => {
+    if (!eventChannelOptions.some((option) => option.value === eventChannel)) {
+      setEventChannel('all');
+    }
+    if (!eventAssetOptions.some((option) => option.value === eventAsset)) {
+      setEventAsset('all');
+    }
+  }, [eventAsset, eventAssetOptions, eventChannel, eventChannelOptions]);
+
+  // Если выбранная карточка скрыта фильтрами, раскрываем первое видимое
+  // событие. Так пользователь сразу видит паспорт и цепочку передачи,
+  // а не только список свёрнутых заголовков.
+  useEffect(() => {
+    if (!hasEventFilters || filteredEvents.length === 0) return;
+    if (!selectedEventId || !filteredEvents.some((event) => event.eventId === selectedEventId)) {
+      setSelectedEventId(filteredEvents[0].eventId);
+    }
+  }, [filteredEvents, hasEventFilters, selectedEventId]);
 
   const reliableAnalogues = useMemo(
     () => (data?.analogues ?? []).filter((analogue) => analogue.promptVersion === 'event_classification_v3'),
@@ -534,18 +657,50 @@ export default function MarketMemory() {
       <div className="overflow-hidden rounded-xl2 border border-accent/20 bg-linear-to-br from-accent/12 via-bg-card to-bg-card shadow-xl">
         <div className="border-b border-white/10 p-5 lg:p-6">
           {loading && !data ? (
-            <div className="py-8 text-center text-text-secondary animate-pulse">Загружаем накопленную память…</div>
-          ) : error && !data ? (
-            <div className="flex items-start gap-3 rounded-xl border border-negative/25 bg-negative/5 p-4 text-sm text-negative">
-              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
-              <span>Память рынка временно недоступна: {error}</span>
+            <div aria-busy="true" aria-label="Загрузка памяти рынка">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="min-h-28 rounded-xl border border-white/10 bg-bg-primary/55 p-4">
+                    <div className="h-3 w-20 animate-pulse rounded-sm bg-white/10" />
+                    <div className="mt-4 h-8 w-16 animate-pulse rounded-sm bg-white/12" />
+                    <div className="mt-3 h-3 animate-pulse rounded-sm bg-white/[0.07]" />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-center text-sm text-text-secondary">
+                Загружаем накопленную память: события, замороженные прогнозы и фактические исходы…
+              </p>
             </div>
+          ) : error && !data ? (
+            <ErrorNotice
+              title="Память рынка временно недоступна"
+              message="Не удалось прочитать публичные представления исследовательского контура. Остальные разделы не затронуты; повторная проверка также выполнится автоматически через пять минут."
+              onRetry={() => void load()}
+              actionLabel={isRefreshing ? 'Проверяем…' : 'Повторить загрузку'}
+            />
           ) : (
             <>
+              {error && data && (
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
+                  <span className="min-w-0 flex-1">
+                    Не удалось обновить память рынка. Ниже последний успешно загруженный снимок, а не свежие данные.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void load()}
+                    disabled={isRefreshing}
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+                  >
+                    <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Проверяем…' : 'Повторить'}
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
                 <StatCard label="Статей" value={String(data?.stats?.articlesTotal ?? 0)} hint="сырой новостной архив" />
                 <StatCard label="Событий" value={String(data?.stats?.eventsTotal ?? 0)} hint="кластеры заголовков" />
-                <StatCard label="Классифицировано" value={String(data?.stats?.classifiedEvents ?? 0)} hint="с каналом влияния" />
+                <StatCard label="Классификаций" value={String(data?.stats?.classifiedEvents ?? 0)} hint="событий с каналом влияния" />
                 <StatCard label="Реакций проверено" value={String(data?.stats?.evaluatedEventOutcomes ?? 0)} hint="событие × актив × горизонт" />
                 <StatCard label="Снимков прогнозов" value={String(data?.stats?.forecastSnapshots ?? 0)} hint={`${data?.stats?.evaluatedForecasts ?? 0} уже оценено`} />
                 <StatCard label="Ценовых точек" value={String(data?.stats?.priceSnapshots ?? 0)} hint="дневные ряды V2" />
@@ -592,17 +747,70 @@ export default function MarketMemory() {
         <div className="p-5 lg:p-6">
           {tab === 'events' && (
             data?.events.length ? (
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                {data.events.map((event) => (
-                  <EventCard
-                    key={event.eventId}
-                    event={event}
-                    outcomes={outcomesByEvent.get(event.eventId) ?? []}
-                    selected={selectedEventId === event.eventId}
-                    onSelect={() => setSelectedEventId((current) => current === event.eventId ? null : event.eventId)}
+              <>
+                <div className="mb-5 space-y-4 rounded-xl2 border border-white/10 bg-bg-primary/45 p-4 sm:p-5">
+                  <EventFilterRow
+                    title="Канал передачи"
+                    value={eventChannel}
+                    options={eventChannelOptions}
+                    onChange={setEventChannel}
                   />
-                ))}
-              </div>
+                  <EventFilterRow
+                    title="Актив в цепочке влияния"
+                    value={eventAsset}
+                    options={eventAssetOptions}
+                    onChange={setEventAsset}
+                  />
+                  <div className="flex flex-wrap items-center gap-3 border-t border-white/8 pt-4">
+                    <p className="text-xs leading-relaxed text-text-secondary" aria-live="polite">
+                      Показано {filteredEvents.length} из {data.events.length} последних классифицированных событий.
+                      Фильтр не пересчитывает исходы и аналогии — он только выбирает паспорта событий.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={resetEventFilters}
+                      disabled={!hasEventFilters}
+                      className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-slate-100 transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Сбросить
+                    </button>
+                  </div>
+                </div>
+
+                {filteredEvents.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    {filteredEvents.map((event) => (
+                      <EventCard
+                        key={event.eventId}
+                        event={event}
+                        outcomes={outcomesByEvent.get(event.eventId) ?? []}
+                        selected={selectedEventId === event.eventId}
+                        onSelect={() => setSelectedEventId((current) => current === event.eventId ? null : event.eventId)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-white/15 bg-bg-primary/45 px-5 py-10 text-center">
+                    <h3 className="text-base font-extrabold text-text-primary">
+                      Событий с таким каналом и активом пока нет
+                    </h3>
+                    <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">
+                      В последних {data.events.length} карточках нет события, которое одновременно
+                      идёт по выбранному каналу и содержит выбранный актив в сохранённой
+                      цепочке влияния. Сбросьте один из фильтров, чтобы расширить выборку.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={resetEventFilters}
+                      className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Показать все события
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <EmptyState text="Классифицированных событий пока нет. Память уже собирает статьи и кластеры; карточки появятся после классификаций." />
             )

@@ -1,13 +1,22 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, ShieldQuestion } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, RotateCcw, SearchX, ShieldQuestion } from 'lucide-react';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import GuideLink from './GuideLink';
+import { ErrorNotice } from './SectionFallback';
 
 const ALL_SOURCES = 'Все источники';
 const ALL_TOPICS = 'Все темы';
+const ALL_ASSETS = 'Все активы';
+const ALL_IMPORTANCE = 'Любая важность';
 const SENTIMENT_OPTIONS = ['Любая', 'Позитивная', 'Нейтральная', 'Негативная'];
+const IMPORTANCE_OPTIONS = [
+  ALL_IMPORTANCE,
+  '6+ — заметные',
+  '8+ — важные',
+  '9+ — критические',
+];
 
 function sentimentLabel(value: number): string {
   if (value < -0.3) return 'негатив';
@@ -34,6 +43,13 @@ function sentimentMatches(item: number, filter: string): boolean {
   if (filter === 'Негативная') return label === 'негатив';
   if (filter === 'Нейтральная') return label === 'нейтрал';
   return true;
+}
+
+function importanceThreshold(filter: string): number {
+  if (filter.startsWith('9+')) return 9;
+  if (filter.startsWith('8+')) return 8;
+  if (filter.startsWith('6+')) return 6;
+  return 3; // прежняя защита ленты от малозначимого шума
 }
 
 // Относительное время: "только что" / "N мин назад" / "N ч назад" / "N дн назад".
@@ -176,6 +192,8 @@ type FilterState = {
   source: string;
   topic: string;
   sentiment: string;
+  asset: string;
+  importance: string;
 };
 
 type FilterSelectProps = {
@@ -278,13 +296,23 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
 }
 
 export default function NewsFeed() {
-  const { news: liveNews, loading, error } = useLiveNews();
+  const {
+    news: liveNews,
+    loading,
+    error,
+    refresh,
+    isRefreshing,
+    lastUpdatedAt,
+  } = useLiveNews();
 
   const [filters, setFilters] = useState<FilterState>({
     source: ALL_SOURCES,
     topic: ALL_TOPICS,
     sentiment: 'Любая',
+    asset: ALL_ASSETS,
+    importance: ALL_IMPORTANCE,
   });
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Списки фильтров строятся из реально пришедших новостей,
   // поэтому в них нет "мёртвых" источников/тем без единой новости.
@@ -298,6 +326,15 @@ export default function NewsFeed() {
     return [ALL_TOPICS, ...unique.sort((a, b) => a.localeCompare(b, 'ru'))];
   }, [liveNews]);
 
+  const assetOptions = useMemo(() => {
+    const unique = [
+      ...new Set(
+        liveNews.flatMap((item) => (item.impacts ?? []).map((impact) => impact.asset)),
+      ),
+    ].filter(Boolean);
+    return [ALL_ASSETS, ...unique.sort((a, b) => a.localeCompare(b, 'ru'))];
+  }, [liveNews]);
+
   // Если после обновления выбранное значение фильтра исчезло из данных —
   // сбрасываем его, чтобы пользователь не смотрел в пустую ленту.
   useEffect(() => {
@@ -305,22 +342,51 @@ export default function NewsFeed() {
       ...prev,
       source: sourceOptions.includes(prev.source) ? prev.source : ALL_SOURCES,
       topic: topicOptions.includes(prev.topic) ? prev.topic : ALL_TOPICS,
+      asset: assetOptions.includes(prev.asset) ? prev.asset : ALL_ASSETS,
     }));
-  }, [sourceOptions, topicOptions]);
+  }, [assetOptions, sourceOptions, topicOptions]);
+
+  const resetFilters = () => {
+    setFilters({
+      source: ALL_SOURCES,
+      topic: ALL_TOPICS,
+      sentiment: 'Любая',
+      asset: ALL_ASSETS,
+      importance: ALL_IMPORTANCE,
+    });
+  };
+
+  const activeFilterCount = [
+    filters.source !== ALL_SOURCES,
+    filters.topic !== ALL_TOPICS,
+    filters.sentiment !== 'Любая',
+    filters.asset !== ALL_ASSETS,
+    filters.importance !== ALL_IMPORTANCE,
+  ].filter(Boolean).length;
 
   const filteredNews = useMemo(() => {
+    const minImportance = importanceThreshold(filters.importance);
     return liveNews.filter((item) => {
-      // Скрываем мало важные новости (важность < 3)
-      if (item.importance < 3) return false;
+      if (item.importance < minImportance) return false;
 
       const sourceMatch =
         filters.source === ALL_SOURCES || item.source === filters.source;
       const topicMatch =
         filters.topic === ALL_TOPICS || item.topic === filters.topic;
       const sentimentMatch = sentimentMatches(item.sentiment, filters.sentiment);
-      return sourceMatch && topicMatch && sentimentMatch;
+      const assetMatch =
+        filters.asset === ALL_ASSETS ||
+        (item.impacts ?? []).some((impact) => impact.asset === filters.asset);
+      return sourceMatch && topicMatch && sentimentMatch && assetMatch;
     });
   }, [filters, liveNews]);
+
+  const lastUpdatedLabel = lastUpdatedAt
+    ? new Intl.DateTimeFormat('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(lastUpdatedAt)
+    : null;
 
   return (
     <motion.section
@@ -329,54 +395,175 @@ export default function NewsFeed() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="mb-10 lg:mb-12"
+      className="mb-10 scroll-mt-24 lg:mb-12"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Лента новостей</h2>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Лента новостей</h2>
         <GuideLink
           href="#guide-news"
           label="Тональность и важность"
           mobileLabel="Справка"
         />
+        {lastUpdatedLabel && !error && (
+          <span className="ml-auto hidden text-xs font-semibold text-slate-500 sm:inline">
+            Последняя проверка в {lastUpdatedLabel}
+          </span>
+        )}
       </div>
 
-      <div className="relative z-30 bg-bg-card rounded-xl2 p-4 lg:p-5 border border-border-subtle mb-6 flex flex-col sm:flex-row gap-3 lg:gap-4">
-        <div className="flex items-center gap-2 text-text-secondary shrink-0">
-          <Filter className="w-4 h-4" />
-          <span className="text-sm font-medium hidden sm:inline">Фильтры:</span>
+      <div className="relative z-30 mb-6 rounded-xl2 border border-border-subtle bg-bg-card p-4 lg:p-5">
+        <div className="flex min-h-11 items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-text-secondary">
+            <Filter className="h-4 w-4" />
+            <span className="text-sm font-extrabold text-slate-200">Фильтры</span>
+            {activeFilterCount > 0 && (
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-black text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </div>
+
+          <span className="hidden text-sm font-semibold text-text-secondary sm:block" aria-live="polite">
+            Показано {filteredNews.length} из {liveNews.length}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((open) => !open)}
+            aria-expanded={filtersOpen}
+            aria-controls="news-filter-panel"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent sm:hidden"
+          >
+            {filtersOpen ? 'Скрыть' : 'Настроить'}
+            <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+          </button>
         </div>
-        <FilterSelect
-          label="Фильтр по источнику"
-          value={filters.source}
-          options={sourceOptions}
-          onChange={(source) => setFilters((prev) => ({ ...prev, source }))}
-        />
-        <FilterSelect
-          label="Фильтр по теме"
-          value={filters.topic}
-          options={topicOptions}
-          onChange={(topic) => setFilters((prev) => ({ ...prev, topic }))}
-        />
-        <FilterSelect
-          label="Фильтр по тональности"
-          value={filters.sentiment}
-          options={SENTIMENT_OPTIONS}
-          onChange={(sentiment) => setFilters((prev) => ({ ...prev, sentiment }))}
-        />
-        <span className="text-sm text-text-secondary self-center ml-auto hidden lg:block">
-          {filteredNews.length} из {liveNews.length}
-        </span>
+
+        <div
+          id="news-filter-panel"
+          className={`${filtersOpen ? 'mt-4 grid' : 'hidden'} grid-cols-1 gap-3 sm:mt-4 sm:grid sm:grid-cols-2 xl:grid-cols-5`}
+        >
+          <div>
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+              Источник
+            </span>
+            <FilterSelect
+              label="Фильтр по источнику"
+              value={filters.source}
+              options={sourceOptions}
+              onChange={(source) => setFilters((prev) => ({ ...prev, source }))}
+            />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+              Тема
+            </span>
+            <FilterSelect
+              label="Фильтр по теме"
+              value={filters.topic}
+              options={topicOptions}
+              onChange={(topic) => setFilters((prev) => ({ ...prev, topic }))}
+            />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+              Актив влияния
+            </span>
+            <FilterSelect
+              label="Фильтр по активу влияния"
+              value={filters.asset}
+              options={assetOptions}
+              onChange={(asset) => setFilters((prev) => ({ ...prev, asset }))}
+            />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+              Тональность
+            </span>
+            <FilterSelect
+              label="Фильтр по тональности"
+              value={filters.sentiment}
+              options={SENTIMENT_OPTIONS}
+              onChange={(sentiment) => setFilters((prev) => ({ ...prev, sentiment }))}
+            />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+              Важность
+            </span>
+            <FilterSelect
+              label="Фильтр по минимальной важности"
+              value={filters.importance}
+              options={IMPORTANCE_OPTIONS}
+              onChange={(importance) => setFilters((prev) => ({ ...prev, importance }))}
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/8 pt-4">
+          <p className="text-xs leading-relaxed text-slate-500" aria-live="polite">
+            {activeFilterCount > 0
+              ? `Активно фильтров: ${activeFilterCount}. Показано ${filteredNews.length} из ${liveNews.length} новостей.`
+              : `Показаны все новости с важностью от 3/10: ${filteredNews.length} из ${liveNews.length}.`}
+          </p>
+          <button
+            type="button"
+            onClick={resetFilters}
+            disabled={activeFilterCount === 0}
+            className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-slate-100 transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Сбросить фильтры
+          </button>
+        </div>
       </div>
 
       {loading && liveNews.length === 0 && (
-        <div className="text-center py-16 text-text-secondary">
-          Загрузка новостей...
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2" aria-busy="true" aria-label="Загрузка новостей">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="rounded-xl2 border border-border-subtle bg-bg-card p-5 lg:p-6">
+              <div className="flex gap-2">
+                <div className="h-6 w-24 animate-pulse rounded-md bg-white/10" />
+                <div className="h-6 w-20 animate-pulse rounded-md bg-white/[0.07]" />
+              </div>
+              <div className="mt-5 h-6 animate-pulse rounded-sm bg-white/10" />
+              <div className="mt-2 h-6 w-3/4 animate-pulse rounded-sm bg-white/[0.08]" />
+              <div className="mt-5 space-y-2">
+                <div className="h-4 animate-pulse rounded-sm bg-white/[0.06]" />
+                <div className="h-4 animate-pulse rounded-sm bg-white/[0.05]" />
+                <div className="h-4 w-2/3 animate-pulse rounded-sm bg-white/[0.06]" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {error && (
-        <div className="text-center py-8 text-negative">
-          Ошибка: {error}
+      {error && liveNews.length === 0 && !loading && (
+        <ErrorNotice
+          title="Не удалось загрузить ленту новостей"
+          message="Публичный кэш временно не ответил. Повторите загрузку сейчас — остальные разделы сайта при этом продолжают работать независимо."
+          onRetry={() => void refresh()}
+          actionLabel={isRefreshing ? 'Загружаем…' : 'Повторить загрузку'}
+          className="mb-6"
+        />
+      )}
+
+      {error && liveNews.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
+          <span className="min-w-0 flex-1">
+            Не удалось обновить ленту. Ниже последние успешно загруженные новости
+            {lastUpdatedLabel ? ` (проверка в ${lastUpdatedLabel})` : ''}.
+          </span>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            disabled={isRefreshing}
+            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+          >
+            <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Проверяем…' : 'Повторить'}
+          </button>
         </div>
       )}
 
@@ -388,9 +575,25 @@ export default function NewsFeed() {
         </AnimatePresence>
       </div>
 
-      {!loading && filteredNews.length === 0 && !error && (
-        <div className="text-center py-16 text-text-secondary">
-          Нет новостей, соответствующих выбранным фильтрам
+      {!loading && liveNews.length > 0 && filteredNews.length === 0 && (
+        <div className="rounded-xl2 border border-dashed border-white/12 bg-white/[0.03] px-6 py-14 text-center">
+          <SearchX className="mx-auto h-9 w-9 text-slate-500" />
+          <h3 className="mt-4 text-lg font-extrabold text-white">
+            Под эту комбинацию фильтров новостей нет
+          </h3>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-text-secondary">
+            Это не означает, что лента пуста: в текущем кэше {liveNews.length} новостей,
+            но ни одна одновременно не подходит под источник, тему, актив, тональность
+            и выбранный порог важности.
+          </p>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Показать всю ленту
+          </button>
         </div>
       )}
     </motion.section>

@@ -1,74 +1,112 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AssetData, assets as fallbackAssets } from '@/data/mockData';
 import { fetchLiveAssets } from '@/data/liveAssets';
 
+function isUsableLiveAsset(asset: AssetData | undefined): asset is AssetData {
+  return Boolean(asset && asset.price !== '—' && asset.sparkline?.length);
+}
+
 /**
- * Собирает итоговый список активов: для каждого fallback-актива
- * берёт живые данные, если они валидны, иначе оставляет fallback.
- * Живые активы, которых нет в fallback, добавляются в конец.
- * Так карточка актива никогда не "пропадёт" из-за одной битой строки.
+ * Собирает итоговый список активов и отдельно сообщает, какие плитки
+ * остались на резервных значениях. Это важно для честности UI: fallback
+ * нельзя визуально выдавать за только что полученную живую котировку.
  */
-function mergeWithFallback(live: AssetData[]): AssetData[] {
+function mergeWithFallback(live: AssetData[]): {
+  assets: AssetData[];
+  fallbackAssetIds: string[];
+} {
+  const fallbackAssetIds: string[] = [];
+
   const merged = fallbackAssets.map((fb) => {
     const liveItem = live.find((a) => a.id === fb.id);
-    if (!liveItem || liveItem.price === '—' || !liveItem.sparkline?.length) {
+    if (!isUsableLiveAsset(liveItem)) {
+      fallbackAssetIds.push(fb.id);
       return fb;
     }
     return liveItem;
   });
 
   const extras = live.filter(
-    (item) => !fallbackAssets.some((fb) => fb.id === item.id)
+    (item) =>
+      isUsableLiveAsset(item) &&
+      !fallbackAssets.some((fb) => fb.id === item.id),
   );
 
-  return [...merged, ...extras];
+  return { assets: [...merged, ...extras], fallbackAssetIds };
 }
 
 export function useLiveAssets(): {
   assets: AssetData[];
   loading: boolean;
   error: string | null;
+  hasLiveData: boolean;
+  fallbackAssetIds: string[];
+  refresh: () => Promise<void>;
+  isRefreshing: boolean;
 } {
   const [assets, setAssets] = useState<AssetData[]>(fallbackAssets);
+  const [fallbackAssetIds, setFallbackAssetIds] = useState<string[]>(
+    fallbackAssets.map((asset) => asset.id),
+  );
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasLiveData, setHasLiveData] = useState(false);
   const isMounted = useRef(true);
+  const hasLiveDataRef = useRef(false);
+
+  const load = useCallback(async () => {
+    if (hasLiveDataRef.current) setIsRefreshing(true);
+
+    try {
+      const live = await fetchLiveAssets();
+      if (!isMounted.current) return;
+
+      if (live.length === 0) {
+        // Не затираем уже показанные значения. UI различает два случая:
+        // живых данных ещё не было (fallback) и обновление не удалось
+        // после успешной загрузки (устаревший живой снимок).
+        setError('Не удалось загрузить живые цены');
+        return;
+      }
+
+      const merged = mergeWithFallback(live);
+      hasLiveDataRef.current = true;
+      setHasLiveData(true);
+      setAssets(merged.assets);
+      setFallbackAssetIds(merged.fallbackAssetIds);
+      setError(null);
+    } catch (e) {
+      if (!isMounted.current) return;
+      setError(e instanceof Error ? e.message : 'Failed to load live assets');
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     isMounted.current = true;
-
-    const load = async () => {
-      try {
-        const live = await fetchLiveAssets();
-        if (!isMounted.current) return;
-
-        if (live.length === 0) {
-          // Загрузка не удалась: НЕ затираем уже показанные данные
-          // пустым массивом, а сообщаем об ошибке.
-          setError('Не удалось загрузить живые цены');
-          return;
-        }
-
-        setAssets(mergeWithFallback(live));
-        setError(null);
-      } catch (e) {
-        if (!isMounted.current) return;
-        setError(e instanceof Error ? e.message : 'Failed to load live assets');
-      } finally {
-        if (isMounted.current) setLoading(false);
-      }
-    };
-
-    load();
+    void load();
 
     // Обновление раз в 5 минут — стабильно, без лимитов.
-    const interval = setInterval(load, 300_000);
+    const interval = setInterval(() => void load(), 300_000);
 
     return () => {
       isMounted.current = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [load]);
 
-  return { assets, loading, error };
+  return {
+    assets,
+    loading,
+    error,
+    hasLiveData,
+    fallbackAssetIds,
+    refresh: load,
+    isRefreshing,
+  };
 }

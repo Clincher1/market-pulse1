@@ -21,13 +21,6 @@ export default defineConfig({
         // тяжёлые библиотеки кэшируются отдельно от кода приложения.
         manualChunks(id: string) {
           if (!id.includes('node_modules')) return undefined;
-          if (
-            /[\\/]node_modules[\\/](recharts|@reduxjs|react-redux|reselect|immer|victory-vendor|decimal\.js-light|es-toolkit|eventemitter3|tiny-invariant|use-sync-external-store|clsx)[\\/]/.test(
-              id
-            )
-          ) {
-            return 'charts';
-          }
           if (/[\\/]node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/.test(id)) {
             return 'animation';
           }
