@@ -7,6 +7,7 @@ const SUPABASE_URL = "https://hekzplfftannlzwvgwwm.supabase.co";
 const Groq_URL = "https://api.Groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
 const PROMPT_VERSION = "event_classification_v3";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const COOLDOWN_MINUTES = 10;
 const MIN_IMPACT_STRENGTH = 0.35;
 const Groq_MIN_INTERVAL_MS = 7000;
