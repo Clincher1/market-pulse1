@@ -5,6 +5,7 @@ import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
 import NewsFeed from '@/components/NewsFeed';
 import Forecasts from '@/components/Forecasts';
+import MarketMemory from '@/components/MarketMemory';
 import AnalyticsGuide from '@/components/AnalyticsGuide';
 import Footer from '@/components/Footer';
 
@@ -89,6 +90,7 @@ function App() {
             <RussiaBusiness globalMarkets={<KeyAssets />} />
             <NewsFeed />
             <Forecasts />
+            <MarketMemory />
           </>
         )}
       </main>

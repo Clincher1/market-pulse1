@@ -6,6 +6,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BookOpen,
+  BrainCircuit,
   Calculator,
   CheckCircle2,
   ChevronDown,
@@ -125,6 +126,7 @@ const quickLinks = [
   { label: 'Россия и бизнес', href: '#guide-russia', icon: Landmark },
   { label: 'Новости', href: '#guide-news', icon: Newspaper },
   { label: 'Прогнозы', href: '#guide-forecasts', icon: Target },
+  { label: 'Память рынка', href: '#guide-memory', icon: BrainCircuit },
   { label: 'Свежесть и ограничения', href: '#guide-data-quality', icon: RefreshCw },
   { label: 'Частые вопросы', href: '#guide-faq', icon: ShieldQuestion },
 ];
@@ -621,6 +623,60 @@ export default function AnalyticsGuide() {
               Через 12 часов вес той же новости станет вдвое меньше, через 24 часа — вчетверо. Поэтому свежие события влияют на прогноз сильнее старых.
             </p>
           </FormulaDetails>
+        </div>
+      </GuideSection>
+
+      <GuideSection id="guide-memory" eyebrow="Новая система самопроверки" title="Память рынка: что сайт знал тогда и что произошло потом" icon={BrainCircuit}>
+        <div className="space-y-5">
+          <p className="text-text-secondary leading-relaxed">
+            «Память рынка» — исследовательский контур V2, который превращает временную новостную ленту в проверяемый архив. Сначала статьи сохраняются и объединяются в события,
+            затем событие получает канал передачи и оценку влияния на активы. После наступления горизонта сайт сравнивает это предположение с дневными ценами.
+            Отдельно хранятся неизменяемые дневные снимки агрегатных сигналов и их будущие исходы.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-bg-primary/60 border border-border-subtle rounded-xl p-5">
+              <div className="font-bold text-text-primary mb-2">1 · Событие</div>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Несколько публикаций об одном факте считаются одним событием. Карточка показывает источники, канал передачи, важность, релевантность,
+                уверенность и сохранённое объяснение классификатора.
+              </p>
+            </div>
+            <div className="bg-bg-primary/60 border border-border-subtle rounded-xl p-5">
+              <div className="font-bold text-text-primary mb-2">2 · Проверка рынком</div>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Для каждого направленного предположения измеряется доходность через 1, 3 и 10 торговых дней. Аномальная доходность дополнительно отделяет
+                реакцию от обычного дневного фона актива.
+              </p>
+            </div>
+            <div className="bg-bg-primary/60 border border-border-subtle rounded-xl p-5">
+              <div className="font-bold text-text-primary mb-2">3 · Журнал и аналоги</div>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Журнал фиксирует момент выдачи сигнала до результата. Аналоги агрегируют прошлые похожие события и показывают N, число совпадений
+                направления и медианные реакции.
+              </p>
+            </div>
+          </div>
+
+          <FormulaDetails title="Подробнее: актив, N и обозначения">
+            <p>
+              <strong className="text-text-primary">EUR/USD</strong> здесь означает доллара за евро (USD per EUR). Это обратная величина к плитке USD/EUR в блоке котировок.
+              <strong className="text-text-primary"> Gold index</strong> — дневной индекс Nasdaq по золоту, который используется для относительной доходности, а не цена спота в USD за унцию.
+            </p>
+            <p>
+              <strong className="text-text-primary">N</strong> — число уже оценённых наблюдений. N меньше 8 помечается как малая выборка, 8–29 — ранняя, 30 и выше — рабочая для осторожной статистики.
+              Даже при большом N аналоги показывают совместное движение после событий, а не доказательство того, что событие было единственной причиной движения.
+            </p>
+            <p>
+              <strong className="text-text-primary">Score вверх</strong> в журнале — взвешенная доля направленных доказательств вверх среди направленных доказательств.
+              Пока у сайта недостаточно оценённых прогнозов, это не калиброванная вероятность и не обещание точности.
+            </p>
+          </FormulaDetails>
+
+          <Callout variant="warning">
+            <strong>Достаточность данных важнее красивого процента.</strong> Market Pulse не будет публиковать «точность 80%» по пяти или десяти примерам:
+            интерфейс сначала покажет малый N, ожидающие исходы и воздержания. Калибровка появится только после достаточной собственной проверенной истории.
+          </Callout>
         </div>
       </GuideSection>
 

@@ -28,6 +28,27 @@ function serviceKey(): string {
   return key;
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < b.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Gateway verify_jwt alone is not enough: a public publishable key can pass
+// JWT verification. Shadow writers therefore require the actual service-role
+// bearer token (sent by the guarded dispatcher) or the shared cron secret.
+function isAuthorizedService(req: Request): boolean {
+  const auth = req.headers.get("Authorization") ?? "";
+  const keys = [
+    Deno.env.get("SERVICE_KEY") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  ].filter(Boolean);
+  if (keys.some((key) => auth === `Bearer ${key}`)) return true;
+  return timingSafeEqual(req.headers.get("x-cron-secret") ?? "", Deno.env.get("CRON_SECRET") ?? "");
+}
+
+
 async function restJson(path: string, init: RequestInit = {}): Promise<unknown> {
   const key = serviceKey();
   const headers = new Headers(init.headers);
@@ -73,6 +94,7 @@ function directionHit(expected: string, returnPct: number, dailyVolatility: numb
 }
 
 Deno.serve(async (request) => {
+  if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   try {
     const url = new URL(request.url);
     const eventLimit = clampInteger(Number(url.searchParams.get("limit") ?? 50), 1, 200, 50);

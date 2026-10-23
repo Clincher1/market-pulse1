@@ -5,10 +5,10 @@
 
 const SUPABASE_URL = "https://hekzplfftannlzwvgwwm.supabase.co";
 const Groq_URL = "https://api.Groq.com/openai/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-oss-120b";
-const PROMPT_VERSION = "event_classification_v2";
+const DEFAULT_MODEL = "openai/gpt-oss-20b";
+const PROMPT_VERSION = "event_classification_v3";
 const COOLDOWN_MINUTES = 10;
-const MIN_IMPACT_STRENGTH = 0.25;
+const MIN_IMPACT_STRENGTH = 0.35;
 const Groq_MIN_INTERVAL_MS = 7000;
 const Groq_MAX_RETRIES = 2;
 
@@ -60,6 +60,27 @@ function serviceKey(): string {
   return key;
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < b.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Gateway verify_jwt alone is not enough: a public publishable key can pass
+// JWT verification. Shadow writers therefore require the actual service-role
+// bearer token (sent by the guarded dispatcher) or the shared cron secret.
+function isAuthorizedService(req: Request): boolean {
+  const auth = req.headers.get("Authorization") ?? "";
+  const keys = [
+    Deno.env.get("SERVICE_KEY") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  ].filter(Boolean);
+  if (keys.some((key) => auth === `Bearer ${key}`)) return true;
+  return timingSafeEqual(req.headers.get("x-cron-secret") ?? "", Deno.env.get("CRON_SECRET") ?? "");
+}
+
+
 async function restJson(path: string, init: RequestInit = {}): Promise<unknown> {
   const key = serviceKey();
   const headers = new Headers(init.headers);
@@ -101,6 +122,60 @@ function retryAfterMs(errorText: string): number {
   return Math.min(20000, Math.max(3000, Math.ceil(ms) + 750));
 }
 
+// Deterministic post-model discipline. The 2026-10-22 manual audit found
+// generic "risk-on/risk-off" spillovers (for example a local UK gas project
+// mapped to EURUSD/S&P 500). Persisted impacts are forecast evidence, so keep
+// only directional, asset-specific channels. The unfiltered model output is
+// still preserved in raw_response for audit.
+function applyChannelDiscipline(
+  channel: string,
+  importance: number,
+  impacts: Classification["impacts"],
+): Classification["impacts"] {
+  const directional = impacts
+    .filter((impact) => impact.direction === "up" || impact.direction === "down")
+    .sort((a, b) => b.strength - a.strength);
+
+  let allowed: Set<string> | null = null;
+  let maxImpacts = 3;
+
+  switch (channel) {
+    case "energy_supply":
+    case "energy_demand":
+      allowed = importance >= 8
+        ? new Set(["Brent", "gold", "sp500", "eurusd"])
+        : importance >= 7
+          ? new Set(["Brent", "gold", "sp500"])
+          : new Set(["Brent"]);
+      break;
+    case "corporate_earnings":
+      allowed = new Set(["sp500"]);
+      maxImpacts = 1;
+      break;
+    case "crypto_specific":
+      allowed = new Set(["btc", "sp500"]);
+      maxImpacts = 2;
+      break;
+    case "commodities":
+      allowed = importance >= 7
+        ? new Set(["Brent", "gold", "sp500", "eurusd"])
+        : new Set(["Brent", "gold"]);
+      break;
+    case "regulation":
+    case "other":
+      maxImpacts = 2;
+      break;
+    case "none":
+      return [];
+    default:
+      break;
+  }
+
+  return directional
+    .filter((impact) => !allowed || allowed.has(impact.asset))
+    .slice(0, maxImpacts);
+}
+
 function validateClassification(value: unknown): Classification {
   if (!isRecord(value)) throw new Error("Model output is not an object");
 
@@ -133,8 +208,10 @@ function validateClassification(value: unknown): Classification {
     if (!DIRECTIONS.includes(direction as typeof DIRECTIONS[number])) throw new Error(`Invalid impact direction: ${direction}`);
     if (!HORIZONS.includes(horizon as typeof HORIZONS[number])) throw new Error(`Invalid impact horizon: ${horizon}`);
     if (!Number.isFinite(strength) || strength < 0 || strength > 1) throw new Error("Invalid impact strength");
-    // Negligible padded impacts are not evidence for later aggregation.
+    // Negligible or unexplained padded impacts are not evidence for later aggregation.
     if (strength < MIN_IMPACT_STRENGTH) continue;
+    const rationaleRu = String(rawImpact.rationale_ru ?? "").trim().slice(0, 500);
+    if ((direction === "up" || direction === "down") && rationaleRu.length < 12) continue;
     if (seenAssets.has(asset)) continue;
     seenAssets.add(asset);
     impacts.push({
@@ -142,7 +219,7 @@ function validateClassification(value: unknown): Classification {
       direction,
       strength,
       horizon,
-      rationale_ru: String(rawImpact.rationale_ru ?? "").trim().slice(0, 500),
+      rationale_ru: rationaleRu,
     });
   }
 
@@ -157,7 +234,9 @@ function validateClassification(value: unknown): Classification {
   // Below the relevance threshold the row will be stored as rejected. Keep
   // the model's diagnostic text in raw_response, but do not persist usable
   // impacts that a later aggregation could accidentally read.
-  const effectiveImpacts = relevance >= 0.35 ? impacts : [];
+  const effectiveImpacts = relevance >= 0.35
+    ? applyChannelDiscipline(channel, importance, impacts)
+    : [];
 
   return {
     market_relevant: marketRelevant,
@@ -202,7 +281,7 @@ const RESPONSE_SCHEMA = {
     },
     impacts: {
       type: "array",
-      maxItems: 5,
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
@@ -239,8 +318,10 @@ async function classifyWithGroq(event: Record<string, unknown>, articles: Record
     "Используй только переданные заголовки и описания. Не добавляй внешние факты и не выдумывай детали.",
     "Несколько статей могут описывать одно событие: не умножай важность только из-за числа публикаций.",
     "Оценивай влияние только на активы sp500, btc, Brent, gold и eurusd.",
-    "В impacts включай только активы с правдоподобным и материальным каналом влияния. Не заполняй все пять активов ради полноты; активы без ясного канала просто опускай.",
-    "strength означает силу правдоподобного влияния, а не уверенность: 0.25 — слабое, 0.5 — заметное, 0.75 и выше — сильное. Не ставь одинаковую силу всем активам без причины.",
+    "В impacts включай максимум три актива с правдоподобным и материальным каналом влияния. Не заполняй все пять активов ради полноты; активы без ясного канала просто опускай.",
+    "Общий risk-on/risk-off перелив не является достаточным основанием для направленного impact. Для каждого актива в rationale_ru назови конкретный механизм: предложение/спрос, доходности и доллар, прибыль компаний, потоки в защитные активы или иной прямой канал.",
+    "Локальный проект, одна компания или региональная новость обычно дают только один прямо затронутый актив. Не выводи из них EURUSD или BTC без явного глобального механизма в тексте.",
+    "strength означает силу правдоподобного влияния, а не уверенность: 0.35 — слабое, 0.5 — заметное, 0.75 и выше — сильное. Не ставь одинаковую силу всем активам без причины.",
     "sentiment — общий рыночный риск-тон: +1 максимально risk-on, -1 максимально risk-off; конкретные направления укажи в impacts.",
     "importance оценивай по масштабу, неожиданности и широте последствий, а не по громкости заголовка.",
     "Если данных мало или влияние спорно, снижай confidence и используй direction=uncertain.",
@@ -325,6 +406,7 @@ async function classifyWithGroq(event: Record<string, unknown>, articles: Record
 }
 
 Deno.serve(async (request) => {
+  if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   try {
     const url = new URL(request.url);
     const limit = Math.round(clampNumber(Number(url.searchParams.get("limit") ?? 6), 1, 12));

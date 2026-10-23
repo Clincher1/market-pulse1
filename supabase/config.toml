@@ -1,0 +1,28 @@
+project_id = "hekzplfftannlzwvgwwm"
+
+# Shadow writers keep gateway JWT verification AND verify the exact
+# service-role bearer in code. The guarded dispatcher is the only no-JWT entry:
+# it verifies x-cron-secret in code and calls one allowlisted step.
+[functions.ingest-news-v2-shadow]
+verify_jwt = true
+
+[functions.cluster-news-v2-shadow]
+verify_jwt = true
+
+[functions.classify-events-v2-shadow]
+verify_jwt = true
+
+[functions.update-prices-v2-shadow]
+verify_jwt = true
+
+[functions.evaluate-event-impacts-v2-shadow]
+verify_jwt = true
+
+[functions.write-forecasts-v2-shadow]
+verify_jwt = true
+
+[functions.evaluate-forecasts-v2-shadow]
+verify_jwt = true
+
+[functions.run-shadow-pipeline]
+verify_jwt = false

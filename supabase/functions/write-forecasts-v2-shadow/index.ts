@@ -1,4 +1,4 @@
-// Stage 4: deterministic shadow forecast aggregation_v1.
+// Stage 4: deterministic shadow forecast aggregation_v2.
 //
 // Writes one immutable daily snapshot per asset/horizon to
 // market_forecasts_v2 and a pending row to forecast_outcomes_v2.
@@ -6,10 +6,13 @@
 // not a calibrated probability.
 
 const SUPABASE_URL = "https://hekzplfftannlzwvgwwm.supabase.co";
-const AGGREGATION_VERSION = "aggregation_v1";
+const AGGREGATION_VERSION = "aggregation_v2";
+const REQUIRED_PROMPT_VERSION = "event_classification_v3";
 const WINDOW_HOURS = 72;
 const DECAY_HALF_LIFE_HOURS = 36;
-const MIN_IMPACT_STRENGTH = 0.25;
+const MIN_IMPACT_STRENGTH = 0.35;
+const MIN_RELEVANCE = 0.50;
+const MIN_CONFIDENCE = 0.50;
 const MIN_DIRECTIONAL_WEIGHT = 0.05;
 const HORIZONS = [1, 3, 10] as const;
 
@@ -28,6 +31,27 @@ function serviceKey(): string {
   if (!key) throw new Error("Missing SERVICE_KEY/SUPABASE_SERVICE_ROLE_KEY secret");
   return key;
 }
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < b.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Gateway verify_jwt alone is not enough: a public publishable key can pass
+// JWT verification. Shadow writers therefore require the actual service-role
+// bearer token (sent by the guarded dispatcher) or the shared cron secret.
+function isAuthorizedService(req: Request): boolean {
+  const auth = req.headers.get("Authorization") ?? "";
+  const keys = [
+    Deno.env.get("SERVICE_KEY") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  ].filter(Boolean);
+  if (keys.some((key) => auth === `Bearer ${key}`)) return true;
+  return timingSafeEqual(req.headers.get("x-cron-secret") ?? "", Deno.env.get("CRON_SECRET") ?? "");
+}
+
 
 async function restJson(path: string, init: RequestInit = {}): Promise<unknown> {
   const key = serviceKey();
@@ -61,7 +85,8 @@ function horizonFactor(declaredHorizon: string, forecastHorizon: number): number
   return HORIZON_FACTORS[declaredHorizon]?.[forecastHorizon] ?? HORIZON_FACTORS.unknown[forecastHorizon];
 }
 
-Deno.serve(async () => {
+Deno.serve(async (request) => {
+  if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   try {
     const issuedAt = new Date();
     const issuedAtIso = issuedAt.toISOString();
@@ -74,7 +99,7 @@ Deno.serve(async () => {
 
     const classifications = await restJson(
       "news_event_classifications_shadow?select=event_id,relevance,confidence,importance,sentiment,transmission_channel,impacts,summary_ru,model,prompt_version,classified_at" +
-      `&status=eq.classified&classified_at=gte.${encodeURIComponent(windowStart)}&order=classified_at.desc&limit=500`,
+      `&status=eq.classified&prompt_version=eq.${REQUIRED_PROMPT_VERSION}&classified_at=gte.${encodeURIComponent(windowStart)}&order=classified_at.desc&limit=500`,
     ) as AnyRecord[];
 
     const eventIds = [...new Set(classifications.map((row) => String(row.event_id)).filter(Boolean))];
@@ -131,6 +156,7 @@ Deno.serve(async () => {
         if (!event) continue;
         const relevance = finiteNumber(classification.relevance) ?? 0;
         const confidence = finiteNumber(classification.confidence) ?? 0;
+        if (relevance < MIN_RELEVANCE || confidence < MIN_CONFIDENCE) continue;
         const importance = finiteNumber(classification.importance) ?? 0;
         const sourceCount = finiteNumber(event.source_count) ?? 1;
         const firstPublishedMs = new Date(String(event.first_published_at ?? "")).getTime();
@@ -227,6 +253,9 @@ Deno.serve(async () => {
             aggregation: {
               decay_half_life_hours: DECAY_HALF_LIFE_HOURS,
               min_impact_strength: MIN_IMPACT_STRENGTH,
+              min_relevance: MIN_RELEVANCE,
+              min_confidence: MIN_CONFIDENCE,
+              required_prompt_version: REQUIRED_PROMPT_VERSION,
               min_directional_weight: MIN_DIRECTIONAL_WEIGHT,
               direction_thresholds: { up: 0.60, down: 0.40 },
             },

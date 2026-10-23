@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
+  BrainCircuit,
   ChevronRight,
   Info,
   Landmark,
@@ -37,6 +38,12 @@ const navLinks = [
     href: '#forecasts',
     description: 'Сигналы по ключевым активам',
     icon: Target,
+  },
+  {
+    label: 'Память',
+    href: '#market-memory',
+    description: 'События, исторические аналоги и проверка исходов',
+    icon: BrainCircuit,
   },
   {
     label: 'Как читать',
