@@ -36,6 +36,13 @@ export default function Footer() {
             </a>
           </div>
         </div>
+
+        <p className="mt-6 text-center text-xs leading-relaxed text-text-secondary/80">
+          Сайт не использует cookies, не ставит трекеры и не собирает
+          персональные данные. Локально в вашем браузере сохраняются только
+          выбранные вами профили в разделе «Россия и бизнес» — эти данные
+          никуда не отправляются.
+        </p>
       </div>
     </footer>
   );
