@@ -1,7 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- Vercel serverless function, not a Vite module. */
 import { readFile } from 'node:fs/promises';
-import { Resvg } from '@resvg/resvg-js';
-import satori from 'satori';
 
 /**
  * Stage 5: server-generated Telegram card for the deterministic brief.
@@ -956,6 +954,10 @@ export default async function handler(req: NodeRequest, res: NodeResponse) {
   }
 
   try {
+    const [{ default: satori }, { Resvg }] = await Promise.all([
+      import('satori'),
+      import('@resvg/resvg-js'),
+    ]);
     const [card, fonts] = await Promise.all([buildBriefCard(), loadFonts()]);
     const svg = await satori(<BriefImage card={card} />, {
       width: 1080,
@@ -976,6 +978,9 @@ export default async function handler(req: NodeRequest, res: NodeResponse) {
     console.error('Brief image generation failed:', error);
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
-    res.status(500).json({ error: 'Brief image generation failed' });
+    res.status(500).json({
+      error: 'Brief image generation failed',
+      detail: error instanceof Error ? error.message : String(error),
+    });
   }
 }
