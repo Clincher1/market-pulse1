@@ -3,12 +3,31 @@
 // или если живые данные из Supabase недоступны (в этом случае UI
 // честно показывает предупреждение — см. useLiveAssets / KeyAssets).
 
+/**
+ * Распределение дневной истории шкалы напряжённости относительно
+ * текущего значения. Считается в Postgres по tension_history и лежит
+ * в cached_tension.history_stats. belowDays — дни со значением ниже
+ * текущего, aboveDays — выше текущего.
+ */
+export interface TensionHistoryStats {
+  days: number;
+  belowDays: number;
+  aboveDays: number;
+  equalDays: number;
+  median: number | null;
+  min: number | null;
+  max: number | null;
+  firstDate?: string;
+  lastDate?: string;
+}
+
 export interface TensionData {
   current: number;
   label: string;
   history: { day: string; value: number }[];
   newsCount: number;
   updatedAt?: string;
+  historyStats?: TensionHistoryStats | null;
 }
 
 export interface AssetData {

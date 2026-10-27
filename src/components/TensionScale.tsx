@@ -22,6 +22,22 @@ function clampTension(value: number) {
   return Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
 }
 
+/** Ниже этого числа дней перцентиль и медиана — шум, а не контекст. */
+const MIN_STATS_DAYS = 14;
+
+function daysWord(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'день';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'дня';
+  return 'дней';
+}
+
+function formatStatValue(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '—';
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',');
+}
+
 function formatDateTime(value?: string) {
   if (!value) return null;
   const date = new Date(value);
@@ -326,6 +342,26 @@ export default function TensionScale() {
   const markerPosition = `${value}%`;
   const updatedLabel = formatDateTime(data?.updatedAt);
 
+  const historyStats = data?.historyStats ?? null;
+  const showHistoryStats = Boolean(
+    historyStats && historyStats.days >= MIN_STATS_DAYS && historyStats.median !== null,
+  );
+  // aboveDays — прошлые дни выше текущего значения: именно их доля
+  // отвечает на фразу «ниже, чем в N% дней», и наоборот для belowDays.
+  const lowerThanShare =
+    historyStats && historyStats.days > 0
+      ? Math.round((historyStats.aboveDays / historyStats.days) * 100)
+      : 0;
+  const higherThanShare =
+    historyStats && historyStats.days > 0
+      ? Math.round((historyStats.belowDays / historyStats.days) * 100)
+      : 0;
+  const contextPhrase = historyStats
+    ? historyStats.aboveDays >= historyStats.belowDays
+      ? `Ниже, чем в ${lowerThanShare}% накопленных дней`
+      : `Выше, чем в ${higherThanShare}% накопленных дней`
+    : '';
+
   const getStatusIcon = () => {
     if (value < 30) return <Snowflake className="h-5 w-5 text-blue-400" />;
     if (value < 70) return <Thermometer className="h-5 w-5 text-yellow-400" />;
@@ -472,6 +508,35 @@ export default function TensionScale() {
               <span>70</span>
               <span>100 — Горячо</span>
             </div>
+
+            {historyStats && (
+              <div className="-mt-4 mb-8 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm leading-relaxed text-text-secondary">
+                {showHistoryStats ? (
+                  <>
+                    <span className="font-extrabold text-text-primary">Исторический контекст:</span>{' '}
+                    {contextPhrase} · медиана —{' '}
+                    <span className="font-bold tabular-nums text-text-primary">
+                      {formatStatValue(historyStats.median)}
+                    </span>{' '}
+                    · максимум —{' '}
+                    <span className="font-bold tabular-nums text-text-primary">
+                      {formatStatValue(historyStats.max)}
+                    </span>{' '}
+                    · наблюдений: {historyStats.days} {daysWord(historyStats.days)}. Это фон
+                    новостного внимания, а не вероятность кризиса.
+                  </>
+                ) : (
+                  <>
+                    Исторический контекст появится после {MIN_STATS_DAYS} дней наблюдений:
+                    сейчас накоплено{' '}
+                    <span className="font-bold tabular-nums text-text-primary">
+                      {historyStats.days} из {MIN_STATS_DAYS}
+                    </span>
+                    . Перцентиль и медиану на меньшей выборке не показываем — это был бы шум.
+                  </>
+                )}
+              </div>
+            )}
 
             <div className="mt-6">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

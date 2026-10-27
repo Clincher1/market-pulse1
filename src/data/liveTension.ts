@@ -1,5 +1,38 @@
-import { TensionData } from './mockData';
+import { TensionData, TensionHistoryStats } from './mockData';
 import { supabase } from '@/lib/supabase';
+
+function finiteOrNull(value: unknown): number | null {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function countOrZero(value: unknown): number {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.floor(number) : 0;
+}
+
+/**
+ * Разбор cached_tension.history_stats. Любое неожиданное содержимое
+ * трактуем как отсутствие статистики, а не как повод падать: шкала
+ * обязана работать и без исторического контекста.
+ */
+function parseHistoryStats(raw: unknown): TensionHistoryStats | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const stats = raw as Record<string, unknown>;
+  const days = countOrZero(stats.days);
+  if (days === 0) return null;
+  return {
+    days,
+    belowDays: countOrZero(stats.below_days),
+    aboveDays: countOrZero(stats.above_days),
+    equalDays: countOrZero(stats.equal_days),
+    median: finiteOrNull(stats.median),
+    min: finiteOrNull(stats.min),
+    max: finiteOrNull(stats.max),
+    firstDate: typeof stats.first_date === 'string' ? stats.first_date : undefined,
+    lastDate: typeof stats.last_date === 'string' ? stats.last_date : undefined,
+  };
+}
 
 /**
  * Схлопывает дублирующиеся дни в истории напряжённости.
@@ -30,7 +63,7 @@ export async function fetchLiveTension(): Promise<TensionData | null> {
   try {
     const { data, error } = await supabase
       .from('cached_tension')
-      .select('value, label, history, news_count, updated_at')
+      .select('value, label, history, history_stats, news_count, updated_at')
       .eq('id', 1)
       .single();
 
@@ -42,6 +75,7 @@ export async function fetchLiveTension(): Promise<TensionData | null> {
       history: dedupeHistory(data.history),
       newsCount: data.news_count ?? 0,
       updatedAt: data.updated_at ?? undefined,
+      historyStats: parseHistoryStats(data.history_stats),
     };
   } catch (e) {
     console.error('Ошибка загрузки напряжённости:', e);
