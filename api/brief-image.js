@@ -650,11 +650,12 @@ export default async function handler(req, res) {
         return;
     }
     try {
-        const [{ default: satori }, { Resvg }] = await Promise.all([
-            import('satori'),
-            import('@resvg/resvg-js'),
+        const rendererPromise = Promise.all([import('satori'), import('@resvg/resvg-js')]);
+        const [[{ default: satori }, { Resvg }], card, fonts] = await Promise.all([
+            rendererPromise,
+            buildBriefCard(),
+            loadFonts(),
         ]);
-        const [card, fonts] = await Promise.all([buildBriefCard(), loadFonts()]);
         const svg = await satori(_jsx(BriefImage, { card: card }), {
             width: 1080,
             height: 1600,
@@ -674,9 +675,6 @@ export default async function handler(req, res) {
         console.error('Brief image generation failed:', error);
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Cache-Control', 'no-store');
-        res.status(500).json({
-            error: 'Brief image generation failed',
-            detail: error instanceof Error ? error.message : String(error),
-        });
+        res.status(500).json({ error: 'Brief image generation failed' });
     }
 }
