@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import TensionScale from '@/components/TensionScale';
+import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
 import Footer from '@/components/Footer';
@@ -129,6 +130,7 @@ function App() {
             </section>
 
             <TensionScale />
+            <DailyBrief />
             <RussiaBusiness globalMarkets={<KeyAssets />} />
 
             <DeferredMount
