@@ -191,11 +191,13 @@ async function fetchMoexCny() {
   );
   if (!security || !market) throw new Error('Нет CETS для CNYRUB_TOM');
   const previous = Number(security.PREVPRICE);
-  // До первой сделки дня ISS отдаёт LAST = 0. Берём первое положительное
-  // значение, а если сделок ещё не было — предыдущее закрытие вместо «0 ₽».
+  // До первой сделки дня ISS отдаёт LAST = 0/null. Берём первое положительное
+  // значение; если сделок ещё не было — показываем предыдущее закрытие и
+  // честно помечаем это (changePct = null), а не рисуем «0,00%».
   const traded = [market.LAST, market.MARKETPRICETODAY, market.CLOSEPRICE]
     .map(Number)
     .find((candidate) => Number.isFinite(candidate) && candidate > 0);
+  const hasTradeToday = traded !== undefined;
   const value = traded ?? previous;
   if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(previous) || previous <= 0) {
     throw new Error('Некорректное значение CNYRUB_TOM');
@@ -206,11 +208,15 @@ async function fetchMoexCny() {
     label: 'Юань на Мосбирже',
     value: round(value, 4),
     unit: '₽',
-    changePct: round(((value - previous) / previous) * 100, 3),
-    asOf: market.SYSTIME || market.UPDATETIME || '',
+    changePct: hasTradeToday ? round(((value - previous) / previous) * 100, 3) : null,
+    asOf: hasTradeToday
+      ? market.SYSTIME || market.UPDATETIME || ''
+      : security.PREVDATE || market.SYSTIME || '',
     previousDate: security.PREVDATE || null,
     provider: 'Мосбиржа ISS',
-    basis: 'CNYRUB_TOM, последняя сделка; публичный поток может быть задержан',
+    basis: hasTradeToday
+      ? 'CNYRUB_TOM, последняя сделка; публичный поток может быть задержан'
+      : 'CNYRUB_TOM: сделок сегодня в публичном потоке пока нет — показано предыдущее закрытие',
     sourceUrl: 'https://www.moex.com/ru/issue/CNYRUB_TOM/CETS',
   };
 }
