@@ -11,6 +11,11 @@ import {
   X,
 } from 'lucide-react';
 import { AssetData, ForecastData } from '@/data/mockData';
+import {
+  fetchAssetPriceHistory,
+  type AssetHistoryPoint,
+  type AssetPriceHistory,
+} from '@/data/assetPriceHistory';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
 
 /**
@@ -180,6 +185,67 @@ function daysWord(n: number): string {
   if (m10 === 1 && m100 !== 11) return 'торговый день';
   if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'торговых дня';
   return 'торговых дней';
+}
+
+const HISTORY_RANGE_OPTIONS = [30, 90, 180] as const;
+type HistoryRangeDays = (typeof HISTORY_RANGE_OPTIONS)[number];
+
+const DAY_MS = 86400000;
+
+function dateMs(date: string): number {
+  return Date.parse(`${date}T00:00:00Z`);
+}
+
+function formatDateShort(dateOrMs: string | number): string {
+  const value = typeof dateOrMs === 'number' ? dateOrMs : dateMs(dateOrMs);
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(value);
+}
+
+function formatDateLong(date: string): string {
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(dateMs(date));
+}
+
+function calendarDaysWord(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'календарный день';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'календарных дня';
+  return 'календарных дней';
+}
+
+function todayInMoscow(): string {
+  try {
+    // en-CA renders an ISO-like YYYY-MM-DD date in modern browsers.
+    const formatted = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Moscow',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+    if (/^\d{4}-\d{2}-\d{2}$/.test(formatted)) return formatted;
+  } catch {
+    // Fall through to the UTC date below.
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
+function lagPhrase(lastObservationDate: string): string {
+  const lagDays = Math.max(
+    0,
+    Math.round((dateMs(todayInMoscow()) - dateMs(lastObservationDate)) / DAY_MS),
+  );
+  if (lagDays === 0) return 'сегодня по календарю источника';
+  return `отстаёт от сегодняшней даты на ${lagDays} ${calendarDaysWord(lagDays)}`;
 }
 
 interface AssetSourceMeta {
@@ -364,9 +430,9 @@ function HeatTile({
 }
 
 /**
- * Большой график панели актива. Фаза 1: ряд — дневные значения спарклайна
- * без календарных дат, поэтому ось X честно подписана в торговых днях,
- * а подсказка показывает «N торговых дней назад».
+ * Резервный большой график панели. Он используется только если публичная
+ * датированная история временно недоступна: ряд спарклайна не содержит
+ * календарных дат, поэтому ось X честно подписана в торговых днях.
  */
 function AssetChart({
   values,
@@ -544,7 +610,222 @@ function AssetChart({
         {highlight && highlightLabel
           ? ` Пунктир — начало выбранного горизонта (${highlightLabel}).`
           : ''}{' '}
-        Полная история с календарными датами — в следующей фазе.
+        Датированная история временно недоступна, поэтому календарные даты для этих точек не показываются.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Stage 6 dated chart. The x-coordinate is linear in calendar time, weekends
+ * and publication gaps keep their real width, and the tooltip prints the
+ * exact source observation date rather than "N points ago".
+ */
+function DatedAssetChart({
+  points,
+  domainStartMs,
+  domainEndMs,
+  paletteId,
+}: {
+  points: AssetHistoryPoint[];
+  domainStartMs: number;
+  domainEndMs: number;
+  paletteId: PaletteId;
+}) {
+  const gradientId = useId().replace(/:/g, '');
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  if (points.length < 2 || domainEndMs <= domainStartMs) {
+    return (
+      <div className="flex h-52 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-sm text-text-secondary">
+        Недостаточно датированных значений для выбранного периода.
+      </div>
+    );
+  }
+
+  const width = 720;
+  const height = 208;
+  const padTop = 12;
+  const padBottom = 20;
+  const values = points.map((point) => point.value);
+  const rawMin = Math.min(...values);
+  const rawMax = Math.max(...values);
+  const pad = (rawMax - rawMin) * 0.06 || Math.abs(rawMax) * 0.01 || 1;
+  const min = rawMin - pad;
+  const max = rawMax + pad;
+  const range = max - min;
+  const domainRange = domainEndMs - domainStartMs;
+  const coords = points.map((point) => {
+    const time = dateMs(point.date);
+    return {
+      ...point,
+      time,
+      x: ((time - domainStartMs) / domainRange) * width,
+      y: padTop + ((max - point.value) / range) * (height - padTop - padBottom),
+    };
+  });
+  const line = coords.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const area = `${coords[0].x.toFixed(1)},${height} ${line} ${coords[coords.length - 1].x.toFixed(1)},${height}`;
+  const first = points[0];
+  const last = points[points.length - 1];
+  const periodChange = first.value !== 0 ? ((last.value - first.value) / first.value) * 100 : 0;
+  const palette = PALETTES[paletteId];
+  const stroke =
+    periodChange > 0.005
+      ? palette.linePositive
+      : periodChange < -0.005
+        ? palette.lineNegative
+        : '#cbd5e1';
+  const active = activeIndex !== null ? coords[activeIndex] : null;
+  const activePct = active ? (active.x / width) * 100 : 0;
+  const tickFractions = [0, 1 / 3, 2 / 3, 1];
+
+  const handlePointer = (event: React.PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const targetTime = domainStartMs + ratio * domainRange;
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    coords.forEach((point, index) => {
+      const distance = Math.abs(point.time - targetTime);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+    setActiveIndex(nearestIndex);
+  };
+
+  return (
+    <div>
+      <div
+        className="relative h-52 w-full select-none"
+        style={{ touchAction: 'pan-y' }}
+        onPointerMove={handlePointer}
+        onPointerDown={handlePointer}
+        onPointerLeave={() => setActiveIndex(null)}
+        role="img"
+        aria-label={`Датированный график дневных значений с ${formatDateLong(first.date)} по ${formatDateLong(last.date)}: от ${formatValue(first.value)} до ${formatValue(last.value)}, изменение за период ${formatChange(periodChange)}`}
+      >
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          preserveAspectRatio="none"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={stroke} stopOpacity="0.32" />
+              <stop offset="100%" stopColor={stroke} stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+          {[0.25, 0.5, 0.75].map((fraction) => (
+            <line
+              key={`h-${fraction}`}
+              x1="0"
+              x2={width}
+              y1={padTop + fraction * (height - padTop - padBottom)}
+              y2={padTop + fraction * (height - padTop - padBottom)}
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth="1"
+              strokeDasharray="4 5"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          {tickFractions.map((fraction) => (
+            <line
+              key={`v-${fraction}`}
+              x1={fraction * width}
+              x2={fraction * width}
+              y1={padTop}
+              y2={height - padBottom}
+              stroke="rgba(255,255,255,0.045)"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          <polygon points={area} fill={`url(#${gradientId})`} />
+          <polyline
+            points={line}
+            fill="none"
+            stroke={stroke}
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          <circle
+            cx={coords[coords.length - 1].x}
+            cy={coords[coords.length - 1].y}
+            r="3.4"
+            fill={stroke}
+            stroke="#0A1424"
+            strokeWidth="1.4"
+          />
+          {active && (
+            <circle cx={active.x} cy={active.y} r="4.2" fill="#ffffff" stroke={stroke} strokeWidth="2" />
+          )}
+        </svg>
+
+        <span className="absolute right-1 top-0 rounded-sm bg-black/25 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/85">
+          max {formatValue(rawMax)}
+        </span>
+        <span className="absolute bottom-0 right-1 rounded-sm bg-black/25 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/85">
+          min {formatValue(rawMin)}
+        </span>
+
+        {active && (
+          <>
+            <div
+              className="absolute bottom-0 top-0 w-px bg-white/25"
+              style={{ left: `${activePct}%` }}
+              aria-hidden="true"
+            />
+            <div
+              data-testid="dated-chart-tooltip"
+              className="absolute top-1 whitespace-nowrap rounded-md border border-white/15 bg-[#0B1526]/95 px-2 py-1 text-[11px] font-bold tabular-nums text-white shadow-lg"
+              style={{
+                left: `${activePct}%`,
+                transform: `translateX(${activePct < 18 ? '0%' : activePct > 82 ? '-100%' : '-50%'})`,
+              }}
+            >
+              {formatValue(active.value)}
+              <span className="ml-1.5 font-semibold text-white/60">
+                {formatDateLong(active.date)}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="relative mt-1 h-5 text-[11px] font-semibold tabular-nums text-text-secondary" aria-hidden="true">
+        {tickFractions.map((fraction) => {
+          const tickMs = domainStartMs + fraction * domainRange;
+          return (
+            <span
+              key={fraction}
+              className="absolute top-0 whitespace-nowrap"
+              style={{
+                left: `${fraction * 100}%`,
+                transform: `translateX(${fraction === 0 ? '0%' : fraction === 1 ? '-100%' : '-50%'})`,
+              }}
+            >
+              {new Intl.DateTimeFormat('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                timeZone: 'UTC',
+              }).format(tickMs)}
+            </span>
+          );
+        })}
+      </div>
+
+      <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+        Дневные закрытия · {points.length} {observationsWord(points.length)} ·{' '}
+        {formatDateLong(first.date)} — {formatDateLong(last.date)}. Ось X линейна по
+        календарным датам источника; наведите курсор или коснитесь графика, чтобы увидеть
+        точную дату и значение.
       </p>
     </div>
   );
@@ -605,6 +886,65 @@ function AssetPanel({
         ? 'bg-emerald-400'
         : 'bg-red-400';
 
+  const [historyRangeDays, setHistoryRangeDays] = useState<HistoryRangeDays>(90);
+  const [historyState, setHistoryState] = useState<{
+    assetId: string;
+    status: 'loading' | 'ready' | 'error';
+    history: AssetPriceHistory | null;
+  }>({ assetId: asset.id, status: 'loading', history: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    setHistoryRangeDays(90);
+    setHistoryState({ assetId: asset.id, status: 'loading', history: null });
+    fetchAssetPriceHistory(asset.id).then((history) => {
+      if (cancelled) return;
+      setHistoryState({
+        assetId: asset.id,
+        status: history ? 'ready' : 'error',
+        history,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [asset.id]);
+
+  const history =
+    historyState.assetId === asset.id && historyState.status === 'ready'
+      ? historyState.history
+      : null;
+  const historyLoading =
+    historyState.assetId !== asset.id || historyState.status === 'loading';
+  const historyPoints = history?.points ?? [];
+  const lastHistoryPoint = historyPoints[historyPoints.length - 1] ?? null;
+  const historyDomainEndMs = lastHistoryPoint ? dateMs(lastHistoryPoint.date) : 0;
+  const historyDomainStartMs = historyDomainEndMs - historyRangeDays * DAY_MS;
+  const visibleHistoryPoints = historyPoints.filter((point) => {
+    const time = dateMs(point.date);
+    return time >= historyDomainStartMs && time <= historyDomainEndMs;
+  });
+  const firstVisibleHistoryPoint = visibleHistoryPoints[0] ?? null;
+  const lastVisibleHistoryPoint =
+    visibleHistoryPoints[visibleHistoryPoints.length - 1] ?? null;
+  const historyRangeChange =
+    firstVisibleHistoryPoint && lastVisibleHistoryPoint && firstVisibleHistoryPoint.value !== 0
+      ? ((lastVisibleHistoryPoint.value - firstVisibleHistoryPoint.value) /
+          firstVisibleHistoryPoint.value) *
+        100
+      : null;
+  const minHistoryPoint = visibleHistoryPoints.reduce<AssetHistoryPoint | null>(
+    (best, point) => (best === null || point.value < best.value ? point : best),
+    null,
+  );
+  const maxHistoryPoint = visibleHistoryPoints.reduce<AssetHistoryPoint | null>(
+    (best, point) => (best === null || point.value > best.value ? point : best),
+    null,
+  );
+  const isHistoryPartial = Boolean(
+    historyPoints[0] && dateMs(historyPoints[0].date) > historyDomainStartMs,
+  );
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -662,15 +1002,122 @@ function AssetPanel({
       )}
 
       <div className="mt-4">
-        <AssetChart
-          values={points}
-          paletteId={paletteId}
-          highlightIndex={highlightIndex}
-          highlightLabel={`${horizon.label.toLowerCase()}: последние ${selectedIntervals} ${observationsWord(selectedIntervals)}`}
-        />
+        {historyLoading ? (
+          <div
+            className="flex h-52 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] px-4 text-center text-sm text-text-secondary"
+            role="status"
+          >
+            Загружаем датированную историю дневных значений…
+          </div>
+        ) : history && lastHistoryPoint ? (
+          <div>
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
+              <div className="min-w-0 flex-1">
+                <h5 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+                  История с датами
+                </h5>
+                <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                  Ряд: <span className="font-bold text-text-primary">{history.provider}</span>
+                  {history.providerSymbol ? ` · ${history.providerSymbol}` : ''}
+                  {' · '}последнее наблюдение:{' '}
+                  <time
+                    dateTime={lastHistoryPoint.date}
+                    className="font-bold text-text-primary"
+                  >
+                    {formatDateLong(lastHistoryPoint.date)}
+                  </time>{' '}
+                  ({lagPhrase(lastHistoryPoint.date)}).
+                </p>
+              </div>
+              <div
+                role="group"
+                aria-label="Период датированного графика в календарных днях"
+                className="inline-flex shrink-0 rounded-full border border-white/15 bg-white/5 p-1"
+              >
+                {HISTORY_RANGE_OPTIONS.map((days) => (
+                  <button
+                    key={days}
+                    id={`asset-history-range-${days}`}
+                    type="button"
+                    aria-pressed={historyRangeDays === days}
+                    onClick={() => setHistoryRangeDays(days)}
+                    className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+                      historyRangeDays === days
+                        ? 'bg-cyan-300 text-[#071120]'
+                        : 'text-text-secondary hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {days} дн.
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <DatedAssetChart
+              key={`${asset.id}-${historyRangeDays}-${firstVisibleHistoryPoint?.date ?? ''}-${lastVisibleHistoryPoint?.date ?? ''}`}
+              points={visibleHistoryPoints}
+              domainStartMs={historyDomainStartMs}
+              domainEndMs={historyDomainEndMs}
+              paletteId={paletteId}
+            />
+
+            {isHistoryPartial && historyPoints[0] && (
+              <p className="mt-2 rounded-lg border border-amber-300/20 bg-amber-400/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-100">
+                Доступная датированная история начинается {formatDateLong(historyPoints[0].date)},
+                поэтому выбранный диапазон {historyRangeDays} {calendarDaysWord(historyRangeDays)}
+                {' '}показан частично. Более ранних значений в этот ряд не подмешивали.
+              </p>
+            )}
+          </div>
+        ) : (
+          <AssetChart
+            values={points}
+            paletteId={paletteId}
+            highlightIndex={highlightIndex}
+            highlightLabel={`${horizon.label.toLowerCase()}: последние ${selectedIntervals} ${observationsWord(selectedIntervals)}`}
+          />
+        )}
       </div>
 
-      {points.length >= 2 && (
+      {history && visibleHistoryPoints.length >= 2 && firstVisibleHistoryPoint && lastVisibleHistoryPoint && minHistoryPoint && maxHistoryPoint ? (
+        <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div>
+            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+              Изменение периода · {formatDateShort(firstVisibleHistoryPoint.date)}–
+              {formatDateShort(lastVisibleHistoryPoint.date)}
+            </dt>
+            <dd
+              className={`mt-0.5 text-base font-extrabold tabular-nums ${directionalTextClass(historyRangeChange ?? 0, paletteId)}`}
+            >
+              {historyRangeChange !== null ? formatChange(historyRangeChange) : '—'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+              Минимум · {formatDateShort(minHistoryPoint.date)}
+            </dt>
+            <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
+              {formatValue(minHistoryPoint.value)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+              Максимум · {formatDateShort(maxHistoryPoint.date)}
+            </dt>
+            <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
+              {formatValue(maxHistoryPoint.value)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+              Последнее · {formatDateShort(lastVisibleHistoryPoint.date)}
+            </dt>
+            <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
+              {formatValue(lastVisibleHistoryPoint.value)}
+            </dd>
+          </div>
+        </dl>
+      ) : !historyLoading && points.length >= 2 && (
         <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">

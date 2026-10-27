@@ -9,6 +9,10 @@ const USER_AGENT = "MarketPulseBot/0.3 (+https://market-pulse1-eta.vercel.app; s
 const COOLDOWN_MINUTES = 10;
 const DEFAULT_LOOKBACK_DAYS = 60;
 const DEFAULT_MAX_ROWS_PER_INSTRUMENT = 20;
+// Stage 6: the public dated panel needs a rolling 180-calendar-day window.
+// ECB, Kraken and Twelve gold therefore refresh a deeper daily tail on every
+// scheduled run; these are still separate provider series, never spliced.
+const HISTORY_BACKFILL_ROWS = 250;
 
 // Set per request in Deno.serve. A one-off backfill can request, for example,
 // ?lookback_days=220&max_rows=150 while ordinary runs stay small.
@@ -95,14 +99,28 @@ function snapshotKey(instrumentId: string, date: string | null, timestamp: strin
 function dailyRows(
   instrumentId: string,
   assetKey: string,
-  observations: Array<{ date: string; value: number }>,
+  observations: Array<{
+    date: string;
+    value: number;
+    open?: number | null;
+    high?: number | null;
+    low?: number | null;
+  }>,
   sourceUrl: string,
   rawBase: AnyRecord,
+  maxRows = activeMaxRowsPerInstrument,
 ) {
-  const sorted = [...observations]
+  const sortedRaw = [...observations]
     .filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(row.date) && Number.isFinite(row.value) && row.value > 0)
     .sort((a, b) => a.date.localeCompare(b.date));
-  const start = Math.max(0, sorted.length - activeMaxRowsPerInstrument);
+  // Some daily providers can emit more than one bar that slices to the same
+  // calendar date (notably Twelve Data around session boundaries). A dated
+  // snapshot has one deterministic key per instrument/date, so keep the last
+  // observation for a date before calculating previous-close changes.
+  const byDate = new Map<string, (typeof sortedRaw)[number]>();
+  for (const row of sortedRaw) byDate.set(row.date, row);
+  const sorted = [...byDate.values()];
+  const start = Math.max(0, sorted.length - maxRows);
   const rows: AnyRecord[] = [];
   for (let index = start; index < sorted.length; index += 1) {
     const current = sorted[index];
@@ -116,9 +134,9 @@ function dailyRows(
       price_timestamp: null,
       snapshot_key: snapshotKey(instrumentId, current.date, null),
       price: current.value,
-      open: null,
-      high: null,
-      low: null,
+      open: current.open ?? null,
+      high: current.high ?? null,
+      low: current.low ?? null,
       close: current.value,
       previous_price: previous?.value ?? null,
       change_abs: changeAbs,
@@ -149,8 +167,21 @@ async function fetchFred(instrumentId: string, assetKey: string, series: string)
 }
 
 async function fetchEcb() {
-  const url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml";
-  const text = await fetchText(url);
+  // The 90-day ECB file cannot support the Stage 6 180-day panel range.
+  // The full official history uses the same Cube structure; dailyRows keeps
+  // only the newest HISTORY_BACKFILL_ROWS observations. If the large file is
+  // temporarily unavailable, fall back to the smaller 90-day file rather
+  // than losing the ECB update altogether.
+  const fullHistoryUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml";
+  const fallbackUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml";
+  let url = fullHistoryUrl;
+  let text: string;
+  try {
+    text = await fetchText(fullHistoryUrl);
+  } catch {
+    url = fallbackUrl;
+    text = await fetchText(fallbackUrl);
+  }
   const observations: Array<{ date: string; value: number }> = [];
   const blockPattern = /<Cube\s+time=["'](\d{4}-\d{2}-\d{2})["']>([\s\S]*?)<\/Cube>/g;
   let match: RegExpExecArray | null;
@@ -163,7 +194,7 @@ async function fetchEcb() {
     provider: "ECB",
     symbol: "USD",
     convention: "USD per 1 EUR",
-  });
+  }, HISTORY_BACKFILL_ROWS);
 }
 
 async function fetchKrakenDaily() {
@@ -191,7 +222,10 @@ async function fetchKrakenDaily() {
     };
   }).filter((row) => row.date && row.close !== null && row.close > 0);
 
-  const start = Math.max(0, parsed.length - activeMaxRowsPerInstrument);
+  const start = Math.max(
+    0,
+    parsed.length - Math.max(activeMaxRowsPerInstrument, HISTORY_BACKFILL_ROWS),
+  );
   const rows: AnyRecord[] = [];
   for (let index = start; index < parsed.length; index += 1) {
     const current = parsed[index];
@@ -264,6 +298,45 @@ async function fetchTwelveGoldQuote() {
   }];
 }
 
+async function fetchTwelveGoldDaily() {
+  const key = Deno.env.get("TWELVE_KEY") ?? Deno.env.get("TWELVEDATA_API_KEY") ?? Deno.env.get("Twelve API_KEY");
+  if (!key) throw new Error("TWELVE_KEY secret not found");
+  const url =
+    `https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=1day&outputsize=${HISTORY_BACKFILL_ROWS}&order=asc&timezone=UTC`;
+  const payload = JSON.parse(await fetchText(url, { Authorization: `apikey ${key}` })) as unknown;
+  if (!isRecord(payload)) throw new Error("Twelve Data returned a non-object response");
+  if (payload.status === "error") {
+    throw new Error(`Twelve Data time_series: ${String(payload.message ?? "error").slice(0, 300)}`);
+  }
+  const values = Array.isArray(payload.values) ? payload.values : [];
+  // Sort by the full provider datetime before slicing to a date. If Twelve
+  // emits two bars for one UTC date, dailyRows then keeps the later one.
+  const sortedValues = [...values].sort((a, b) => {
+    const left = isRecord(a) ? String(a.datetime ?? "") : "";
+    const right = isRecord(b) ? String(b.datetime ?? "") : "";
+    return left.localeCompare(right);
+  });
+  const observations = sortedValues.map((raw) => {
+    const row = isRecord(raw) ? raw : {};
+    const close = finiteNumber(row.close) ?? Number.NaN;
+    return {
+      date: String(row.datetime ?? "").slice(0, 10),
+      value: close,
+      open: finiteNumber(row.open),
+      high: finiteNumber(row.high),
+      low: finiteNumber(row.low),
+    };
+  }).filter((row) => row.date && Number.isFinite(row.value) && row.value > 0);
+  if (!observations.length) throw new Error("Twelve Data gold time_series returned no valid daily closes");
+
+  return dailyRows("gold_twelve_xauusd_daily", "gold", observations, url, {
+    provider: "Twelve Data",
+    symbol: "XAU/USD",
+    interval: "1day",
+    timezone: "UTC",
+  }, HISTORY_BACKFILL_ROWS);
+}
+
 function clampInteger(value: number, min: number, max: number, fallback: number): number {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, Math.round(value)));
@@ -317,6 +390,7 @@ Deno.serve(async (request) => {
       { instrumentId: "eurusd_ecb_daily", load: fetchEcb },
       { instrumentId: "btc_kraken_xbtusd_daily", load: fetchKrakenDaily },
       { instrumentId: "gold_twelve_xauusd_quote", load: fetchTwelveGoldQuote },
+      { instrumentId: "gold_twelve_xauusd_daily", load: fetchTwelveGoldDaily },
     ];
 
     const allRows: AnyRecord[] = [];
@@ -343,11 +417,18 @@ Deno.serve(async (request) => {
       }
     }
 
-    if (allRows.length) {
+    // PostgreSQL cannot update the same conflict target twice in one
+    // INSERT ... ON CONFLICT statement. Keep one row per deterministic
+    // snapshot key (last provider observation wins) before the bulk upsert.
+    const upsertRows = [...new Map(
+      allRows.map((row) => [String(row.snapshot_key ?? ""), row]),
+    ).values()].filter((row) => String(row.snapshot_key ?? ""));
+
+    if (upsertRows.length) {
       await restJson("asset_price_snapshots_v2?on_conflict=snapshot_key", {
         method: "POST",
         headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-        body: JSON.stringify(allRows),
+        body: JSON.stringify(upsertRows),
       });
     }
 
@@ -362,7 +443,7 @@ Deno.serve(async (request) => {
           status,
           instruments_total: tasks.length,
           instruments_ok: instrumentsOk,
-          snapshots_upserted: allRows.length,
+          snapshots_upserted: upsertRows.length,
           stats: { instruments: instrumentResults, lookback_days: activeLookbackDays, max_rows_per_instrument: activeMaxRowsPerInstrument },
         }),
       });
@@ -374,7 +455,7 @@ Deno.serve(async (request) => {
       status,
       instruments_total: tasks.length,
       instruments_ok: instrumentsOk,
-      snapshots_upserted: allRows.length,
+      snapshots_upserted: upsertRows.length,
       lookback_days: activeLookbackDays,
       max_rows_per_instrument: activeMaxRowsPerInstrument,
       instruments: instrumentResults,
