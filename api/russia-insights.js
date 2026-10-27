@@ -190,9 +190,14 @@ async function fetchMoexCny() {
     (item) => item.SECID === 'CNYRUB_TOM' && item.BOARDID === 'CETS',
   );
   if (!security || !market) throw new Error('Нет CETS для CNYRUB_TOM');
-  const value = Number(market.LAST ?? market.MARKETPRICETODAY ?? market.CLOSEPRICE);
   const previous = Number(security.PREVPRICE);
-  if (!Number.isFinite(value) || !Number.isFinite(previous) || previous <= 0) {
+  // До первой сделки дня ISS отдаёт LAST = 0. Берём первое положительное
+  // значение, а если сделок ещё не было — предыдущее закрытие вместо «0 ₽».
+  const traded = [market.LAST, market.MARKETPRICETODAY, market.CLOSEPRICE]
+    .map(Number)
+    .find((candidate) => Number.isFinite(candidate) && candidate > 0);
+  const value = traded ?? previous;
+  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(previous) || previous <= 0) {
     throw new Error('Некорректное значение CNYRUB_TOM');
   }
   return {
