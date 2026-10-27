@@ -1,7 +1,12 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Eye, Zap } from 'lucide-react';
-import type { NewsItem, TensionData } from '@/data/mockData';
+import { ArrowRight, Eye, History, Zap } from 'lucide-react';
+import type { ForecastData, NewsItem, TensionData } from '@/data/mockData';
+import { fetchLiveForecasts } from '@/data/liveForecasts';
 import { fetchLiveTension } from '@/data/liveTension';
+import {
+  fetchTodaySnapshot,
+  type DailySnapshot,
+} from '@/data/dailySnapshots';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import {
@@ -26,6 +31,28 @@ interface BriefItem {
   href: string;
   body: ReactNode;
 }
+
+interface ChangeItem extends BriefItem {
+  score: number;
+}
+
+const TENSION_CHANGE_THRESHOLD = 5;
+const GLOBAL_CHANGE_THRESHOLDS: Record<string, number> = {
+  'usd-eur': 0.25,
+  sp500: 0.4,
+  gold: 0.5,
+  brent: 0.8,
+  btc: 1.5,
+};
+const RUSSIA_CHANGE_THRESHOLDS: Record<string, number> = {
+  'usd-rub': 0.3,
+  'eur-rub': 0.3,
+  'cny-rub-moex': 0.3,
+  'cny-rub-cbr': 0.3,
+  imoex: 0.5,
+  rgbi: 0.1,
+};
+const SIGNAL_BALANCE_THRESHOLD = 10;
 
 function plural(n: number, forms: [string, string, string]): string {
   const abs = Math.abs(n);
@@ -79,6 +106,37 @@ function formatStamp(values: Array<string | undefined>): string | null {
   );
 }
 
+function moscowHour(value?: string | null): number | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const hour = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    hourCycle: 'h23',
+    timeZone: 'Europe/Moscow',
+  }).format(date);
+  const parsed = Number(hour);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function currentSparklineLast(sparkline?: number[]): number | null {
+  if (!Array.isArray(sparkline)) return null;
+  const values = sparkline.filter((value) => Number.isFinite(value));
+  return values.length ? values[values.length - 1] : null;
+}
+
+function publicSignalLabel(direction: string, probability: number | null): string {
+  if (
+    probability === null ||
+    probability < 60 ||
+    (direction !== 'up' && direction !== 'down')
+  ) {
+    return 'Нет сигнала';
+  }
+  const side = direction === 'up' ? 'вверх' : 'вниз';
+  return probability < 70 ? `Слабый перекос ${side}` : side === 'вверх' ? 'Вверх' : 'Вниз';
+}
+
 function eventTimestamp(item: NewsItem): number {
   const parsed = item.published_at ? new Date(item.published_at).getTime() : Number.NaN;
   return Number.isFinite(parsed) ? parsed : 0;
@@ -114,6 +172,11 @@ export default function DailyBrief() {
   const [tensionLoaded, setTensionLoaded] = useState(false);
   const [insights, setInsights] = useState<RussiaInsights | null>(null);
   const [insightsLoaded, setInsightsLoaded] = useState(false);
+  const [snapshot, setSnapshot] = useState<DailySnapshot | null>(null);
+  const [snapshotLoaded, setSnapshotLoaded] = useState(false);
+  const [snapshotError, setSnapshotError] = useState(false);
+  const [forecasts, setForecasts] = useState<ForecastData[]>([]);
+  const [forecastsLoaded, setForecastsLoaded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -146,6 +209,53 @@ export default function DailyBrief() {
       window.clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      const result = await fetchTodaySnapshot();
+      if (!mounted) return;
+      setSnapshot(result.snapshot);
+      setSnapshotError(result.error);
+      setSnapshotLoaded(true);
+    }
+    void load();
+    const interval = window.setInterval(load, 300_000);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      const data = await fetchLiveForecasts();
+      if (!mounted) return;
+      setForecasts(data);
+      setForecastsLoaded(true);
+    }
+    void load();
+    const interval = window.setInterval(load, 300_000);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const liveAssets = useMemo(
+    () =>
+      hasLiveData
+        ? assets.filter(
+            (asset) =>
+              !fallbackAssetIds.includes(asset.id) &&
+              asset.price !== '—' &&
+              Number.isFinite(asset.change) &&
+              (asset.sparkline?.length ?? 0) >= 2,
+          )
+        : [],
+    [assets, fallbackAssetIds, hasLiveData],
+  );
 
   const brief = useMemo(() => {
     const facts: BriefItem[] = [];
@@ -213,15 +323,6 @@ export default function DailyBrief() {
     }
 
     // --- Факт 3: сильнейшее движение внешнего фона ---
-    const liveAssets = hasLiveData
-      ? assets.filter(
-          (asset) =>
-            !fallbackAssetIds.includes(asset.id) &&
-            asset.price !== '—' &&
-            Number.isFinite(asset.change) &&
-            (asset.sparkline?.length ?? 0) >= 2,
-        )
-      : [];
     const strongestGlobal =
       [...liveAssets].sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0] ?? null;
     if (strongestGlobal && facts.length < 3) {
@@ -446,13 +547,254 @@ export default function DailyBrief() {
     }
 
     return { facts: facts.slice(0, 3), consequences: consequences.slice(0, 2), watch };
-  }, [tension, news, assets, hasLiveData, fallbackAssetIds, insights]);
+  }, [tension, news, liveAssets, insights]);
+
+  const changeView = useMemo(() => {
+    const empty = { items: [] as ChangeItem[], comparable: 0, totalSignificant: 0 };
+    if (!snapshot) return empty;
+
+    const items: ChangeItem[] = [];
+    let comparable = 0;
+    let totalSignificant = 0;
+
+    // Шкала: изменения меньше пяти пунктов считаем дневным шумом.
+    if (tension && snapshot.tension?.value !== null && snapshot.tension?.value !== undefined) {
+      comparable += 1;
+      const base = Math.round(snapshot.tension.value);
+      const current = Math.round(Math.min(100, Math.max(0, tension.current)));
+      const delta = current - base;
+      if (Math.abs(delta) >= TENSION_CHANGE_THRESHOLD) {
+        totalSignificant += 1;
+        items.push({
+          id: 'change-tension',
+          href: '#dashboard',
+          score: 95 + Math.min(10, (Math.abs(delta) / TENSION_CHANGE_THRESHOLD) * 2),
+          body: (
+            <>
+              Шкала напряжённости:{' '}
+              <strong className="tabular-nums text-text-primary">
+                {base}/100 → {current}/100
+              </strong>{' '}
+              ({delta > 0 ? '+' : '−'}
+              {Math.abs(delta)}{' '}
+              {plural(Math.abs(delta), ['пункт', 'пункта', 'пунктов'])}).
+            </>
+          ),
+        });
+      }
+    }
+
+    // Внешний фон: сравниваем последнюю точку той же серии sparkline,
+    // а не дневной процент провайдера с другим базисом.
+    const snapshotAssets = new Map(snapshot.assets.map((asset) => [asset.id, asset]));
+    const globalCandidates: Array<{ ratio: number; item: ChangeItem }> = [];
+    liveAssets.forEach((asset) => {
+      const base = snapshotAssets.get(asset.id)?.last;
+      const current = currentSparklineLast(asset.sparkline);
+      if (typeof base !== 'number' || base <= 0 || current === null || current <= 0) return;
+      comparable += 1;
+      const deltaPct = (current / base - 1) * 100;
+      const threshold = GLOBAL_CHANGE_THRESHOLDS[asset.id] ?? 0.5;
+      if (Math.abs(deltaPct) < threshold) return;
+      const ratio = Math.abs(deltaPct) / threshold;
+      globalCandidates.push({
+        ratio,
+        item: {
+          id: `change-global-${asset.id}`,
+          href: '#global-markets',
+          score: 70 + Math.min(20, ratio * 4),
+          body: (
+            <>
+              Внешний фон — <strong className="text-text-primary">{asset.name}</strong>:{' '}
+              <strong className="tabular-nums text-text-primary">{formatPct(deltaPct)}</strong>{' '}
+              к снимку; последнее значение {asset.price}.
+            </>
+          ),
+        },
+      });
+    });
+    totalSignificant += globalCandidates.length;
+    items.push(
+      ...globalCandidates
+        .sort((a, b) => b.ratio - a.ratio)
+        .slice(0, 3)
+        .map((candidate) => candidate.item),
+    );
+
+    // Российский контур остаётся отдельным: сравнение только внутри
+    // того же индикатора и того же провайдера, без смешивания контуров.
+    const snapshotRussia = new Map(
+      snapshot.russiaMarkets.map((indicator) => [indicator.id, indicator]),
+    );
+    const russiaCandidates: Array<{ ratio: number; item: ChangeItem }> = [];
+    (insights?.markets ?? []).forEach((indicator) => {
+      const threshold = RUSSIA_CHANGE_THRESHOLDS[indicator.id];
+      const base = snapshotRussia.get(indicator.id)?.value;
+      if (
+        threshold === undefined ||
+        typeof base !== 'number' ||
+        base <= 0 ||
+        !Number.isFinite(indicator.value) ||
+        indicator.value <= 0
+      ) {
+        return;
+      }
+      comparable += 1;
+      const deltaPct = (indicator.value / base - 1) * 100;
+      if (Math.abs(deltaPct) < threshold) return;
+      const ratio = Math.abs(deltaPct) / threshold;
+      russiaCandidates.push({
+        ratio,
+        item: {
+          id: `change-russia-${indicator.id}`,
+          href: '#russia-business',
+          score: 75 + Math.min(20, ratio * 4),
+          body: (
+            <>
+              Российский контур —{' '}
+              <strong className="text-text-primary">{indicator.name}</strong>:{' '}
+              <strong className="tabular-nums text-text-primary">{formatPct(deltaPct)}</strong>{' '}
+              к снимку; сейчас {formatIndicatorValue(indicator)} {indicator.unit}.
+            </>
+          ),
+        },
+      });
+    });
+    totalSignificant += russiaCandidates.length;
+    items.push(
+      ...russiaCandidates
+        .sort((a, b) => b.ratio - a.ratio)
+        .slice(0, 3)
+        .map((candidate) => candidate.item),
+    );
+
+    // Сигналы сравниваем по публичному статусу после порога 60/40.
+    // Внутренний переворот ниже порога сам по себе изменением не считаем.
+    const snapshotForecasts = new Map(
+      snapshot.forecasts.map((forecast) => [forecast.id, forecast]),
+    );
+    const signalItems: ChangeItem[] = [];
+    forecasts.forEach((forecast) => {
+      const base = snapshotForecasts.get(forecast.id);
+      if (!base || base.probability === null || !Number.isFinite(forecast.probability)) return;
+      comparable += 1;
+      const baseLabel = publicSignalLabel(base.direction, base.probability);
+      const currentLabel = publicSignalLabel(forecast.direction, forecast.probability);
+      const balanceDelta = Math.abs(forecast.probability - base.probability);
+      const statusChanged = baseLabel !== currentLabel;
+      if (!statusChanged && balanceDelta < SIGNAL_BALANCE_THRESHOLD) return;
+      signalItems.push({
+        id: `change-signal-${forecast.id}`,
+        href: '#forecasts',
+        score: statusChanged
+          ? 90 + Math.min(10, balanceDelta / 2)
+          : 55 + Math.min(10, balanceDelta / 2),
+        body: (
+          <>
+            Сигнал по <strong className="text-text-primary">{forecast.asset}</strong>: баланс
+            свидетельств{' '}
+            <strong className="tabular-nums text-text-primary">
+              {Math.round(base.probability)} → {Math.round(forecast.probability)}
+            </strong>
+            {statusChanged ? (
+              <>
+                ; публичный статус «{baseLabel}» → «{currentLabel}».
+              </>
+            ) : (
+              <>; публичный статус по-прежнему «{currentLabel}».</>
+            )}
+          </>
+        ),
+      });
+    });
+    totalSignificant += signalItems.length;
+    items.push(...signalItems.sort((a, b) => b.score - a.score).slice(0, 3));
+
+    return {
+      items: items.sort((a, b) => b.score - a.score).slice(0, 6),
+      comparable,
+      totalSignificant,
+    };
+  }, [forecasts, insights, liveAssets, snapshot, tension]);
 
   // Показываем бриф только цельным снимком: полусобранный вариант мог бы
   // на секунду заявить «данных недостаточно» просто потому, что активы
   // или российский контур ещё в пути.
-  const loading = assetsLoading || !tensionLoaded || !insightsLoaded || newsLoading;
+  const loading =
+    assetsLoading ||
+    !tensionLoaded ||
+    !insightsLoaded ||
+    newsLoading ||
+    !snapshotLoaded ||
+    !forecastsLoaded;
   const stamp = formatStamp([tension?.updatedAt, insights?.generatedAt]);
+  const baselineStamp = snapshot ? formatStamp([snapshot.capturedAt]) : null;
+  const baselineHour = snapshot ? moscowHour(snapshot.capturedAt) : null;
+  const changesHeading =
+    !snapshot || (baselineHour !== null && baselineHour < 11)
+      ? 'Что изменилось с утра'
+      : 'Что изменилось со снимка дня';
+
+  const changesSection = (
+    <div data-testid="brief-changes" className="mt-5 border-t border-white/10 pt-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <History className="h-4 w-4 text-cyan-300" aria-hidden="true" />
+        <h3 className="text-sm font-extrabold tracking-tight">{changesHeading}</h3>
+        {baselineStamp && (
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
+            точка отсчёта: {baselineStamp}
+          </span>
+        )}
+      </div>
+
+      {snapshotError ? (
+        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+          Не удалось загрузить снимок дня, поэтому сравнение временно не показываем: без
+          зафиксированной точки отсчёта дельты были бы выдумкой.
+        </p>
+      ) : !snapshot ? (
+        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+          Снимок на сегодня ещё не записан. Автоматическая запись запланирована на 07:00 МСК;
+          до появления строки сравнение не показываем и вчерашнюю базу не подставляем.
+        </p>
+      ) : changeView.comparable === 0 ? (
+        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+          Снимок сохранён, но сопоставимых актуальных значений пока недостаточно, чтобы честно
+          посчитать изменения.
+        </p>
+      ) : changeView.items.length > 0 ? (
+        <ul data-testid="brief-changes-list" className="mt-1.5 space-y-0.5">
+          {changeView.items.map((item) => (
+            <BriefLinkItem
+              key={item.id}
+              item={item}
+              marker={
+                <span
+                  className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300"
+                  aria-hidden="true"
+                />
+              }
+            />
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+          Значимых изменений со снимка нет: шкала, сопоставимые цены и публичные статусы
+          сигналов остаются в пределах порогов шума.
+        </p>
+      )}
+
+      {snapshot && changeView.comparable > 0 && (
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
+          Пороги шума: шкала — 5 пунктов; цены — 0,1–1,5% в зависимости от инструмента;
+          сигналы — смена публичного статуса или сдвиг баланса на 10.
+          {changeView.totalSignificant > changeView.items.length
+            ? ` Показано ${changeView.items.length} самых заметных из ${changeView.totalSignificant} изменений выше порогов.`
+            : ''}
+        </p>
+      )}
+    </div>
+  );
 
   return (
     <section id="brief" className="mb-10 scroll-mt-24 lg:mb-12" aria-label="Бриф за 60 секунд">
@@ -480,10 +822,13 @@ export default function DailyBrief() {
             </p>
           </div>
         ) : brief.facts.length === 0 ? (
-          <p className="text-sm leading-relaxed text-text-secondary">
-            Бриф временно недоступен: не хватает свежих данных сразу из нескольких блоков.
-            Ниже каждый раздел честно покажет своё состояние — выдуманный итог мы не подставляем.
-          </p>
+          <>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Бриф временно недоступен: не хватает свежих данных сразу из нескольких блоков.
+              Ниже каждый раздел честно покажет своё состояние — выдуманный итог мы не подставляем.
+            </p>
+            {changesSection}
+          </>
         ) : (
           <>
             <div className="grid gap-5 lg:grid-cols-2">
@@ -533,6 +878,8 @@ export default function DailyBrief() {
               </div>
             </div>
 
+            {changesSection}
+
             {brief.watch && (
               <a
                 data-testid="brief-watch"
@@ -552,8 +899,9 @@ export default function DailyBrief() {
             )}
 
             <p className="mt-3.5 text-[11px] leading-relaxed text-text-secondary/80">
-              Бриф собирается автоматически только из блоков ниже: каждое число можно проверить
-              по ссылке пункта. Новых данных и торговых рекомендаций здесь нет.
+              Бриф собирается автоматически только из блоков ниже, а снимок дня лишь фиксирует
+              те же публичные значения как точку отсчёта. Каждое изменение можно проверить по
+              ссылке пункта; торговых рекомендаций здесь нет.
             </p>
           </>
         )}
