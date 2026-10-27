@@ -43,6 +43,10 @@ export default function Footer() {
           выбранные вами профили в разделе «Россия и бизнес» — эти данные
           никуда не отправляются.
         </p>
+        <p className="mt-2 text-center text-xs leading-relaxed text-text-secondary/80">
+          Материалы сайта носят информационный характер и не являются
+          персональной инвестиционной рекомендацией.
+        </p>
       </div>
     </footer>
   );
