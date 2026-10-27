@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Eye, History, Zap } from 'lucide-react';
+import { ArrowRight, Camera, Eye, History, Zap } from 'lucide-react';
 import type { ForecastData, NewsItem, TensionData } from '@/data/mockData';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
 import { fetchLiveTension } from '@/data/liveTension';
@@ -806,6 +806,17 @@ export default function DailyBrief() {
             обновлено {stamp}
           </span>
         )}
+        <a
+          data-testid="brief-telegram-image"
+          href="/api/brief-image"
+          download="market-pulse-brief.png"
+          title="Серверная PNG-карточка с актуальными цифрами, без параметров отслеживания"
+          aria-label="Скачать PNG-снимок брифа для Telegram"
+          className="ml-auto inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-cyan-100 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+        >
+          <Camera className="h-4 w-4" aria-hidden="true" />
+          Снимок для Telegram
+        </a>
       </div>
 
       <div className="rounded-xl2 border border-border-subtle bg-bg-card p-4 shadow-lg sm:p-5">
