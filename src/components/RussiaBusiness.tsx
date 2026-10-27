@@ -227,7 +227,7 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
       href={indicator.sourceUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group rounded-2xl border border-white/10 bg-black/20 p-4 shadow-lg transition-all hover:-translate-y-0.5 hover:border-accent/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+      className="group flex h-full flex-col rounded-2xl border border-white/10 bg-black/20 p-4 shadow-lg transition-all hover:-translate-y-0.5 hover:border-accent/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
       title={`${indicator.provider}: ${indicator.basis}`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -247,10 +247,21 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
           {formatPercent(indicator.changePct)}
         </span>
       </div>
-      <div className="mt-3 border-t border-white/10 pt-2.5 text-[11px] leading-relaxed text-slate-400">
+      <div className="mb-3 mt-3 border-t border-white/10 pt-2.5 text-[11px] leading-relaxed text-slate-400">
         <span className="font-bold text-slate-200">{indicator.provider}</span> · {formatAsOf(indicator)}
         <div className="mt-0.5">{indicator.basis}</div>
       </div>
+      <span
+        data-testid="russia-source-tile-hint"
+        className="mt-auto inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-blue-300/25 bg-blue-400/10 px-2.5 py-1.5 text-[11px] font-extrabold leading-none text-blue-100"
+      >
+        <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-300 opacity-50 [animation-duration:1.8s]" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-300" />
+        </span>
+        Открыть источник
+        <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      </span>
     </a>
   );
 }

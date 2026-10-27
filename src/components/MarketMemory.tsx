@@ -24,6 +24,7 @@ import {
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
+import ExpandHint from './ExpandHint';
 import {
   fetchMarketMemory,
   type MarketMemoryData,
@@ -172,14 +173,14 @@ function EventCard({
   return (
     <article
       className={`rounded-xl2 border bg-bg-card p-5 shadow-lg transition-all duration-300 lg:p-6 ${
-        selected ? 'border-accent/60 ring-2 ring-accent/20' : 'border-border-subtle hover:border-accent/35'
+        selected ? 'border-fuchsia-300/60 ring-2 ring-fuchsia-400/20' : 'border-border-subtle hover:border-fuchsia-300/35'
       }`}
     >
       <button
         type="button"
         onClick={onSelect}
         aria-expanded={selected}
-        className="block w-full text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
+        className="block w-full text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-300 rounded-lg"
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-extrabold text-accent">
@@ -236,6 +237,21 @@ function EventCard({
             <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Уверенность</div>
             <div className="text-sm font-extrabold text-text-primary">{formatShare(event.confidence)}</div>
           </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/8 pt-3">
+          <span className="text-xs leading-relaxed text-text-secondary">
+            {selected
+              ? 'Паспорт события открыт ниже'
+              : 'Внутри: цепочка влияния и фактические исходы'}
+          </span>
+          <ExpandHint
+            expanded={selected}
+            closedLabel="Развернуть паспорт"
+            openLabel="Свернуть паспорт"
+            testId="memory-event-expand-hint"
+            className="border-fuchsia-300/35 bg-fuchsia-400/10 text-fuchsia-100"
+          />
         </div>
       </button>
 

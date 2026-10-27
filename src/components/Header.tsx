@@ -207,13 +207,24 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
 
         <button
           type="button"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/[0.07] text-white shadow-[0_10px_26px_rgba(0,0,0,0.24)] transition-all hover:border-accent/65 hover:bg-accent/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] lg:hidden"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3.5 py-2 text-sm font-extrabold text-white shadow-[0_10px_26px_rgba(0,0,0,0.24)] transition-all hover:border-accent/65 hover:bg-accent/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] lg:hidden"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
           aria-expanded={menuOpen}
           aria-controls="mobile-navigation"
         >
-          {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {!menuOpen && (
+            <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-300 opacity-50 [animation-duration:1.8s]" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-300" />
+            </span>
+          )}
+          <span>{menuOpen ? 'Закрыть' : 'Меню'}</span>
+          {menuOpen ? (
+            <X className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          )}
         </button>
       </div>
 

@@ -251,11 +251,19 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
       >
         <span className="flex items-center justify-between gap-3">
           <span className="truncate">{value}</span>
-          <ChevronDown
-            className={`h-4 w-4 shrink-0 text-blue-300 transition-transform duration-200 ${
-              open ? 'rotate-180' : ''
-            }`}
-          />
+          <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
+            {!open && (
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300 opacity-50 [animation-duration:1.8s]" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-300" />
+              </span>
+            )}
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-amber-200 transition-transform duration-200 ${
+                open ? 'rotate-180' : 'animate-pulse [animation-duration:1.8s]'
+              }`}
+            />
+          </span>
         </span>
       </button>
 
@@ -469,8 +477,19 @@ export default function NewsFeed() {
             aria-controls="news-filter-panel"
             className="inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-4 py-2 text-sm font-extrabold text-amber-100 transition-colors hover:bg-amber-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-300"
           >
-            {filtersOpen ? 'Скрыть' : 'Настроить'}
-            <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+            {!filtersOpen && (
+              <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300 opacity-50 [animation-duration:1.8s]" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-300" />
+              </span>
+            )}
+            {filtersOpen ? 'Свернуть фильтры' : 'Развернуть фильтры'}
+            <ChevronDown
+              aria-hidden="true"
+              className={`h-4 w-4 transition-transform ${
+                filtersOpen ? 'rotate-180' : 'animate-pulse [animation-duration:1.8s]'
+              }`}
+            />
           </button>
         </div>
 

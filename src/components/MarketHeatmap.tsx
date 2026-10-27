@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import {
-  ChevronDown,
   ExternalLink,
   Globe,
   Grid2x2,
@@ -11,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { AssetData, ForecastData } from '@/data/mockData';
+import ExpandHint from './ExpandHint';
 import {
   fetchAssetPriceHistory,
   type AssetHistoryPoint,
@@ -382,7 +382,7 @@ function HeatTile({
       aria-expanded={isSelected}
       aria-controls="asset-panel"
       onClick={() => onSelect(asset.id)}
-      className={`flex min-h-[154px] w-full cursor-pointer flex-col rounded-xl border p-4 text-left text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+      className={`flex min-h-[202px] w-full cursor-pointer flex-col rounded-xl border p-4 text-left text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
         isSelected
           ? 'border-cyan-200/70 ring-2 ring-cyan-300'
           : 'border-white/10'
@@ -393,15 +393,7 @@ function HeatTile({
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-extrabold tracking-wide">{asset.name}</span>
-        <span className="flex shrink-0 items-center gap-1">
-          <DirectionIcon className="h-4 w-4 opacity-90" aria-hidden="true" />
-          <ChevronDown
-            className={`h-4 w-4 opacity-80 transition-transform duration-300 ${
-              isSelected ? 'rotate-180' : ''
-            }`}
-            aria-hidden="true"
-          />
-        </span>
+        <DirectionIcon className="h-4 w-4 shrink-0 opacity-90" aria-hidden="true" />
       </div>
       {isFallback && (
         <span className="mt-2 inline-flex w-fit rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-100">
@@ -425,6 +417,14 @@ function HeatTile({
       <div className="mt-auto pt-3">
         <TileSparkline values={asset.sparkline ?? []} />
       </div>
+
+      <ExpandHint
+        expanded={isSelected}
+        closedLabel="Нажмите, чтобы развернуть"
+        openLabel="Нажмите, чтобы свернуть"
+        testId="heat-tile-expand-hint"
+        className="mt-3 w-full justify-center border-white/40 bg-black/25 px-2 text-center leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+      />
     </button>
   );
 }
@@ -987,10 +987,11 @@ function AssetPanel({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Закрыть панель актива"
-          className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+          aria-label="Свернуть панель актива"
+          className="ml-auto inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-extrabold text-cyan-100 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
         >
-          <X className="h-4 w-4" />
+          Свернуть
+          <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -1267,12 +1268,13 @@ function SkeletonTiles() {
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="min-h-[154px] animate-pulse rounded-xl border border-border-subtle bg-bg-card p-4"
+          className="min-h-[202px] animate-pulse rounded-xl border border-border-subtle bg-bg-card p-4"
         >
           <div className="h-4 w-20 rounded-sm bg-white/10" />
           <div className="mt-5 h-6 w-24 rounded-sm bg-white/10" />
           <div className="mt-4 h-5 w-16 rounded-sm bg-white/10" />
           <div className="mt-5 h-7 rounded-sm bg-white/10" />
+          <div className="mt-3 h-7 rounded-full bg-white/10" />
         </div>
       ))}
     </div>

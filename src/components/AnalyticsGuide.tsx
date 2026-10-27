@@ -27,6 +27,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { SectionThemeBadge } from './sectionThemes';
+import ExpandHint from './ExpandHint';
 
 type GuideSectionProps = {
   id: string;
@@ -95,11 +96,18 @@ function FormulaDetails({ title, children }: { title: string; children: ReactNod
           </span>
           <span>{title}</span>
         </span>
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/45 bg-bg-primary/70 px-3 py-1.5 text-xs font-extrabold text-blue-100">
-          <span className="group-open:hidden">Показать</span>
-          <span className="hidden group-open:inline">Скрыть</span>
-          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
-        </span>
+        <ExpandHint
+          detailsMode
+          closedLabel={(
+            <>
+              <span className="sm:hidden">Развернуть</span>
+              <span className="hidden sm:inline">Нажмите, чтобы развернуть</span>
+            </>
+          )}
+          openLabel="Свернуть"
+          testId="guide-formula-expand-hint"
+          className="border-rose-300/40 bg-rose-400/10 text-rose-100"
+        />
       </summary>
       <div className="space-y-3 border-t border-white/10 px-4 pb-5 pt-4 text-sm leading-relaxed text-text-secondary sm:px-5">
         {children}
@@ -766,11 +774,13 @@ export default function AnalyticsGuide() {
             >
               <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-extrabold text-text-primary transition-colors hover:bg-white/4 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:px-5 [&::-webkit-details-marker]:hidden">
                 <span>{item.q}</span>
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/45 bg-accent/15 px-3 py-1.5 text-xs font-extrabold text-blue-100">
-                  <span className="group-open:hidden">Ответ</span>
-                  <span className="hidden group-open:inline">Скрыть</span>
-                  <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
-                </span>
+                <ExpandHint
+                  detailsMode
+                  closedLabel="Открыть ответ"
+                  openLabel="Свернуть"
+                  testId="guide-faq-expand-hint"
+                  className="border-rose-300/40 bg-rose-400/10 text-rose-100"
+                />
               </summary>
               <p className="border-t border-white/10 px-4 pb-5 pt-4 text-sm leading-relaxed text-text-secondary sm:px-5">
                 {item.a}
