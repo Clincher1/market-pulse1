@@ -187,7 +187,7 @@ Deno.serve(async (request) => {
         abnormal_return_pct: abnormalReturnPct,
         abnormal_z: abnormalZ,
         direction_hit: directionHit,
-        Brier_score: Brier,
+        brier_score: Brier,
         evaluated_at: new Date().toISOString(),
         raw: {
           alignment: "Outcome is the horizon-th daily observation strictly after issue_date. Base may lag issue_date when the provider publishes with delay.",
