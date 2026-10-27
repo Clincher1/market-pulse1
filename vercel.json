@@ -1,5 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/brief-image.js": {
+      "includeFiles": "api/assets/**",
+      "maxDuration": 30
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
