@@ -26,6 +26,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
+import { SectionThemeBadge } from './sectionThemes';
 
 type GuideSectionProps = {
   id: string;
@@ -139,12 +140,9 @@ export default function AnalyticsGuide() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="scroll-mt-24 overflow-hidden rounded-xl2 border border-accent/25 bg-linear-to-br from-accent/15 via-bg-card to-bg-card shadow-xl p-6 lg:p-10"
+        className="scroll-mt-24 overflow-hidden rounded-xl2 border border-rose-300/25 bg-linear-to-br from-rose-400/10 via-bg-card to-bg-card shadow-xl shadow-rose-950/20 p-6 lg:p-10"
       >
-        <div className="inline-flex items-center gap-2 rounded-full bg-accent/15 text-accent px-3 py-1.5 text-xs font-bold uppercase tracking-wider mb-5">
-          <BookOpen className="w-4 h-4" />
-          Методология простым языком
-        </div>
+        <SectionThemeBadge themeId="guide" className="mb-5" />
         <h1 className="text-3xl lg:text-5xl font-extrabold tracking-tight mb-4">
           Как читать Market Pulse
         </h1>
@@ -156,23 +154,23 @@ export default function AnalyticsGuide() {
         <div id="guide-start" className="scroll-mt-28 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
           <QuickStep
             number={1}
-            title="Сначала общий фон"
-            text="Посмотрите Tension: насколько негативен свежий новостной поток относительно шкалы 0–100."
+            title="Сначала Россия"
+            text="В синем разделе смотрите официальные курсы, Мосбиржу и каналы влияния на российский бизнес."
           />
           <QuickStep
             number={2}
-            title="Потом факты рынка"
-            text="Проверьте плитки активов: что цены уже сделали и не отыграл ли рынок новость до вас."
+            title="Затем мировой фон"
+            text="В бирюзовом блоке проверьте Tension и внешние котировки: что уже произошло на глобальных рынках."
           />
           <QuickStep
             number={3}
-            title="Затем причины"
-            text="В новостях смотрите источник, время, влияние на конкретный актив, важность и уверенность — не только заголовок."
+            title="Бриф и причины"
+            text="Фиолетовый бриф сводит факты вместе. В янтарной ленте сначала видны последние 4 новости; остальные открываются на 50% или 100%."
           />
           <QuickStep
             number={4}
-            title="Прогноз — последним"
-            text="Стрелка и процент показывают перевес новостных сигналов, а не гарантию и не доказанную вероятность движения цены."
+            title="Сигналы — последними"
+            text="Изумрудный баланс показывает перевес новостных свидетельств, а не гарантию. Блок памяти цвета фуксии позже сверяет гипотезы с ценой."
           />
         </div>
 

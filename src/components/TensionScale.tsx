@@ -370,7 +370,7 @@ export default function TensionScale() {
 
   return (
     <motion.section
-      id="dashboard"
+      id="tension"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -378,7 +378,7 @@ export default function TensionScale() {
       className="mb-10 scroll-mt-24 lg:mb-12"
     >
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <Activity className="h-6 w-6 text-accent" />
+        <Activity className="h-6 w-6 text-cyan-300" />
         <h2 className="text-xl font-bold tracking-tight lg:text-2xl">
           Шкала напряжённости мира
         </h2>
@@ -389,7 +389,7 @@ export default function TensionScale() {
         />
       </div>
 
-      <div className="relative rounded-xl2 border border-border-subtle bg-bg-card p-5 shadow-xl sm:p-6 lg:p-8">
+      <div className="relative rounded-xl2 border border-cyan-300/25 bg-bg-card p-5 shadow-xl shadow-cyan-950/20 sm:p-6 lg:p-8">
         {phase === 'loading' && !data && (
           <div className="min-h-[430px]" aria-busy="true" aria-label="Загрузка индекса напряжённости">
             <div className="flex items-center gap-3 text-text-secondary">

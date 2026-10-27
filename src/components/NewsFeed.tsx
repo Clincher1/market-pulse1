@@ -5,6 +5,7 @@ import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
+import { SectionThemeBadge } from './sectionThemes';
 
 const ALL_SOURCES = 'Все источники';
 const ALL_TOPICS = 'Все темы';
@@ -17,6 +18,9 @@ const IMPORTANCE_OPTIONS = [
   '8+ — важные',
   '9+ — критические',
 ];
+const NEWS_PREVIEW_COUNT = 4;
+
+type NewsViewMode = 'latest' | 'half' | 'all';
 
 function sentimentLabel(value: number): string {
   if (value < -0.3) return 'негатив';
@@ -79,16 +83,17 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
 
   return (
     <motion.article
+      data-testid="news-card"
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.4) }}
-      className="bg-bg-card rounded-xl2 p-5 lg:p-6 border border-border-subtle shadow-lg hover:border-accent/30 hover:bg-bg-card-hover transition-all duration-300"
+      className="bg-bg-card rounded-xl2 p-5 lg:p-6 border border-border-subtle shadow-lg hover:border-amber-300/40 hover:bg-bg-card-hover transition-all duration-300"
     >
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-2.5 py-1 bg-accent/10 text-accent text-xs font-bold rounded-md">
+          <span className="px-2.5 py-1 bg-amber-400/10 text-amber-200 text-xs font-bold rounded-md">
             {item.source}
           </span>
           <span className="text-xs text-text-secondary flex items-center gap-1">
@@ -114,7 +119,7 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
           rel="noopener noreferrer"
           className="group block mb-3"
         >
-          <h3 className="text-base lg:text-lg font-bold leading-snug text-text-primary group-hover:text-accent transition-colors">
+          <h3 className="text-base lg:text-lg font-bold leading-snug text-text-primary group-hover:text-amber-200 transition-colors">
             {item.title}
             <ExternalLink className="inline-block w-3 h-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </h3>
@@ -313,6 +318,9 @@ export default function NewsFeed() {
     importance: ALL_IMPORTANCE,
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
+  // По умолчанию лента не превращается в длинную стену: видны только
+  // четыре последние новости. Остальные открываются ступенями 50% и 100%.
+  const [visibleMode, setVisibleMode] = useState<NewsViewMode>('latest');
 
   // Списки фильтров строятся из реально пришедших новостей,
   // поэтому в них нет "мёртвых" источников/тем без единой новости.
@@ -364,6 +372,12 @@ export default function NewsFeed() {
     filters.importance !== ALL_IMPORTANCE,
   ].filter(Boolean).length;
 
+  // При смене фильтров снова начинаем с компактного режима «последние 4»,
+  // иначе новая выборка неожиданно развернётся на десятки карточек.
+  useEffect(() => {
+    setVisibleMode('latest');
+  }, [filters]);
+
   const filteredNews = useMemo(() => {
     const minImportance = importanceThreshold(filters.importance);
     return liveNews.filter((item) => {
@@ -381,6 +395,22 @@ export default function NewsFeed() {
     });
   }, [filters, liveNews]);
 
+  const halfCount = Math.min(
+    filteredNews.length,
+    Math.max(NEWS_PREVIEW_COUNT, Math.ceil(filteredNews.length / 2)),
+  );
+  const visibleCount =
+    visibleMode === 'all'
+      ? filteredNews.length
+      : visibleMode === 'half'
+        ? halfCount
+        : Math.min(NEWS_PREVIEW_COUNT, filteredNews.length);
+  const visibleNews = filteredNews.slice(0, visibleCount);
+  const hiddenNewsCount = Math.max(0, filteredNews.length - visibleCount);
+  const visibleShare = filteredNews.length > 0
+    ? Math.round((visibleCount / filteredNews.length) * 100)
+    : 0;
+
   const lastUpdatedLabel = lastUpdatedAt
     ? new Intl.DateTimeFormat('ru-RU', {
         hour: '2-digit',
@@ -397,8 +427,9 @@ export default function NewsFeed() {
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className="mb-10 scroll-mt-24 lg:mb-12"
     >
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Лента новостей</h2>
+      <SectionThemeBadge themeId="news" className="mb-4" />
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Глобальные новости</h2>
         <GuideLink
           href="#guide-news"
           label="Тональность и важность"
@@ -410,21 +441,25 @@ export default function NewsFeed() {
           </span>
         )}
       </div>
+      <p className="mb-5 max-w-3xl text-sm leading-relaxed text-text-secondary">
+        По умолчанию открыты только последние 4 новости. Остальная лента не удалена —
+        её можно развернуть на половину или полностью кнопками под карточками.
+      </p>
 
-      <div className="relative z-30 mb-6 rounded-xl2 border border-border-subtle bg-bg-card p-4 lg:p-5">
+      <div className="relative z-30 mb-6 rounded-xl2 border border-amber-300/25 bg-bg-card p-4 shadow-lg shadow-amber-950/20 lg:p-5">
         <div className="flex min-h-11 items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-text-secondary">
             <Filter className="h-4 w-4" />
             <span className="text-sm font-extrabold text-slate-200">Фильтры</span>
             {activeFilterCount > 0 && (
-              <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-black text-white">
+              <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950">
                 {activeFilterCount}
               </span>
             )}
           </div>
 
           <span className="hidden text-sm font-semibold text-text-secondary sm:block" aria-live="polite">
-            Показано {filteredNews.length} из {liveNews.length}
+            На экране {visibleCount} из {filteredNews.length} подходящих
           </span>
 
           <button
@@ -432,7 +467,7 @@ export default function NewsFeed() {
             onClick={() => setFiltersOpen((open) => !open)}
             aria-expanded={filtersOpen}
             aria-controls="news-filter-panel"
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent sm:hidden"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-4 py-2 text-sm font-extrabold text-amber-100 transition-colors hover:bg-amber-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             {filtersOpen ? 'Скрыть' : 'Настроить'}
             <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
@@ -441,7 +476,7 @@ export default function NewsFeed() {
 
         <div
           id="news-filter-panel"
-          className={`${filtersOpen ? 'mt-4 grid' : 'hidden'} grid-cols-1 gap-3 sm:mt-4 sm:grid sm:grid-cols-2 xl:grid-cols-5`}
+          className={`${filtersOpen ? 'mt-4 grid' : 'hidden'} grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5`}
         >
           <div>
             <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
@@ -503,8 +538,8 @@ export default function NewsFeed() {
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/8 pt-4">
           <p className="text-xs leading-relaxed text-slate-500" aria-live="polite">
             {activeFilterCount > 0
-              ? `Активно фильтров: ${activeFilterCount}. Показано ${filteredNews.length} из ${liveNews.length} новостей.`
-              : `Показаны все новости с важностью от 3/10: ${filteredNews.length} из ${liveNews.length}.`}
+              ? `Активно фильтров: ${activeFilterCount}. Подходит ${filteredNews.length} из ${liveNews.length} новостей; на экране сейчас ${visibleCount}.`
+              : `Новости с важностью от 3/10: подходит ${filteredNews.length} из ${liveNews.length}; на экране сейчас ${visibleCount}.`}
           </p>
           <button
             type="button"
@@ -567,13 +602,93 @@ export default function NewsFeed() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="news-grid">
         <AnimatePresence mode="popLayout">
-          {filteredNews.map((item, i) => (
+          {visibleNews.map((item, i) => (
             <NewsCard key={item.id} item={item} index={i} />
           ))}
         </AnimatePresence>
       </div>
+
+      {filteredNews.length > NEWS_PREVIEW_COUNT && (
+        <div
+          data-testid="news-expand-controls"
+          className="mt-6 rounded-xl2 border border-amber-300/25 bg-amber-400/[0.06] p-4 shadow-lg shadow-amber-950/10"
+        >
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <p
+                data-testid="news-visible-status"
+                className="text-sm font-extrabold text-amber-100"
+                aria-live="polite"
+              >
+                На экране {visibleCount} из {filteredNews.length} · {visibleShare}%
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                {hiddenNewsCount > 0
+                  ? `Скрыто ещё: ${hiddenNewsCount}. Самые свежие новости остаются первыми.`
+                  : 'Вся подходящая под фильтры лента открыта.'}
+              </p>
+            </div>
+
+            <div
+              role="group"
+              aria-label="Количество новостей на экране"
+              className="flex flex-wrap gap-2"
+            >
+              <button
+                type="button"
+                data-testid="news-show-latest"
+                aria-pressed={visibleMode === 'latest'}
+                onClick={() => setVisibleMode('latest')}
+                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${
+                  visibleMode === 'latest'
+                    ? 'border-amber-300 bg-amber-400 text-slate-950'
+                    : 'border-white/12 bg-white/[0.05] text-white hover:bg-white/10'
+                }`}
+              >
+                {visibleMode === 'latest' ? 'Последние 4' : 'Свернуть до 4'}
+              </button>
+              <button
+                type="button"
+                data-testid="news-show-half"
+                aria-pressed={visibleMode === 'half'}
+                onClick={() => setVisibleMode('half')}
+                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${
+                  visibleMode === 'half'
+                    ? 'border-amber-300 bg-amber-400 text-slate-950'
+                    : 'border-amber-300/30 bg-amber-400/10 text-amber-100 hover:bg-amber-400/15'
+                }`}
+              >
+                Показать половину · {halfCount}
+              </button>
+              <button
+                type="button"
+                data-testid="news-show-all"
+                aria-pressed={visibleMode === 'all'}
+                onClick={() => setVisibleMode('all')}
+                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${
+                  visibleMode === 'all'
+                    ? 'border-amber-300 bg-amber-400 text-slate-950'
+                    : 'border-amber-300/30 bg-amber-400/10 text-amber-100 hover:bg-amber-400/15'
+                }`}
+              >
+                Показать все · {filteredNews.length}
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/25"
+            aria-hidden="true"
+          >
+            <div
+              className="h-full rounded-full bg-amber-400 transition-all duration-500"
+              style={{ width: `${visibleShare}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {!loading && liveNews.length > 0 && filteredNews.length === 0 && (
         <div className="rounded-xl2 border border-dashed border-white/12 bg-white/[0.03] px-6 py-14 text-center">

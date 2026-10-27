@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
+import { SectionThemeBadge } from './sectionThemes';
 import {
   fetchMarketMemory,
   type MarketMemoryData,
@@ -636,8 +637,9 @@ export default function MarketMemory() {
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className="mb-10 scroll-mt-24 lg:mb-12"
     >
+      <SectionThemeBadge themeId="memory" className="mb-4" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-400/15 text-fuchsia-200">
           <BrainCircuit className="h-5 w-5" />
         </span>
         <div>
@@ -654,7 +656,7 @@ export default function MarketMemory() {
         <GuideLink href="#guide-memory" label="Как работает память" mobileLabel="Справка" />
       </div>
 
-      <div className="overflow-hidden rounded-xl2 border border-accent/20 bg-linear-to-br from-accent/12 via-bg-card to-bg-card shadow-xl">
+      <div className="overflow-hidden rounded-xl2 border border-fuchsia-300/25 bg-linear-to-br from-fuchsia-400/10 via-bg-card to-bg-card shadow-xl shadow-fuchsia-950/20">
         <div className="border-b border-white/10 p-5 lg:p-6">
           {loading && !data ? (
             <div aria-busy="true" aria-label="Загрузка памяти рынка">
@@ -732,10 +734,10 @@ export default function MarketMemory() {
                 type="button"
                 onClick={() => setTab(item.id)}
                 aria-pressed={active}
-                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
+                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-300 ${
                   active
-                    ? 'bg-accent text-white shadow-lg shadow-accent/25'
-                    : 'border border-white/12 bg-white/5 text-slate-200 hover:border-accent/50 hover:bg-accent/10'
+                    ? 'bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/25'
+                    : 'border border-white/12 bg-white/5 text-slate-200 hover:border-fuchsia-300/50 hover:bg-fuchsia-400/10'
                 }`}
               >
                 <Icon className="h-4 w-4" /> {item.label}

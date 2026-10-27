@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -24,6 +24,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import GuideLink from './GuideLink';
+import { SectionThemeBadge } from './sectionThemes';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
@@ -437,7 +438,7 @@ function readProfiles(): ProfileId[] {
   }
 }
 
-export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: ReactNode }) {
+export default function RussiaBusiness() {
   const { news, loading: newsLoading } = useLiveNews();
   const { assets } = useLiveAssets();
   const [insights, setInsights] = useState<RussiaInsights>({
@@ -599,10 +600,7 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
         <div className="p-5 sm:p-7 lg:p-8">
           <div className="flex flex-wrap items-start gap-4">
             <div className="min-w-0 max-w-4xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/25 bg-blue-400/10 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-blue-200">
-                <Landmark className="h-3.5 w-3.5" />
-                Для бизнеса в России
-              </div>
+              <SectionThemeBadge themeId="russia" />
               <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                 Пульс российского бизнеса
               </h2>
@@ -685,7 +683,7 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
               Каналы влияния на российский бизнес
             </div>
             <span className="text-xs font-medium text-slate-400">
-              Вывод по российским индикаторам и внешним драйверам ниже
+              Российские индикаторы и внешние драйверы; мировой блок идёт следующим разделом
             </span>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -696,9 +694,7 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
         </div>
       </div>
 
-      {globalMarkets}
-
-      <div className="overflow-hidden rounded-[28px] border border-accent/25 bg-linear-to-br from-[#102747] via-bg-card to-[#281722] shadow-2xl">
+      <div className="mt-6 overflow-hidden rounded-[28px] border border-accent/25 bg-linear-to-br from-[#102747] via-bg-card to-[#281722] shadow-2xl">
         <div className="p-5 sm:p-7 lg:p-8">
           <div className="mb-5 flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
             <span className="rounded-full border border-blue-300/25 bg-blue-400/10 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-100">
@@ -707,7 +703,7 @@ export default function RussiaBusiness({ globalMarkets }: { globalMarkets?: Reac
             <div>
               <h3 className="text-lg font-extrabold text-white">Причины: события и российские первоисточники</h3>
               <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
-                Сначала выше вы увидели российские факты и внешний фон. Ниже — события, которые могут объяснять движение каналов.
+                Выше — российские курсы, рынок и каналы влияния. Ниже — события и первоисточники, которые помогают объяснить движение каналов. Мировые котировки вынесены в следующий отдельный раздел.
               </p>
             </div>
           </div>

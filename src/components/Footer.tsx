@@ -20,19 +20,19 @@ export default function Footer() {
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
               href="#about"
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 bg-white/6 px-4 py-2 text-sm font-extrabold text-white transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-300/25 bg-slate-400/10 px-4 py-2 text-sm font-extrabold text-white transition-colors hover:border-slate-300/60 hover:bg-slate-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-300"
             >
-              <Info className="h-4 w-4 text-cyan-300" />
+              <Info className="h-4 w-4 text-slate-300" />
               О проекте
             </a>
             <a
               href="#guide"
               aria-label="Открыть методологию Market Pulse"
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 bg-white/6 px-4 py-2 text-sm font-extrabold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/70 hover:bg-accent/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:translate-y-0"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-rose-300/25 bg-rose-400/10 px-4 py-2 text-sm font-extrabold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300/60 hover:bg-rose-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:translate-y-0"
             >
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="h-4 w-4 text-rose-200" />
               Методология
-              <ArrowRight className="h-4 w-4 text-blue-300" />
+              <ArrowRight className="h-4 w-4 text-rose-300" />
             </a>
           </div>
         </div>

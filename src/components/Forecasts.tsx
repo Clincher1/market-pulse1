@@ -14,6 +14,7 @@ import { ForecastData } from '@/data/mockData';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
+import { SectionThemeBadge } from './sectionThemes';
 
 function confidenceColor(confidence: string): string {
   if (confidence === 'Высокая') return 'text-positive';
@@ -53,7 +54,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.4, delay: index * 0.1, ease: 'easeOut' }}
-      className="bg-bg-card rounded-xl2 p-6 lg:p-7 border border-border-subtle shadow-lg hover:border-accent/30 transition-all duration-300"
+      className="bg-bg-card rounded-xl2 p-6 lg:p-7 border border-emerald-300/20 shadow-lg shadow-emerald-950/10 hover:border-emerald-300/45 transition-all duration-300"
     >
       {/* Asset + Direction */}
       <div className="flex items-center justify-between gap-3 mb-6">
@@ -135,7 +136,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
       {/* Reason */}
       <div className="pt-4 border-t border-border-subtle">
         <div className="flex items-start gap-2">
-          <Target className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+          <Target className="w-4 h-4 text-emerald-300 mt-0.5 shrink-0" />
           <div>
             <div className="text-xs text-text-secondary mb-1">Основание</div>
             <p className="text-sm text-text-primary leading-relaxed">
@@ -193,8 +194,9 @@ export default function Forecasts() {
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className="mb-10 scroll-mt-24 lg:mb-12"
     >
+      <SectionThemeBadge themeId="forecasts" className="mb-4" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Прогнозы</h2>
+        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Сигналы по активам</h2>
         <GuideLink
           href="#guide-forecasts"
           label="Что значит процент"

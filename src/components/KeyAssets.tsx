@@ -27,14 +27,14 @@ export default function KeyAssets() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="my-6 scroll-mt-24"
+      className="my-6 scroll-mt-24 rounded-[24px] border border-cyan-300/25 bg-cyan-400/[0.04] p-4 shadow-xl shadow-cyan-950/20 sm:p-5"
     >
       <div className="mb-5">
         <div className="flex flex-wrap items-center gap-3">
           <div>
             <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-cyan-300">
               <Globe className="h-3.5 w-3.5" />
-              Глобальный контур
+              Глобальный контур · котировки
             </div>
             <h2 className="mt-1 text-xl font-bold tracking-tight lg:text-2xl">
               Мировые рынки — внешний фон

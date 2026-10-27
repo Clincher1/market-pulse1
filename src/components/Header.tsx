@@ -1,80 +1,63 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-  BookOpen,
-  BrainCircuit,
-  ChevronRight,
-  Info,
-  Landmark,
-  LayoutDashboard,
-  Menu,
-  Newspaper,
-  Target,
-  X,
-} from 'lucide-react';
+import { ChevronRight, LayoutDashboard, Menu, X } from 'lucide-react';
 import BrandMark from './BrandMark';
+import {
+  DASHBOARD_THEME_ORDER,
+  SECTION_THEMES,
+  type SectionThemeId,
+} from './sectionThemes';
 
-const navLinks = [
-  {
-    label: 'Дашборд',
-    href: '#dashboard',
-    description: 'Tension, активы и общий обзор',
-    icon: LayoutDashboard,
-  },
-  {
-    label: 'Россия',
-    href: '#russia-business',
-    description: 'Курсы ЦБ, Мосбиржа и последствия для бизнеса',
-    icon: Landmark,
-  },
-  {
-    label: 'Новости',
-    href: '#news',
-    description: 'Свежая лента и фильтры',
-    icon: Newspaper,
-  },
-  {
-    label: 'Прогнозы',
-    href: '#forecasts',
-    description: 'Сигналы по ключевым активам',
-    icon: Target,
-  },
-  {
-    label: 'Память',
-    href: '#market-memory',
-    description: 'События, исторические аналоги и проверка исходов',
-    icon: BrainCircuit,
-  },
-  {
-    label: 'Как читать',
-    href: '#guide',
-    description: 'Методология, формулы и ограничения',
-    icon: BookOpen,
-  },
-  {
-    label: 'О проекте',
-    href: '#about',
-    description: 'Архитектура, стек, ограничения и планы',
-    icon: Info,
-  },
-];
+const navLinks = DASHBOARD_THEME_ORDER.map((themeId) => {
+  const theme = SECTION_THEMES[themeId];
+  return {
+    themeId,
+    label: theme.navLabel,
+    fullLabel: theme.label,
+    href: theme.href,
+    description: theme.description,
+    icon: theme.icon,
+    theme,
+  };
+});
 
 const SECTION_IDS = [
   'dashboard',
   'russia-business',
+  'global-economy',
+  'brief',
   'news',
   'forecasts',
   'market-memory',
   'about',
 ] as const;
 
+const mobileThemeIds: SectionThemeId[] = [
+  'russia',
+  'global',
+  'brief',
+  'news',
+  'forecasts',
+  'memory',
+  'guide',
+];
+
 const mobileQuickLinks = [
-  { label: 'Обзор', href: '#dashboard', icon: LayoutDashboard },
-  { label: 'Россия', href: '#russia-business', icon: Landmark },
-  { label: 'Новости', href: '#news', icon: Newspaper },
-  { label: 'Сигналы', href: '#forecasts', icon: Target },
-  { label: 'Память', href: '#market-memory', icon: BrainCircuit },
-  { label: 'Гид', href: '#guide', icon: BookOpen },
+  {
+    label: 'Обзор',
+    href: '#dashboard',
+    icon: LayoutDashboard,
+    theme: null,
+  },
+  ...mobileThemeIds.map((themeId) => {
+    const theme = SECTION_THEMES[themeId];
+    return {
+      label: theme.navLabel,
+      href: theme.href,
+      icon: theme.icon,
+      theme,
+    };
+  }),
 ];
 
 type HeaderProps = {
@@ -184,7 +167,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
 
         <nav
           aria-label="Основная навигация"
-          className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-md md:flex"
+          className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-md lg:flex"
         >
           {navLinks.map((link) => {
             const Icon = link.icon;
@@ -193,20 +176,27 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
               <a
                 key={link.href}
                 href={link.href}
+                data-testid={`header-nav-${link.themeId}`}
                 onClick={() => {
                   setCurrentHash(link.href);
                   setActiveSection(link.href.replace('#', ''));
                 }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-extrabold transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary lg:gap-2 lg:px-4 lg:text-sm ${
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-2.5 py-2 text-[13px] font-extrabold transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary xl:gap-2 xl:px-3.5 xl:text-sm ${
                   isActive
-                    ? 'bg-accent text-white shadow-lg shadow-accent/30'
-                    : 'text-slate-100 hover:bg-white/10 hover:text-white active:bg-accent/20'
+                    ? link.theme.activeClass
+                    : `${link.theme.cardClass} text-slate-100 hover:text-white`
                 }`}
               >
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    isActive ? 'bg-current' : link.theme.dotClass
+                  }`}
+                  aria-hidden="true"
+                />
                 <Icon
-                  className={`hidden h-4 w-4 shrink-0 lg:block ${
-                    isActive ? 'text-white' : 'text-blue-300'
+                  className={`hidden h-4 w-4 shrink-0 xl:block ${
+                    isActive ? 'text-current' : link.theme.textClass
                   }`}
                 />
                 {link.label}
@@ -217,7 +207,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
 
         <button
           type="button"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/[0.07] text-white shadow-[0_10px_26px_rgba(0,0,0,0.24)] transition-all hover:border-accent/65 hover:bg-accent/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] md:hidden"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/[0.07] text-white shadow-[0_10px_26px_rgba(0,0,0,0.24)] transition-all hover:border-accent/65 hover:bg-accent/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] lg:hidden"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
           aria-expanded={menuOpen}
@@ -234,7 +224,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="overflow-hidden border-t border-white/10 bg-[#0B1222]/95 shadow-2xl backdrop-blur-xl md:hidden"
+          className="max-h-[calc(100dvh-11rem)] overflow-y-auto overscroll-contain border-t border-white/10 bg-[#0B1222]/95 shadow-2xl backdrop-blur-xl lg:hidden"
         >
           <div className="px-4 py-4">
             <div className="mb-3 flex items-center justify-between px-1">
@@ -260,26 +250,26 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
                     aria-current={isActive ? 'page' : undefined}
                     className={`group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.99] ${
                       isActive
-                        ? 'border-accent bg-linear-to-r from-accent to-accent-hover text-white shadow-[0_14px_32px_rgba(37,99,235,0.32)]'
-                        : 'border-white/15 bg-white/6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-accent/65 hover:bg-accent/15 active:bg-accent/20'
+                        ? link.theme.activeClass
+                        : `${link.theme.cardClass} text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]`
                     }`}
                   >
                     <span
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                         isActive
-                          ? 'border-white/25 bg-white/20 text-white'
-                          : 'border-accent/30 bg-accent/20 text-blue-200'
+                          ? 'border-white/25 bg-white/20 text-current'
+                          : `border-transparent ${link.theme.iconClass}`
                       }`}
                     >
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-base font-extrabold leading-tight text-white">
-                        {link.label}
+                      <span className="text-base font-extrabold leading-tight text-current">
+                        {link.theme.order} · {link.fullLabel}
                       </span>
                       <span
                         className={`mt-0.5 text-xs leading-snug ${
-                          isActive ? 'text-blue-100' : 'text-slate-300'
+                          isActive ? 'text-current opacity-80' : 'text-slate-300'
                         }`}
                       >
                         {link.description}
@@ -287,7 +277,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
                     </span>
                     <ChevronRight
                       className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${
-                        isActive ? 'text-white' : 'text-blue-300'
+                        isActive ? 'text-current' : link.theme.textClass
                       }`}
                     />
                   </a>
@@ -304,7 +294,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
           иначе «fixed bottom» внезапно считается от шапки, а не viewport. */}
       <nav
         aria-label="Быстрая мобильная навигация"
-        className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 grid grid-cols-6 rounded-2xl border border-white/12 bg-[#0B1222]/92 p-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-xl md:hidden"
+        className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 flex overflow-x-auto rounded-2xl border border-white/12 bg-[#0B1222]/92 p-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-xl scrollbar-hide lg:hidden"
       >
         {mobileQuickLinks.map((link) => {
           const Icon = link.icon;
@@ -319,13 +309,19 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
                 setMenuOpen(false);
               }}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`flex min-h-12 min-w-[4.15rem] flex-1 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-1.5 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive
-                  ? 'bg-accent text-white shadow-lg shadow-accent/25'
-                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  ? link.theme?.activeClass ?? 'border-accent bg-accent text-white shadow-lg shadow-accent/25'
+                  : link.theme
+                    ? `${link.theme.cardClass} text-slate-200`
+                    : 'border-transparent text-slate-300 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <Icon className="h-4.5 w-4.5 shrink-0" />
+              <Icon
+                className={`h-4.5 w-4.5 shrink-0 ${
+                  isActive ? 'text-current' : link.theme?.textClass ?? 'text-blue-300'
+                }`}
+              />
               <span className="max-w-full truncate">{link.label}</span>
             </a>
           );

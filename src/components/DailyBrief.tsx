@@ -14,6 +14,7 @@ import {
   type RussiaInsights,
   type RussiaMarketIndicator,
 } from '@/data/russiaInsights';
+import { SectionThemeBadge } from './sectionThemes';
 
 /**
  * «Бриф за 60 секунд» (этап 3 дорожной карты).
@@ -152,12 +153,12 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
     <li>
       <a
         href={item.href}
-        className="group flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+        className="group flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
       >
         {marker}
         <span className="min-w-0 flex-1">{item.body}</span>
         <ArrowRight
-          className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-cyan-300"
+          className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-violet-300"
           aria-hidden="true"
         />
       </a>
@@ -278,7 +279,7 @@ export default function DailyBrief() {
             : `, ${tensionDelta > 0 ? '+' : '−'}${Math.abs(tensionDelta)} ${plural(Math.abs(tensionDelta), ['пункт', 'пункта', 'пунктов'])} к предыдущему дню`;
       facts.push({
         id: 'tension',
-        href: '#dashboard',
+        href: '#tension',
         body: (
           <>
             Шкала напряжённости —{' '}
@@ -495,7 +496,7 @@ export default function DailyBrief() {
     } else if (tensionDelta !== null && Math.abs(tensionDelta) >= 10) {
       watch = {
         id: 'watch-tension',
-        href: '#dashboard',
+        href: '#tension',
         body: (
           <>
             Продолжится ли движение шкалы к следующему обновлению: сегодня уже{' '}
@@ -567,7 +568,7 @@ export default function DailyBrief() {
         totalSignificant += 1;
         items.push({
           id: 'change-tension',
-          href: '#dashboard',
+          href: '#tension',
           score: 95 + Math.min(10, (Math.abs(delta) / TENSION_CHANGE_THRESHOLD) * 2),
           body: (
             <>
@@ -738,7 +739,7 @@ export default function DailyBrief() {
   const changesSection = (
     <div data-testid="brief-changes" className="mt-5 border-t border-white/10 pt-4">
       <div className="flex flex-wrap items-center gap-2">
-        <History className="h-4 w-4 text-cyan-300" aria-hidden="true" />
+        <History className="h-4 w-4 text-violet-300" aria-hidden="true" />
         <h3 className="text-sm font-extrabold tracking-tight">{changesHeading}</h3>
         {baselineStamp && (
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
@@ -770,7 +771,7 @@ export default function DailyBrief() {
               item={item}
               marker={
                 <span
-                  className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300"
+                  className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-300"
                   aria-hidden="true"
                 />
               }
@@ -798,8 +799,9 @@ export default function DailyBrief() {
 
   return (
     <section id="brief" className="mb-10 scroll-mt-24 lg:mb-12" aria-label="Бриф за 60 секунд">
+      <SectionThemeBadge themeId="brief" className="mb-4" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Zap className="h-5 w-5 text-cyan-300" aria-hidden="true" />
+        <Zap className="h-5 w-5 text-violet-300" aria-hidden="true" />
         <h2 className="text-lg font-extrabold tracking-tight lg:text-xl">Бриф за 60 секунд</h2>
         {stamp && (
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
@@ -812,14 +814,14 @@ export default function DailyBrief() {
           download="market-pulse-brief.png"
           title="Серверная PNG-карточка с актуальными цифрами, без параметров отслеживания"
           aria-label="Скачать PNG-снимок брифа для Telegram"
-          className="ml-auto inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-cyan-100 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+          className="ml-auto inline-flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-100 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
           Снимок для Telegram
         </a>
       </div>
 
-      <div className="rounded-xl2 border border-border-subtle bg-bg-card p-4 shadow-lg sm:p-5">
+      <div className="rounded-xl2 border border-violet-300/25 bg-bg-card p-4 shadow-lg shadow-violet-950/20 sm:p-5">
         {loading ? (
           <div aria-busy="true" aria-label="Собираем бриф">
             <div className="h-5 w-56 animate-pulse rounded-sm bg-white/10" />
@@ -853,7 +855,7 @@ export default function DailyBrief() {
                       key={item.id}
                       item={item}
                       marker={
-                        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-extrabold text-white">
+                        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500 text-[11px] font-extrabold text-white">
                           {index + 1}
                         </span>
                       }
@@ -874,7 +876,7 @@ export default function DailyBrief() {
                         item={item}
                         marker={
                           <span
-                            className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300"
+                            className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-300"
                             aria-hidden="true"
                           />
                         }
@@ -895,15 +897,15 @@ export default function DailyBrief() {
               <a
                 data-testid="brief-watch"
                 href={brief.watch.href}
-                className="group mt-4 flex items-start gap-2.5 rounded-xl border border-cyan-300/20 bg-cyan-400/[0.07] px-3.5 py-3 text-sm leading-relaxed text-slate-200 transition-colors hover:border-cyan-300/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+                className="group mt-4 flex items-start gap-2.5 rounded-xl border border-violet-300/20 bg-violet-400/[0.07] px-3.5 py-3 text-sm leading-relaxed text-slate-200 transition-colors hover:border-violet-300/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
               >
-                <Eye className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" aria-hidden="true" />
+                <Eye className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  <strong className="font-extrabold text-cyan-100">Смотреть сегодня:</strong>{' '}
+                  <strong className="font-extrabold text-violet-100">Смотреть сегодня:</strong>{' '}
                   {brief.watch.body}
                 </span>
                 <ArrowRight
-                  className="mt-1 h-3.5 w-3.5 shrink-0 text-cyan-300/70 transition-colors group-hover:text-cyan-200"
+                  className="mt-1 h-3.5 w-3.5 shrink-0 text-violet-300/70 transition-colors group-hover:text-violet-200"
                   aria-hidden="true"
                 />
               </a>

@@ -5,6 +5,8 @@ import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
 import Footer from '@/components/Footer';
+import DashboardQuickNav from '@/components/DashboardQuickNav';
+import { SectionThemeBadge } from '@/components/sectionThemes';
 import { DeferredMount, SectionFallback } from '@/components/SectionFallback';
 
 const NewsFeed = lazy(() => import('@/components/NewsFeed'));
@@ -46,14 +48,26 @@ function App() {
 
     // После переключения между дашбордом и гидом целевой элемент может
     // появиться только после загрузки lazy-чанка (например, #guide-memory
-    // внутри AnalyticsGuide). Поэтому не ограничиваемся одним кадром:
-    // повторяем поиск несколько секунд, пока элемент реально не появится.
+    // внутри AnalyticsGuide). Кроме того, асинхронные данные в секциях выше
+    // цели могут изменить высоту страницы уже после первой прокрутки.
+    // Поэтому несколько секунд мягко проверяем позицию и корректируем её,
+    // пока пользователь сам не начнёт прокручивать страницу.
     let cancelled = false;
+    let userInterrupted = false;
     let timer = 0;
     let attempts = 0;
+    let corrections = 0;
+    const startedAt = Date.now();
+    const markInterrupted = () => {
+      userInterrupted = true;
+    };
+
+    window.addEventListener('wheel', markInterrupted, { passive: true });
+    window.addEventListener('touchmove', markInterrupted, { passive: true });
+    window.addEventListener('keydown', markInterrupted);
 
     const tryScroll = () => {
-      if (cancelled) return;
+      if (cancelled || userInterrupted) return;
       let target: Element | null = null;
       try {
         target = document.querySelector(currentHash);
@@ -62,12 +76,24 @@ function App() {
       }
 
       if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const top = target.getBoundingClientRect().top;
+        const needsCorrection = corrections === 0 || top < 48 || top > 220;
+        if (needsCorrection) {
+          target.scrollIntoView({
+            behavior: corrections === 0 ? 'smooth' : 'auto',
+            block: 'start',
+          });
+        }
+        corrections += 1;
+
+        if (Date.now() - startedAt < 4500) {
+          timer = window.setTimeout(tryScroll, corrections === 1 ? 750 : 550);
+        }
         return;
       }
 
       attempts += 1;
-      if (attempts < 16) {
+      if (Date.now() - startedAt < 4500) {
         timer = window.setTimeout(tryScroll, attempts < 4 ? 60 : 250);
       }
     };
@@ -80,11 +106,14 @@ function App() {
       cancelled = true;
       cancelAnimationFrame(frame);
       window.clearTimeout(timer);
+      window.removeEventListener('wheel', markInterrupted);
+      window.removeEventListener('touchmove', markInterrupted);
+      window.removeEventListener('keydown', markInterrupted);
     };
   }, [currentHash, view]);
 
   return (
-    <div className="min-h-screen bg-bg-primary pb-20 text-text-primary md:pb-0">
+    <div className="min-h-screen bg-bg-primary pb-20 text-text-primary lg:pb-0">
       <Header activeView={view} />
       <main className="mx-auto max-w-[1400px] px-4 pb-8 pt-24 sm:px-6 lg:px-10 lg:pt-28">
         {view === 'guide' ? (
@@ -102,43 +131,56 @@ function App() {
           </Suspense>
         ) : (
           <>
-            <section className="mb-8 max-w-5xl lg:mb-10">
+            <section id="dashboard" className="mb-8 max-w-5xl scroll-mt-24 lg:mb-10">
               <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-accent">
-                Аналитика простым языком
+                Россия · мировая экономика · рынки
               </div>
               <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                Что произошло в мире — и что это значит для России и рынков
+                Сначала Россия — затем мировой фон и его последствия
               </h1>
               <p className="mt-3 max-w-4xl text-base leading-relaxed text-text-secondary lg:text-lg">
-                За несколько минут: сначала общий новостной фон, затем российские курсы и последствия для бизнеса,
-                после этого фактическая реакция цен и только в конце — осторожная гипотеза, а не обещание прибыли.
+                Страница читается по порядку: российские курсы и рынок, отдельный блок глобальной
+                экономики, короткий бриф, новости, сигналы и проверка истории. Цветные кнопки ниже
+                ведут сразу к нужной теме.
               </p>
-              <div className="mt-5 grid gap-2 text-sm font-semibold text-slate-200 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/4.5 px-4 py-3">
-                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">1</span>
-                  Смотрите фон и российские индикаторы
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/4.5 px-4 py-3">
-                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">2</span>
-                  Проверяйте цены и первоисточники
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/4.5 px-4 py-3">
-                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">3</span>
-                  Отличайте факт от прогноза
-                </div>
-              </div>
             </section>
 
-            <TensionScale />
+            <DashboardQuickNav />
+
+            <RussiaBusiness />
+
+            <section
+              id="global-economy"
+              aria-labelledby="global-economy-title"
+              className="mb-10 scroll-mt-24 rounded-[28px] border border-cyan-300/25 bg-cyan-400/[0.03] p-3 shadow-xl shadow-cyan-950/20 sm:p-5 lg:mb-12 lg:p-6"
+            >
+              <div className="mb-7 px-1 pt-1 sm:px-2">
+                <SectionThemeBadge themeId="global" />
+                <h2
+                  id="global-economy-title"
+                  className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
+                >
+                  Глобальная экономика
+                </h2>
+                <p className="mt-2 max-w-4xl text-sm leading-relaxed text-slate-300 sm:text-base">
+                  Отдельный мировой блок после российского. Сначала шкала новостного напряжения,
+                  затем внешние котировки и графики. Курсы ЦБ, рубль и Мосбиржа остались выше —
+                  в синем российском разделе.
+                </p>
+              </div>
+
+              <TensionScale />
+              <KeyAssets />
+            </section>
+
             <DailyBrief />
-            <RussiaBusiness globalMarkets={<KeyAssets />} />
 
             <DeferredMount
               targetId="news"
               fallback={
                 <SectionFallback
                   id="news"
-                  title="Лента событий"
+                  title="Глобальные новости"
                   message="Раздел загрузится при приближении к нему, чтобы первая страница открывалась быстрее."
                   minHeightClass="min-h-[560px]"
                   className="mb-10 lg:mb-12"
@@ -149,8 +191,8 @@ function App() {
                 fallback={
                   <SectionFallback
                     id="news"
-                    title="Лента событий"
-                    message="Готовим фильтры, источники и последние новости…"
+                    title="Глобальные новости"
+                    message="Готовим фильтры, источники и последние четыре новости…"
                     minHeightClass="min-h-[560px]"
                     className="mb-10 lg:mb-12"
                   />
