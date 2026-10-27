@@ -1,5 +1,7 @@
-/* eslint-disable react-refresh/only-export-components -- Vercel Edge function, not a Vite module. */
-import { ImageResponse } from '@vercel/og';
+/* eslint-disable react-refresh/only-export-components -- Vercel serverless function, not a Vite module. */
+import { readFile } from 'node:fs/promises';
+import { Resvg } from '@resvg/resvg-js';
+import satori from 'satori';
 
 /**
  * Stage 5: server-generated Telegram card for the deterministic brief.
@@ -10,8 +12,6 @@ import { ImageResponse } from '@vercel/og';
  * marker. Missing sources degrade to explicit "not enough data" lines;
  * fallback/demo numbers are never substituted.
  */
-
-export const config = { runtime: 'edge' };
 
 type AnyRecord = Record<string, unknown>;
 
@@ -25,6 +25,7 @@ type BriefCard = {
   changesTitle: string | null;
   changes: string[];
   changesNote: string | null;
+  changesExtraNote: string | null;
   watch: string | null;
 };
 
@@ -43,6 +44,9 @@ const SUPABASE_URL =
   env.SUPABASE_URL || env.VITE_SUPABASE_URL || 'https://hekzplfftannlzwvgwwm.supabase.co';
 // Publishable/anon key only. The same key is already shipped to browsers;
 // Supabase RLS grants it SELECT-only access to the public cache tables.
+const SITE_ORIGIN = env.VERCEL_URL
+  ? `https://${env.VERCEL_URL}`
+  : 'https://market-pulse1-eta.vercel.app';
 const SUPABASE_ANON_KEY =
   env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_FPAh2Z30aCCKpbfDdDrM_g_urRwk8r-';
 
@@ -74,11 +78,13 @@ function loadFonts(): Promise<FontSpec[]> {
     ] as const;
     fontsPromise = Promise.all(
       specs.map(async ([path, weight]) => {
-        const response = await fetch(new URL(path, import.meta.url));
-        if (!response.ok) throw new Error(`Font load failed: ${response.status}`);
+        const buffer = await readFile(new URL(path, import.meta.url));
         return {
           name: 'Inter',
-          data: await response.arrayBuffer(),
+          data: buffer.buffer.slice(
+            buffer.byteOffset,
+            buffer.byteOffset + buffer.byteLength,
+          ) as ArrayBuffer,
           weight,
           style: 'normal' as const,
         };
@@ -220,9 +226,9 @@ async function fetchSupabase(path: string): Promise<unknown> {
   );
 }
 
-async function fetchRussia(request: Request): Promise<AnyRecord | null> {
+async function fetchRussia(): Promise<AnyRecord | null> {
   try {
-    const url = new URL('/api/russia-insights', request.url).toString();
+    const url = new URL('/api/russia-insights', SITE_ORIGIN).toString();
     const payload = await fetchJsonWithTimeout(
       url,
       {
@@ -289,7 +295,7 @@ function publicSignalLabel(direction: string, probability: number | null): strin
   return probability < 70 ? `Слабый перекос ${side}` : side === 'вверх' ? 'Вверх' : 'Вниз';
 }
 
-async function buildBriefCard(request: Request): Promise<BriefCard> {
+async function buildBriefCard(): Promise<BriefCard> {
   const today = moscowDateKey();
   const [tensionResult, newsResult, assetsResult, forecastsResult, snapshotResult, russia] =
     await Promise.all([
@@ -316,7 +322,7 @@ async function buildBriefCard(request: Request): Promise<BriefCard> {
           `daily_snapshots?select=date,captured_at,tension,assets,russia,forecasts&date=eq.${today}&limit=1`,
         ),
       ]).then((items) => items[0]),
-      fetchRussia(request),
+      fetchRussia(),
     ]);
 
   const tensionRow = firstRow(settledValue(tensionResult, null));
@@ -494,6 +500,7 @@ async function buildBriefCard(request: Request): Promise<BriefCard> {
   let changesTitle: string | null = null;
   const changes: string[] = [];
   let changesNote: string | null = null;
+  let changesExtraNote: string | null = null;
 
   if (snapshotRow) {
     const capturedAt = stringValue(snapshotRow.captured_at);
@@ -592,7 +599,7 @@ async function buildBriefCard(request: Request): Promise<BriefCard> {
     } else {
       changes.push(...sorted.slice(0, 2).map((item) => item.text));
       if (sorted.length > 2) {
-        changesNote = `${changesNote ? `${changesNote} · ` : ''}ещё ${sorted.length - 2} ${plural(sorted.length - 2, ['изменение', 'изменения', 'изменений'])} — на сайте`;
+        changesExtraNote = `Ещё ${sorted.length - 2} ${plural(sorted.length - 2, ['изменение', 'изменения', 'изменений'])} выше порогов — на сайте.`;
       }
     }
   }
@@ -620,6 +627,7 @@ async function buildBriefCard(request: Request): Promise<BriefCard> {
     changesTitle,
     changes: changes.map((item) => truncateText(item, 166)),
     changesNote,
+    changesExtraNote,
     watch: watch ? truncateText(watch, 190) : null,
   };
 }
@@ -674,7 +682,7 @@ function FactItem({ index, text }: { index: number; text: string }) {
       >
         {index + 1}
       </div>
-      <div style={{ flex: 1, fontSize: 29, lineHeight: 1.34, color: '#dbeafe' }}>{text}</div>
+      <div style={{ flex: 1, fontSize: 28, lineHeight: 1.3, color: '#dbeafe' }}>{text}</div>
     </div>
   );
 }
@@ -693,7 +701,7 @@ function BulletItem({ text, first }: { text: string; first: boolean }) {
           flexShrink: 0,
         }}
       />
-      <div style={{ flex: 1, fontSize: 27, lineHeight: 1.34, color: '#cbd5e1' }}>{text}</div>
+      <div style={{ flex: 1, fontSize: 26, lineHeight: 1.3, color: '#cbd5e1' }}>{text}</div>
     </div>
   );
 }
@@ -714,8 +722,9 @@ function BriefImage({ card }: { card: BriefCard }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
+        boxSizing: 'border-box',
         width: 1080,
-        height: 1350,
+        height: 1600,
         padding: '54px 58px 46px',
         background: '#050914',
         backgroundImage:
@@ -773,13 +782,14 @@ function BriefImage({ card }: { card: BriefCard }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', marginTop: 36, fontSize: 56, fontWeight: 800, letterSpacing: -1.6 }}>
+      <div style={{ display: 'flex', marginTop: 30, fontSize: 56, fontWeight: 800, letterSpacing: -1.6 }}>
         Бриф за 60 секунд
       </div>
 
       <div
         style={{
           display: 'flex',
+          boxSizing: 'border-box',
           flexDirection: 'column',
           width: '100%',
           marginTop: 25,
@@ -829,14 +839,14 @@ function BriefImage({ card }: { card: BriefCard }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 29 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 24 }}>
         <SectionTitle>ФАКТЫ</SectionTitle>
         {card.facts.map((fact, index) => (
           <FactItem key={index} index={index} text={fact} />
         ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 27 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 22 }}>
         <SectionTitle>ЧТО ЭТО ЗНАЧИТ ДЛЯ РОССИИ</SectionTitle>
         {card.consequences.map((item, index) => (
           <BulletItem key={index} text={item} first={index === 0} />
@@ -847,9 +857,10 @@ function BriefImage({ card }: { card: BriefCard }) {
         <div
           style={{
             display: 'flex',
+            boxSizing: 'border-box',
             flexDirection: 'column',
             width: '100%',
-            marginTop: 24,
+            marginTop: 20,
             padding: '20px 22px 22px',
             borderRadius: 24,
             border: '1px solid rgba(34,211,238,0.20)',
@@ -860,15 +871,21 @@ function BriefImage({ card }: { card: BriefCard }) {
           {card.changes.map((item, index) => (
             <BulletItem key={index} text={item} first={index === 0} />
           ))}
+          {card.changesExtraNote ? (
+            <div style={{ display: 'flex', marginTop: 10, fontSize: 18, color: '#7dd3fc' }}>
+              {card.changesExtraNote}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {card.watch ? (
         <div
           style={{
+            boxSizing: 'border-box',
             display: 'flex',
             width: '100%',
-            marginTop: 22,
+            marginTop: 18,
             padding: '19px 22px 21px',
             borderRadius: 24,
             border: '1px solid rgba(34,211,238,0.35)',
@@ -878,8 +895,10 @@ function BriefImage({ card }: { card: BriefCard }) {
             color: '#e0f2fe',
           }}
         >
-          <span style={{ fontWeight: 800, color: '#a5f3fc' }}>Смотреть сегодня: </span>
-          <span>{card.watch}</span>
+          <div style={{ width: 192, flexShrink: 0, fontWeight: 800, color: '#a5f3fc' }}>
+            Смотреть сегодня:
+          </div>
+          <div style={{ flex: 1 }}>{card.watch}</div>
         </div>
       ) : null}
 
@@ -916,37 +935,47 @@ function BriefImage({ card }: { card: BriefCard }) {
   );
 }
 
-export default async function handler(request: Request) {
-  if (!['GET', 'HEAD'].includes(request.method)) {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: {
-        Allow: 'GET, HEAD',
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store',
-      },
-    });
+type NodeRequest = {
+  method?: string;
+};
+
+type NodeResponse = {
+  setHeader: (name: string, value: string) => void;
+  status: (code: number) => NodeResponse;
+  json: (body: unknown) => void;
+  send: (body: Buffer) => void;
+};
+
+export default async function handler(req: NodeRequest, res: NodeResponse) {
+  if (!['GET', 'HEAD'].includes(req.method ?? '')) {
+    res.setHeader('Allow', 'GET, HEAD');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   try {
-    const [card, fonts] = await Promise.all([buildBriefCard(request), loadFonts()]);
-    return new ImageResponse(<BriefImage card={card} />, {
+    const [card, fonts] = await Promise.all([buildBriefCard(), loadFonts()]);
+    const svg = await satori(<BriefImage card={card} />, {
       width: 1080,
-      height: 1350,
+      height: 1600,
       fonts,
-      headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-        'Content-Disposition': 'attachment; filename="market-pulse-brief.png"',
-      },
-    }) as unknown as Response;
+    });
+    const png = new Resvg(svg, {
+      fitTo: { mode: 'width', value: 1080 },
+    })
+      .render()
+      .asPng();
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    res.setHeader('Content-Disposition', 'attachment; filename="market-pulse-brief.png"');
+    res.status(200).send(png);
   } catch (error) {
     console.error('Brief image generation failed:', error);
-    return new Response(JSON.stringify({ error: 'Brief image generation failed' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store',
-      },
-    });
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(500).json({ error: 'Brief image generation failed' });
   }
 }
