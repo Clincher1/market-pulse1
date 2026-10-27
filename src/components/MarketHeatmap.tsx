@@ -5,6 +5,7 @@ import {
   Globe,
   Grid2x2,
   Minus,
+  Palette as PaletteIcon,
   TrendingDown,
   TrendingUp,
   X,
@@ -30,9 +31,46 @@ const SATURATION_CAPS: Record<string, number> = {
 
 type Rgb = [number, number, number];
 
+/**
+ * Горизонты цвета плиток. Интервалы считаются в сохранённых наблюдениях
+ * источника (дневных закрытиях), а не в календарных днях: у FRED/EIA
+ * наблюдения отстают от календаря, и подпись обязана это честно отражать.
+ */
+const HORIZON_OPTIONS = [
+  { id: 'day', label: 'День', accusative: 'день', intervals: 1 },
+  { id: 'week', label: 'Неделя', accusative: 'неделю', intervals: 5 },
+  { id: 'month', label: 'Месяц', accusative: 'месяц', intervals: 29 },
+] as const;
+
+type HorizonId = (typeof HORIZON_OPTIONS)[number]['id'];
+type PaletteId = 'standard' | 'colorblind';
+
+const PALETTE_STORAGE_KEY = 'market-pulse-heatmap-palette';
+
 const NEUTRAL: Rgb = [30, 41, 59];
-const POSITIVE: Rgb = [5, 150, 105];
-const NEGATIVE: Rgb = [220, 38, 38];
+
+/**
+ * Две палитры направления. Стандартная — красно-зелёная; альтернативная
+ * сине-оранжевая различается при дейтеранопии/протанопии. Знак при этом
+ * всегда продублирован текстом процента и иконкой тренда.
+ */
+const PALETTES: Record<
+  PaletteId,
+  { tilePositive: Rgb; tileNegative: Rgb; linePositive: string; lineNegative: string }
+> = {
+  standard: {
+    tilePositive: [5, 150, 105],
+    tileNegative: [220, 38, 38],
+    linePositive: '#34d399',
+    lineNegative: '#f87171',
+  },
+  colorblind: {
+    tilePositive: [2, 132, 199],
+    tileNegative: [234, 88, 12],
+    linePositive: '#38bdf8',
+    lineNegative: '#fb923c',
+  },
+};
 
 function mix(from: Rgb, to: Rgb, amount: number): string {
   const value = from.map((channel, index) =>
@@ -41,13 +79,84 @@ function mix(from: Rgb, to: Rgb, amount: number): string {
   return `rgb(${value[0]}, ${value[1]}, ${value[2]})`;
 }
 
-function tileColor(asset: AssetData): string {
-  const cap = SATURATION_CAPS[asset.id] ?? 3;
-  const rawIntensity = Math.min(1, Math.abs(asset.change ?? 0) / cap);
+function rgbString([r, g, b]: Rgb): string {
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function horizonOption(id: HorizonId) {
+  return HORIZON_OPTIONS.find((option) => option.id === id) ?? HORIZON_OPTIONS[0];
+}
+
+/**
+ * Изменение за выбранный горизонт по спарклайну. Для дня предпочитаем
+ * официальное поле change бэкенда; для недели/месяца считаем от точки
+ * N наблюдений назад. Возвращает фактическое число интервалов, если ряд
+ * короче запрошенного горизонта.
+ */
+function horizonChange(
+  asset: AssetData,
+  horizonId: HorizonId,
+): { change: number | null; intervals: number } {
+  const points = (asset.sparkline ?? []).filter((value) => Number.isFinite(value));
+  if (horizonId === 'day') {
+    if (typeof asset.change === 'number' && Number.isFinite(asset.change)) {
+      return { change: asset.change, intervals: 1 };
+    }
+  }
+  if (points.length < 2) return { change: null, intervals: 0 };
+  const intervals = Math.min(horizonOption(horizonId).intervals, points.length - 1);
+  const base = points[points.length - 1 - intervals];
+  const last = points[points.length - 1];
+  if (!base) return { change: null, intervals };
+  return { change: ((last - base) / base) * 100, intervals };
+}
+
+/**
+ * Шкала насыщенности для горизонта: дневная шкала актива, растянутая на
+ * √числа интервалов — грубое, но честно подписанное приближение того, как
+ * растёт обычный разброс движения с длиной периода.
+ */
+function horizonCap(assetId: string, intervals: number): number {
+  const dailyCap = SATURATION_CAPS[assetId] ?? 3;
+  return dailyCap * Math.sqrt(Math.max(1, intervals));
+}
+
+function formatCap(cap: number): string {
+  return `${cap.toFixed(1).replace(/\.0$/, '')}%`;
+}
+
+function observationsWord(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'наблюдение';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'наблюдения';
+  return 'наблюдений';
+}
+
+function tileColor(change: number, cap: number, paletteId: PaletteId): string {
+  const palette = PALETTES[paletteId];
+  const rawIntensity = Math.min(1, Math.abs(change) / cap);
   // Square-root easing makes small but real moves visible without
   // pretending that colour is a precise measurement. The number is exact.
   const intensity = Math.sqrt(rawIntensity);
-  return mix(NEUTRAL, asset.change >= 0 ? POSITIVE : NEGATIVE, intensity);
+  return mix(NEUTRAL, change >= 0 ? palette.tilePositive : palette.tileNegative, intensity);
+}
+
+function directionalTextClass(value: number, paletteId: PaletteId): string {
+  if (paletteId === 'colorblind') {
+    return value >= 0 ? 'text-sky-300' : 'text-orange-300';
+  }
+  return value >= 0 ? 'text-emerald-300' : 'text-red-300';
+}
+
+function readInitialPalette(): PaletteId {
+  try {
+    return window.localStorage.getItem(PALETTE_STORAGE_KEY) === 'colorblind'
+      ? 'colorblind'
+      : 'standard';
+  } catch {
+    return 'standard';
+  }
 }
 
 function formatChange(change: number): string {
@@ -167,23 +276,31 @@ function TileSparkline({ values }: { values: number[] }) {
 
 function HeatTile({
   asset,
+  horizonId,
+  paletteId,
   isFallback = false,
   isSelected = false,
   onSelect,
 }: {
   asset: AssetData;
+  horizonId: HorizonId;
+  paletteId: PaletteId;
   isFallback?: boolean;
   isSelected?: boolean;
   onSelect: (id: string) => void;
 }) {
-  const change = asset.change ?? 0;
-  const cap = SATURATION_CAPS[asset.id] ?? 3;
-  const nearlyFlat = Math.abs(change) < 0.005;
+  const horizon = horizonOption(horizonId);
+  const { change: horizonChangeValue, intervals } = horizonChange(asset, horizonId);
+  const change = horizonChangeValue ?? 0;
+  const cap = horizonCap(asset.id, intervals);
+  const nearlyFlat = horizonChangeValue === null || Math.abs(change) < 0.005;
   const DirectionIcon = nearlyFlat ? Minus : change > 0 ? TrendingUp : TrendingDown;
   const tooltip =
-    `${asset.name}: ${asset.price}, изменение ${formatChange(change)}. ` +
-    `Насыщенность цвета нормирована к шкале ±${cap}% для этого актива. ` +
-    'Белая мини-линия показывает только форму последних сохранённых дневных значений без оси цены и времени. ' +
+    `${asset.name}: ${asset.price}, изменение за горизонт «${horizon.label}» ` +
+    `(${intervals} ${observationsWord(intervals)} источника): ` +
+    `${horizonChangeValue === null ? 'недостаточно данных' : formatChange(change)}. ` +
+    `Насыщенность цвета нормирована к шкале ±${formatCap(cap)} для этого актива и горизонта. ` +
+    'Белая мини-линия показывает форму всех последних сохранённых дневных значений без оси цены и времени. ' +
     'Площадь плитки одинакова для всех активов и ничего не кодирует. ' +
     'Нажмите на плитку, чтобы развернуть график, статистику периода, текущий сигнал и источник данных.' +
     (isFallback
@@ -204,7 +321,9 @@ function HeatTile({
           ? 'border-cyan-200/70 ring-2 ring-cyan-300'
           : 'border-white/10'
       }`}
-      style={{ backgroundColor: isFallback ? 'rgb(51, 65, 85)' : tileColor(asset) }}
+      style={{
+        backgroundColor: isFallback ? 'rgb(51, 65, 85)' : tileColor(change, cap, paletteId),
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-extrabold tracking-wide">{asset.name}</span>
@@ -230,10 +349,10 @@ function HeatTile({
 
       <div className="mt-3 flex items-end justify-between gap-2">
         <span className="text-base font-extrabold tabular-nums">
-          {nearlyFlat ? '0.00%' : formatChange(change)}
+          {horizonChangeValue === null ? '—' : nearlyFlat ? '0.00%' : formatChange(change)}
         </span>
         <span className="text-[10px] font-semibold uppercase tracking-wider text-white/65">
-          шкала ±{cap}%
+          шкала ±{formatCap(cap)}
         </span>
       </div>
 
@@ -249,7 +368,17 @@ function HeatTile({
  * без календарных дат, поэтому ось X честно подписана в торговых днях,
  * а подсказка показывает «N торговых дней назад».
  */
-function AssetChart({ values }: { values: number[] }) {
+function AssetChart({
+  values,
+  paletteId,
+  highlightIndex = null,
+  highlightLabel = '',
+}: {
+  values: number[];
+  paletteId: PaletteId;
+  highlightIndex?: number | null;
+  highlightLabel?: string;
+}) {
   const gradientId = useId().replace(/:/g, '');
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const points = values.filter((value) => Number.isFinite(value));
@@ -282,7 +411,17 @@ function AssetChart({ values }: { values: number[] }) {
   const first = points[0];
   const last = points[points.length - 1];
   const periodChange = first !== 0 ? ((last - first) / first) * 100 : 0;
-  const stroke = periodChange > 0.005 ? '#34d399' : periodChange < -0.005 ? '#f87171' : '#cbd5e1';
+  const palette = PALETTES[paletteId];
+  const stroke =
+    periodChange > 0.005
+      ? palette.linePositive
+      : periodChange < -0.005
+        ? palette.lineNegative
+        : '#cbd5e1';
+  const highlight =
+    highlightIndex !== null && highlightIndex > 0 && highlightIndex < coords.length
+      ? coords[highlightIndex]
+      : null;
   const active = activeIndex !== null ? coords[activeIndex] : null;
   const activePct = active ? (active.x / width) * 100 : 0;
   const activeOffset = activeIndex !== null ? points.length - 1 - activeIndex : 0;
@@ -340,6 +479,21 @@ function AssetChart({ values }: { values: number[] }) {
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
           />
+          {highlight && (
+            <>
+              <line
+                x1={highlight.x}
+                x2={highlight.x}
+                y1={padTop}
+                y2={height - padBottom}
+                stroke="rgba(255,255,255,0.45)"
+                strokeWidth="1.2"
+                strokeDasharray="4 4"
+                vectorEffect="non-scaling-stroke"
+              />
+              <circle cx={highlight.x} cy={highlight.y} r="3.2" fill="#ffffff" stroke={stroke} strokeWidth="1.6" />
+            </>
+          )}
           <circle
             cx={coords[coords.length - 1].x}
             cy={coords[coords.length - 1].y}
@@ -386,8 +540,11 @@ function AssetChart({ values }: { values: number[] }) {
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
         Дневные закрытия · последние {points.length} {daysWord(points.length)} · наведите курсор
-        или коснитесь графика, чтобы увидеть значения. Полная история с календарными датами —
-        в следующей фазе.
+        или коснитесь графика, чтобы увидеть значения.
+        {highlight && highlightLabel
+          ? ` Пунктир — начало выбранного горизонта (${highlightLabel}).`
+          : ''}{' '}
+        Полная история с календарными датами — в следующей фазе.
       </p>
     </div>
   );
@@ -395,12 +552,16 @@ function AssetChart({ values }: { values: number[] }) {
 
 function AssetPanel({
   asset,
+  horizonId,
+  paletteId,
   isFallback,
   forecast,
   forecastLoading,
   onClose,
 }: {
   asset: AssetData;
+  horizonId: HorizonId;
+  paletteId: PaletteId;
   isFallback: boolean;
   forecast: ForecastData | null;
   forecastLoading: boolean;
@@ -408,10 +569,16 @@ function AssetPanel({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const points = (asset.sparkline ?? []).filter((value) => Number.isFinite(value));
-  const first = points[0];
   const last = points[points.length - 1];
-  const periodChange =
-    points.length >= 2 && first !== 0 ? ((last - first) / first) * 100 : null;
+  const horizon = horizonOption(horizonId);
+  const {
+    change: selectedChange,
+    intervals: selectedIntervals,
+  } = horizonChange(asset, horizonId);
+  const highlightIndex =
+    points.length >= 2 && selectedIntervals > 0
+      ? points.length - 1 - selectedIntervals
+      : null;
   const meta = ASSET_SOURCE_META[asset.id];
   const forecastPublishedForAsset = asset.id in FORECAST_ASSET_NAME;
   // Тот же порог, что и в разделе «Прогнозы»: ниже 60/40 направления нет.
@@ -419,6 +586,24 @@ function AssetPanel({
     forecast && forecast.direction !== 'none' && forecast.probability >= 60,
   );
   const signalUp = hasSignal && forecast?.direction === 'up';
+  const signalPillClass = !hasSignal
+    ? 'bg-white/10 text-text-secondary'
+    : paletteId === 'colorblind'
+      ? signalUp
+        ? 'bg-sky-400/15 text-sky-200'
+        : 'bg-orange-400/15 text-orange-200'
+      : signalUp
+        ? 'bg-emerald-400/15 text-emerald-200'
+        : 'bg-red-400/15 text-red-200';
+  const signalBarClass = !hasSignal
+    ? 'bg-slate-400'
+    : paletteId === 'colorblind'
+      ? signalUp
+        ? 'bg-sky-400'
+        : 'bg-orange-400'
+      : signalUp
+        ? 'bg-emerald-400'
+        : 'bg-red-400';
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -452,9 +637,7 @@ function AssetPanel({
             <span className="font-extrabold tabular-nums text-text-primary">{asset.price}</span>
             {' · '}
             <span
-              className={`font-extrabold tabular-nums ${
-                (asset.change ?? 0) >= 0 ? 'text-emerald-300' : 'text-red-300'
-              }`}
+              className={`font-extrabold tabular-nums ${directionalTextClass(asset.change ?? 0, paletteId)}`}
             >
               {formatChange(asset.change ?? 0)}
             </span>{' '}
@@ -479,26 +662,30 @@ function AssetPanel({
       )}
 
       <div className="mt-4">
-        <AssetChart values={points} />
+        <AssetChart
+          values={points}
+          paletteId={paletteId}
+          highlightIndex={highlightIndex}
+          highlightLabel={`${horizon.label.toLowerCase()}: последние ${selectedIntervals} ${observationsWord(selectedIntervals)}`}
+        />
       </div>
 
       {points.length >= 2 && (
         <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-              За {points.length} {daysWord(points.length)}
+              За {horizon.accusative} · {selectedIntervals}{' '}
+              {observationsWord(selectedIntervals)}
             </dt>
             <dd
-              className={`mt-0.5 text-base font-extrabold tabular-nums ${
-                (periodChange ?? 0) >= 0 ? 'text-emerald-300' : 'text-red-300'
-              }`}
+              className={`mt-0.5 text-base font-extrabold tabular-nums ${directionalTextClass(selectedChange ?? 0, paletteId)}`}
             >
-              {periodChange !== null ? formatChange(periodChange) : '—'}
+              {selectedChange !== null ? formatChange(selectedChange) : '—'}
             </dd>
           </div>
           <div>
             <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-              Минимум периода
+              Минимум · {points.length} {daysWord(points.length)}
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
               {formatValue(Math.min(...points))}
@@ -506,7 +693,7 @@ function AssetPanel({
           </div>
           <div>
             <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-              Максимум периода
+              Максимум · {points.length} {daysWord(points.length)}
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
               {formatValue(Math.max(...points))}
@@ -547,13 +734,7 @@ function AssetPanel({
             <div className="mt-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-extrabold ${
-                    hasSignal
-                      ? signalUp
-                        ? 'bg-emerald-400/15 text-emerald-200'
-                        : 'bg-red-400/15 text-red-200'
-                      : 'bg-white/10 text-text-secondary'
-                  }`}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-extrabold ${signalPillClass}`}
                 >
                   {hasSignal ? (
                     signalUp ? (
@@ -578,9 +759,7 @@ function AssetPanel({
                 aria-hidden="true"
               >
                 <div
-                  className={`h-full rounded-full ${
-                    hasSignal ? (signalUp ? 'bg-emerald-400' : 'bg-red-400') : 'bg-slate-400'
-                  }`}
+                  className={`h-full rounded-full ${signalBarClass}`}
                   style={{ width: `${forecast.probability}%` }}
                 />
               </div>
@@ -671,9 +850,21 @@ export default function MarketHeatmap({
   fallbackAssetIds?: string[];
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(readInitialAssetId);
+  const [horizonId, setHorizonId] = useState<HorizonId>('day');
+  const [paletteId, setPaletteId] = useState<PaletteId>(readInitialPalette);
   const [forecasts, setForecasts] = useState<ForecastData[] | null>(null);
   const [forecastLoading, setForecastLoading] = useState(false);
   const forecastRequestRef = useRef<Promise<ForecastData[]> | null>(null);
+
+  // Палитра — функциональная настройка доступности. Хранится только
+  // локально в браузере и никуда не отправляется.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PALETTE_STORAGE_KEY, paletteId);
+    } catch {
+      // Недоступное хранилище не должно ломать карту.
+    }
+  }, [paletteId]);
 
   const selectedAsset =
     !loading && selectedId ? assets.find((asset) => asset.id === selectedId) ?? null : null;
@@ -765,6 +956,59 @@ export default function MarketHeatmap({
         </p>
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div
+          role="group"
+          aria-label="Горизонт изменения на тепловой карте"
+          className="inline-flex rounded-full border border-white/15 bg-white/5 p-1"
+        >
+          {HORIZON_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              id={`heat-horizon-${option.id}`}
+              type="button"
+              disabled={loading}
+              aria-pressed={horizonId === option.id}
+              onClick={() => setHorizonId(option.id)}
+              className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
+                horizonId === option.id
+                  ? 'bg-cyan-300 text-[#071120]'
+                  : 'text-text-secondary hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <button
+          id="heat-palette-toggle"
+          type="button"
+          disabled={loading}
+          aria-pressed={paletteId === 'colorblind'}
+          title={
+            paletteId === 'colorblind'
+              ? 'Включена сине-оранжевая палитра: синий — рост, оранжевый — снижение'
+              : 'Включить сине-оранжевую палитру для дальтоников'
+          }
+          onClick={() =>
+            setPaletteId((previous) => (previous === 'colorblind' ? 'standard' : 'colorblind'))
+          }
+          className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
+            paletteId === 'colorblind'
+              ? 'border-orange-300/50 bg-sky-400/15 text-sky-100'
+              : 'border-white/15 bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <PaletteIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          Палитра для дальтоников
+        </button>
+        <p className="w-full text-[11px] leading-relaxed text-text-secondary sm:w-auto sm:flex-1">
+          Цвет и процент плиток — за выбранный горизонт по последним сохранённым наблюдениям
+          источника: день — 1, неделя — 5, месяц — до 29. Это наблюдения, а не обязательно
+          календарные дни.
+        </p>
+      </div>
+
       {loading ? (
         <SkeletonTiles />
       ) : (
@@ -774,6 +1018,8 @@ export default function MarketHeatmap({
               <HeatTile
                 key={asset.id}
                 asset={asset}
+                horizonId={horizonId}
+                paletteId={paletteId}
                 isFallback={fallbackAssetIds.includes(asset.id)}
                 isSelected={selectedId === asset.id}
                 onSelect={handleSelect}
@@ -783,6 +1029,8 @@ export default function MarketHeatmap({
           {selectedAsset && (
             <AssetPanel
               asset={selectedAsset}
+              horizonId={horizonId}
+              paletteId={paletteId}
               isFallback={fallbackAssetIds.includes(selectedAsset.id)}
               forecast={selectedForecast}
               forecastLoading={forecastLoading}
@@ -796,8 +1044,7 @@ export default function MarketHeatmap({
         <div
           className="h-2 rounded-full"
           style={{
-            background:
-              'linear-gradient(90deg, rgb(220,38,38) 0%, rgb(30,41,59) 50%, rgb(5,150,105) 100%)',
+            background: `linear-gradient(90deg, ${rgbString(PALETTES[paletteId].tileNegative)} 0%, ${rgbString(NEUTRAL)} 50%, ${rgbString(PALETTES[paletteId].tilePositive)} 100%)`,
           }}
           aria-hidden="true"
         />
@@ -807,6 +1054,9 @@ export default function MarketHeatmap({
           <span>сильнее вверх</span>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+          {paletteId === 'colorblind'
+            ? 'В сине-оранжевой палитре синий означает рост, оранжевый — снижение; знак всегда продублирован процентом и стрелкой. '
+            : ''}
           Площадь всех плиток одинакова: она не означает капитализацию, объём торгов или
           важность актива. Сравнивайте активы по напечатанному проценту; одинаковая насыщенность
           у разных активов не обязательно означает одинаковое процентное движение. У мини-линии
