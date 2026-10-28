@@ -38,6 +38,21 @@ function serviceKey(): string {
   return key;
 }
 
+// Браузер вызывает функцию напрямую с кнопки «Проверить сейчас», поэтому
+// нужен и ответ на предварительный OPTIONS-запрос, и заголовки в каждом ответе.
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+function json(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+  });
+}
+
 async function restJson(path: string, init: RequestInit = {}): Promise<unknown> {
   const key = serviceKey();
   const headers = new Headers(init.headers);
@@ -100,9 +115,30 @@ async function linearGraphql(query: string, variables: AnyRecord): Promise<AnyRe
   return (payload.data as AnyRecord) ?? null;
 }
 
+// Команду не обязательно указывать: если LINEAR_TEAM_ID или LINEAR_TEAM_NAME
+// не заданы, берётся первая доступная команда, а её название попадает в отчёт —
+// сразу видно, куда падают задачи, и это можно поправить одной переменной.
+async function resolveTeam(): Promise<{ id: string; name: string } | null> {
+  const wantedId = Deno.env.get('LINEAR_TEAM_ID') ?? '';
+  const wantedName = (Deno.env.get('LINEAR_TEAM_NAME') ?? '').trim().toLowerCase();
+  const reply = await linearGraphql('query { teams { nodes { id name key } } }', {});
+  const nodes = ((((reply?.teams) as AnyRecord)?.nodes) as AnyRecord[]) ?? [];
+  if (!nodes.length) return null;
+  const pick = (n: AnyRecord): { id: string; name: string } => ({ id: String(n.id), name: String(n.name) });
+  const byId = wantedId ? nodes.find((n) => String(n.id) === wantedId) : undefined;
+  if (byId) return pick(byId);
+  const byName = wantedName
+    ? nodes.find((n) => String(n.name).toLowerCase() === wantedName || String(n.key).toLowerCase() === wantedName)
+    : undefined;
+  if (byName) return pick(byName);
+  return pick(nodes[0]);
+}
+
 async function syncLinear(results: Record<string, Check>, checkedAt: string): Promise<string> {
-  const teamId = Deno.env.get('LINEAR_TEAM_ID') ?? '';
-  if (!Deno.env.get('LINEAR_API_KEY') || !teamId) return 'Linear не подключён';
+  if (!Deno.env.get('LINEAR_API_KEY')) return 'Linear не подключён';
+  const team = await resolveTeam();
+  if (!team) return 'Linear: ключ есть, но команда не видна — проверьте права ключа';
+  const teamId = team.id;
   try {
     const statesReply = await linearGraphql(
       `query($t:String!){ team(id:$t){ states{ nodes{ id name type } } } }`,
@@ -159,13 +195,15 @@ async function syncLinear(results: Record<string, Check>, checkedAt: string): Pr
       }
     }
 
-    return `Linear: заведено ${created.length}, закрыто ${closed.length}`;
+    return `Linear: команда «${team.name}», заведено ${created.length}, закрыто ${closed.length}`;
   } catch (error) {
     return `Linear недоступен: ${(error instanceof Error ? error.message : String(error)).slice(0, 120)}`;
   }
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
+
   const privileged = isPrivileged(req);
 
   let latest: AnyRecord[] = [];
@@ -181,13 +219,18 @@ Deno.serve(async (req: Request) => {
   // A public caller gets the stored report back instead of a fresh run when the
   // previous check is recent: the button cannot be used to hammer the database.
   if (!privileged && lastAge !== null && lastAge * 60 < MANUAL_COOLDOWN_MIN) {
-    return Response.json({
+    // Саму проверку не повторяем, но состояние Linear обновляем и здесь: иначе
+    // частое нажатие кнопки оставляло бы задачи без присмотра.
+    const storedChecks = (latest[0]?.checks ?? {}) as Record<string, Check>;
+    const linear = await syncLinear(storedChecks, String(latest[0]?.checked_at ?? new Date().toISOString()));
+    return json({
       success: true,
       ok: Boolean(latest[0]?.ok),
       skipped: true,
       detail: `проверка уже запускалась ${(lastAge * 60).toFixed(1)} мин назад (${String(latest[0]?.trigger ?? 'cron')}); повторно можно через ${MANUAL_COOLDOWN_MIN} мин`,
       checked_at: latest[0]?.checked_at ?? null,
-      checks: latest[0]?.checks ?? {},
+      linear,
+      checks: storedChecks,
     });
   }
 
@@ -367,14 +410,14 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify(row),
     });
   } catch (error) {
-    return Response.json({
+    return json({
       success: false,
       ok,
       error: `не удалось записать site_health: ${error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200)}`,
       checks: results,
-    }, { status: 500 });
+    }, 500);
   }
 
   const linear = await syncLinear(results, checkedAt);
-  return Response.json({ success: true, ok, checked_at: checkedAt, trigger: row.trigger, linear, checks: results });
+  return json({ success: true, ok, checked_at: checkedAt, trigger: row.trigger, linear, checks: results });
 });
