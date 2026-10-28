@@ -32,6 +32,9 @@ export interface CheckRunResult {
   skipped?: boolean;
   detail?: string;
   linear?: string;
+  healing?: string;
+  decisions?: string;
+  digest?: string;
   checks?: Record<string, HealthCheck>;
 }
 
@@ -79,6 +82,10 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string }> = {
   site_online: {
     title: 'Сайт отвечает',
     hint: 'Главная страница возвращает HTTP 200',
+  },
+  calibration_applied: {
+    title: 'Калибровка прогнозов не откатилась',
+    hint: 'Свежие прогнозы пишутся со сжатием к базовой частоте, а не прямой долей',
   },
 };
 

@@ -66,7 +66,17 @@ export default function SystemStatus() {
       // всё равно обновляется — показываем обе части.
       setNote([result.detail ?? 'Проверка уже запускалась только что.', result.linear].filter(Boolean).join(' · '));
     } else {
-      setNote(`Проверка выполнена${result.linear ? ` · ${result.linear}` : ''}`);
+      setNote(
+        [
+          'Проверка выполнена',
+          result.linear,
+          result.healing,
+          result.decisions,
+          result.digest,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      );
     }
     await load();
     setRunning(false);

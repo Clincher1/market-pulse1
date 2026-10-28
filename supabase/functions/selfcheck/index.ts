@@ -7,16 +7,22 @@
 //     throttled to one per MANUAL_COOLDOWN_MIN minutes and are recorded with
 //     trigger = 'manual', so the hourly record stays clean.
 //
-// The result is written to `site_health` either way. Nothing here sends
-// notifications: it only leaves evidence, plus — if Linear is connected —
-// an issue that opens when a check fails and closes itself when it recovers.
+// Three things happen with the result:
+//   1. it is written to `site_health` — the evidence;
+//   2. a red check opens a Linear issue, and it closes itself when the check
+//      turns green again;
+//   3. where a machine cannot decide, Linear gets a *decision* issue that no
+//      automation will close — only a person.
 //
-// The site must be able to prove that it works without a person standing next
-// to it. This is that proof.
+// One red check also gets a single retry of the job that should have kept it
+// green. Exactly one per run: this is a nudge, not a loop.
 //
 // The Linear bridge was proven end to end on 2026-10-28: a deliberately broken
 // news_fresh threshold made the check fail, the bridge opened issue CLI-5 in
 // team «Clincher», and restoring the threshold closed it again with a comment.
+//
+// The site must be able to prove that it works without a person standing next
+// to it. This is that proof.
 
 const SUPABASE_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const SITE = 'https://market-pulse1-eta.vercel.app';
@@ -33,6 +39,23 @@ const MIN_SAMPLE = 20;
 const TENSION_TOLERANCE = 2;
 const MAX_ONE_SIDED_SHARE = 0.85;
 
+// The calibrated writer first runs at 05:45 UTC on 2026-10-29. Until then this
+// check sleeps instead of crying wolf over rows written before the change.
+const CALIBRATION_SINCE = '2026-10-29';
+const CALIBRATION_MARKER = 'empirical_bayes_v1';
+const VERDICT_SCORED_MIN = 30;
+const HEAL_TIMEOUT_MS = 25_000;
+
+// Which job is responsible for which red check. One retry, nothing more.
+const HEAL_BY_CHECK: Record<string, string> = {
+  assets_fresh: 'update-assets',
+  forecasts_fresh: 'update-forecasts',
+  news_fresh: 'update-news-v2',
+};
+
+const DIGEST_TITLE = 'Дайджест недели: Market Pulse';
+const VERDICT_TITLE = 'Решение: вердикт по прогнозам готов';
+
 type AnyRecord = Record<string, unknown>;
 type Check = { ok: boolean; detail: string };
 
@@ -42,8 +65,9 @@ function serviceKey(): string {
   return key;
 }
 
-// Браузер вызывает функцию напрямую с кнопки «Проверить сейчас», поэтому
-// нужен и ответ на предварительный OPTIONS-запрос, и заголовки в каждом ответе.
+// The browser calls this function straight from the status page button, so the
+// preflight OPTIONS request has to be answered and every response has to carry
+// the headers.
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
@@ -99,9 +123,50 @@ async function check(name: string, run: () => Promise<Check>): Promise<[string, 
 }
 
 // ---------------------------------------------------------------------------
-// Linear bridge. Inactive until LINEAR_API_KEY and LINEAR_TEAM_ID exist, and
-// never allowed to break the check itself: every failure is swallowed into the
-// report text.
+// Self-healing: one nudge at the job that should have kept the check green.
+// ---------------------------------------------------------------------------
+
+async function invokeFunction(name: string): Promise<string> {
+  try {
+    const key = serviceKey();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(HEAL_TIMEOUT_MS),
+      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    const text = await res.text().catch(() => '');
+    return `код ${res.status}${res.ok ? '' : `: ${text.slice(0, 70)}`}`;
+  } catch (error) {
+    return `не удалось вызвать: ${(error instanceof Error ? error.message : String(error)).slice(0, 70)}`;
+  }
+}
+
+// At most one attempt per run, on purpose: two red checks must not turn the
+// hourly check into a traffic jam of retries.
+// Anything that happens after the report is written must not be able to fail
+// the run: a missing view or a silent Linear costs a line, not the check.
+async function guard(what: string, run: () => Promise<string>): Promise<string> {
+  try {
+    return await run();
+  } catch (error) {
+    return `${what} не сработало: ${(error instanceof Error ? error.message : String(error)).slice(0, 100)}`;
+  }
+}
+
+async function heal(results: Record<string, Check>): Promise<string> {
+  const name = Object.keys(HEAL_BY_CHECK).find((key) => results[key] && !results[key].ok);
+  if (!name) return '';
+  const target = HEAL_BY_CHECK[name];
+  return `повторный запуск: ${name} → ${target} (${await invokeFunction(target)})`;
+}
+
+// ---------------------------------------------------------------------------
+// Linear bridge. Inactive until LINEAR_API_KEY exists, and never allowed to
+// break the check itself: every failure is swallowed into the report text.
+//
+// The key needs read AND write, not just "create issues": the bridge also moves
+// a recovered issue to Done and comments on it.
 // ---------------------------------------------------------------------------
 
 async function linearGraphql(query: string, variables: AnyRecord): Promise<AnyRecord | null> {
@@ -119,9 +184,10 @@ async function linearGraphql(query: string, variables: AnyRecord): Promise<AnyRe
   return (payload.data as AnyRecord) ?? null;
 }
 
-// Команду не обязательно указывать: если LINEAR_TEAM_ID или LINEAR_TEAM_NAME
-// не заданы, берётся первая доступная команда, а её название попадает в отчёт —
-// сразу видно, куда падают задачи, и это можно поправить одной переменной.
+// The team does not have to be configured: without LINEAR_TEAM_ID or
+// LINEAR_TEAM_NAME the first available team is used, and its name goes into the
+// report — so it is always visible where the issues land and fixable with one
+// environment variable.
 async function resolveTeam(): Promise<{ id: string; name: string } | null> {
   const wantedId = Deno.env.get('LINEAR_TEAM_ID') ?? '';
   const wantedName = (Deno.env.get('LINEAR_TEAM_NAME') ?? '').trim().toLowerCase();
@@ -138,77 +204,219 @@ async function resolveTeam(): Promise<{ id: string; name: string } | null> {
   return pick(nodes[0]);
 }
 
-async function syncLinear(results: Record<string, Check>, checkedAt: string): Promise<string> {
-  if (!Deno.env.get('LINEAR_API_KEY')) return 'Linear не подключён';
+interface LinearCtx {
+  teamId: string;
+  teamName: string;
+  doneStateId: string | null;
+  openByTitle: Map<string, string>;
+}
+
+async function linearContext(): Promise<LinearCtx | null> {
+  if (!Deno.env.get('LINEAR_API_KEY')) return null;
   const team = await resolveTeam();
-  if (!team) return 'Linear: ключ есть, но команда не видна — проверьте права ключа';
-  const teamId = team.id;
-  try {
-    const statesReply = await linearGraphql(
-      `query($t:String!){ team(id:$t){ states{ nodes{ id name type } } } }`,
-      { t: teamId },
-    );
-    const stateNodes = ((((statesReply?.team as AnyRecord)?.states) as AnyRecord)?.nodes as AnyRecord[]) ?? [];
-    const doneState = stateNodes.find((s) => s.type === 'completed');
+  if (!team) return null;
 
-    const openReply = await linearGraphql(
-      `query($t:String!){ team(id:$t){ issues(filter:{ state:{ type:{ nin:["completed","canceled"] } } }){ nodes{ id title } } } }`,
-      { t: teamId },
-    );
-    const issueNodes = ((((openReply?.team as AnyRecord)?.issues) as AnyRecord)?.nodes as AnyRecord[]) ?? [];
-    const openById = new Map<string, string>(issueNodes.map((n) => [String(n.title), String(n.id)]));
+  const statesReply = await linearGraphql(
+    `query($t:String!){ team(id:$t){ states{ nodes{ id name type } } } }`,
+    { t: team.id },
+  );
+  const stateNodes = ((((statesReply?.team as AnyRecord)?.states) as AnyRecord)?.nodes as AnyRecord[]) ?? [];
+  const done = stateNodes.find((s) => s.type === 'completed');
 
-    const created: string[] = [];
-    const closed: string[] = [];
+  const openReply = await linearGraphql(
+    `query($t:String!){ team(id:$t){ issues(filter:{ state:{ type:{ nin:["completed","canceled"] } } }){ nodes{ id title } } } }`,
+    { t: team.id },
+  );
+  const issueNodes = ((((openReply?.team as AnyRecord)?.issues) as AnyRecord)?.nodes as AnyRecord[]) ?? [];
 
-    for (const [name, value] of Object.entries(results)) {
-      const title = `Самопроверка сайта: ${name}`;
-      const openId = openById.get(title);
+  return {
+    teamId: team.id,
+    teamName: team.name,
+    doneStateId: done ? String(done.id) : null,
+    openByTitle: new Map(issueNodes.map((n) => [String(n.title), String(n.id)])),
+  };
+}
 
-      if (!value.ok) {
-        if (openId) continue; // already tracked, one issue per failing check
-        const reply = await linearGraphql(
-          `mutation($team:String!,$title:String!,$description:String!){ issueCreate(input:{ teamId:$team, title:$title, description:$description, priority:2 }){ success } }`,
-          {
-            team: teamId,
-            title,
-            description: [
-              `Проверка \`${name}\` провалилась ${checkedAt} (UTC).`,
-              '',
-              value.detail,
-              '',
-              `Отчёт целиком: ${SITE}/#status`,
-              'Задача заведена автоматически; закроется сама, когда проверка снова станет зелёной.',
-            ].join('\n'),
-          },
-        );
-        if ((reply?.issueCreate as AnyRecord)?.success) created.push(name);
-        continue;
-      }
+function linearUnavailable(): string {
+  return Deno.env.get('LINEAR_API_KEY')
+    ? 'Linear: ключ есть, но команда не видна — проверьте права ключа'
+    : 'Linear не подключён';
+}
 
-      if (openId && doneState) {
-        await linearGraphql(
-          `mutation($issue:String!,$body:String!){ commentCreate(input:{ issueId:$issue, body:$body }){ success } }`,
-          { issue: openId, body: `Вновь в норме ${checkedAt} (UTC): ${value.detail}` },
-        );
-        await linearGraphql(
-          `mutation($id:String!,$state:String!){ issueUpdate(id:$id, input:{ stateId:$state }){ success } }`,
-          { id: openId, state: String(doneState.id) },
-        );
-        closed.push(name);
-      }
+async function createIssue(ctx: LinearCtx, title: string, description: string, priority: number): Promise<string | null> {
+  const reply = await linearGraphql(
+    `mutation($team:String!,$title:String!,$description:String!,$priority:Int){ issueCreate(input:{ teamId:$team, title:$title, description:$description, priority:$priority }){ success issue{ id } } }`,
+    { team: ctx.teamId, title, description, priority },
+  );
+  const created = reply?.issueCreate as AnyRecord | undefined;
+  if (!created?.success) return null;
+  const id = String((created.issue as AnyRecord)?.id ?? '');
+  if (id) ctx.openByTitle.set(title, id);
+  return id || null;
+}
+
+async function syncLinear(ctx: LinearCtx | null, results: Record<string, Check>, checkedAt: string): Promise<string> {
+  if (!ctx) return linearUnavailable();
+  const created: string[] = [];
+  const closed: string[] = [];
+
+  for (const [name, value] of Object.entries(results)) {
+    const title = `Самопроверка сайта: ${name}`;
+    const openId = ctx.openByTitle.get(title);
+
+    if (!value.ok) {
+      if (openId) continue; // already tracked, one issue per failing check
+      const id = await createIssue(ctx, title, [
+        `Проверка \`${name}\` провалилась ${checkedAt} (UTC).`,
+        '',
+        value.detail,
+        '',
+        `Отчёт целиком: ${SITE}/#status`,
+        'Задача заведена автоматически; закроется сама, когда проверка снова станет зелёной.',
+      ].join('\n'), 2);
+      if (id) created.push(name);
+      continue;
     }
 
-    return `Linear: команда «${team.name}», заведено ${created.length}, закрыто ${closed.length}`;
-  } catch (error) {
-    return `Linear недоступен: ${(error instanceof Error ? error.message : String(error)).slice(0, 120)}`;
+    if (openId && ctx.doneStateId) {
+      await linearGraphql(
+        `mutation($issue:String!,$body:String!){ commentCreate(input:{ issueId:$issue, body:$body }){ success } }`,
+        { issue: openId, body: `Вновь в норме ${checkedAt} (UTC): ${value.detail}` },
+      );
+      await linearGraphql(
+        `mutation($id:String!,$state:String!){ issueUpdate(id:$id, input:{ stateId:$state }){ success } }`,
+        { id: openId, state: ctx.doneStateId },
+      );
+      closed.push(name);
+    }
   }
+
+  return `Linear: команда «${ctx.teamName}», заведено ${created.length}, закрыто ${closed.length}`;
+}
+
+// ---------------------------------------------------------------------------
+// Escalations. A machine can notice; only a person can decide. These issues are
+// never closed by automation — that is the whole point.
+// ---------------------------------------------------------------------------
+
+async function raiseDecision(ctx: LinearCtx | null, title: string, body: string): Promise<boolean> {
+  if (!ctx) return false;
+  if (ctx.openByTitle.has(title)) return false; // the question is already asked
+  return Boolean(await createIssue(ctx, title, body, 3));
+}
+
+// The honest moment for the forecast block: enough scored calls to say whether
+// the system beats a coin. What to do with the answer is a human decision.
+async function escalateForecastVerdict(ctx: LinearCtx | null): Promise<string> {
+  const rows = (await restJson(
+    'forecast_track_record?select=asset_key,scored,verdict,hit_rate,brier&asset_key=eq.ALL&limit=1',
+  )) as AnyRecord[];
+  const row = rows[0];
+  if (!row) return '';
+  const scored = Number(row.scored ?? 0);
+  if (scored < VERDICT_SCORED_MIN) return '';
+
+  const hitRate = Number(row.hit_rate ?? 0);
+  const brier = Number(row.brier ?? 0);
+  const verdict = String(row.verdict ?? '');
+  const better = brier < 0.25;
+
+  const raised = await raiseDecision(ctx, VERDICT_TITLE, [
+    `Проверенных прогнозов: **${scored}** — порог в ${VERDICT_SCORED_MIN} пройден, молчаливое обещание пора either подтвердить или снять.`,
+    '',
+    `- Попаданий: ${Math.round(hitRate * 100)} %`,
+    `- Брайер: ${brier.toFixed(3)} против 0.250 у подбрасывания монетки (${better ? 'лучше монетки' : 'не лучше монетки'})`,
+    `- Вердикт системы: \`${verdict}\``,
+    '',
+    '**Что решить человеку:**',
+    '',
+    '1. Оставить блок прогнозов как есть — если преимущество над монеткой подтвердилось.',
+    '2. Честно упростить до «сигнала нет» и убрать направление — если не подтвердилось.',
+    '3. Поднять порог и копить дальше — если разница в пределах шума.',
+    '',
+    `Отчёт и текущий счёт: ${SITE}/#status`,
+    'Эту задачу автоматика не закроет: она ждёт решения.',
+  ].join('\n'));
+
+  return raised ? `задача на решение: «${VERDICT_TITLE}»` : '';
+}
+
+// ---------------------------------------------------------------------------
+// Weekly digest: one standing issue, one comment a week. Notifications are for
+// exceptions; this is for the person who wants to see the trend.
+// ---------------------------------------------------------------------------
+
+async function lastCommentHoursAgo(issueId: string): Promise<number | null> {
+  const reply = await linearGraphql(
+    `query($id:String!){ issue(id:$id){ comments(last:1){ nodes{ createdAt } } } }`,
+    { id: issueId },
+  );
+  const nodes = ((((reply?.issue as AnyRecord)?.comments) as AnyRecord)?.nodes as AnyRecord[]) ?? [];
+  return hoursAgo(String(nodes[0]?.createdAt ?? ''));
+}
+
+async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
+  // Monday, early enough to be the first run of the week.
+  if (!ctx || now.getUTCDay() !== 1 || now.getUTCHours() > 3) return '';
+
+  let id = ctx.openByTitle.get(DIGEST_TITLE) ?? null;
+  if (!id) {
+    id = await createIssue(ctx, DIGEST_TITLE, [
+      'Сюда раз в неделю (в понедельник, UTC) сайт пишет сводку: сколько проверок прошло,',
+      'сколько было красных, как движется честный счёт прогнозов, какие ленты молчат.',
+      '',
+      'Задача не закрывается — она накапливает историю. Если сводка не нужна,',
+      'закройте задачу и удалите её: новая не заведётся, пока эта открыта.',
+    ].join('\n'), 4);
+  }
+  if (!id) return '';
+
+  const sinceLastComment = await lastCommentHoursAgo(id);
+  if (sinceLastComment !== null && sinceLastComment < 24 * 6) return ''; // already wrote this week
+
+  const weekAgo = new Date(now.getTime() - 7 * 86_400_000).toISOString();
+  const history = (await restJson(
+    `site_health?select=ok,checked_at&checked_at=gte.${encodeURIComponent(weekAgo)}`,
+  )) as AnyRecord[];
+  const red = history.filter((r) => !r.ok).length;
+
+  const track = (await restJson(
+    'forecast_track_record?select=scored,hit_rate,brier,verdict&asset_key=eq.ALL&limit=1',
+  )) as AnyRecord[];
+  const scored = Number(track[0]?.scored ?? 0);
+  const hit = Math.round(Number(track[0]?.hit_rate ?? 0) * 100);
+  const brier = Number(track[0]?.brier ?? 0);
+
+  const tension = (await restJson('cached_tension?select=value,news_count&id=eq.1')) as AnyRecord[];
+  const feeds = (await restJson('news_source_health?select=source,last_new_at')) as AnyRecord[];
+  const silent = feeds.filter((f) => {
+    const age = hoursAgo(String(f.last_new_at ?? ''));
+    return age === null || age > FRESH_FEED_HOURS;
+  }).map((f) => String(f.source));
+
+  const lines = [
+    `**Неделя ${now.toISOString().slice(0, 10)} (UTC)**`,
+    '',
+    `- Самопроверок: ${history.length}, из них красных: ${red}`,
+    `- Индекс напряжённости: ${tension[0]?.value ?? '—'} (${tension[0]?.news_count ?? 0} материалов в окне)`,
+    `- Прогнозы: проверено ${scored}, попаданий ${hit} %, Брайер ${brier.toFixed(3)}`,
+    `- Ленты: ${silent.length ? `молчат ${silent.join(', ')}` : `все ${feeds.length} давали материалы`}`,
+    '',
+    `Полный отчёт: ${SITE}/#status`,
+  ];
+
+  await linearGraphql(
+    `mutation($issue:String!,$body:String!){ commentCreate(input:{ issueId:$issue, body:$body }){ success } }`,
+    { issue: id, body: lines.join('\n') },
+  );
+  return 'дайджест недели добавлен в Linear';
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 
   const privileged = isPrivileged(req);
+  const now = new Date();
 
   let latest: AnyRecord[] = [];
   try {
@@ -222,11 +430,11 @@ Deno.serve(async (req: Request) => {
 
   // A public caller gets the stored report back instead of a fresh run when the
   // previous check is recent: the button cannot be used to hammer the database.
+  // Linear is still synced here, so rapid presses never leave issues unattended.
   if (!privileged && lastAge !== null && lastAge * 60 < MANUAL_COOLDOWN_MIN) {
-    // Саму проверку не повторяем, но состояние Linear обновляем и здесь: иначе
-    // частое нажатие кнопки оставляло бы задачи без присмотра.
     const storedChecks = (latest[0]?.checks ?? {}) as Record<string, Check>;
-    const linear = await syncLinear(storedChecks, String(latest[0]?.checked_at ?? new Date().toISOString()));
+    const ctx = await linearContext();
+    const linear = await syncLinear(ctx, storedChecks, String(latest[0]?.checked_at ?? now.toISOString()));
     return json({
       success: true,
       ok: Boolean(latest[0]?.ok),
@@ -399,12 +607,38 @@ Deno.serve(async (req: Request) => {
       const res = await fetch(SITE, { signal: AbortSignal.timeout(20000) });
       return { ok: res.ok, detail: `HTTP ${res.status} за ${Date.now() - started} мс` };
     }),
+
+    // 12. The calibrated forecast writer must stay calibrated. Without this, a
+    //     later edit could quietly undo the fix that stopped two weak headlines
+    //     from producing a score of 1.000, and nobody would notice for weeks.
+    check('calibration_applied', async () => {
+      const rows = (await restJson(
+        `market_forecasts_v2?select=issue_date,raw&issue_date=gte.${CALIBRATION_SINCE}&order=issue_date.desc&limit=200`,
+      )) as AnyRecord[];
+      if (!rows.length) {
+        return { ok: true, detail: `записей после ${CALIBRATION_SINCE} пока нет — проверка встанет на дежурство сама` };
+      }
+      const latestDate = String(rows[0]?.issue_date ?? '').slice(0, 10);
+      const sameDay = rows.filter((r) => String(r.issue_date ?? '').slice(0, 10) === latestDate);
+      const calibrated = sameDay.filter((r) => {
+        const aggregation = ((r.raw as AnyRecord)?.aggregation as AnyRecord) ?? {};
+        return (
+          aggregation.calibration === CALIBRATION_MARKER &&
+          typeof aggregation.base_rate_up === 'number' &&
+          typeof aggregation.score_calibrated === 'number'
+        );
+      });
+      return {
+        ok: calibrated.length === sameDay.length,
+        detail: `за ${latestDate}: ${calibrated.length} из ${sameDay.length} прогнозов записаны с калибровкой`,
+      };
+    }),
   ])) {
     results[name] = value;
   }
 
   const ok = Object.values(results).every((r) => r.ok);
-  const checkedAt = new Date().toISOString();
+  const checkedAt = now.toISOString();
   const row = { checked_at: checkedAt, ok, checks: results, trigger: privileged ? 'cron' : 'manual' };
 
   try {
@@ -422,6 +656,24 @@ Deno.serve(async (req: Request) => {
     }, 500);
   }
 
-  const linear = await syncLinear(results, checkedAt);
-  return json({ success: true, ok, checked_at: checkedAt, trigger: row.trigger, linear, checks: results });
+  // One nudge, then the paperwork. The report is already written by now, so
+  // nothing below is allowed to fail the run: a broken Linear or a missing view
+  // costs a line in the report, never the whole check.
+  const healing = ok ? '' : await guard('самолечение', () => heal(results));
+  const ctx = await linearContext();
+  const linear = await syncLinear(ctx, results, checkedAt);
+  const decisions = await guard('эскалация', () => escalateForecastVerdict(ctx));
+  const digest = await guard('дайджест', () => weeklyDigest(ctx, now));
+
+  return json({
+    success: true,
+    ok,
+    checked_at: checkedAt,
+    trigger: row.trigger,
+    healing: healing || '',
+    linear,
+    decisions,
+    digest,
+    checks: results,
+  });
 });
