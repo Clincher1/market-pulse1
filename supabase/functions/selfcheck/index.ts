@@ -491,7 +491,14 @@ Deno.serve(async (req: Request) => {
     for (const row of rows) {
       if (!String(row.prompt_version ?? '').includes('v4')) continue;
       const raw = (row.raw_response ?? {}) as Record<string, unknown>;
-      const rawImpacts = Array.isArray(raw.impacts) ? raw.impacts : [];
+      const content = typeof raw.content === 'string' ? raw.content : '';
+      let rawImpacts: unknown[] = [];
+      if (content) {
+        try {
+          const parsed = JSON.parse(content) as Record<string, unknown>;
+          if (Array.isArray(parsed.impacts)) rawImpacts = parsed.impacts;
+        } catch { rawImpacts = []; }
+      }
       proposed += rawImpacts.length;
       droppedAsDerived += rawImpacts.filter((item) => {
         const value = (item ?? {}) as Record<string, unknown>;
