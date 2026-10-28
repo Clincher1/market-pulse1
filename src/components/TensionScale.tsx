@@ -554,32 +554,21 @@ export default function TensionScale() {
               <span>100 — Горячо</span>
             </div>
 
-            {historyStats && (
+            {/* Контекст показываем только когда он что-то значит. Плашка «накоплено
+                8 из 14» не несла посетителю ничего и висела мёртвым текстом. */}
+            {showHistoryStats && historyStats && (
               <div className="-mt-4 mb-8 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm leading-relaxed text-text-secondary">
-                {showHistoryStats ? (
-                  <>
-                    <span className="font-extrabold text-text-primary">Исторический контекст:</span>{' '}
-                    {contextPhrase} · медиана —{' '}
-                    <span className="font-bold tabular-nums text-text-primary">
-                      {formatStatValue(historyStats.median)}
-                    </span>{' '}
-                    · максимум —{' '}
-                    <span className="font-bold tabular-nums text-text-primary">
-                      {formatStatValue(historyStats.max)}
-                    </span>{' '}
-                    · наблюдений: {historyStats.days} {daysWord(historyStats.days)}. Это фон
-                    новостного внимания, а не вероятность кризиса.
-                  </>
-                ) : (
-                  <>
-                    Исторический контекст появится после {MIN_STATS_DAYS} дней наблюдений:
-                    сейчас накоплено{' '}
-                    <span className="font-bold tabular-nums text-text-primary">
-                      {historyStats.days} из {MIN_STATS_DAYS}
-                    </span>
-                    . Перцентиль и медиану на меньшей выборке не показываем — это был бы шум.
-                  </>
-                )}
+                <span className="font-extrabold text-text-primary">Исторический контекст:</span>{' '}
+                {contextPhrase} · медиана —{' '}
+                <span className="font-bold tabular-nums text-text-primary">
+                  {formatStatValue(historyStats.median)}
+                </span>{' '}
+                · максимум —{' '}
+                <span className="font-bold tabular-nums text-text-primary">
+                  {formatStatValue(historyStats.max)}
+                </span>{' '}
+                · наблюдений: {historyStats.days} {daysWord(historyStats.days)}. Это фон
+                новостного внимания, а не вероятность кризиса.
               </div>
             )}
 

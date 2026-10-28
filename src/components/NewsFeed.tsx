@@ -12,7 +12,12 @@ const ALL_TOPICS = 'Все темы';
 const ALL_ASSETS = 'Все активы';
 const ALL_IMPORTANCE = 'Любая важность';
 const SENTIMENT_OPTIONS = ['Любая', 'Позитивная', 'Нейтральная', 'Негативная'];
+// Порог «3+» совпадает с тем, какие материалы вообще попадают в индекс
+// напряжённости: всё, что модель оценила ниже тройки, — личное, политическое
+// и бытовое, оно только забивает ленту. Поэтому по умолчанию стоит оно.
+const DEFAULT_IMPORTANCE = '3+ — по существу';
 const IMPORTANCE_OPTIONS = [
+  DEFAULT_IMPORTANCE,
   ALL_IMPORTANCE,
   '6+ — заметные',
   '8+ — важные',
@@ -323,7 +328,7 @@ export default function NewsFeed() {
     topic: ALL_TOPICS,
     sentiment: 'Любая',
     asset: ALL_ASSETS,
-    importance: ALL_IMPORTANCE,
+    importance: DEFAULT_IMPORTANCE,
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
   // По умолчанию лента не превращается в длинную стену: видны только
@@ -368,7 +373,7 @@ export default function NewsFeed() {
       topic: ALL_TOPICS,
       sentiment: 'Любая',
       asset: ALL_ASSETS,
-      importance: ALL_IMPORTANCE,
+      importance: DEFAULT_IMPORTANCE,
     });
   };
 
