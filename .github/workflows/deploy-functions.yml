@@ -1,17 +1,21 @@
-name: Deploy edge functions
+name: Verify and deploy
 
-# Every edge function is deployed from here, so a fix reaches production by
-# pushing it — with no connector, no dashboard and no manual step that can be
-# forgotten at midnight.
+# The site has to survive without constantly being repaired, so nothing reaches
+# production until the checks below pass. That is the whole point of this file:
+# a fix that does not type-check or does not build simply does not ship.
 #
-# Secrets are never read from the repository: the functions pick them up from
-# Supabase at runtime. SENTRY_DSN is optional and stays unset until someone
-# chooses to switch error reporting on.
+# Secrets are never read from the repository: functions pick them up from
+# Supabase at runtime.
 on:
   push:
     branches: [main]
     paths:
       - 'supabase/functions/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'vite.config.ts'
       - 'supabase/config.toml'
       - '.github/workflows/deploy-functions.yml'
   workflow_dispatch:
@@ -20,11 +24,42 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-functions
+  group: verify-and-deploy
   cancel-in-progress: false
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # The edge functions are Deno, so they were never covered by the
+      # repository's TypeScript setup. This is the check that was missing.
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check every edge function
+        working-directory: supabase/functions
+        run: deno check */index.ts _shared/*.ts
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # npm run build type-checks the app before bundling it, so one step covers both.
+      - name: Type-check and build the site
+        run: npm run build
+
   deploy:
+    needs: check
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

@@ -15,6 +15,19 @@ const MAX_CANDIDATES_PER_SOURCE = 20;
 const COOLDOWN_MINUTES = 10;
 const GATE_VERSION = "token_prefix_v2";
 
+type SourceHealth = {
+  source_id: string;
+  ok: boolean;
+  http_status: number | null;
+  duration_ms: number | null;
+  items_seen: number;
+  items_candidate: number;
+  items_rejected: number;
+  latest_published_at: string | null;
+  final_url: string;
+  error: string | null;
+};
+
 type Source = {
   id: string;
   name: string;
@@ -338,7 +351,7 @@ async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => P
 
 async function processSource(source: Source, blacklist: string[], now: Date) {
   const started = Date.now();
-  const health: Record<string, unknown> = {
+  const health: SourceHealth = {
     source_id: source.id,
     ok: false,
     http_status: null,
