@@ -24,7 +24,11 @@ const ALLOWED_ASSETS = new Set(['S&P 500', 'Gold', 'Brent', 'USD', 'BTC']);
 type AnyRecord = Record<string, unknown>;
 const MAX_RETRIES = 2;
 const NEWS_CHAR_LIMIT = 420;
-const MAX_OUTPUT_TOKENS = 220;
+// gpt-oss models reason before they answer, and that reasoning is billed and
+// counted against the output cap. A cap that is too small truncates the JSON,
+// which Groq rejects with a 400 json_validate_failed; 400 tokens of headroom
+// keeps the answer complete while `low` effort keeps the bill small.
+const MAX_OUTPUT_TOKENS = 700;
 const CALL_SPACING_MS = 150;
 // Spread the daily budget evenly instead of burning it in one burst: at four
 // runs an hour this is still far above the ~160 articles the feeds produce.
@@ -42,6 +46,7 @@ type Provider = {
   model: string;
   key: string;
   jsonMode: boolean;
+  reasoningEffort?: string;
 };
 let lastError = '';
 const exhausted = new Set<string>();
@@ -73,8 +78,8 @@ function activeProviders(): Provider[] {
   const list: Provider[] = [];
   const groq = Deno.env.get('GROQ_API_KEY') ?? '';
   if (groq) {
-    list.push({ id: 'groq120', label: 'groq:openai/gpt-oss-120b', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', key: groq, jsonMode: true });
-    list.push({ id: 'groq20', label: 'groq:openai/gpt-oss-20b', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-20b', key: groq, jsonMode: true });
+    list.push({ id: 'groq120', label: 'groq:openai/gpt-oss-120b', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', key: groq, jsonMode: true, reasoningEffort: 'low' });
+    list.push({ id: 'groq20', label: 'groq:openai/gpt-oss-20b', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-20b', key: groq, jsonMode: true, reasoningEffort: 'low' });
   }
   const gemini = Deno.env.get('GEMINI_API_KEY') ?? '';
   if (gemini) {
@@ -88,14 +93,17 @@ function activeProviders(): Provider[] {
   }
   return list;
 }
-async function callProvider(provider: Provider, prompt: string): Promise<Response> {
+async function callProvider(provider: Provider, prompt: string, loose: boolean): Promise<Response> {
   const body: AnyRecord = {
     model: provider.model,
     messages: [{ role: 'user', content: prompt }],
     temperature: 0,
     max_tokens: MAX_OUTPUT_TOKENS,
   };
-  if (provider.jsonMode) body.response_format = { type: 'json_object' };
+  // Strict JSON mode is the first choice; if the provider rejects it, the retry
+  // asks for plain text and relies on tolerant parsing instead.
+  if (provider.jsonMode && !loose) body.response_format = { type: 'json_object' };
+  if (provider.reasoningEffort) body.reasoning_effort = provider.reasoningEffort;
   return fetch(provider.url, {
     method: 'POST',
     signal: AbortSignal.timeout(45000),
@@ -137,7 +145,7 @@ async function analyzeWithProviders(news: string): Promise<{ analysis: AnyRecord
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       let res: Response;
       try {
-        res = await callProvider(provider, prompt);
+        res = await callProvider(provider, prompt, attempt > 0);
       } catch (error) {
         lastError = `${provider.id}: ${error instanceof Error ? error.message.slice(0, 160) : String(error).slice(0, 160)}`;
         if (attempt < MAX_RETRIES) await sleep(retryAfterMs('', attempt));
