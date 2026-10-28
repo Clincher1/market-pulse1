@@ -1,11 +1,17 @@
-// Token-lean news writer with proper Groq limit handling (2026-10-28).
+// Token-lean news writer with a provider chain (2026-10-28).
 // Same public contract (cached_news rows, {success, updated} response), plus:
-// compact prompt + capped output (about 2.5x fewer tokens per article),
-// retries with backoff for per-minute limits, immediate stop on the daily
-// token quota, noise sections skipped before Groq, and safe output parsing.
+// compact prompt + capped output, retries with backoff for per-minute limits,
+// immediate stop on a daily token quota, noise sections skipped before the
+// model, tolerant output parsing, and a recorded model marker per row.
+//
+// Provider chain, tried in order until one answers:
+//   1. Groq openai/gpt-oss-120b   (primary, 200k tokens/day free quota)
+//   2. Groq openai/gpt-oss-20b    (separate quota in the same account)
+//   3. Gemini (Google AI Studio)  (only if GEMINI_API_KEY is set)
+//   4. Mistral (La Plateforme)    (only if MISTRAL_API_KEY is set)
+// A provider that reports a daily quota is skipped for the rest of the run,
+// so the remaining articles go to the next provider instead of being lost.
 // Body {"dry_run": true, "max_items": n} analyzes without inserting.
-// Deployed live as slug `update-news-v2` (third generation of the writer);
-// the previous body is kept in the repo history for a fast rollback.
 // pg_cron job 2 (update-news-every-15-min) calls this function.
 const FALLBACK_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const SOURCES = [
@@ -16,25 +22,36 @@ const SOURCES = [
 ];
 const ALLOWED_ASSETS = new Set(['S&P 500', 'Gold', 'Brent', 'USD', 'BTC']);
 type AnyRecord = Record<string, unknown>;
-const GROQ_MODEL = 'openai/gpt-oss-120b';
-const GROQ_MAX_RETRIES = 3;
-const GROQ_NEWS_CHAR_LIMIT = 420;
-const GROQ_MAX_OUTPUT_TOKENS = 220;
-const GROQ_CALL_SPACING_MS = 150;
-// Sections that are never about world markets: do not spend the daily Groq
-// token budget on them.
+const MAX_RETRIES = 2;
+const NEWS_CHAR_LIMIT = 420;
+const MAX_OUTPUT_TOKENS = 220;
+const CALL_SPACING_MS = 150;
+// Spread the daily budget evenly instead of burning it in one burst: at four
+// runs an hour this is still far above the ~160 articles the feeds produce.
+const DEFAULT_MAX_ITEMS = 6;
+const HARD_MAX_ITEMS = 20;
+// Sections that are never about world markets: do not spend tokens on them.
 const SKIP_URL_PARTS = [
   '/personal-finance/', '/life/', '/sport', '/sports/', '/culture/',
   '/lifestyle/', '/food/', '/travel/', '/horoscope', '/recipes/', '/games/',
 ];
-let groqStop = false;
-let groqDailyLimit = false;
-let groqError = '';
+type Provider = {
+  id: string;
+  label: string;
+  url: string;
+  model: string;
+  key: string;
+  jsonMode: boolean;
+};
+let lastError = '';
+const exhausted = new Set<string>();
+const usedProviders: Record<string, number> = {};
+
 function sleep(ms: number): Promise<void> { return new Promise((resolve) => setTimeout(resolve, ms)); }
 // A daily token quota (TPD) cannot be waited out, while a per-minute request
-// limit (RPM) can; Groq tells them apart in the error text.
+// limit (RPM) can; providers tell them apart in the error text.
 function isDailyQuotaError(text: string): boolean {
-  return /tokens per day|per day \(TPD\)|\bTPD\b/i.test(text);
+  return /tokens per day|per day \(TPD\)|\bTPD\b|quota|exhausted/i.test(text);
 }
 function retryAfterMs(text: string, attempt: number): number {
   const match = text.match(/try again in\s*([\d.]+)\s*(ms|s|seconds?)/i);
@@ -45,12 +62,118 @@ function retryAfterMs(text: string, attempt: number): number {
       return Math.min(20000, Math.max(500, ms));
     }
   }
-  return Math.min(15000, 1200 * 2 ** attempt) + Math.floor(Math.random() * 400);
+  return Math.min(12000, 1000 * 2 ** attempt) + Math.floor(Math.random() * 400);
 }
 function compactPrompt(news: string): string {
   return `Rate how important this news is for S&P 500, Gold, Brent, USD, BTC. Return JSON {"sentiment":-1..1,"importance":1..10,"confidence":0..1,"impacts":[{"asset":"Gold","direction":"up"}]}.
 Rules: personal finance, family, sport, celebrities, games, food, travel -> importance 1, confidence 0.9, impacts []. Macro, policy, companies, sanctions, rates, inflation, technology -> judge for real. Unsure -> importance 2, confidence 0.3, impacts [].
-News: "${news.replace(/"/g, '\\"').slice(0, GROQ_NEWS_CHAR_LIMIT)}"`;
+News: "${news.replace(/"/g, '\\"').slice(0, NEWS_CHAR_LIMIT)}"`;
+}
+function activeProviders(): Provider[] {
+  const list: Provider[] = [];
+  const groq = Deno.env.get('GROQ_API_KEY') ?? '';
+  if (groq) {
+    list.push({ id: 'groq120', label: 'groq:openai/gpt-oss-120b', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', key: groq, jsonMode: true });
+    list.push({ id: 'groq20', label: 'groq:openai/gpt-oss-20b', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-20b', key: groq, jsonMode: true });
+  }
+  const gemini = Deno.env.get('GEMINI_API_KEY') ?? '';
+  if (gemini) {
+    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash-lite';
+    list.push({ id: 'gemini', label: `gemini:${model}`, url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model, key: gemini, jsonMode: false });
+  }
+  const mistral = Deno.env.get('MISTRAL_API_KEY') ?? '';
+  if (mistral) {
+    const model = Deno.env.get('MISTRAL_MODEL') ?? 'ministral-8b-latest';
+    list.push({ id: 'mistral', label: `mistral:${model}`, url: 'https://api.mistral.ai/v1/chat/completions', model, key: mistral, jsonMode: true });
+  }
+  return list;
+}
+async function callProvider(provider: Provider, prompt: string): Promise<Response> {
+  const body: AnyRecord = {
+    model: provider.model,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0,
+    max_tokens: MAX_OUTPUT_TOKENS,
+  };
+  if (provider.jsonMode) body.response_format = { type: 'json_object' };
+  return fetch(provider.url, {
+    method: 'POST',
+    signal: AbortSignal.timeout(45000),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.key}` },
+    body: JSON.stringify(body),
+  });
+}
+function tryParseObject(text: string): AnyRecord | null {
+  try {
+    const value = JSON.parse(text) as unknown;
+    return value && typeof value === 'object' && !Array.isArray(value) ? value as AnyRecord : null;
+  } catch {
+    return null;
+  }
+}
+// Providers differ in how strictly they return JSON, so accept a fenced or a
+// slightly chatty answer and pull the first JSON object out of it.
+function extractObject(raw: string): AnyRecord | null {
+  const text = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  const direct = tryParseObject(text);
+  if (direct) return direct;
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start >= 0 && end > start) return tryParseObject(text.slice(start, end + 1));
+  return null;
+}
+function contentOf(payload: unknown): string {
+  if (!payload || typeof payload !== 'object') return '';
+  const data = payload as AnyRecord;
+  const choices = Array.isArray(data.choices) ? data.choices : [];
+  const first = choices[0] && typeof choices[0] === 'object' ? choices[0] as AnyRecord : {};
+  const message = first.message && typeof first.message === 'object' ? first.message as AnyRecord : {};
+  return typeof message.content === 'string' ? message.content : '';
+}
+async function analyzeWithProviders(news: string): Promise<{ analysis: AnyRecord; provider: string } | null> {
+  const prompt = compactPrompt(news);
+  for (const provider of activeProviders()) {
+    if (exhausted.has(provider.id)) continue;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      let res: Response;
+      try {
+        res = await callProvider(provider, prompt);
+      } catch (error) {
+        lastError = `${provider.id}: ${error instanceof Error ? error.message.slice(0, 160) : String(error).slice(0, 160)}`;
+        if (attempt < MAX_RETRIES) await sleep(retryAfterMs('', attempt));
+        continue;
+      }
+      if (!res.ok) {
+        const errText = await res.text();
+        lastError = `${provider.id} ${res.status}: ${errText.slice(0, 160)}`;
+        if (res.status === 429) {
+          if (isDailyQuotaError(errText)) {
+            exhausted.add(provider.id);
+            break;
+          }
+          if (attempt < MAX_RETRIES) {
+            await sleep(retryAfterMs(errText, attempt));
+            continue;
+          }
+          break;
+        }
+        if (res.status >= 500 && attempt < MAX_RETRIES) {
+          await sleep(retryAfterMs(errText, attempt));
+          continue;
+        }
+        break;
+      }
+      const payload = await res.json().catch(() => null);
+      const parsed = extractObject(contentOf(payload));
+      if (!parsed) {
+        lastError = `${provider.id}: unparsable output`;
+        break;
+      }
+      usedProviders[provider.label] = (usedProviders[provider.label] ?? 0) + 1;
+      return { analysis: parsed, provider: provider.label };
+    }
+  }
+  return null;
 }
 function supabaseUrl(): string { return (Deno.env.get('SUPABASE_URL') ?? FALLBACK_URL).replace(/\/$/, ''); }
 function serviceKey(): string { const k = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SERVICE_KEY') ?? ''; if (!k) throw new Error('Missing service role key secret'); return k; }
@@ -83,7 +206,7 @@ function decodeHtml(html: string): string {
     .replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
 }
 function matchTag(item: string, tag: string): string {
-  const m = item.match(new RegExp(`<${tag}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`, 'i'));
+  const m = item.match(new RegExp(`<${tag}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${tag}>`, 'i'));
   return m ? m[1].trim() : '';
 }
 function normalizeUrl(raw: string): string { return raw.replace(/<!\[CDATA\[|\]\]>/g, '').trim().replace(/&amp;/g, '&').split('#')[0].split('?')[0]; }
@@ -96,73 +219,6 @@ async function fetchRss(url: string): Promise<string> {
   if (!proxied.ok) throw new Error(`RSS fetch failed for ${url}`);
   return await proxied.text();
 }
-async function groqRequest(prompt: string): Promise<Response> {
-  const apiKey = Deno.env.get('GROQ_API_KEY');
-  if (!apiKey) throw new Error('Missing GROQ_API_KEY secret');
-  return fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    signal: AbortSignal.timeout(45000),
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0,
-      max_tokens: GROQ_MAX_OUTPUT_TOKENS,
-    }),
-  });
-}
-
-async function analyzeWithGroq(news: string): Promise<AnyRecord | null> {
-  const prompt = compactPrompt(news);
-  for (let attempt = 0; attempt <= GROQ_MAX_RETRIES; attempt++) {
-    if (groqDailyLimit) return null;
-    let res: Response;
-    try {
-      res = await groqRequest(prompt);
-    } catch (error) {
-      groqError = error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200);
-      if (attempt < GROQ_MAX_RETRIES) await sleep(retryAfterMs('', attempt));
-      continue;
-    }
-    if (!res.ok) {
-      const errText = await res.text();
-      groqError = `Groq ${res.status}: ${errText.slice(0, 200)}`;
-      if (res.status === 429) {
-        // Daily token quota: stop spending attempts, the remaining items will
-        // arrive in the next runs (URL dedupe makes that safe).
-        if (isDailyQuotaError(errText)) {
-          groqDailyLimit = true;
-          groqStop = true;
-          return null;
-        }
-        if (attempt < GROQ_MAX_RETRIES) {
-          await sleep(retryAfterMs(errText, attempt));
-          continue;
-        }
-        groqStop = true;
-        return null;
-      }
-      if (res.status >= 500 && attempt < GROQ_MAX_RETRIES) {
-        await sleep(retryAfterMs(errText, attempt));
-        continue;
-      }
-      return null;
-    }
-    try {
-      const data = await res.json() as AnyRecord;
-      const choices = Array.isArray(data.choices) ? data.choices : [];
-      const first = choices[0] && typeof choices[0] === 'object' ? choices[0] as AnyRecord : {};
-      const message = first.message && typeof first.message === 'object' ? first.message as AnyRecord : {};
-      return JSON.parse(String(message.content ?? '{}')) as AnyRecord;
-    } catch (error) {
-      groqError = `Groq parse: ${error instanceof Error ? error.message.slice(0, 120) : String(error).slice(0, 120)}`;
-      return null;
-    }
-  }
-  return null;
-}
-
 function cleanImpacts(value: unknown): Array<{ asset: string; direction: string }> {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
@@ -181,10 +237,17 @@ function cleanImpacts(value: unknown): Array<{ asset: string; direction: string 
 }
 Deno.serve(async (req: Request) => {
   if (!isAuthorizedCron(req)) return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
-  groqStop = false; groqDailyLimit = false; groqError = '';
+  lastError = '';
+  exhausted.clear();
+  for (const key of Object.keys(usedProviders)) delete usedProviders[key];
   let dryRun = false;
-  let maxItems = 20;
-  try { const body = await req.clone().json() as AnyRecord; dryRun = body?.dry_run === true; const m = Number(body?.max_items); if (Number.isFinite(m) && m > 0) maxItems = Math.min(20, Math.floor(m)); } catch { dryRun = false; }
+  let maxItems = DEFAULT_MAX_ITEMS;
+  try {
+    const body = await req.clone().json() as AnyRecord;
+    dryRun = body?.dry_run === true;
+    const m = Number(body?.max_items);
+    if (Number.isFinite(m) && m > 0) maxItems = Math.min(HARD_MAX_ITEMS, Math.floor(m));
+  } catch { dryRun = false; }
   try {
     const blacklistRows = await restJson('news_blacklist?select=phrase') as Array<{ phrase: string }>;
     const blacklist = blacklistRows.map((b) => String(b.phrase ?? '').toLowerCase()).filter(Boolean);
@@ -195,13 +258,13 @@ Deno.serve(async (req: Request) => {
     let analyzed = 0;
     let seq = 0;
     for (const source of SOURCES) {
-      if (groqStop || groqDailyLimit || analyzed >= maxItems) { perSource[source.name] = { skipped: true }; continue; }
+      if (analyzed >= maxItems) { perSource[source.name] = { skipped: true }; continue; }
       let added = 0;
       try {
         const xmlText = await fetchRss(source.url);
         const items = xmlText.split('<item>').slice(1, 6);
         for (const item of items) {
-          if (groqStop || groqDailyLimit || analyzed >= maxItems) break;
+          if (analyzed >= maxItems) break;
           const title = decodeHtml(matchTag(item, 'title'));
           const rawDesc = decodeHtml(matchTag(item, 'description'));
           const desc = rawDesc ? (rawDesc.length > 200 ? rawDesc.slice(0, 200) + '...' : rawDesc) : '';
@@ -214,20 +277,21 @@ Deno.serve(async (req: Request) => {
           const haystack = `${title} ${desc}`.toLowerCase();
           if (blacklist.some((phrase) => haystack.includes(phrase))) continue;
           seenUrls.add(url);
-          const analysis = await analyzeWithGroq(`${title}. ${desc}`);
+          const outcome = await analyzeWithProviders(`${title}. ${desc}`);
           analyzed++;
-          await sleep(GROQ_CALL_SPACING_MS);
-          if (!analysis) continue;
+          await sleep(CALL_SPACING_MS);
+          if (!outcome) continue;
+          const analysis = outcome.analysis;
           const parsedDate = dateRaw ? new Date(dateRaw) : new Date();
-          results.push({ id: Date.now() * 1000 + (++seq), source: source.name, time: 'Недавно', title, summary: desc, url, published_at: Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString(), impacts: cleanImpacts(analysis.impacts), sentiment: clamp(finite(analysis.sentiment, 0), -1, 1), importance: clamp(Math.round(finite(analysis.importance, 5)), 1, 10), confidence: clamp(finite(analysis.confidence, 0.5), 0, 1), topic: 'Экономика', updated_at: new Date().toISOString() });
+          results.push({ id: Date.now() * 1000 + (++seq), source: source.name, time: 'Недавно', title, summary: desc, url, published_at: Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString(), impacts: cleanImpacts(analysis.impacts), sentiment: clamp(finite(analysis.sentiment, 0), -1, 1), importance: clamp(Math.round(finite(analysis.importance, 5)), 1, 10), confidence: clamp(finite(analysis.confidence, 0.5), 0, 1), topic: 'Экономика', model: outcome.provider, updated_at: new Date().toISOString() });
           added++;
         }
       } catch (error) { perSource[source.name] = { error: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) }; continue; }
       perSource[source.name] = { added };
     }
     if (!dryRun && results.length) await restJson('cached_news', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(results) });
-    return Response.json({ success: true, updated: dryRun ? 0 : results.length, dry_run: dryRun, candidates: results.length, analyzed, groq_error: groqError || null, groq_daily_limit: groqDailyLimit, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts })) });
+    return Response.json({ success: true, updated: dryRun ? 0 : results.length, dry_run: dryRun, candidates: results.length, analyzed, max_items: maxItems, last_error: lastError || null, groq_error: lastError || null, groq_daily_limit: exhausted.has('groq120'), providers: usedProviders, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts, model: r.model })) });
   } catch (error) {
-    return Response.json({ success: false, error: error instanceof Error ? error.message.slice(0, 700) : String(error).slice(0, 700), groq_error: groqError || null }, { status: 500 });
+    return Response.json({ success: false, error: error instanceof Error ? error.message.slice(0, 700) : String(error).slice(0, 700), groq_error: lastError || null }, { status: 500 });
   }
 });
