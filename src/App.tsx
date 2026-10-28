@@ -57,7 +57,14 @@ function App() {
     let timer = 0;
     let attempts = 0;
     let corrections = 0;
+    let stableTicks = 0;
+    let lastHeight = 0;
     const startedAt = Date.now();
+    // Данные секций приходят асинхронно и могут сдвинуть цель уже после первой
+    // прокрутки, поэтому держим корректировку дольше, но выходим, как только
+    // положение стало устойчивым, либо вмешался пользователь.
+    const SETTLE_LIMIT_MS = 15000;
+    const MAX_CORRECTIONS = 12;
     const markInterrupted = () => {
       userInterrupted = true;
     };
@@ -77,23 +84,34 @@ function App() {
 
       if (target) {
         const top = target.getBoundingClientRect().top;
-        const needsCorrection = corrections === 0 || top < 48 || top > 220;
-        if (needsCorrection) {
+        const height = document.documentElement.scrollHeight;
+        const heightChanged = height !== lastHeight;
+        lastHeight = height;
+
+        const outOfRange = top < 48 || top > 220;
+        if ((corrections === 0 || outOfRange) && corrections < MAX_CORRECTIONS) {
           target.scrollIntoView({
             behavior: corrections === 0 ? 'smooth' : 'auto',
             block: 'start',
           });
+          corrections += 1;
+          stableTicks = 0;
+        } else if (heightChanged) {
+          stableTicks = 0;
+        } else {
+          stableTicks += 1;
         }
-        corrections += 1;
 
-        if (Date.now() - startedAt < 4500) {
+        if (stableTicks >= 3 && Date.now() - startedAt > 1200) return;
+
+        if (Date.now() - startedAt < SETTLE_LIMIT_MS) {
           timer = window.setTimeout(tryScroll, corrections === 1 ? 750 : 550);
         }
         return;
       }
 
       attempts += 1;
-      if (Date.now() - startedAt < 4500) {
+      if (Date.now() - startedAt < SETTLE_LIMIT_MS) {
         timer = window.setTimeout(tryScroll, attempts < 4 ? 60 : 250);
       }
     };

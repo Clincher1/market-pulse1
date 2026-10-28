@@ -1,9 +1,12 @@
-// Secured replacement for the legacy update-news writer (2026-10-22).
-// Same public contract (cached_news rows, {success, updated} response), plus
-// in-code cron auth, dedupe before Groq, validated output, Groq 429 stop.
+// Token-lean news writer with proper Groq limit handling (2026-10-28).
+// Same public contract (cached_news rows, {success, updated} response), plus:
+// compact prompt + capped output (about 2.5x fewer tokens per article),
+// retries with backoff for per-minute limits, immediate stop on the daily
+// token quota, noise sections skipped before Groq, and safe output parsing.
 // Body {"dry_run": true, "max_items": n} analyzes without inserting.
-// Deployed live as slug `update-news-v2` (v2). The old public `update-news`
-// slug was deleted after cron cutover; pg_cron job 2 calls this function.
+// Deployed live as slug `update-news-v2` (third generation of the writer);
+// the previous body is kept in the repo history for a fast rollback.
+// pg_cron job 2 (update-news-every-15-min) calls this function.
 const FALLBACK_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const SOURCES = [
   { name: 'CNBC', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
@@ -13,8 +16,42 @@ const SOURCES = [
 ];
 const ALLOWED_ASSETS = new Set(['S&P 500', 'Gold', 'Brent', 'USD', 'BTC']);
 type AnyRecord = Record<string, unknown>;
+const GROQ_MODEL = 'openai/gpt-oss-120b';
+const GROQ_MAX_RETRIES = 3;
+const GROQ_NEWS_CHAR_LIMIT = 420;
+const GROQ_MAX_OUTPUT_TOKENS = 220;
+const GROQ_CALL_SPACING_MS = 150;
+// Sections that are never about world markets: do not spend the daily Groq
+// token budget on them.
+const SKIP_URL_PARTS = [
+  '/personal-finance/', '/life/', '/sport', '/sports/', '/culture/',
+  '/lifestyle/', '/food/', '/travel/', '/horoscope', '/recipes/', '/games/',
+];
 let groqStop = false;
+let groqDailyLimit = false;
 let groqError = '';
+function sleep(ms: number): Promise<void> { return new Promise((resolve) => setTimeout(resolve, ms)); }
+// A daily token quota (TPD) cannot be waited out, while a per-minute request
+// limit (RPM) can; Groq tells them apart in the error text.
+function isDailyQuotaError(text: string): boolean {
+  return /tokens per day|per day \(TPD\)|\bTPD\b/i.test(text);
+}
+function retryAfterMs(text: string, attempt: number): number {
+  const match = text.match(/try again in\s*([\d.]+)\s*(ms|s|seconds?)/i);
+  if (match) {
+    const value = Number(match[1]);
+    if (Number.isFinite(value)) {
+      const ms = match[2].toLowerCase().startsWith('ms') ? value : value * 1000;
+      return Math.min(20000, Math.max(500, ms));
+    }
+  }
+  return Math.min(15000, 1200 * 2 ** attempt) + Math.floor(Math.random() * 400);
+}
+function compactPrompt(news: string): string {
+  return `Rate how important this news is for S&P 500, Gold, Brent, USD, BTC. Return JSON {"sentiment":-1..1,"importance":1..10,"confidence":0..1,"impacts":[{"asset":"Gold","direction":"up"}]}.
+Rules: personal finance, family, sport, celebrities, games, food, travel -> importance 1, confidence 0.9, impacts []. Macro, policy, companies, sanctions, rates, inflation, technology -> judge for real. Unsure -> importance 2, confidence 0.3, impacts [].
+News: "${news.replace(/"/g, '\\"').slice(0, GROQ_NEWS_CHAR_LIMIT)}"`;
+}
 function supabaseUrl(): string { return (Deno.env.get('SUPABASE_URL') ?? FALLBACK_URL).replace(/\/$/, ''); }
 function serviceKey(): string { const k = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SERVICE_KEY') ?? ''; if (!k) throw new Error('Missing service role key secret'); return k; }
 function isAuthorizedCron(req: Request): boolean {
@@ -59,40 +96,73 @@ async function fetchRss(url: string): Promise<string> {
   if (!proxied.ok) throw new Error(`RSS fetch failed for ${url}`);
   return await proxied.text();
 }
-async function analyzeWithGroq(text: string): Promise<AnyRecord | null> {
+async function groqRequest(prompt: string): Promise<Response> {
   const apiKey = Deno.env.get('GROQ_API_KEY');
   if (!apiKey) throw new Error('Missing GROQ_API_KEY secret');
-  const prompt = `Ты — профессиональный финансовый аналитик. Оцени, насколько эта новость важна для мировых рынков (S&P 500, Gold, Brent, USD, BTC).
-
-Верни СТРОГО JSON:
-{
-  "sentiment": число от -1 до 1,
-  "importance": число от 1 до 10,
-  "confidence": число от 0.0 до 1.0 (насколько ты уверен в оценке),
-  "impacts": массив активов (asset: "S&P 500" | "Gold" | "Brent" | "USD" | "BTC", direction: "up" | "down")
+  return fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    signal: AbortSignal.timeout(45000),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0,
+      max_tokens: GROQ_MAX_OUTPUT_TOKENS,
+    }),
+  });
 }
 
-ПРАВИЛА:
-- Если новость про личные финансы, семьи, дейтинг, здоровье знаменитостей, спорт, игры или советы по бизнесу — ставь "importance": 1, "confidence": 0.9, "impacts": [].
-- Если новость про макроэкономику, политику, компании, санкции, конфликты, инфляцию, ставки или технологии — оцени её реально.
-- Если не уверен — ставь "importance": 2, "confidence": 0.3, "impacts": [].
-
-Новость: "${text.replace(/"/g, '\\"').slice(0, 900)}"`;
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', signal: AbortSignal.timeout(45000), headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` }, body: JSON.stringify({ model: 'openai/gpt-oss-120b', messages: [{ role: 'user', content: prompt }], response_format: { type: 'json_object' }, temperature: 0 }) });
+async function analyzeWithGroq(news: string): Promise<AnyRecord | null> {
+  const prompt = compactPrompt(news);
+  for (let attempt = 0; attempt <= GROQ_MAX_RETRIES; attempt++) {
+    if (groqDailyLimit) return null;
+    let res: Response;
+    try {
+      res = await groqRequest(prompt);
+    } catch (error) {
+      groqError = error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200);
+      if (attempt < GROQ_MAX_RETRIES) await sleep(retryAfterMs('', attempt));
+      continue;
+    }
     if (!res.ok) {
       const errText = await res.text();
-      groqError = `Groq ${res.status}: ${errText.slice(0, 220)}`;
-      if (res.status === 429) groqStop = true;
+      groqError = `Groq ${res.status}: ${errText.slice(0, 200)}`;
+      if (res.status === 429) {
+        // Daily token quota: stop spending attempts, the remaining items will
+        // arrive in the next runs (URL dedupe makes that safe).
+        if (isDailyQuotaError(errText)) {
+          groqDailyLimit = true;
+          groqStop = true;
+          return null;
+        }
+        if (attempt < GROQ_MAX_RETRIES) {
+          await sleep(retryAfterMs(errText, attempt));
+          continue;
+        }
+        groqStop = true;
+        return null;
+      }
+      if (res.status >= 500 && attempt < GROQ_MAX_RETRIES) {
+        await sleep(retryAfterMs(errText, attempt));
+        continue;
+      }
       return null;
     }
-    const data = await res.json() as AnyRecord;
-    const choices = Array.isArray(data.choices) ? data.choices : [];
-    const first = choices[0] && typeof choices[0] === 'object' ? choices[0] as AnyRecord : {};
-    const message = first.message && typeof first.message === 'object' ? first.message as AnyRecord : {};
-    return JSON.parse(String(message.content ?? '{}')) as AnyRecord;
-  } catch (error) { groqError = error instanceof Error ? error.message.slice(0, 220) : String(error).slice(0, 220); return null; }
+    try {
+      const data = await res.json() as AnyRecord;
+      const choices = Array.isArray(data.choices) ? data.choices : [];
+      const first = choices[0] && typeof choices[0] === 'object' ? choices[0] as AnyRecord : {};
+      const message = first.message && typeof first.message === 'object' ? first.message as AnyRecord : {};
+      return JSON.parse(String(message.content ?? '{}')) as AnyRecord;
+    } catch (error) {
+      groqError = `Groq parse: ${error instanceof Error ? error.message.slice(0, 120) : String(error).slice(0, 120)}`;
+      return null;
+    }
+  }
+  return null;
 }
+
 function cleanImpacts(value: unknown): Array<{ asset: string; direction: string }> {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
@@ -111,7 +181,7 @@ function cleanImpacts(value: unknown): Array<{ asset: string; direction: string 
 }
 Deno.serve(async (req: Request) => {
   if (!isAuthorizedCron(req)) return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
-  groqStop = false; groqError = '';
+  groqStop = false; groqDailyLimit = false; groqError = '';
   let dryRun = false;
   let maxItems = 20;
   try { const body = await req.clone().json() as AnyRecord; dryRun = body?.dry_run === true; const m = Number(body?.max_items); if (Number.isFinite(m) && m > 0) maxItems = Math.min(20, Math.floor(m)); } catch { dryRun = false; }
@@ -125,20 +195,20 @@ Deno.serve(async (req: Request) => {
     let analyzed = 0;
     let seq = 0;
     for (const source of SOURCES) {
-      if (groqStop || analyzed >= maxItems) { perSource[source.name] = { skipped: true }; continue; }
+      if (groqStop || groqDailyLimit || analyzed >= maxItems) { perSource[source.name] = { skipped: true }; continue; }
       let added = 0;
       try {
         const xmlText = await fetchRss(source.url);
         const items = xmlText.split('<item>').slice(1, 6);
         for (const item of items) {
-          if (groqStop || analyzed >= maxItems) break;
+          if (groqStop || groqDailyLimit || analyzed >= maxItems) break;
           const title = decodeHtml(matchTag(item, 'title'));
           const rawDesc = decodeHtml(matchTag(item, 'description'));
           const desc = rawDesc ? (rawDesc.length > 200 ? rawDesc.slice(0, 200) + '...' : rawDesc) : '';
           const url = normalizeUrl(matchTag(item, 'link'));
           const dateRaw = matchTag(item, 'pubDate');
           if (!title || !url) continue;
-          if (url.includes('/personal-finance/') || url.includes('/life/')) continue;
+          if (SKIP_URL_PARTS.some((part) => url.includes(part))) continue;
           if (title.length < 15 && desc.length < 30) continue;
           if (seenUrls.has(url)) continue;
           const haystack = `${title} ${desc}`.toLowerCase();
@@ -146,6 +216,7 @@ Deno.serve(async (req: Request) => {
           seenUrls.add(url);
           const analysis = await analyzeWithGroq(`${title}. ${desc}`);
           analyzed++;
+          await sleep(GROQ_CALL_SPACING_MS);
           if (!analysis) continue;
           const parsedDate = dateRaw ? new Date(dateRaw) : new Date();
           results.push({ id: Date.now() * 1000 + (++seq), source: source.name, time: 'Недавно', title, summary: desc, url, published_at: Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString(), impacts: cleanImpacts(analysis.impacts), sentiment: clamp(finite(analysis.sentiment, 0), -1, 1), importance: clamp(Math.round(finite(analysis.importance, 5)), 1, 10), confidence: clamp(finite(analysis.confidence, 0.5), 0, 1), topic: 'Экономика', updated_at: new Date().toISOString() });
@@ -155,7 +226,7 @@ Deno.serve(async (req: Request) => {
       perSource[source.name] = { added };
     }
     if (!dryRun && results.length) await restJson('cached_news', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(results) });
-    return Response.json({ success: true, updated: dryRun ? 0 : results.length, dry_run: dryRun, candidates: results.length, analyzed, groq_error: groqError || null, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts })) });
+    return Response.json({ success: true, updated: dryRun ? 0 : results.length, dry_run: dryRun, candidates: results.length, analyzed, groq_error: groqError || null, groq_daily_limit: groqDailyLimit, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts })) });
   } catch (error) {
     return Response.json({ success: false, error: error instanceof Error ? error.message.slice(0, 700) : String(error).slice(0, 700), groq_error: groqError || null }, { status: 500 });
   }
