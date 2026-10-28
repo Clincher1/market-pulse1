@@ -29,11 +29,31 @@ serveWithErrorReporting("proxy", async (req: Request) => {
     if (targetUrlObj.protocol !== 'https:') return json(403, { error: 'Only https targets are allowed' });
     const isAllowed = ALLOWED_HOSTS.some((host) => targetUrlObj.hostname === host);
     if (!isAllowed) return json(403, { error: 'Host not allowed', host: targetUrlObj.hostname });
-    const upstream = await fetch(target, {
-      signal: AbortSignal.timeout(20000),
-      headers: { 'User-Agent': 'MarketPulse/1.0', 'Accept': 'application/rss+xml,application/xml,text/xml,*/*' },
-    });
+    // Follow redirects manually: fetch() would silently chase a redirect to
+    // any host, turning the allowlist into decoration. Every hop is checked.
+    const MAX_BYTES = 2_000_000;
+    let current = target;
+    let upstream: Response | null = null;
+    for (let hop = 0; hop <= 3; hop++) {
+      const hopUrl = new URL(current);
+      if (hopUrl.protocol !== 'https:' || !ALLOWED_HOSTS.some((host) => hopUrl.hostname === host)) {
+        return json(403, { error: 'Redirect target not allowed', host: hopUrl.hostname });
+      }
+      upstream = await fetch(current, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(20000),
+        headers: { 'User-Agent': 'MarketPulse/1.0', 'Accept': 'application/rss+xml,application/xml,text/xml,*/*' },
+      });
+      if (upstream.status < 300 || upstream.status >= 400) break;
+      const location = upstream.headers.get('Location');
+      if (!location || hop === 3) return json(502, { error: 'Too many redirects' });
+      current = new URL(location, current).toString();
+    }
+    if (!upstream) return json(502, { error: 'No upstream response' });
+    const declared = Number(upstream.headers.get('Content-Length') ?? 0);
+    if (declared > MAX_BYTES) return json(502, { error: 'Upstream response too large' });
     const bodyText = await upstream.text();
+    if (bodyText.length > MAX_BYTES) return json(502, { error: 'Upstream response too large' });
     return new Response(bodyText, {
       status: upstream.status,
       headers: { ...CORS_HEADERS, 'Content-Type': upstream.headers.get('Content-Type') || 'text/plain; charset=utf-8' },

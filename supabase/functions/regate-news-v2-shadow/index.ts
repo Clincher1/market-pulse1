@@ -1,5 +1,6 @@
 // One-off Stage 2 maintenance function: applies token_prefix_v2 market gate
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { isAuthorizedService, unauthorized } from "../_shared/auth.ts";
 // and a 20-candidate per-source cap to already stored shadow articles.
 // Delete after use; the canonical logic lives in ingest-news-v2-shadow.
 
@@ -60,7 +61,9 @@ function hasMarketTerm(normalized: string): boolean {
   );
 }
 
-serveWithErrorReporting("regate-news-v2-shadow", async () => {
+serveWithErrorReporting("regate-news-v2-shadow", async (req: Request) => {
+  // Mutates stored article statuses with the service key: service callers only.
+  if (!isAuthorizedService(req)) return unauthorized();
   try {
     const sources = (await restJson(
       "news_sources_v2?select=id&requires_market_terms=eq.true&order=id.asc",

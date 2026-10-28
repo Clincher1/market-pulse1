@@ -95,14 +95,14 @@ function buildReason(row: LatestRow): string {
 }
 
 /** Загружает честный счёт прогнозов: сколько выдано, сколько проверено и с каким качеством. */
-export async function fetchForecastTrackRecord(): Promise<TrackRecordRow | null> {
+export async function fetchForecastTrackRecord(assetKey = 'ALL'): Promise<TrackRecordRow | null> {
   try {
     const { data, error } = await supabase
       .from('forecast_track_record')
       .select(
         'asset_key, issued, resolved, scored, mean_brier, hit_rate, mean_return_pct, pending, last_evaluated_at, verdict',
       )
-      .eq('asset_key', 'ALL')
+      .eq('asset_key', assetKey)
       .maybeSingle();
 
     if (error || !data) return null;
@@ -110,6 +110,21 @@ export async function fetchForecastTrackRecord(): Promise<TrackRecordRow | null>
   } catch (e) {
     console.error('Ошибка загрузки статистики прогнозов:', e);
     return null;
+  }
+}
+
+/** Счёт сразу по всем активам: преимущество «в целом» не доказывает преимущество по каждому активу. */
+async function fetchTrackRecordsByAsset(): Promise<Map<string, TrackRecordRow>> {
+  try {
+    const { data, error } = await supabase
+      .from('forecast_track_record')
+      .select(
+        'asset_key, issued, resolved, scored, mean_brier, hit_rate, mean_return_pct, pending, last_evaluated_at, verdict',
+      );
+    if (error || !data) return new Map();
+    return new Map((data as TrackRecordRow[]).map((row) => [row.asset_key, row]));
+  } catch {
+    return new Map();
   }
 }
 
@@ -132,8 +147,7 @@ export async function fetchLiveForecasts(): Promise<ForecastData[]> {
 
     // «Высокая» уверенность возможна только тогда, когда накопленная история
     // действительно подтвердила преимущество над подбрасыванием монеты.
-    const track = await fetchForecastTrackRecord();
-    const provenEdge = track?.verdict === 'edge';
+    const trackByAsset = await fetchTrackRecordsByAsset();
 
     return (data as LatestRow[]).map((item) => {
       const direction = normalizeDirection(item.direction);
@@ -157,7 +171,7 @@ export async function fetchLiveForecasts(): Promise<ForecastData[]> {
         probability: Math.min(100, Math.max(0, Math.floor(shareOnArrow * 100))),
         time_window: `${item.horizon_trading_days} ${item.horizon_trading_days === 1 ? 'торговый день' : 'торговых дня'}`,
         confidence: normalizeConfidence(
-          provenEdge ? 'Высокая' : evidence >= 8 ? 'Средняя' : 'Низкая',
+          trackByAsset.get(item.asset_key)?.verdict === 'edge' ? 'Высокая' : evidence >= 8 ? 'Средняя' : 'Низкая',
         ),
         reason: buildReason(item),
         updated_at: item.issued_at ?? undefined,

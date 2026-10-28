@@ -436,7 +436,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
   // ВРЕМЕННЫЙ ЗАМЕР (снимается после настройки классификатора): статистика по
   // связям «событие → актив», чтобы чинить качество оснований по числам, а не
   // на глаз. Наружу отдаются только агрегаты и короткие обрывки.
-  if (new URL(req.url).searchParams.get('diagnose') === 'evidence') {
+  if (new URL(req.url).searchParams.get('diagnose') === 'evidence' && isPrivileged(req)) {
     const rows = (await restJson(
       'news_event_classifications_shadow?select=relevance,importance,transmission_channel,impacts,rationale_ru,prompt_version,raw_response' +
         '&status=eq.classified&order=updated_at.desc&limit=400',
@@ -617,8 +617,8 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
 
     // 5. Forecasts must be recalculated on schedule.
     check('forecasts_fresh', async () => {
-      const rows = (await restJson('cached_forecasts?select=updated_at&order=updated_at.desc&limit=1')) as AnyRecord[];
-      const age = hoursAgo(String(rows[0]?.updated_at ?? ''));
+      const rows = (await restJson('forecast_latest_v2?select=issued_at&order=issued_at.desc&limit=1')) as AnyRecord[];
+      const age = hoursAgo(String(rows[0]?.issued_at ?? ''));
       return {
         ok: age !== null && age <= FRESH_FORECAST_HOURS,
         detail: age === null ? 'нет данных' : `прогнозам ${age.toFixed(1)} ч`,

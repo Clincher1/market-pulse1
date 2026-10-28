@@ -20,6 +20,8 @@ on:
       - 'package-lock.json'
       - 'tsconfig*.json'
       - 'vite.config.ts'
+      - 'api/**'
+      - 'vercel.json'
       - 'supabase/config.toml'
       - '.github/workflows/deploy-functions.yml'
   workflow_dispatch:
@@ -55,11 +57,14 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint the site
+        run: npm run lint
 
       # npm run build type-checks the app before bundling it, so one step covers both.
       - name: Type-check and build the site
