@@ -18,7 +18,11 @@ const SOURCES = [
   { name: 'CNBC', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
   { name: 'Financial Times', url: 'https://www.ft.com/rss/home' },
   { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
-  { name: 'WSJ', url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml' },
+  // 2026-10-28: every WSJ feed (Markets, World, US Business, WSJD) froze in
+  // January 2025 — all items are ~638 days old, and the table guard rejects
+  // anything older than seven days, so the slots spent on them were pure loss.
+  // MarketWatch is the closest live markets desk to replace it.
+  { name: 'MarketWatch', url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories' },
 ];
 const ALLOWED_ASSETS = new Set(['S&P 500', 'Gold', 'Brent', 'USD', 'BTC']);
 type AnyRecord = Record<string, unknown>;
@@ -270,19 +274,25 @@ Deno.serve(async (req: Request) => {
     const perSource: AnyRecord = {};
     let analyzed = 0;
     let seq = 0;
+
+    // Collect candidates from every feed first, before spending provider calls.
+    // Draining one source at a time (the previous behaviour) meant the first
+    // feeds in the list consumed the whole item budget: over the last week WSJ
+    // contributed 0 articles and 68% of the flow came from Bloomberg, which
+    // quietly turned the tension index into one newsroom's mood.
+    type Candidate = { title: string; desc: string; url: string; dateRaw: string };
+    type Queue = { source: { name: string; url: string }; stats: AnyRecord; items: Candidate[] };
+    const queues: Queue[] = [];
     for (const source of SOURCES) {
-      if (analyzed >= maxItems) { perSource[source.name] = { skipped: true }; continue; }
-      let added = 0;
       const stats: AnyRecord = { added: 0, items: 0, fresh: 0, dup: 0, filtered: 0, via: 'unknown', first_url: '' };
+      const items: Candidate[] = [];
       try {
         const feed = await fetchRss(source.url);
         const xmlText = feed.text;
-        const items = xmlText.split('<item>').slice(1, 6);
-        stats.items = items.length;
+        stats.items = xmlText.split('<item>').slice(1, 6).length;
         stats.via = feed.via;
         if (feed.note) stats.note = feed.note;
-        for (const item of items) {
-          if (analyzed >= maxItems) break;
+        for (const item of xmlText.split('<item>').slice(1, 6)) {
           const title = decodeHtml(matchTag(item, 'title'));
           const rawDesc = decodeHtml(matchTag(item, 'description'));
           const desc = rawDesc ? (rawDesc.length > 200 ? rawDesc.slice(0, 200) + '...' : rawDesc) : '';
@@ -293,22 +303,50 @@ Deno.serve(async (req: Request) => {
           if (SKIP_URL_PARTS.some((part) => url.includes(part))) { stats.filtered = (stats.filtered as number) + 1; continue; }
           if (title.length < 15 && desc.length < 30) { stats.filtered = (stats.filtered as number) + 1; continue; }
           if (seenUrls.has(url)) { stats.dup = (stats.dup as number) + 1; continue; }
+          // The table guard silently drops rows older than seven days or dated
+          // more than a day ahead. Analyzing them would burn provider tokens on
+          // articles that can never be stored, so skip them before the model
+          // gets involved and leave the slot to a usable item.
+          const parsedTs = Date.parse(dateRaw);
+          if (Number.isFinite(parsedTs)) {
+            const ageDays = (Date.now() - parsedTs) / 86_400_000;
+            if (ageDays > 7 || ageDays < -1) { stats.filtered = (stats.filtered as number) + 1; continue; }
+          }
           const haystack = `${title} ${desc}`.toLowerCase();
           if (blacklist.some((phrase) => haystack.includes(phrase))) { stats.filtered = (stats.filtered as number) + 1; continue; }
           seenUrls.add(url);
           stats.fresh = (stats.fresh as number) + 1;
-          const outcome = await analyzeWithProviders(`${title}. ${desc}`);
-          analyzed++;
-          await sleep(CALL_SPACING_MS);
-          if (!outcome) continue;
-          const analysis = outcome.analysis;
-          const parsedDate = dateRaw ? new Date(dateRaw) : new Date();
-          results.push({ id: Date.now() * 1000 + (++seq), source: source.name, time: 'Недавно', title, summary: desc, url, published_at: Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString(), impacts: cleanImpacts(analysis.impacts), sentiment: clamp(finite(analysis.sentiment, 0), -1, 1), importance: clamp(Math.round(finite(analysis.importance, 5)), 1, 10), confidence: clamp(finite(analysis.confidence, 0.5), 0, 1), topic: 'Экономика', model: outcome.provider, updated_at: new Date().toISOString() });
-          added++;
+          items.push({ title, desc, url, dateRaw });
         }
-      } catch (error) { perSource[source.name] = { error: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) }; continue; }
-      stats.added = added;
+      } catch (error) {
+        perSource[source.name] = { error: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) };
+        continue;
+      }
       perSource[source.name] = stats;
+      queues.push({ source, stats, items });
+    }
+
+    // Round-robin: one candidate per source per pass, and the starting source
+    // rotates every 15-minute slot so no feed is permanently last in line.
+    const rotation = Math.floor(Date.now() / (15 * 60 * 1000)) % Math.max(1, queues.length);
+    const rotated = rotation === 0 ? queues : [...queues.slice(rotation), ...queues.slice(0, rotation)];
+    while (analyzed < maxItems) {
+      let pickedInPass = false;
+      for (const queue of rotated) {
+        if (analyzed >= maxItems) break;
+        const candidate = queue.items.shift();
+        if (!candidate) continue;
+        pickedInPass = true;
+        const outcome = await analyzeWithProviders(`${candidate.title}. ${candidate.desc}`);
+        analyzed++;
+        await sleep(CALL_SPACING_MS);
+        if (!outcome) continue;
+        const analysis = outcome.analysis;
+        const parsedDate = candidate.dateRaw ? new Date(candidate.dateRaw) : new Date();
+        results.push({ id: Date.now() * 1000 + (++seq), source: queue.source.name, time: 'Недавно', title: candidate.title, summary: candidate.desc, url: candidate.url, published_at: Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString(), impacts: cleanImpacts(analysis.impacts), sentiment: clamp(finite(analysis.sentiment, 0), -1, 1), importance: clamp(Math.round(finite(analysis.importance, 5)), 1, 10), confidence: clamp(finite(analysis.confidence, 0.5), 0, 1), topic: 'Экономика', model: outcome.provider, updated_at: new Date().toISOString() });
+        queue.stats.added = (queue.stats.added as number) + 1;
+      }
+      if (!pickedInPass) break;
     }
     if (!dryRun && results.length) await restJson('cached_news', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(results) });
     return Response.json({ success: true, updated: dryRun ? 0 : results.length, dry_run: dryRun, candidates: results.length, analyzed, max_items: maxItems, last_error: lastError || null, groq_error: lastError || null, groq_daily_limit: exhausted.has('groq120'), providers: usedProviders, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts, model: r.model })) });

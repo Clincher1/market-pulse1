@@ -198,7 +198,12 @@ Deno.serve(async (req) => {
     // and keeps its meaning if the model's absolute importance scale drifts.
     let negativeWeight = 0;
     let totalWeight = 0;
+    let newestPublished: number | null = null;
     for (const item of news) {
+      const publishedAt = Date.parse(String(item.published_at));
+      if (Number.isFinite(publishedAt) && (newestPublished === null || publishedAt > newestPublished)) {
+        newestPublished = publishedAt;
+      }
       const sentiment = clamp(Number(item.sentiment), -1, 1);
       const importance = clamp(Number(item.importance), 1, 10);
       const confidence = clamp(Number(item.confidence), 0, 1);
@@ -210,6 +215,11 @@ Deno.serve(async (req) => {
     const index = totalWeight > 0
       ? clamp(Math.round((negativeWeight / totalWeight) * 100), 0, 100)
       : 0;
+    // When the news flow stops, the 24-hour window silently keeps the old
+    // articles while `updated_at` keeps ticking every 15 minutes. The age of
+    // the newest article in the sample is what actually tells whether the
+    // metric is measuring live news or a frozen snapshot.
+    const sampleNewest = newestPublished === null ? null : new Date(newestPublished).toISOString();
     let label = "Тепло";
     if (index < 30) label = "Холодно";
     else if (index > 70) label = "Горячо";
@@ -279,11 +289,19 @@ Deno.serve(async (req) => {
         history: formattedHistory,
         history_stats: historyStats,
         news_count: news.length,
+        sample_newest: sampleNewest,
         updated_at: now.toISOString(),
       }),
     });
 
-    return Response.json({ success: true, index, label, news_count: news.length, negative_share: index });
+    return Response.json({
+      success: true,
+      index,
+      label,
+      news_count: news.length,
+      negative_share: index,
+      sample_newest: sampleNewest,
+    });
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : String(error) },
