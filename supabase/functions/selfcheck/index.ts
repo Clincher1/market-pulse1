@@ -432,6 +432,50 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 
+  // ВРЕМЕННЫЙ ЗАМЕР (снимается после настройки классификатора): статистика по
+  // связям «событие → актив», чтобы чинить качество оснований по числам, а не
+  // на глаз. Наружу отдаются только агрегаты и короткие обрывки.
+  if (new URL(req.url).searchParams.get('diagnose') === 'evidence') {
+    const rows = (await restJson(
+      'news_event_classifications_shadow?select=relevance,importance,transmission_channel,impacts,rationale_ru' +
+        '&status=eq.classified&order=updated_at.desc&limit=400',
+    )) as AnyRecord[];
+    const flat: AnyRecord[] = [];
+    for (const row of rows) {
+      const impacts = Array.isArray(row.impacts) ? row.impacts as AnyRecord[] : [];
+      for (const impact of impacts) {
+        flat.push({
+          channel: String(row.transmission_channel ?? ''),
+          importance: Number(row.importance ?? 0),
+          relevance: Number(row.relevance ?? 0),
+          asset: String(impact.asset ?? ''),
+          strength: Number(impact.strength ?? 0),
+          direction: String(impact.direction ?? ''),
+          why: String(impact.rationale_ru ?? '').slice(0, 70),
+        });
+      }
+    }
+    const pairs: Record<string, { n: number; sum: number; weak: number }> = {};
+    for (const item of flat) {
+      const key = `${item.channel} → ${item.asset}`;
+      const bucket = pairs[key] ?? { n: 0, sum: 0, weak: 0 };
+      bucket.n += 1;
+      bucket.sum += Number(item.strength);
+      if (Number(item.importance) <= 5 && Number(item.strength) >= 0.5) bucket.weak += 1;
+      pairs[key] = bucket;
+    }
+    const ranked = Object.entries(pairs)
+      .map(([key, value]) => `${key}: ${value.n} шт, средняя сила ${(value.sum / value.n).toFixed(2)}, слабых связей ${value.weak}`)
+      .sort((a, b) => b.length - a.length)
+      .slice(0, 14);
+    const suspicious = flat
+      .filter((item) => Number(item.importance) <= 5 && Number(item.strength) >= 0.5)
+      .sort((a, b) => Number(b.strength) - Number(a.strength))
+      .slice(0, 12)
+      .map((item) => `${item.channel} имп.${item.importance} рел.${item.relevance} → ${item.asset} ${item.direction} ${item.strength}: ${item.why}`);
+    return json({ ok: true, classifications: rows.length, impacts: flat.length, pairs: ranked, suspicious });
+  }
+
   const privileged = isPrivileged(req);
   const now = new Date();
 
