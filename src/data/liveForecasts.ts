@@ -152,7 +152,9 @@ export async function fetchLiveForecasts(): Promise<ForecastData[]> {
         id: item.asset_key,
         asset: assetLabel(item),
         direction,
-        probability: Math.min(100, Math.max(0, Math.round(shareOnArrow * 100))),
+        // Округление вниз: доля 59.5 не должна показываться как 60 и спорить
+        // с подписью «ниже порога 60 % сигналы считаются шумом».
+        probability: Math.min(100, Math.max(0, Math.floor(shareOnArrow * 100))),
         time_window: `${item.horizon_trading_days} ${item.horizon_trading_days === 1 ? 'торговый день' : 'торговых дня'}`,
         confidence: normalizeConfidence(
           provenEdge ? 'Высокая' : evidence >= 8 ? 'Средняя' : 'Низкая',
