@@ -87,6 +87,10 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string }> = {
     title: 'Калибровка прогнозов не откатилась',
     hint: 'Свежие прогнозы пишутся со сжатием к базовой частоте, а не прямой долей',
   },
+  no_telemetry: {
+    title: 'Сайт ничего не собирает',
+    hint: 'В разметке нет счётчиков: ни своего от Vercel, ни Яндекс.Метрики, ни Google',
+  },
 };
 
 export async function fetchLatestHealth(): Promise<HealthRow | null> {

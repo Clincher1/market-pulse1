@@ -53,6 +53,23 @@ const HEAL_BY_CHECK: Record<string, string> = {
   news_fresh: 'update-news-v2',
 };
 
+// Признаки телеметрии в разметке. Проверка 10 ловит чужие домены, эта —
+// отправку данных куда бы то ни было: собственный счётчик Vercel ходит по
+// своему пути на нашем же домене, и доменным фильтром его не поймать.
+const TELEMETRY_MARKERS = [
+  '/_vercel/insights',
+  'vercel-insights',
+  'va.vercel-scripts',
+  'vitals.vercel',
+  'googletagmanager',
+  'gtag/js',
+  'mc.yandex',
+  'metrika',
+  'hotjar',
+  'clarity.ms',
+  'segment.com/analytics',
+];
+
 const DIGEST_TITLE = 'Дайджест недели: Market Pulse';
 const VERDICT_TITLE = 'Решение: вердикт по прогнозам готов';
 
@@ -606,6 +623,21 @@ Deno.serve(async (req: Request) => {
       const started = Date.now();
       const res = await fetch(SITE, { signal: AbortSignal.timeout(20000) });
       return { ok: res.ok, detail: `HTTP ${res.status} за ${Date.now() - started} мс` };
+    }),
+
+    // 13. The site promises no trackers, no analytics, no telemetry. Promise is
+    //     cheap: this looks for the actual markers in the shipped markup, so a
+    //     metric quietly switched on in the dashboard shows up here — even when
+    //     the beacon is served from our own domain.
+    check('no_telemetry', async () => {
+      const html = (await (await fetch(SITE, { signal: AbortSignal.timeout(20000) })).text()).toLowerCase();
+      const found = TELEMETRY_MARKERS.filter((marker) => html.includes(marker));
+      return {
+        ok: found.length === 0,
+        detail: found.length
+          ? `в разметке найдены счётчики: ${found.join(', ')}`
+          : `счётчиков нет: проверено ${TELEMETRY_MARKERS.length} признаков, ни одного в разметке`,
+      };
     }),
 
     // 12. The calibrated forecast writer must stay calibrated. Without this, a
