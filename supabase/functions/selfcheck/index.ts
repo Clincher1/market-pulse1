@@ -13,6 +13,10 @@
 //
 // The site must be able to prove that it works without a person standing next
 // to it. This is that proof.
+//
+// The Linear bridge was proven end to end on 2026-10-28: a deliberately broken
+// news_fresh threshold made the check fail, the bridge opened issue CLI-5 in
+// team «Clincher», and restoring the threshold closed it again with a comment.
 
 const SUPABASE_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const SITE = 'https://market-pulse1-eta.vercel.app';
