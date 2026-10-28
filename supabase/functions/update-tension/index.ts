@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
     const params = new URLSearchParams({
       select: "sentiment,importance,confidence,source,published_at,title,url",
       order: "published_at.desc",
-      limit: "50",
+      limit: "400",
     });
     params.append("published_at", `gte.${cutoff}`);
     params.append("published_at", `lte.${futureLimit}`);
@@ -175,7 +175,11 @@ Deno.serve(async (req) => {
         acceptedTitleTokens.push(tokens);
         return true;
       })
-      .slice(0, 20);
+      // Every qualified article of the last 24 hours is counted. The former
+      // cap of 20 silently turned the window into the last three or four hours
+      // on busy days, so values depended on the time of day and could not be
+      // compared between days.
+      .slice(0, 300);
 
     if (news.length < MIN_NEWS) {
       return Response.json({
@@ -186,15 +190,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    let totalScore = 0;
+    // The index is the share of the flow's total significance that is negative.
+    // The previous version divided the average per-article score by the
+    // theoretical maximum of 10 points; real days scored 0.4-1.6 points, so the
+    // scale read 4-16 out of 100 and the "warm/hot" thresholds were unreachable
+    // - the chart looked like a permanent slide into cold. A share is unit-free
+    // and keeps its meaning if the model's absolute importance scale drifts.
+    let negativeWeight = 0;
+    let totalWeight = 0;
     for (const item of news) {
       const sentiment = clamp(Number(item.sentiment), -1, 1);
       const importance = clamp(Number(item.importance), 1, 10);
       const confidence = clamp(Number(item.confidence), 0, 1);
-      totalScore += Math.max(0, -sentiment) * importance * confidence;
+      const weight = importance * confidence;
+      totalWeight += weight;
+      negativeWeight += Math.max(0, -sentiment) * weight;
     }
 
-    const index = clamp(Math.round((totalScore / (news.length * 10)) * 100), 0, 100);
+    const index = totalWeight > 0
+      ? clamp(Math.round((negativeWeight / totalWeight) * 100), 0, 100)
+      : 0;
     let label = "Тепло";
     if (index < 30) label = "Холодно";
     else if (index > 70) label = "Горячо";
@@ -212,6 +227,40 @@ Deno.serve(async (req) => {
       limit: "7",
     });
     const history = (await restJson(`tension_history?${historyParams.toString()}`)) as Array<Record<string, unknown>>;
+
+    // Historical context for the scale. Recomputed on every run so the card
+    // never quotes a stale "N days out of M were quieter" line.
+    const statsParams = new URLSearchParams({
+      select: "value,date",
+      order: "date.desc",
+      limit: "60",
+    });
+    const statsRows = (await restJson(`tension_history?${statsParams.toString()}`)) as Array<Record<string, unknown>>;
+    const statValues = statsRows
+      .map((row) => Number(row.value))
+      .filter((value) => Number.isFinite(value));
+    const sortedValues = [...statValues].sort((a, b) => a - b);
+    const middle = Math.floor(sortedValues.length / 2);
+    const median = sortedValues.length === 0
+      ? 0
+      : sortedValues.length % 2 === 0
+        ? (sortedValues[middle - 1] + sortedValues[middle]) / 2
+        : sortedValues[middle];
+    const historyStats = statValues.length > 0
+      ? {
+          days: statValues.length,
+          value: index,
+          min: sortedValues[0],
+          max: sortedValues[sortedValues.length - 1],
+          median,
+          first_date: String(statsRows[statsRows.length - 1].date),
+          last_date: String(statsRows[0].date),
+          above_days: statValues.filter((value) => value > index).length,
+          below_days: statValues.filter((value) => value < index).length,
+          equal_days: statValues.filter((value) => value === index).length,
+        }
+      : null;
+
     const formattedHistory = [...history].reverse().map((row) => {
       const date = new Date(String(row.date));
       return {
@@ -228,12 +277,13 @@ Deno.serve(async (req) => {
         value: index,
         label,
         history: formattedHistory,
+        history_stats: historyStats,
         news_count: news.length,
         updated_at: now.toISOString(),
       }),
     });
 
-    return Response.json({ success: true, index, label, news_count: news.length });
+    return Response.json({ success: true, index, label, news_count: news.length, negative_share: index });
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : String(error) },
