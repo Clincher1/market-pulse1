@@ -117,7 +117,7 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
           <div>
             <div className="text-xs text-text-secondary mb-0.5">Окно</div>
             <div className="text-sm font-semibold text-text-primary">
-              {hasSignal ? forecast.time_window : '—'}
+              {forecast.time_window}
             </div>
           </div>
         </div>
