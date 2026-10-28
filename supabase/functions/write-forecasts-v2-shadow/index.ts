@@ -2,8 +2,15 @@
 //
 // Writes one immutable daily snapshot per asset/horizon to
 // market_forecasts_v2 and a pending row to forecast_outcomes_v2.
-// It never writes cached_forecasts. score_up is a weighted evidence share,
-// not a calibrated probability.
+// It never writes cached_forecasts.
+//
+// 2026-10-28, calibration: the first eleven resolved forecasts scored a Brier
+// of 0.41 against 0.25 for a coin flip and hit the direction 4 times out of 11,
+// with nine of them calling "up". The cause was not the threshold but the
+// scale: two weak events agreeing produced score_up = 1.000, i.e. certainty out
+// of almost nothing. The share is now shrunk toward the asset's own base rate
+// before the 60/40 gate is applied, and a directional call needs three
+// independent events. Most forecasts now come out as "none" on purpose.
 
 const SUPABASE_URL = "https://hekzplfftannlzwvgwwm.supabase.co";
 const AGGREGATION_VERSION = "aggregation_v2";
@@ -14,6 +21,14 @@ const MIN_IMPACT_STRENGTH = 0.35;
 const MIN_RELEVANCE = 0.50;
 const MIN_CONFIDENCE = 0.50;
 const MIN_DIRECTIONAL_WEIGHT = 0.05;
+// How much pseudo-evidence the base rate is worth, and how many independent
+// events a directional call needs. PRIOR_WEIGHT is set near the weight of one
+// strong event, so thin evidence stays near the base rate instead of reaching
+// a confident extreme.
+const PRIOR_WEIGHT = 0.6;
+const MIN_DIRECTIONAL_EVENTS = 3;
+const BASE_RATE_DAYS = 90;
+const MIN_BASE_OBSERVATIONS = 20;
 const HORIZONS = [1, 3, 10] as const;
 
 const HORIZON_FACTORS: Record<string, Record<number, number>> = {
@@ -64,6 +79,42 @@ async function restJson(path: string, init: RequestInit = {}): Promise<unknown> 
   const text = await response.text();
   if (!response.ok) throw new Error(`Supabase REST ${response.status}: ${text.slice(0, 900)}`);
   return text ? JSON.parse(text) as unknown : null;
+}
+
+// How often each asset actually rises, measured on its own price history.
+// A directional claim is only meaningful relative to that: saying "up" every
+// day is worth 50% on a coin-flip market and less than nothing on a falling
+// one. Used as the prior the evidence share is shrunk toward.
+async function loadBaseUpRates(): Promise<Record<string, number>> {
+  const since = new Date(Date.now() - BASE_RATE_DAYS * 86_400_000).toISOString().slice(0, 10);
+  try {
+    const rows = await restJson(
+      `asset_price_history_v1?select=asset_key,change_pct&observation_date=gte.${since}&change_pct=not.is.null&limit=3000`,
+    ) as AnyRecord[];
+    const up: Record<string, number> = {};
+    const total: Record<string, number> = {};
+    for (const row of rows ?? []) {
+      // Case-insensitive: the price history and the instrument registry do not
+      // agree on capitalisation.
+      const key = String(row.asset_key ?? "").toLowerCase();
+      const pct = Number(row.change_pct);
+      if (!key || !Number.isFinite(pct)) continue;
+      total[key] = (total[key] ?? 0) + 1;
+      if (pct > 0) up[key] = (up[key] ?? 0) + 1;
+    }
+    const rates: Record<string, number> = {};
+    for (const key of Object.keys(total)) {
+      // Below a couple of dozen observations the rate is noise, so fall back to
+      // a coin flip; clamped so a short window cannot swing the prior to an
+      // extreme that is then hard for real evidence to overcome.
+      const rate = total[key] >= MIN_BASE_OBSERVATIONS ? (up[key] ?? 0) / total[key] : 0.5;
+      rates[key] = Math.min(0.65, Math.max(0.35, rate));
+    }
+    return rates;
+  } catch (error) {
+    console.warn("base rates unavailable, falling back to 0.5:", error);
+    return {};
+  }
 }
 
 function isRecord(value: unknown): value is AnyRecord {
@@ -133,11 +184,15 @@ Deno.serve(async (request) => {
     const promptLabel = promptVersions.length === 1 ? promptVersions[0] : promptVersions.length ? "mixed" : null;
 
     const forecasts: AnyRecord[] = [];
+    // Measured once per run, not per asset: how often each asset has actually
+    // risen over the last three months.
+    const baseUpRates = await loadBaseUpRates();
 
     for (const instrument of instruments) {
       const assetKey = String(instrument.asset_key);
       const instrumentId = String(instrument.id);
       const base = baseByInstrument.get(instrumentId) ?? null;
+      const baseUp = baseUpRates[assetKey.toLowerCase()] ?? 0.5;
 
       type EvidenceItem = {
         eventId: string;
@@ -208,15 +263,23 @@ Deno.serve(async (request) => {
         const upWeight = evidenceItems.filter((item) => item.direction === "up").reduce((sum, item) => sum + item.weight, 0);
         const downWeight = evidenceItems.filter((item) => item.direction === "down").reduce((sum, item) => sum + item.weight, 0);
         const directionalWeight = upWeight + downWeight;
-        const scoreUp = directionalWeight > 0 ? upWeight / directionalWeight : null;
+        const scoreRaw = directionalWeight > 0 ? upWeight / directionalWeight : null;
+        // Shrink the evidence share toward the asset's own base rate. Without
+        // this, two weak events agreeing yield 1.000 — certainty manufactured
+        // out of almost nothing — which is exactly what the first eleven
+        // forecasts did before losing to a coin flip.
+        const scoreUp = scoreRaw !== null
+          ? (upWeight + PRIOR_WEIGHT * baseUp) / (directionalWeight + PRIOR_WEIGHT)
+          : null;
         const weightedBalance = scoreUp !== null ? 2 * scoreUp - 1 : null;
         const directionalEventIds = [...new Set(
           evidenceItems.filter((item) => item.direction === "up" || item.direction === "down").map((item) => item.eventId),
         )];
-        // V1 is deliberately conservative: one event, even if multi-source,
-        // cannot create a directional shadow forecast on its own.
+        // One event, even if multi-source, cannot create a directional forecast.
+        // Two agreeing events turned out not to be enough either: three is the
+        // floor from 2026-10-28 on, alongside the weight floor.
         const evidenceGate = directionalWeight >= MIN_DIRECTIONAL_WEIGHT &&
-          directionalEventIds.length >= 2;
+          directionalEventIds.length >= MIN_DIRECTIONAL_EVENTS;
 
         let direction = "none";
         if (base && evidenceGate && scoreUp !== null && scoreUp >= 0.60) direction = "up";
@@ -258,13 +321,19 @@ Deno.serve(async (request) => {
               required_prompt_version: REQUIRED_PROMPT_VERSION,
               min_directional_weight: MIN_DIRECTIONAL_WEIGHT,
               direction_thresholds: { up: 0.60, down: 0.40 },
+              calibration: "empirical_bayes_v1",
+              prior_weight: PRIOR_WEIGHT,
+              min_directional_events: MIN_DIRECTIONAL_EVENTS,
+              base_rate_up: Number(baseUp.toFixed(4)),
+              score_raw: scoreRaw === null ? null : Number(scoreRaw.toFixed(4)),
+              score_calibrated: scoreUp === null ? null : Number(scoreUp.toFixed(4)),
             },
             instrument: {
               provider: instrument.provider ?? null,
               symbol: instrument.provider_symbol ?? null,
               unit: instrument.unit ?? null,
             },
-            score_semantics: "Weighted share of directional evidence; not a calibrated probability.",
+            score_semantics: "Base-rate-shrunk weighted share of directional evidence; a stated P(up), deliberately conservative, not a fitted market model.",
           },
         });
       }

@@ -9,9 +9,14 @@ import {
   RotateCcw,
   Target,
   ShieldQuestion,
+  BarChart3,
 } from 'lucide-react';
 import { ForecastData } from '@/data/mockData';
-import { fetchLiveForecasts } from '@/data/liveForecasts';
+import {
+  fetchLiveForecasts,
+  fetchForecastTrackRecord,
+  TrackRecordRow,
+} from '@/data/liveForecasts';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
@@ -149,8 +154,86 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
   );
 }
 
+const MIN_SCORED_FOR_VERDICT = 30;
+
+/**
+ * Честный счёт: не «мы умеем предсказывать», а сколько прогнозов выдано,
+ * сколько уже проверено рынком и с каким качеством. Брайер 0.25 — это
+ * подбрасывание монеты, 0 — идеал. Пока проверенных меньше тридцати, сайт
+ * прямо говорит, что вывода о предсказательной силе нет.
+ */
+function ForecastScoreboard({ track }: { track: TrackRecordRow | null }) {
+  if (!track) return null;
+
+  const enough = track.scored >= MIN_SCORED_FOR_VERDICT;
+  const percent = (value: number | null) =>
+    value === null ? '—' : `${Math.round(value * 100)} %`;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: 0.15 }}
+      className="mt-6 rounded-xl2 border border-slate-600/30 bg-bg-card/60 p-5 lg:p-6"
+    >
+      <div className="mb-4 flex items-center gap-2">
+        <BarChart3 className="h-4 w-4 shrink-0 text-emerald-300" />
+        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary">
+          Честный счёт прогнозов
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div>
+          <div className="text-xs text-text-secondary mb-0.5">Выдано</div>
+          <div className="text-xl font-bold tabular-nums text-text-primary">
+            {track.issued}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-text-secondary mb-0.5">Проверено рынком</div>
+          <div className="text-xl font-bold tabular-nums text-text-primary">
+            {track.scored}
+          </div>
+          <div className="text-[11px] text-text-secondary">
+            ещё {track.pending} в работе
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-text-secondary mb-0.5">Попаданий</div>
+          <div className="text-xl font-bold tabular-nums text-text-primary">
+            {percent(track.hit_rate)}
+          </div>
+          <div className="text-[11px] text-text-secondary">монетка даёт 50 %</div>
+        </div>
+        <div>
+          <div className="text-xs text-text-secondary mb-0.5">Точность (Брайер)</div>
+          <div className="text-xl font-bold tabular-nums text-text-primary">
+            {track.mean_brier === null ? '—' : track.mean_brier.toFixed(2)}
+          </div>
+          <div className="text-[11px] text-text-secondary">монетка 0.25, идеал 0</div>
+        </div>
+      </div>
+
+      <p className="mt-4 text-xs leading-relaxed text-text-secondary">
+        {enough
+          ? `Проверенных прогнозов достаточно, чтобы судить о качестве. Текущая точность ${
+              track.mean_brier?.toFixed(2) ?? '—'
+            } против 0.25 у подбрасывания монеты — ${
+              track.verdict === 'edge'
+                ? 'преимущество подтверждено.'
+                : 'преимущества над монеткой не видно, поэтому сигналы не выдаются за торговую рекомендацию.'
+            }`
+          : `Проверено ${track.scored} прогнозов из ${MIN_SCORED_FOR_VERDICT}, нужных для вывода — сайт не утверждает, что умеет предсказывать. Первая неделя отработала хуже монетки: девять из одиннадцати прогнозов говорили «вверх», а рынок в те дни падал. Причина была в шкале, а не в пороге: двум слабым совпавшим новостям хватало, чтобы получить оценку 1.000 — уверенность из почти ничего. С 28.10.2026 оценка сжимается к собственной базовой частоте актива, а направленный вывод требует минимум трёх независимых событий. Старые строки из истории не удалены: счёт не переписывается задним числом.`}
+      </p>
+    </motion.div>
+  );
+}
+
 export default function Forecasts() {
   const [forecasts, setForecasts] = useState<ForecastData[]>([]);
+  const [track, setTrack] = useState<TrackRecordRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,8 +242,12 @@ export default function Forecasts() {
 
   const load = useCallback(async () => {
     if (hasDataRef.current) setIsRefreshing(true);
-    const live = await fetchLiveForecasts();
+    const [live, record] = await Promise.all([
+      fetchLiveForecasts(),
+      fetchForecastTrackRecord(),
+    ]);
     if (!mountedRef.current) return;
+    setTrack(record);
 
     if (live.length > 0) {
       hasDataRef.current = true;
@@ -254,11 +341,12 @@ export default function Forecasts() {
               </button>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
             {forecasts.map((f, i) => (
               <ForecastCard key={f.id} forecast={f} index={i} />
             ))}
           </div>
+          <ForecastScoreboard track={track} />
         </>
       )}
 
