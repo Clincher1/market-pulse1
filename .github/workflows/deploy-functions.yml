@@ -4,8 +4,12 @@ name: Verify and deploy
 # production until the checks below pass. That is the whole point of this file:
 # a fix that does not type-check or does not build simply does not ship.
 #
+# No connector can read this workflow's logs, so a failure would otherwise be
+# invisible until somebody went looking. Instead a red run files an issue in
+# Linear by itself — the check reports on itself rather than waiting to be asked.
+#
 # Secrets are never read from the repository: functions pick them up from
-# Supabase at runtime.
+# Supabase at runtime, and Linear's key stays in repository secrets.
 on:
   push:
     branches: [main]
@@ -26,6 +30,9 @@ permissions:
 concurrency:
   group: verify-and-deploy
   cancel-in-progress: false
+
+env:
+  LINEAR_TEAM_ID: 6d6e5192-94c3-44e9-9f42-b8869cb37b61
 
 jobs:
   check:
@@ -58,6 +65,12 @@ jobs:
       - name: Type-check and build the site
         run: npm run build
 
+      - name: File an issue if the checks fail
+        if: failure()
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        run: .github/report-failure.sh "Проверка перед выкатом не прошла"
+
   deploy:
     needs: check
     runs-on: ubuntu-latest
@@ -82,3 +95,9 @@ jobs:
 
       - name: Deploy all edge functions
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: File an issue if the deploy fails
+        if: failure()
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        run: .github/report-failure.sh "Выкат функций не прошёл"
