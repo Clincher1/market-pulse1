@@ -216,7 +216,26 @@ Deno.serve(async (req: Request) => {
       };
     }),
 
-    // 10. The site itself must answer.
+    // 10. The site promises no trackers and no third-party resources. Once this
+    //     check exists, a font CDN, an analytics snippet or any other outside
+    //     host reappearing in the markup shows up here within the hour.
+    check('no_third_party', async () => {
+      const html = await (await fetch(SITE, { signal: AbortSignal.timeout(20000) })).text();
+      const hosts = [...new Set(
+        [...html.matchAll(/https?:\/\/([a-zA-Z0-9._-]+)/g)].map((m) => String(m[1]).toLowerCase()),
+      )];
+      // w3.org is an XML namespace in inline markup, not a request.
+      const allowed = ['vercel.app', 'supabase.co', 'w3.org'];
+      const foreign = hosts.filter((h) => !allowed.some((a) => h === a || h.endsWith(`.${a}`)));
+      return {
+        ok: foreign.length === 0,
+        detail: foreign.length
+          ? `в разметке чужие домены: ${foreign.join(', ')}`
+          : `в разметке только свои домены (${hosts.join(', ')})`,
+      };
+    }),
+
+    // 11. The site itself must answer.
     check('site_online', async () => {
       const started = Date.now();
       const res = await fetch(SITE, { signal: AbortSignal.timeout(20000) });
