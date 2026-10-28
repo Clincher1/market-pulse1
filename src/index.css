@@ -34,16 +34,10 @@
   unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F,
     U+FE2E-FE2F;
 }
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 900;
-  font-display: swap;
-  src: url('/fonts/inter-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
-    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
-    U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
+/* Подмножество latin-ext убрано 28.10.2026: в текстах сайта не встречается ни
+   одного символа из его диапазона, а весило оно 83 КБ — больше, чем все
+   остальные подмножества вместе взятые. Если в заголовке новости попадётся
+   польская, чешская или турецкая буква, браузер возьмёт системный шрифт. */
 
 @theme {
   --color-bg-primary: #0a0e1a;
