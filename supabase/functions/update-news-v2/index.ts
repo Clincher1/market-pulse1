@@ -212,12 +212,17 @@ function matchTag(item: string, tag: string): string {
 function normalizeUrl(raw: string): string { return raw.replace(/<!\[CDATA\[|\]\]>/g, '').trim().replace(/&amp;/g, '&').split('#')[0].split('?')[0]; }
 function clamp(value: number, min: number, max: number): number { return Math.min(max, Math.max(min, value)); }
 function finite(value: unknown, fallback: number): number { const n = Number(value); return Number.isFinite(n) ? n : fallback; }
-async function fetchRss(url: string): Promise<string> {
+async function fetchRss(url: string): Promise<{ text: string; via: string; note: string }> {
   const headers = { 'User-Agent': 'MarketPulseBot/0.4 (+https://market-pulse1-eta.vercel.app)', Accept: 'application/rss+xml,application/xml,text/xml,*/*' };
-  try { const direct = await fetch(url, { signal: AbortSignal.timeout(20000), headers }); if (direct.ok) return await direct.text(); } catch { /* proxy fallback */ }
+  let note = '';
+  try {
+    const direct = await fetch(url, { signal: AbortSignal.timeout(20000), headers });
+    if (direct.ok) return { text: await direct.text(), via: 'direct', note: '' };
+    note = `direct ${direct.status}`;
+  } catch (error) { note = `direct error: ${error instanceof Error ? error.message.slice(0, 80) : String(error).slice(0, 80)}`; }
   const proxied = await fetch(`${supabaseUrl()}/functions/v1/proxy?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(25000) });
-  if (!proxied.ok) throw new Error(`RSS fetch failed for ${url}`);
-  return await proxied.text();
+  if (!proxied.ok) throw new Error(`RSS fetch failed for ${url} (${note}, proxy ${proxied.status})`);
+  return { text: await proxied.text(), via: 'proxy', note };
 }
 function cleanImpacts(value: unknown): Array<{ asset: string; direction: string }> {
   if (!Array.isArray(value)) return [];
@@ -260,9 +265,14 @@ Deno.serve(async (req: Request) => {
     for (const source of SOURCES) {
       if (analyzed >= maxItems) { perSource[source.name] = { skipped: true }; continue; }
       let added = 0;
+      const stats: AnyRecord = { added: 0, items: 0, fresh: 0, dup: 0, filtered: 0, via: 'unknown', first_url: '' };
       try {
-        const xmlText = await fetchRss(source.url);
+        const feed = await fetchRss(source.url);
+        const xmlText = feed.text;
         const items = xmlText.split('<item>').slice(1, 6);
+        stats.items = items.length;
+        stats.via = feed.via;
+        if (feed.note) stats.note = feed.note;
         for (const item of items) {
           if (analyzed >= maxItems) break;
           const title = decodeHtml(matchTag(item, 'title'));
@@ -270,13 +280,15 @@ Deno.serve(async (req: Request) => {
           const desc = rawDesc ? (rawDesc.length > 200 ? rawDesc.slice(0, 200) + '...' : rawDesc) : '';
           const url = normalizeUrl(matchTag(item, 'link'));
           const dateRaw = matchTag(item, 'pubDate');
-          if (!title || !url) continue;
-          if (SKIP_URL_PARTS.some((part) => url.includes(part))) continue;
-          if (title.length < 15 && desc.length < 30) continue;
-          if (seenUrls.has(url)) continue;
+          if (!stats.first_url && url) stats.first_url = url.slice(0, 120);
+          if (!title || !url) { stats.filtered = (stats.filtered as number) + 1; continue; }
+          if (SKIP_URL_PARTS.some((part) => url.includes(part))) { stats.filtered = (stats.filtered as number) + 1; continue; }
+          if (title.length < 15 && desc.length < 30) { stats.filtered = (stats.filtered as number) + 1; continue; }
+          if (seenUrls.has(url)) { stats.dup = (stats.dup as number) + 1; continue; }
           const haystack = `${title} ${desc}`.toLowerCase();
-          if (blacklist.some((phrase) => haystack.includes(phrase))) continue;
+          if (blacklist.some((phrase) => haystack.includes(phrase))) { stats.filtered = (stats.filtered as number) + 1; continue; }
           seenUrls.add(url);
+          stats.fresh = (stats.fresh as number) + 1;
           const outcome = await analyzeWithProviders(`${title}. ${desc}`);
           analyzed++;
           await sleep(CALL_SPACING_MS);
@@ -287,7 +299,8 @@ Deno.serve(async (req: Request) => {
           added++;
         }
       } catch (error) { perSource[source.name] = { error: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) }; continue; }
-      perSource[source.name] = { added };
+      stats.added = added;
+      perSource[source.name] = stats;
     }
     if (!dryRun && results.length) await restJson('cached_news', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(results) });
     return Response.json({ success: true, updated: dryRun ? 0 : results.length, dry_run: dryRun, candidates: results.length, analyzed, max_items: maxItems, last_error: lastError || null, groq_error: lastError || null, groq_daily_limit: exhausted.has('groq120'), providers: usedProviders, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts, model: r.model })) });
