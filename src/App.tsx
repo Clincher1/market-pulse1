@@ -5,6 +5,7 @@ import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
 import Footer from '@/components/Footer';
+import GuideTeaser from '@/components/GuideTeaser';
 import DashboardQuickNav from '@/components/DashboardQuickNav';
 import { SectionThemeBadge } from '@/components/sectionThemes';
 import { DeferredMount, SectionFallback } from '@/components/SectionFallback';
@@ -273,6 +274,8 @@ function App() {
                 <MarketMemory />
               </Suspense>
             </DeferredMount>
+
+            <GuideTeaser />
 
             <DeferredMount
               targetId="about"
