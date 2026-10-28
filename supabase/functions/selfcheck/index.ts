@@ -309,7 +309,7 @@ async function raiseDecision(ctx: LinearCtx | null, title: string, body: string)
 // the system beats a coin. What to do with the answer is a human decision.
 async function escalateForecastVerdict(ctx: LinearCtx | null): Promise<string> {
   const rows = (await restJson(
-    'forecast_track_record?select=asset_key,scored,verdict,hit_rate,brier&asset_key=eq.ALL&limit=1',
+    'forecast_track_record?select=asset_key,issued,resolved,scored,verdict,hit_rate,mean_brier,pending&asset_key=eq.ALL&limit=1',
   )) as AnyRecord[];
   const row = rows[0];
   if (!row) return '';
@@ -317,7 +317,7 @@ async function escalateForecastVerdict(ctx: LinearCtx | null): Promise<string> {
   if (scored < VERDICT_SCORED_MIN) return '';
 
   const hitRate = Number(row.hit_rate ?? 0);
-  const brier = Number(row.brier ?? 0);
+  const brier = Number(row.mean_brier ?? 0);
   const verdict = String(row.verdict ?? '');
   const better = brier < 0.25;
 
@@ -381,11 +381,11 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
   const red = history.filter((r) => !r.ok).length;
 
   const track = (await restJson(
-    'forecast_track_record?select=scored,hit_rate,brier,verdict&asset_key=eq.ALL&limit=1',
+    'forecast_track_record?select=scored,issued,resolved,hit_rate,mean_brier,verdict&asset_key=eq.ALL&limit=1',
   )) as AnyRecord[];
   const scored = Number(track[0]?.scored ?? 0);
   const hit = Math.round(Number(track[0]?.hit_rate ?? 0) * 100);
-  const brier = Number(track[0]?.brier ?? 0);
+  const brier = Number(track[0]?.mean_brier ?? 0);
 
   const tension = (await restJson('cached_tension?select=value,news_count&id=eq.1')) as AnyRecord[];
   const feeds = (await restJson('news_source_health?select=source,last_new_at')) as AnyRecord[];
@@ -399,7 +399,7 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
     '',
     `- Самопроверок: ${history.length}, из них красных: ${red}`,
     `- Индекс напряжённости: ${tension[0]?.value ?? '—'} (${tension[0]?.news_count ?? 0} материалов в окне)`,
-    `- Прогнозы: проверено ${scored}, попаданий ${hit} %, Брайер ${brier.toFixed(3)}`,
+    `- Прогнозы: выдано ${track[0]?.issued ?? 0}, проверено ${scored}, попаданий ${hit} %, Брайер ${brier.toFixed(3)}`,
     `- Ленты: ${silent.length ? `молчат ${silent.join(', ')}` : `все ${feeds.length} давали материалы`}`,
     '',
     `Полный отчёт: ${SITE}/#status`,
