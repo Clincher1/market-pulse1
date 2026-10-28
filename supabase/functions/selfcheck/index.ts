@@ -437,7 +437,7 @@ Deno.serve(async (req: Request) => {
   // на глаз. Наружу отдаются только агрегаты и короткие обрывки.
   if (new URL(req.url).searchParams.get('diagnose') === 'evidence') {
     const rows = (await restJson(
-      'news_event_classifications_shadow?select=relevance,importance,transmission_channel,impacts,rationale_ru,prompt_version' +
+      'news_event_classifications_shadow?select=relevance,importance,transmission_channel,impacts,rationale_ru,prompt_version,raw_response' +
         '&status=eq.classified&order=updated_at.desc&limit=400',
     )) as AnyRecord[];
     const flat: AnyRecord[] = [];
@@ -484,13 +484,27 @@ Deno.serve(async (req: Request) => {
       bucket.sum += Number(item.strength);
       byVersion[key] = bucket;
     }
+    // The model's full answer is kept in raw_response, so what was proposed and
+    // what survived can be compared instead of taken on trust.
+    let proposed = 0;
+    let droppedAsDerived = 0;
+    for (const row of rows) {
+      if (!String(row.prompt_version ?? '').includes('v4')) continue;
+      const raw = (row.raw_response ?? {}) as Record<string, unknown>;
+      const rawImpacts = Array.isArray(raw.impacts) ? raw.impacts : [];
+      proposed += rawImpacts.length;
+      droppedAsDerived += rawImpacts.filter((item) => {
+        const value = (item ?? {}) as Record<string, unknown>;
+        return String(value.link ?? '') !== 'direct';
+      }).length;
+    }
     const versions = Object.entries(byVersion).map(([version, value]) =>
       `${version}: связей ${value.n}, прямых ${value.direct}, выводных ${value.derived}, средняя сила ${(value.sum / value.n).toFixed(2)}`);
     const samples = flat
       .filter((item) => String(item.version).includes('v4'))
       .slice(0, 6)
       .map((item) => `${item.link} | ${item.channel} → ${item.asset} ${item.direction} ${item.strength}: ${item.why}`);
-    return json({ ok: true, classifications: rows.length, impacts: flat.length, versions, samples, pairs: ranked, suspicious });
+    return json({ ok: true, classifications: rows.length, impacts: flat.length, versions, samples, rejected: { proposed, droppedAsDerived }, pairs: ranked, suspicious });
   }
 
   const privileged = isPrivileged(req);
