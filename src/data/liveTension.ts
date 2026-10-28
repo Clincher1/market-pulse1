@@ -59,6 +59,26 @@ function dedupeHistory(
  * или пометить ранее полученные живые данные как устаревшие, а не молча
  * подставлять демонстрационный fallback.
  */
+/**
+ * Читает время самого свежего материала в выборке индекса отдельным запросом
+ * и никогда не ломает основную загрузку: пока колонки нет или она недоступна,
+ * возвращаем null, и карточка просто не делает заявлений о свежести потока.
+ */
+async function fetchSampleNewest(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('cached_tension')
+      .select('sample_newest')
+      .eq('id', 1)
+      .single();
+    if (error || !data) return null;
+    const raw = (data as { sample_newest?: unknown }).sample_newest;
+    return typeof raw === 'string' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchLiveTension(): Promise<TensionData | null> {
   try {
     const { data, error } = await supabase
@@ -76,6 +96,7 @@ export async function fetchLiveTension(): Promise<TensionData | null> {
       newsCount: data.news_count ?? 0,
       updatedAt: data.updated_at ?? undefined,
       historyStats: parseHistoryStats(data.history_stats),
+      sampleNewest: (await fetchSampleNewest()) ?? undefined,
     };
   } catch (e) {
     console.error('Ошибка загрузки напряжённости:', e);

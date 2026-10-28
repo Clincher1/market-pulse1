@@ -28,6 +28,13 @@ export interface TensionData {
   newsCount: number;
   updatedAt?: string;
   historyStats?: TensionHistoryStats | null;
+  /**
+   * Время самого свежего материала в выборке индекса. Отличается от updatedAt:
+   * пересчёт идёт каждые 15 минут даже тогда, когда новых новостей нет, и окно
+   * просто держит старые материалы. По этому полю видно, идёт ли поток на самом
+   * деле. Отсутствует — значит карточка ничего о свежести не утверждает.
+   */
+  sampleNewest?: string;
 }
 
 export interface AssetData {

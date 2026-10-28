@@ -25,6 +25,17 @@ function clampTension(value: number) {
 /** Ниже этого числа дней перцентиль и медиана — шум, а не контекст. */
 const MIN_STATS_DAYS = 14;
 
+/** Материал в выборке старше этого возраста — поток новостей считаем прерванным. */
+const STALE_SAMPLE_HOURS = 6;
+
+function hoursWord(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'час';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'часа';
+  return 'часов';
+}
+
 function daysWord(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
@@ -342,6 +353,19 @@ export default function TensionScale() {
   const markerPosition = `${value}%`;
   const updatedLabel = formatDateTime(data?.updatedAt);
 
+  // Время пересчёта (updatedAt) тикает каждые 15 минут даже тогда, когда новых
+  // новостей нет и окно держит старые материалы. Поэтому о том, что поток идёт,
+  // судим по возрасту самого свежего материала в выборке, а не по updatedAt.
+  const sampleAgeHours = useMemo(() => {
+    const raw = data?.sampleNewest;
+    if (!raw) return null;
+    const timestamp = new Date(raw).getTime();
+    if (!Number.isFinite(timestamp)) return null;
+    return Math.max(0, (Date.now() - timestamp) / 3_600_000);
+  }, [data?.sampleNewest]);
+  const sampleStale = sampleAgeHours !== null && sampleAgeHours > STALE_SAMPLE_HOURS;
+  const staleHours = sampleAgeHours === null ? 0 : Math.round(sampleAgeHours);
+
   const historyStats = data?.historyStats ?? null;
   const showHistoryStats = Boolean(
     historyStats && historyStats.days >= MIN_STATS_DAYS && historyStats.median !== null,
@@ -430,6 +454,13 @@ export default function TensionScale() {
                 <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-200">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   Показано последнее успешное значение{updatedLabel ? ` от ${updatedLabel}` : ''}
+                </span>
+              )}
+
+              {sampleStale && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-200">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Нет свежих материалов {staleHours} {hoursWord(staleHours)} — значение считается по уходящему окну
                 </span>
               )}
 
