@@ -1,4 +1,5 @@
 // Token-lean news writer with a provider chain (2026-10-28).
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 // Same public contract (cached_news rows, {success, updated} response), plus:
 // compact prompt + capped output, retries with backoff for per-minute limits,
 // immediate stop on a daily token quota, noise sections skipped before the
@@ -14,15 +15,20 @@
 // Body {"dry_run": true, "max_items": n} analyzes without inserting.
 // pg_cron job 2 (update-news-every-15-min) calls this function.
 const FALLBACK_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
+// 2026-10-28: the desk list was rebuilt around topicality, not brand.
+// The general feeds (CNBC top news, MarketWatch top stories) carried ~16%
+// politics, accidents and personal-finance advice, which the model then had to
+// rate down at provider cost. Every feed below is a markets/economics section,
+// checked for freshness and for the share of on-topic items.
+// WSJ is absent on purpose: all four of its feeds froze in January 2025 and
+// nobody noticed for 638 days — the freshness tracking below exists so that a
+// frozen feed is caught within a day, not within two years.
 const SOURCES = [
-  { name: 'CNBC', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
-  { name: 'Financial Times', url: 'https://www.ft.com/rss/home' },
   { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss' },
-  // 2026-10-28: every WSJ feed (Markets, World, US Business, WSJD) froze in
-  // January 2025 — all items are ~638 days old, and the table guard rejects
-  // anything older than seven days, so the slots spent on them were pure loss.
-  // MarketWatch is the closest live markets desk to replace it.
-  { name: 'MarketWatch', url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories' },
+  { name: 'Bloomberg Economics', url: 'https://feeds.bloomberg.com/economics/news.rss' },
+  { name: 'CNBC Investing', url: 'https://www.cnbc.com/id/15839135/device/rss/rss.html' },
+  { name: 'Financial Times', url: 'https://www.ft.com/rss/home' },
+  { name: 'Investing.com', url: 'https://www.investing.com/rss/news.rss' },
 ];
 const ALLOWED_ASSETS = new Set(['S&P 500', 'Gold', 'Brent', 'USD', 'BTC']);
 type AnyRecord = Record<string, unknown>;
@@ -42,7 +48,13 @@ const HARD_MAX_ITEMS = 20;
 const SKIP_URL_PARTS = [
   '/personal-finance/', '/life/', '/sport', '/sports/', '/culture/',
   '/lifestyle/', '/food/', '/travel/', '/horoscope', '/recipes/', '/games/',
+  '/video/', '/videos/', '/podcast', '/gallery/', '/slideshow/', '/newsletters/',
 ];
+// Titles that are never about markets, whatever the feed claims. Kept narrow on
+// purpose: a tariff story mentioning a politician is still a market story, so
+// politics is left to the model's importance rating instead of a keyword.
+const SKIP_TITLE =
+  /\((video|podcast|photos|slideshow)\)|horoscope|recipe|celebrit|\bwedding\b|royal family|box office|movie review|tv review|\bolympic|football|tennis|golf|gift guide|best time to (buy|travel)/i;
 type Provider = {
   id: string;
   label: string;
@@ -252,7 +264,7 @@ function cleanImpacts(value: unknown): Array<{ asset: string; direction: string 
   }
   return out;
 }
-Deno.serve(async (req: Request) => {
+serveWithErrorReporting("update-news-v2", async (req: Request) => {
   if (!isAuthorizedCron(req)) return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
   lastError = '';
   exhausted.clear();
@@ -286,6 +298,7 @@ Deno.serve(async (req: Request) => {
     for (const source of SOURCES) {
       const stats: AnyRecord = { added: 0, items: 0, fresh: 0, dup: 0, filtered: 0, via: 'unknown', first_url: '' };
       const items: Candidate[] = [];
+      let feedNewest: number | null = null;
       try {
         const feed = await fetchRss(source.url);
         const xmlText = feed.text;
@@ -298,7 +311,14 @@ Deno.serve(async (req: Request) => {
           const desc = rawDesc ? (rawDesc.length > 200 ? rawDesc.slice(0, 200) + '...' : rawDesc) : '';
           const url = normalizeUrl(matchTag(item, 'link'));
           const dateRaw = matchTag(item, 'pubDate');
+          // Tracked before any filtering: the point is to know how fresh the
+          // feed itself is, even when every item in it is already stored.
+          const publishedTs = Date.parse(dateRaw);
+          if (Number.isFinite(publishedTs) && (feedNewest === null || publishedTs > feedNewest)) {
+            feedNewest = publishedTs;
+          }
           if (!stats.first_url && url) stats.first_url = url.slice(0, 120);
+          if (SKIP_TITLE.test(title)) { stats.filtered = (stats.filtered as number) + 1; continue; }
           if (!title || !url) { stats.filtered = (stats.filtered as number) + 1; continue; }
           if (SKIP_URL_PARTS.some((part) => url.includes(part))) { stats.filtered = (stats.filtered as number) + 1; continue; }
           if (title.length < 15 && desc.length < 30) { stats.filtered = (stats.filtered as number) + 1; continue; }
@@ -322,8 +342,32 @@ Deno.serve(async (req: Request) => {
         perSource[source.name] = { error: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) };
         continue;
       }
+      if (feedNewest !== null) stats.feed_newest = new Date(feedNewest).toISOString();
       perSource[source.name] = stats;
       queues.push({ source, stats, items });
+    }
+
+    // How fresh each feed is, recorded every run. This is the check that was
+    // missing when the WSJ feed froze: the writer kept analysing its items and
+    // the table silently dropped them for 638 days. In its own try/catch, so a
+    // missing table can never stop the news from being written.
+    if (!dryRun && queues.length) {
+      const healthRows = queues.map((queue) => ({
+        source: queue.source.name,
+        last_seen_at: new Date().toISOString(),
+        last_new_at: queue.stats.feed_newest ?? null,
+        items: Number(queue.stats.items ?? 0),
+        fresh: Number(queue.stats.fresh ?? 0),
+      }));
+      try {
+        await restJson('news_source_health?on_conflict=source', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify(healthRows),
+        });
+      } catch (error) {
+        lastError = `health: ${error instanceof Error ? error.message.slice(0, 140) : String(error).slice(0, 140)}`;
+      }
     }
 
     // Round-robin: one candidate per source per pass, and the starting source

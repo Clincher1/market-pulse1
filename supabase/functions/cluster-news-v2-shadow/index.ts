@@ -1,4 +1,5 @@
 // Market Pulse Stage 2: deterministic event clustering for shadow articles.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // This intentionally uses direct PostgREST calls and no bundled Supabase
 // client. It reads only news_articles_shadow and writes only V2 shadow
@@ -201,7 +202,7 @@ function rankScore(cluster: Cluster, sourceById: Map<string, SourceRow>, nowMs: 
   ) * 100) / 100;
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("cluster-news-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   let runId: number | null = null;
 

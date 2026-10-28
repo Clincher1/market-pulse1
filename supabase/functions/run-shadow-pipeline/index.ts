@@ -1,4 +1,5 @@
 // Guarded dispatcher for the V2 shadow "market memory" pipeline.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // pg_cron calls ONLY this endpoint with x-cron-secret (from Vault). The
 // dispatcher then invokes exactly one allowlisted shadow step server-to-server
@@ -55,7 +56,7 @@ function supabaseBaseUrl(): string {
   return (Deno.env.get("SUPABASE_URL") ?? "https://hekzplfftannlzwvgwwm.supabase.co").replace(/\/$/, "");
 }
 
-Deno.serve(async (req: Request) => {
+serveWithErrorReporting("run-shadow-pipeline", async (req: Request) => {
   if (!isAuthorized(req)) {
     return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   }

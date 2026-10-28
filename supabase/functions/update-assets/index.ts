@@ -1,4 +1,5 @@
 // Public cached_assets updater.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Security/provenance notes:
 // - Twelve Data is read only from the TWELVE_KEY Edge Function secret.
@@ -383,7 +384,7 @@ function isAuthorizedCron(req: Request): boolean {
   return diff === 0;
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("update-assets", async (request) => {
   if (!isAuthorizedCron(request)) {
     return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   }

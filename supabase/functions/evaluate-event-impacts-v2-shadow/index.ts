@@ -1,4 +1,5 @@
 // Stage 4 shadow event-study evaluator.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // For every classified shadow event impact, compare the primary daily price
 // series after the event with the previous close and with a trailing baseline.
@@ -93,7 +94,7 @@ function directionHit(expected: string, returnPct: number, dailyVolatility: numb
   return null;
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("evaluate-event-impacts-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   try {
     const url = new URL(request.url);

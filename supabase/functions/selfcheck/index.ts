@@ -1,4 +1,5 @@
 // Self-check for the whole public contour.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -429,7 +430,7 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
   return 'дайджест недели добавлен в Linear';
 }
 
-Deno.serve(async (req: Request) => {
+serveWithErrorReporting("selfcheck", async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 
   // ВРЕМЕННЫЙ ЗАМЕР (снимается после настройки классификатора): статистика по

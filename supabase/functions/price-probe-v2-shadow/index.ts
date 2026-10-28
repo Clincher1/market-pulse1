@@ -1,4 +1,5 @@
 // Temporary Stage 3 price-source probe. Read-only network checks from
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 // Supabase egress. It writes nothing and returns sanitized summaries only.
 
 const TWELVE_BASE = "https://api.twelvedata.com";
@@ -135,7 +136,7 @@ async function probeEcb() {
   };
 }
 
-Deno.serve(async () => {
+serveWithErrorReporting("price-probe-v2-shadow", async () => {
   try {
     const quoteSymbols = ["SPX", "SPY", "XBR/USD", "XAU/USD", "EUR/USD", "USD/EUR", "BTC/USD"];
     const seriesSymbols = ["SPX", "SPY", "XBR/USD", "XAU/USD", "EUR/USD", "BTC/USD"];

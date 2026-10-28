@@ -1,4 +1,5 @@
 // Stage 4 shadow forecast outcome evaluator.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Updates only forecast_outcomes_v2. market_forecasts_v2 remains immutable.
 // Target observations must be dated strictly after the forecast issue_date,
@@ -69,7 +70,7 @@ function statistics(values: number[]) {
   return { count: values.length, mean, stdev: Math.sqrt(variance) };
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("evaluate-forecasts-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   try {
     const url = new URL(request.url);

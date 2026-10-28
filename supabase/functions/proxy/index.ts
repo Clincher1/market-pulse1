@@ -1,4 +1,5 @@
 // Supabase Edge Function: proxy (hardened 2026-10-22, deployed live v20)
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 // Purpose: GET-only RSS fetch helper/fallback for update-news-v2.
 // The former POST branch injected the server GROQ_API_KEY into caller-supplied
 // requests and was publicly callable; it has been removed. No secrets are used here.
@@ -17,7 +18,7 @@ const CORS_HEADERS = {
 function json(status: number, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify(payload), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
 }
-Deno.serve(async (req: Request) => {
+serveWithErrorReporting("proxy", async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
   if (req.method !== 'GET') return json(405, { error: 'Method not allowed' });
   try {

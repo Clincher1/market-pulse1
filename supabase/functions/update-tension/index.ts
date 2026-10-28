@@ -1,4 +1,5 @@
 // Stage 1 hardened tension calculation.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 // Preserves the cached_tension contract; excludes GDELT/stale/low-confidence
 // rows and upserts one tension_history row per date.
 // Uses direct PostgREST calls instead of a bundled client dependency.
@@ -122,7 +123,7 @@ function isAuthorizedCron(req: Request): boolean {
   return diff === 0;
 }
 
-Deno.serve(async (req) => {
+serveWithErrorReporting("update-tension", async (req) => {
   if (!isAuthorizedCron(req)) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401,

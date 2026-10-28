@@ -1,4 +1,5 @@
 // Stage 4: deterministic shadow forecast aggregation_v2.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Writes one immutable daily snapshot per asset/horizon to
 // market_forecasts_v2 and a pending row to forecast_outcomes_v2.
@@ -136,7 +137,7 @@ function horizonFactor(declaredHorizon: string, forecastHorizon: number): number
   return HORIZON_FACTORS[declaredHorizon]?.[forecastHorizon] ?? HORIZON_FACTORS.unknown[forecastHorizon];
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("write-forecasts-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   try {
     const issuedAt = new Date();

@@ -1,4 +1,5 @@
 // Stage 3 shadow price snapshots.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Writes numeric, provider-labelled observations to asset_price_snapshots_v2.
 // It does not touch cached_assets and does not publish forecasts/outcomes.
@@ -342,7 +343,7 @@ function clampInteger(value: number, min: number, max: number, fallback: number)
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("update-prices-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   let runId: number | null = null;
   try {

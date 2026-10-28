@@ -1,4 +1,5 @@
 // Stage 1 safety stop for the legacy GDELT article importer.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // The previous version inserted unclassified GDELT articles into
 // cached_news with fixed sentiment/importance and fabricated impacts.
@@ -6,7 +7,7 @@
 // slug alive makes manual/external invocations safe while the new news
 // pipeline is built and verified in shadow mode.
 
-Deno.serve(() => {
+serveWithErrorReporting("update-gdelt", () => {
   return Response.json({
     success: true,
     disabled: true,

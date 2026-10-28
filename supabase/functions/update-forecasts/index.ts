@@ -1,4 +1,5 @@
 // Stage 1 hardened forecast aggregation.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 // Keeps the cached_forecasts contract; probability remains a signal-balance
 // score, not a calibrated market probability. Adds source/age/confidence
 // gates and uses direct PostgREST calls instead of a bundled client.
@@ -154,7 +155,7 @@ function isAuthorizedCron(req: Request): boolean {
   return diff === 0;
 }
 
-Deno.serve(async (req) => {
+serveWithErrorReporting("update-forecasts", async (req) => {
   if (!isAuthorizedCron(req)) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401,

@@ -1,4 +1,5 @@
 // Market Pulse Stage 2: strict-schema Groq classification for top shadow events.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Shadow only. Reads news_events_shadow/news_articles_shadow and writes
 // news_event_classifications_shadow. It never feeds cached_* or forecasts.
@@ -422,7 +423,7 @@ async function classifyWithGroq(event: Record<string, unknown>, articles: Record
   };
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("classify-events-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   try {
     const url = new URL(request.url);

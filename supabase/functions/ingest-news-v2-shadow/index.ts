@@ -1,4 +1,5 @@
 // Stage 2 shadow news ingestion (deterministic part only).
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Reads enabled sources from news_sources_v2, fetches RSS/Atom directly,
 // parses XML, validates dates/URLs/categories/blacklist, and stores auditable
@@ -497,7 +498,7 @@ async function processSource(source: Source, blacklist: string[], now: Date) {
   return { health, articles, rejectReasons };
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   const requestUrl = new URL(request.url);
   const only = new Set((requestUrl.searchParams.get("only") ?? "").split(",").map((v) => v.trim()).filter(Boolean));

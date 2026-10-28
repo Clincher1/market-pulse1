@@ -1,4 +1,5 @@
 // Stage 4 morning baseline snapshot (2026-10-27).
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Runs once a day at 04:00 UTC (07:00 MSK) via pg_cron. Captures the
 // public cached state (tension, global assets, forecasts) plus the
@@ -114,7 +115,7 @@ async function fetchRussia(): Promise<AnyRecord | null> {
   }
 }
 
-Deno.serve(async (req) => {
+serveWithErrorReporting("snapshot-morning", async (req) => {
   if (!isAuthorizedCron(req)) {
     return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   }

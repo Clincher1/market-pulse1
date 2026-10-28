@@ -1,4 +1,5 @@
 // Market Pulse source probe.
+import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Purpose: verify that candidate RSS/Atom feeds are reachable from Supabase
 // Edge Function egress and return parseable feed XML. This function is
@@ -178,7 +179,7 @@ async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => P
   return results;
 }
 
-Deno.serve(async (request) => {
+serveWithErrorReporting("source-probe", async (request) => {
   if (request.method !== "GET") {
     return Response.json({ error: "Method not allowed" }, { status: 405 });
   }
