@@ -437,7 +437,7 @@ Deno.serve(async (req: Request) => {
   // на глаз. Наружу отдаются только агрегаты и короткие обрывки.
   if (new URL(req.url).searchParams.get('diagnose') === 'evidence') {
     const rows = (await restJson(
-      'news_event_classifications_shadow?select=relevance,importance,transmission_channel,impacts,rationale_ru' +
+      'news_event_classifications_shadow?select=relevance,importance,transmission_channel,impacts,rationale_ru,prompt_version' +
         '&status=eq.classified&order=updated_at.desc&limit=400',
     )) as AnyRecord[];
     const flat: AnyRecord[] = [];
@@ -451,6 +451,8 @@ Deno.serve(async (req: Request) => {
           asset: String(impact.asset ?? ''),
           strength: Number(impact.strength ?? 0),
           direction: String(impact.direction ?? ''),
+          version: String(row.prompt_version ?? ''),
+          link: String(impact.link ?? 'нет поля'),
           why: String(impact.rationale_ru ?? '').slice(0, 70),
         });
       }
@@ -473,7 +475,22 @@ Deno.serve(async (req: Request) => {
       .sort((a, b) => Number(b.strength) - Number(a.strength))
       .slice(0, 12)
       .map((item) => `${item.channel} имп.${item.importance} рел.${item.relevance} → ${item.asset} ${item.direction} ${item.strength}: ${item.why}`);
-    return json({ ok: true, classifications: rows.length, impacts: flat.length, pairs: ranked, suspicious });
+    const byVersion: Record<string, { n: number; direct: number; derived: number; sum: number }> = {};
+    for (const item of flat) {
+      const key = String(item.version);
+      const bucket = byVersion[key] ?? { n: 0, direct: 0, derived: 0, sum: 0 };
+      bucket.n += 1;
+      if (item.link === 'direct') bucket.direct += 1; else bucket.derived += 1;
+      bucket.sum += Number(item.strength);
+      byVersion[key] = bucket;
+    }
+    const versions = Object.entries(byVersion).map(([version, value]) =>
+      `${version}: связей ${value.n}, прямых ${value.direct}, выводных ${value.derived}, средняя сила ${(value.sum / value.n).toFixed(2)}`);
+    const samples = flat
+      .filter((item) => String(item.version).includes('v4'))
+      .slice(0, 6)
+      .map((item) => `${item.link} | ${item.channel} → ${item.asset} ${item.direction} ${item.strength}: ${item.why}`);
+    return json({ ok: true, classifications: rows.length, impacts: flat.length, versions, samples, pairs: ranked, suspicious });
   }
 
   const privileged = isPrivileged(req);
