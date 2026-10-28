@@ -64,6 +64,37 @@ function dedupeHistory(
  * и никогда не ломает основную загрузку: пока колонки нет или она недоступна,
  * возвращаем null, и карточка просто не делает заявлений о свежести потока.
  */
+/**
+ * Состав выборки: сколько материалов за последние 24 часа дал каждый источник.
+ * Без этой строки шкала выглядит как «напряжённость мира вообще», хотя на деле
+ * это тон конкретных деловых лент — и если одна из них молчит, посетитель
+ * имеет право это видеть. Ошибка загрузки здесь не ломает карточку.
+ */
+async function fetchSourceMix(): Promise<{ name: string; count: number }[] | null> {
+  try {
+    const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
+    const { data, error } = await supabase
+      .from('cached_news')
+      .select('source, importance, confidence')
+      .gte('published_at', since)
+      .gte('importance', 3)
+      .gte('confidence', 0.5)
+      .limit(500);
+    if (error || !data) return null;
+    const counts = new Map<string, number>();
+    for (const row of data as { source?: string | null }[]) {
+      const name = String(row.source ?? '').trim();
+      if (!name || name === 'GDELT' || name === 'GDELT (Global)') continue;
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  } catch {
+    return null;
+  }
+}
+
 async function fetchSampleNewest(): Promise<string | null> {
   try {
     const { data, error } = await supabase
@@ -97,6 +128,7 @@ export async function fetchLiveTension(): Promise<TensionData | null> {
       updatedAt: data.updated_at ?? undefined,
       historyStats: parseHistoryStats(data.history_stats),
       sampleNewest: (await fetchSampleNewest()) ?? undefined,
+      sourceMix: await fetchSourceMix(),
     };
   } catch (e) {
     console.error('Ошибка загрузки напряжённости:', e);

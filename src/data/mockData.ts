@@ -35,6 +35,11 @@ export interface TensionData {
    * деле. Отсутствует — значит карточка ничего о свежести не утверждает.
    */
   sampleNewest?: string;
+  /**
+   * Сколько материалов за последние 24 часа дал каждый источник. Показывает,
+   * насколько широк взгляд шкалы: если одна лента молчит, это видно сразу.
+   */
+  sourceMix?: { name: string; count: number }[] | null;
 }
 
 export interface AssetData {

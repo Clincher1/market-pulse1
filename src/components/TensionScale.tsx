@@ -365,6 +365,7 @@ export default function TensionScale() {
   }, [data?.sampleNewest]);
   const sampleStale = sampleAgeHours !== null && sampleAgeHours > STALE_SAMPLE_HOURS;
   const staleHours = sampleAgeHours === null ? 0 : Math.round(sampleAgeHours);
+  const sourceMix = data?.sourceMix ?? null;
 
   const historyStats = data?.historyStats ?? null;
   const showHistoryStats = Boolean(
@@ -412,6 +413,10 @@ export default function TensionScale() {
           mobileLabel="Справка"
         />
       </div>
+      <p className="-mt-4 mb-6 max-w-2xl text-xs leading-relaxed text-slate-400">
+        Доля негатива во взвешенном потоке деловых лент за 24 часа. Это тон
+        бизнес-прессы, а не оценка ситуации в мире.
+      </p>
 
       <div className="relative rounded-xl2 border border-cyan-300/25 bg-bg-card p-5 shadow-xl shadow-cyan-950/20 sm:p-6 lg:p-8">
         {phase === 'loading' && !data && (
@@ -483,6 +488,15 @@ export default function TensionScale() {
                 </span>
               )}
             </div>
+
+            {sourceMix && sourceMix.length > 0 && (
+              <p className="-mt-3 mb-6 text-xs leading-relaxed text-slate-400">
+                Источники в выборке: {sourceMix.map((s) => `${s.name} ${s.count}`).join(' · ')}
+                {sourceMix.length < 4
+                  ? ' — в окно попали не все четыре ленты, взгляд уже, чем заявлено'
+                  : ''}
+              </p>
+            )}
 
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex items-center gap-4">
