@@ -62,7 +62,9 @@ export default function SystemStatus() {
     if (!result) {
       setNote('Не удалось запустить проверку. Попробуйте ещё раз через минуту.');
     } else if (result.skipped) {
-      setNote(result.detail ?? 'Проверка уже запускалась только что.');
+      // При слишком частом нажатии проверка не повторяется, но состояние Linear
+      // всё равно обновляется — показываем обе части.
+      setNote([result.detail ?? 'Проверка уже запускалась только что.', result.linear].filter(Boolean).join(' · '));
     } else {
       setNote(`Проверка выполнена${result.linear ? ` · ${result.linear}` : ''}`);
     }
