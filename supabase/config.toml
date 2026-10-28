@@ -26,3 +26,9 @@ verify_jwt = true
 
 [functions.run-shadow-pipeline]
 verify_jwt = false
+
+# The self-check is called by the hourly cron (x-cron-secret, checked in code)
+# and by the «Проверить сейчас» button with the public key. No gateway JWT gate:
+# the throttle in code is what protects it.
+[functions.selfcheck]
+verify_jwt = false
