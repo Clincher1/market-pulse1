@@ -1,18 +1,22 @@
-// Hourly self-check for the whole public contour.
+// Self-check for the whole public contour.
 //
-// The site claims to be a live analytics system, so it has to be able to prove
-// it to itself: this job recomputes the tension index from the raw rows,
-// measures how fresh every feed and every cached table is, asks the site
-// whether it answers at all, and stores the verdict in `site_health`.
+// Two ways in:
+//   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
+//   • anyone can call it with the project's public key (that is what the
+//     «Проверить сейчас» button on the status page does). Public calls are
+//     throttled to one per MANUAL_COOLDOWN_MIN minutes and are recorded with
+//     trigger = 'manual', so the hourly record stays clean.
 //
-// Nothing here sends notifications — it only leaves evidence. Whoever opens
-// the project (a person or an assistant) reads one table and sees whether the
-// machine is healthy, instead of taking the site's word for it.
+// The result is written to `site_health` either way. Nothing here sends
+// notifications: it only leaves evidence, plus — if Linear is connected —
+// an issue that opens when a check fails and closes itself when it recovers.
 //
-// pg_cron job 20 (selfcheck-hourly) calls this function.
+// The site must be able to prove that it works without a person standing next
+// to it. This is that proof.
 
 const SUPABASE_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const SITE = 'https://market-pulse1-eta.vercel.app';
+const MANUAL_COOLDOWN_MIN = 5;
 
 const MIN_IMPORTANCE = 3;
 const MIN_CONFIDENCE = 0.5;
@@ -23,6 +27,7 @@ const FRESH_FORECAST_HOURS = 3;
 const FRESH_FEED_HOURS = 24;
 const MIN_SAMPLE = 20;
 const TENSION_TOLERANCE = 2;
+const MAX_ONE_SIDED_SHARE = 0.85;
 
 type AnyRecord = Record<string, unknown>;
 type Check = { ok: boolean; detail: string };
@@ -46,7 +51,9 @@ async function restJson(path: string, init: RequestInit = {}): Promise<unknown> 
   return text ? JSON.parse(text) : null;
 }
 
-function isAuthorizedCron(req: Request): boolean {
+// Cron and the dashboard button are different callers: the scheduled job and
+// the service role may run at any time, everyone else is throttled.
+function isPrivileged(req: Request): boolean {
   const auth = req.headers.get('Authorization') ?? '';
   const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SERVICE_KEY') ?? '';
   if (serviceRole && auth === `Bearer ${serviceRole}`) return true;
@@ -72,11 +79,115 @@ async function check(name: string, run: () => Promise<Check>): Promise<[string, 
   }
 }
 
+// ---------------------------------------------------------------------------
+// Linear bridge. Inactive until LINEAR_API_KEY and LINEAR_TEAM_ID exist, and
+// never allowed to break the check itself: every failure is swallowed into the
+// report text.
+// ---------------------------------------------------------------------------
+
+async function linearGraphql(query: string, variables: AnyRecord): Promise<AnyRecord | null> {
+  const key = Deno.env.get('LINEAR_API_KEY') ?? '';
+  if (!key) return null;
+  const res = await fetch('https://api.linear.app/graphql', {
+    method: 'POST',
+    signal: AbortSignal.timeout(15000),
+    headers: { 'Content-Type': 'application/json', Authorization: key },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!res.ok) return null;
+  const payload = await res.json().catch(() => null) as AnyRecord | null;
+  if (!payload || (Array.isArray(payload.errors) && payload.errors.length)) return null;
+  return (payload.data as AnyRecord) ?? null;
+}
+
+async function syncLinear(results: Record<string, Check>, checkedAt: string): Promise<string> {
+  const teamId = Deno.env.get('LINEAR_TEAM_ID') ?? '';
+  if (!Deno.env.get('LINEAR_API_KEY') || !teamId) return 'Linear не подключён';
+  try {
+    const statesReply = await linearGraphql(
+      `query($t:String!){ team(id:$t){ states{ nodes{ id name type } } } }`,
+      { t: teamId },
+    );
+    const stateNodes = ((((statesReply?.team as AnyRecord)?.states) as AnyRecord)?.nodes as AnyRecord[]) ?? [];
+    const doneState = stateNodes.find((s) => s.type === 'completed');
+
+    const openReply = await linearGraphql(
+      `query($t:String!){ team(id:$t){ issues(filter:{ state:{ type:{ nin:["completed","canceled"] } } }){ nodes{ id title } } } }`,
+      { t: teamId },
+    );
+    const issueNodes = ((((openReply?.team as AnyRecord)?.issues) as AnyRecord)?.nodes as AnyRecord[]) ?? [];
+    const openById = new Map<string, string>(issueNodes.map((n) => [String(n.title), String(n.id)]));
+
+    const created: string[] = [];
+    const closed: string[] = [];
+
+    for (const [name, value] of Object.entries(results)) {
+      const title = `Самопроверка сайта: ${name}`;
+      const openId = openById.get(title);
+
+      if (!value.ok) {
+        if (openId) continue; // already tracked, one issue per failing check
+        const reply = await linearGraphql(
+          `mutation($team:String!,$title:String!,$description:String!){ issueCreate(input:{ teamId:$team, title:$title, description:$description, priority:2 }){ success } }`,
+          {
+            team: teamId,
+            title,
+            description: [
+              `Проверка \`${name}\` провалилась ${checkedAt} (UTC).`,
+              '',
+              value.detail,
+              '',
+              `Отчёт целиком: ${SITE}/#status`,
+              'Задача заведена автоматически; закроется сама, когда проверка снова станет зелёной.',
+            ].join('\n'),
+          },
+        );
+        if ((reply?.issueCreate as AnyRecord)?.success) created.push(name);
+        continue;
+      }
+
+      if (openId && doneState) {
+        await linearGraphql(
+          `mutation($issue:String!,$body:String!){ commentCreate(input:{ issueId:$issue, body:$body }){ success } }`,
+          { issue: openId, body: `Вновь в норме ${checkedAt} (UTC): ${value.detail}` },
+        );
+        await linearGraphql(
+          `mutation($id:String!,$state:String!){ issueUpdate(id:$id, input:{ stateId:$state }){ success } }`,
+          { id: openId, state: String(doneState.id) },
+        );
+        closed.push(name);
+      }
+    }
+
+    return `Linear: заведено ${created.length}, закрыто ${closed.length}`;
+  } catch (error) {
+    return `Linear недоступен: ${(error instanceof Error ? error.message : String(error)).slice(0, 120)}`;
+  }
+}
+
 Deno.serve(async (req: Request) => {
-  if (!isAuthorizedCron(req)) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
+  const privileged = isPrivileged(req);
+
+  let latest: AnyRecord[] = [];
+  try {
+    latest = (await restJson(
+      'site_health?select=checked_at,ok,checks,trigger&order=checked_at.desc&limit=1',
+    )) as AnyRecord[];
+  } catch {
+    latest = [];
+  }
+  const lastAge = hoursAgo(String(latest[0]?.checked_at ?? ''));
+
+  // A public caller gets the stored report back instead of a fresh run when the
+  // previous check is recent: the button cannot be used to hammer the database.
+  if (!privileged && lastAge !== null && lastAge * 60 < MANUAL_COOLDOWN_MIN) {
+    return Response.json({
+      success: true,
+      ok: Boolean(latest[0]?.ok),
+      skipped: true,
+      detail: `проверка уже запускалась ${(lastAge * 60).toFixed(1)} мин назад (${String(latest[0]?.trigger ?? 'cron')}); повторно можно через ${MANUAL_COOLDOWN_MIN} мин`,
+      checked_at: latest[0]?.checked_at ?? null,
+      checks: latest[0]?.checks ?? {},
     });
   }
 
@@ -198,7 +309,7 @@ Deno.serve(async (req: Request) => {
       const up = directional.filter((r) => r.direction === 'up').length;
       const share = up / directional.length;
       return {
-        ok: share <= 0.85 && share >= 0.15,
+        ok: share <= MAX_ONE_SIDED_SHARE && share >= 1 - MAX_ONE_SIDED_SHARE,
         detail: `из ${directional.length} направленных ${Math.round(share * 100)} % «вверх»`,
       };
     }),
@@ -246,13 +357,24 @@ Deno.serve(async (req: Request) => {
   }
 
   const ok = Object.values(results).every((r) => r.ok);
-  const row = { checked_at: new Date().toISOString(), ok, checks: results };
+  const checkedAt = new Date().toISOString();
+  const row = { checked_at: checkedAt, ok, checks: results, trigger: privileged ? 'cron' : 'manual' };
 
-  await restJson('site_health', {
-    method: 'POST',
-    headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify(row),
-  });
+  try {
+    await restJson('site_health', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify(row),
+    });
+  } catch (error) {
+    return Response.json({
+      success: false,
+      ok,
+      error: `не удалось записать site_health: ${error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200)}`,
+      checks: results,
+    }, { status: 500 });
+  }
 
-  return Response.json({ success: true, ok, checks: results });
+  const linear = await syncLinear(results, checkedAt);
+  return Response.json({ success: true, ok, checked_at: checkedAt, trigger: row.trigger, linear, checks: results });
 });

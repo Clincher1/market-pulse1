@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Info } from 'lucide-react';
+import { ArrowRight, BookOpen, HeartPulse, Info } from 'lucide-react';
 import BrandMark from './BrandMark';
 
 export default function Footer() {
@@ -18,6 +18,13 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="#status"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-extrabold text-white transition-colors hover:border-emerald-300/60 hover:bg-emerald-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-300"
+            >
+              <HeartPulse className="h-4 w-4 text-emerald-300" />
+              Состояние системы
+            </a>
             <a
               href="#about"
               className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-300/25 bg-slate-400/10 px-4 py-2 text-sm font-extrabold text-white transition-colors hover:border-slate-300/60 hover:bg-slate-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-300"

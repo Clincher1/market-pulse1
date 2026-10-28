@@ -61,7 +61,7 @@ const mobileQuickLinks = [
 ];
 
 type HeaderProps = {
-  activeView?: 'dashboard' | 'guide';
+  activeView?: 'dashboard' | 'guide' | 'status';
 };
 
 export default function Header({ activeView = 'dashboard' }: HeaderProps) {

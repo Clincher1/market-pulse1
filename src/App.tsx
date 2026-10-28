@@ -15,10 +15,12 @@ const Forecasts = lazy(() => import('@/components/Forecasts'));
 const MarketMemory = lazy(() => import('@/components/MarketMemory'));
 const AboutProject = lazy(() => import('@/components/AboutProject'));
 const AnalyticsGuide = lazy(() => import('@/components/AnalyticsGuide'));
+const SystemStatus = lazy(() => import('@/components/SystemStatus'));
 
-type AppView = 'dashboard' | 'guide';
+type AppView = 'dashboard' | 'guide' | 'status';
 
 function viewFromHash(hash: string): AppView {
+  if (hash === '#status') return 'status';
   return hash === '#guide' || hash.startsWith('#guide-') ? 'guide' : 'dashboard';
 }
 
@@ -135,7 +137,20 @@ function App() {
     <div className="min-h-screen bg-bg-primary pb-20 text-text-primary lg:pb-0">
       <Header activeView={view} />
       <main className="mx-auto max-w-[1400px] px-4 pb-8 pt-24 sm:px-6 lg:px-10 lg:pt-28">
-        {view === 'guide' ? (
+        {view === 'status' ? (
+          <Suspense
+            fallback={
+              <SectionFallback
+                title="Состояние системы"
+                message="Читаем отчёт самопроверки: индекс, ленты, котировки, прогнозы…"
+                minHeightClass="min-h-[60vh]"
+                className="rounded-[28px]"
+              />
+            }
+          >
+            <SystemStatus />
+          </Suspense>
+        ) : view === 'guide' ? (
           <Suspense
             fallback={
               <SectionFallback
