@@ -6,10 +6,13 @@
 const SUPABASE_URL = "https://hekzplfftannlzwvgwwm.supabase.co";
 const Groq_URL = "https://api.Groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
-const PROMPT_VERSION = "event_classification_v3";
+const PROMPT_VERSION = "event_classification_v4";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const COOLDOWN_MINUTES = 10;
 const MIN_IMPACT_STRENGTH = 0.35;
+// A derived link is capped below MIN_IMPACT_STRENGTH, so it is stored for audit
+// but never becomes forecast evidence.
+const DERIVED_STRENGTH_CAP = 0.3;
 const Groq_MIN_INTERVAL_MS = 7000;
 const Groq_MAX_RETRIES = 2;
 
@@ -50,6 +53,7 @@ type Classification = {
     strength: number;
     horizon: string;
     rationale_ru: string;
+    link: string;
   }>;
   summary_ru: string;
   rationale_ru: string;
@@ -209,19 +213,28 @@ function validateClassification(value: unknown): Classification {
     if (!DIRECTIONS.includes(direction as typeof DIRECTIONS[number])) throw new Error(`Invalid impact direction: ${direction}`);
     if (!HORIZONS.includes(horizon as typeof HORIZONS[number])) throw new Error(`Invalid impact horizon: ${horizon}`);
     if (!Number.isFinite(strength) || strength < 0 || strength > 1) throw new Error("Invalid impact strength");
-    // Negligible or unexplained padded impacts are not evidence for later aggregation.
-    if (strength < MIN_IMPACT_STRENGTH) continue;
     const rationaleRu = String(rawImpact.rationale_ru ?? "").trim().slice(0, 500);
     if ((direction === "up" || direction === "down") && rationaleRu.length < 12) continue;
     if (seenAssets.has(asset)) continue;
     seenAssets.add(asset);
+    // An asset reached only through a generic macro template is not evidence.
+    // The model's own verdict is trusted when it is strict, and defaulted to the
+    // cautious option when the field is missing: strength is capped below
+    // MIN_IMPACT_STRENGTH, so the impact never reaches a forecast.
+    const link = String(rawImpact.link ?? "").trim();
+    const isDirect = link === "direct";
     impacts.push({
       asset,
       direction,
-      strength,
+      strength: isDirect ? strength : Math.min(strength, DERIVED_STRENGTH_CAP),
       horizon,
       rationale_ru: rationaleRu,
+      link: isDirect ? "direct" : "derived",
     });
+    // Negligible, unexplained or merely derived impacts are not evidence for
+    // later aggregation.
+    const kept = impacts[impacts.length - 1];
+    if (kept.strength < MIN_IMPACT_STRENGTH) impacts.pop();
   }
 
   const summaryRu = String(value.summary_ru ?? "").trim().slice(0, 700);
@@ -286,13 +299,14 @@ const RESPONSE_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["asset", "direction", "strength", "horizon", "rationale_ru"],
+        required: ["asset", "direction", "strength", "horizon", "rationale_ru", "link"],
         properties: {
           asset: { type: "string", enum: [...ASSET_KEYS] },
           direction: { type: "string", enum: [...DIRECTIONS] },
           strength: { type: "number", minimum: 0, maximum: 1 },
           horizon: { type: "string", enum: [...HORIZONS] },
           rationale_ru: { type: "string" },
+          link: { type: "string", enum: ["direct", "derived"] },
         },
       },
     },
@@ -322,6 +336,8 @@ async function classifyWithGroq(event: Record<string, unknown>, articles: Record
     "В impacts включай максимум три актива с правдоподобным и материальным каналом влияния. Не заполняй все пять активов ради полноты; активы без ясного канала просто опускай.",
     "Общий risk-on/risk-off перелив не является достаточным основанием для направленного impact. Для каждого актива в rationale_ru назови конкретный механизм: предложение/спрос, доходности и доллар, прибыль компаний, потоки в защитные активы или иной прямой канал.",
     "Локальный проект, одна компания или региональная новость обычно дают только один прямо затронутый актив. Не выводи из них EURUSD или BTC без явного глобального механизма в тексте.",
+    "Для каждого impact укажи link: direct — если этот актив, его цена или его рынок прямо названы в материале (например, атака на нефтяное поле для Brent, отчётность компании из индекса для sp500, решение ФРС по ставке для eurusd и gold); derived — если до актива можно дойти лишь через общий макро-шаблон (инфляция → золото как защита, risk-off → золото, слабый доллар → всё подряд, локальная валюта развивающейся страны → золото).",
+    "Сила derived-связи будет принудительно снижена и в основания прогноза не попадёт, поэтому ставь прямую связь только там, где она действительно прослеживается в тексте, и не завышай strength ради полноты.",
     "strength означает силу правдоподобного влияния, а не уверенность: 0.35 — слабое, 0.5 — заметное, 0.75 и выше — сильное. Не ставь одинаковую силу всем активам без причины.",
     "sentiment — общий рыночный риск-тон: +1 максимально risk-on, -1 максимально risk-off; конкретные направления укажи в impacts.",
     "importance оценивай по масштабу, неожиданности и широте последствий, а не по громкости заголовка.",

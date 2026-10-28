@@ -1,0 +1,41 @@
+name: Deploy event classifier
+
+# The classifier decides what counts as evidence for a forecast. A change to it
+# changes what the site claims to know, so it belongs in production as soon as it
+# is pushed — not whenever somebody remembers the dashboard.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/classify-events-v2-shadow/**'
+      - 'supabase/config.toml'
+      - '.github/workflows/deploy-classifier.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-classifier:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets are present
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
+            echo "Set SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF in GitHub Actions secrets first."
+            exit 1
+          fi
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy classify-events-v2-shadow
+        run: supabase functions deploy classify-events-v2-shadow --project-ref "$SUPABASE_PROJECT_REF"
