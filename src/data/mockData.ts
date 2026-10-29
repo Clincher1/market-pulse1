@@ -79,57 +79,18 @@ export interface ForecastData {
   updated_at?: string;
 }
 
-// --- Fallback-данные (не живые цены!) ---
+// --- Заготовки плиток без чисел ---
 
-export const tensionData: TensionData = {
-  current: 67,
-  label: 'Тепло',
-  history: [
-    { day: '6 окт', value: 54 },
-    { day: '7 окт', value: 58 },
-    { day: '8 окт', value: 61 },
-    { day: '9 окт', value: 55 },
-    { day: '10 окт', value: 63 },
-    { day: '11 окт', value: 70 },
-    { day: '12 окт', value: 67 },
-  ],
-  newsCount: 1247,
-};
-
-export const assets: AssetData[] = [
-  {
-    id: 'usd-eur',
-    name: 'USD/EUR',
-    price: '0.92',
-    change: 0.3,
-    sparkline: [0.914, 0.915, 0.917, 0.916, 0.918, 0.919, 0.92, 0.92, 0.92, 0.92, 0.92],
-  },
-  {
-    id: 'sp500',
-    name: 'S&P 500',
-    price: '5,847',
-    change: -0.8,
-    sparkline: [5910, 5895, 5870, 5885, 5860, 5850, 5847, 5855, 5840, 5847, 5847],
-  },
-  {
-    id: 'brent',
-    name: 'Brent',
-    price: '$78.40',
-    change: 1.2,
-    sparkline: [76.8, 77.0, 77.2, 77.5, 77.8, 78.0, 78.1, 78.3, 78.4, 78.4, 78.4],
-  },
-  {
-    id: 'gold',
-    name: 'Gold',
-    price: '$2,645',
-    change: 0.5,
-    sparkline: [2620, 2625, 2628, 2630, 2635, 2638, 2640, 2642, 2645, 2645, 2645],
-  },
-  {
-    id: 'btc',
-    name: 'BTC',
-    price: '$67,240',
-    change: -2.1,
-    sparkline: [69200, 68800, 68500, 68200, 67800, 67500, 67400, 67300, 67240, 67240, 67240],
-  },
+/**
+ * До первой успешной загрузки плитки рисуются сразу, но без цен: показывать
+ * нечего, а выдуманное число на экране выглядит как котировка, даже если рядом
+ * написано «нет свежей цены». Резервные значения убраны совсем — Brent $78.40
+ * при реальных $123.10 не украшение, а дезинформация.
+ */
+export const assetPlaceholders: AssetData[] = [
+  { id: 'usd-eur', name: 'USD/EUR', price: '—', change: 0, sparkline: [] },
+  { id: 'sp500', name: 'S&P 500', price: '—', change: 0, sparkline: [] },
+  { id: 'brent', name: 'Brent', price: '—', change: 0, sparkline: [] },
+  { id: 'gold', name: 'Gold', price: '—', change: 0, sparkline: [] },
+  { id: 'btc', name: 'BTC', price: '—', change: 0, sparkline: [] },
 ];
