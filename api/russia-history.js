@@ -203,11 +203,13 @@ export function buildKeyRateSteps(records, fromISO) {
   return steps;
 }
 
-async function fetchMoexIndexHistory(secid, fromISO, tillISO) {
-  const url =
-    `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` +
-    `?iss.meta=off&from=${fromISO}&till=${tillISO}`;
-  const payload = await fetchJson(url);
+/**
+ * Разбор блока `history` из ISS — того же, что отдаёт и IMOEX, и RGBI.
+ * Колонки берутся по имени, а не по индексу: порядок у Мосбиржи менялся.
+ * Строки без даты, без закрытия или с нулём выбрасываются: ноль до первой
+ * сделки — это не цена.
+ */
+export function parseIssHistory(payload) {
   const block = payload?.history;
   if (!block?.columns || !Array.isArray(block.data)) throw new Error('ISS не отдал блок history');
   const dateIndex = block.columns.indexOf('TRADEDATE');
@@ -216,11 +218,25 @@ async function fetchMoexIndexHistory(secid, fromISO, tillISO) {
   const total = strictNumber(payload?.['history.cursor']?.data?.[0]?.[1]);
   const points = block.data
     .map((row) => ({ date: String(row[dateIndex] ?? ''), value: strictNumber(row[closeIndex]) }))
-    .filter((point) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value) && point.value > 0)
+    .filter(
+      (point) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(point.date) &&
+        Number.isFinite(point.value) &&
+        point.value > 0,
+    )
     .map((point) => ({ date: point.date, value: round(point.value, 2) }))
     .sort((a, b) => a.date.localeCompare(b.date));
-  if (points.length === 0) throw new Error(`ISS вернул пустую историю ${secid}`);
   return { points, total: Number.isFinite(total) ? total : points.length };
+}
+
+async function fetchMoexIndexHistory(secid, fromISO, tillISO) {
+  const url =
+    `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` +
+    `?iss.meta=off&from=${fromISO}&till=${tillISO}`;
+  const payload = await fetchJson(url);
+  const { points, total } = parseIssHistory(payload);
+  if (points.length === 0) throw new Error(`ISS вернул пустую историю ${secid}`);
+  return { points, total };
 }
 
 async function fetchCbrHistory(currencyCode, fromISO, tillISO) {

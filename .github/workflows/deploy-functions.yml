@@ -21,6 +21,7 @@ on:
       - 'tsconfig*.json'
       - 'vite.config.ts'
       - 'api/**'
+      - 'tests/**'
       - 'vercel.json'
       - 'supabase/config.toml'
       - '.github/workflows/deploy-functions.yml'
@@ -62,6 +63,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Разборщики первоисточников: три реальные ошибки были пойманы именно
+      # здесь (блок ZCYC, срок в годах, пустая ячейка как 0 %). Проверки живут
+      # в репозитории, чтобы формат ответа не поменялся молча.
+      - name: Test market parsers
+        run: npm test
 
       - name: Lint the site
         run: npm run lint
