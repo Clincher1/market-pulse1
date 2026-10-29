@@ -18,7 +18,7 @@ export async function fetchLiveAssets(): Promise<AssetData[]> {
   try {
     const { data, error } = await supabase
       .from('cached_assets')
-      .select('id, name, price, change, sparkline');
+      .select('id, name, price, change, sparkline, updated_at');
 
     if (error || !data || data.length === 0) {
       throw new Error('Нет данных в кэше');
@@ -37,6 +37,7 @@ export async function fetchLiveAssets(): Promise<AssetData[]> {
       ...asset,
       change: asset.change ?? 0,
       sparkline: asset.sparkline ?? [],
+      updatedAt: (asset as AssetData & { updated_at?: string | null }).updated_at ?? null,
     }));
   } catch (e) {
     console.error('Ошибка загрузки кэша активов:', e);

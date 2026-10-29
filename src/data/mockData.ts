@@ -48,6 +48,11 @@ export interface AssetData {
   price: string;
   change: number;
   sparkline: number[];
+  /**
+   * Момент, на который получена цена. Без него плитка показывает число без
+   * времени, и заголовок «у каждого числа есть время» перестаёт быть правдой.
+   */
+  updatedAt?: string | null;
 }
 
 export interface NewsItem {

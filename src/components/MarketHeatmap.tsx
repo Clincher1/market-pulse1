@@ -206,6 +206,18 @@ function formatDateShort(dateOrMs: string | number): string {
   }).format(value);
 }
 
+/** Время источника по Москве: «12:02». Пустая строка, если времени нет. */
+function moscowClock(value?: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
 function formatDateLong(date: string): string {
   return new Intl.DateTimeFormat('ru-RU', {
     day: 'numeric',
@@ -361,8 +373,11 @@ function HeatTile({
   const cap = horizonCap(asset.id, intervals);
   const nearlyFlat = horizonChangeValue === null || Math.abs(change) < 0.005;
   const DirectionIcon = nearlyFlat ? Minus : change > 0 ? TrendingUp : TrendingDown;
+  const asOf = moscowClock(asset.updatedAt);
   const tooltip =
-    `${asset.name}: ${asset.price}, изменение за горизонт «${horizon.label}» ` +
+    `${asset.name}: ${asset.price}` +
+    (asOf ? ` на ${asOf} МСК` : '') +
+    `, изменение за горизонт «${horizon.label}» ` +
     `(${intervals} ${observationsWord(intervals)} источника): ` +
     `${horizonChangeValue === null ? 'недостаточно данных' : formatChange(change)}. ` +
     `Насыщенность цвета нормирована к шкале ±${formatCap(cap)} для этого актива и горизонта. ` +
@@ -404,6 +419,12 @@ function HeatTile({
       <div className="mt-3 text-xl font-extrabold tabular-nums leading-none">
         {isFallback ? '—' : asset.price}
       </div>
+
+      {!isFallback && asset.updatedAt && (
+        <div className="mt-1 text-[10px] font-semibold text-white/70">
+          на {moscowClock(asset.updatedAt)} МСК
+        </div>
+      )}
 
       <div className="mt-3 flex items-end justify-between gap-2">
         <span className="text-base font-extrabold tabular-nums">
@@ -988,6 +1009,9 @@ function AssetPanel({
           <p className="mt-0.5 text-sm text-text-secondary">
             Последнее значение:{' '}
             <span className="font-extrabold tabular-nums text-text-primary">{asset.price}</span>
+            {!isFallback && asset.updatedAt && (
+              <span className="text-text-secondary"> на {moscowClock(asset.updatedAt)} МСК</span>
+            )}
             {' · '}
             <span
               className={`font-extrabold tabular-nums ${directionalTextClass(asset.change ?? 0, paletteId)}`}
