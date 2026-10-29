@@ -424,11 +424,14 @@ export default function NewsFeed() {
     ? Math.round((visibleCount / filteredNews.length) * 100)
     : 0;
 
+  // Пояс указан явно: иначе время рисуется в поясе того, кто открыл страницу
+  // (а в статической сборке — в поясе сервера), и «12:45» нельзя проверить.
   const lastUpdatedLabel = lastUpdatedAt
-    ? new Intl.DateTimeFormat('ru-RU', {
+    ? `${new Intl.DateTimeFormat('ru-RU', {
         hour: '2-digit',
         minute: '2-digit',
-      }).format(lastUpdatedAt)
+        timeZone: 'Europe/Moscow',
+      }).format(lastUpdatedAt)} МСК`
     : null;
 
   return (
