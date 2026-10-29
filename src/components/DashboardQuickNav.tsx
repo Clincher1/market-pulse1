@@ -1,5 +1,5 @@
 import { ArrowDownRight } from 'lucide-react';
-import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from './sectionThemes';
+import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from './sectionThemes.data';
 
 /**
  * Порядок карточек в «Карте страницы». Паспорт дня стоит первым: это

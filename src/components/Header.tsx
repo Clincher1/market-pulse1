@@ -6,7 +6,7 @@ import {
   DASHBOARD_THEME_ORDER,
   SECTION_THEMES,
   type SectionThemeId,
-} from './sectionThemes';
+} from './sectionThemes.data';
 
 const navLinks = DASHBOARD_THEME_ORDER.map((themeId) => {
   const theme = SECTION_THEMES[themeId];
