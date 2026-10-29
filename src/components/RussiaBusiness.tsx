@@ -448,11 +448,30 @@ function EventCard({ scored }: { scored: ScoredNews }) {
           <Clock className="h-3.5 w-3.5" />
           {formatMoscowDateTime(item.published_at)}
         </span>
-        {channels.slice(0, 3).map((channel) => (
-          <span key={channel} className="rounded-full border border-white/10 bg-white/6 px-2 py-1 text-slate-200">
-            {CHANNEL_LABELS[channel]}
-          </span>
-        ))}
+        {channels.slice(0, 3).map((channel) => {
+          // Разметку источника видно и в чипах: канал, найденный по слову в
+          // тексте, — сплошная рамка, канал только из разметки — пунктир и
+          // подсказка. Иначе второй и третий чип выглядят как доказательство,
+          // хотя объяснение под карточкой дано лишь для первого канала.
+          const markupOnly = !matchedKeywords[channel] && Boolean(impactAssets[channel]);
+          return (
+            <span
+              key={channel}
+              title={
+                markupOnly
+                  ? `Канал из разметки источника (${impactAssets[channel]}), в тексте его слов нет`
+                  : `Канал найден по слову «${matchedKeywords[channel]}»`
+              }
+              className={`rounded-full border px-2 py-1 text-slate-200 ${
+                markupOnly
+                  ? 'border-dashed border-amber-300/40 bg-amber-400/5 text-amber-100'
+                  : 'border-white/10 bg-white/6'
+              }`}
+            >
+              {CHANNEL_LABELS[channel]}
+            </span>
+          );
+        })}
       </div>
 
       {item.url ? (
@@ -595,12 +614,23 @@ export default function RussiaBusiness() {
       // Стоимость денег: ключевая ставка ЦБ и точка кривой ОФЗ. Обе строки
       // приходят из тех же публичных источников, что и остальные числа.
       'key-rate',
+      'ruonia',
       'ofz-10y',
     ]
       .map((id) => byId.get(id))
       .filter((indicator): indicator is RussiaMarketIndicator => Boolean(indicator));
     if (!byId.has('cny-rub-moex') && byId.has('cny-rub-cbr')) {
       ordered.splice(2, 0, byId.get('cny-rub-cbr')!);
+    }
+    // Порядок задан списком, но прятать незнакомый id нельзя: сервер добавил
+    // RUONIA, а страница полгода показывала «плитки нет», хотя строка в ответе
+    // была. Всё, что пришло и не попало в список, показываем в конце. Курс ЦБ
+    // на юань — не дубль: он нужен только когда биржевого юаня нет.
+    const shown = new Set(ordered.map((indicator) => indicator.id));
+    for (const indicator of insights.markets) {
+      if (shown.has(indicator.id) || indicator.id === 'cny-rub-cbr') continue;
+      shown.add(indicator.id);
+      ordered.push(indicator);
     }
     return ordered;
   }, [insights.markets]);
