@@ -14,6 +14,7 @@ import type { TensionData } from '@/data/mockData';
 import { fetchLiveTension } from '@/data/liveTension';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
+import { startPolling } from '@/lib/polling';
 
 type TensionPhase = 'loading' | 'live' | 'stale' | 'error';
 type TensionPoint = TensionData['history'][number];
@@ -342,10 +343,10 @@ export default function TensionScale() {
     };
 
     void safeLoad();
-    const interval = window.setInterval(() => void safeLoad(), 300_000);
+    const stopPolling = startPolling(() => void safeLoad());
     return () => {
       isMounted = false;
-      window.clearInterval(interval);
+      stopPolling();
     };
   }, [load]);
 

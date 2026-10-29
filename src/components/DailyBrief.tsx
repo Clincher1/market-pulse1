@@ -15,6 +15,7 @@ import {
   type RussiaMarketIndicator,
 } from '@/data/russiaInsights';
 import { SectionThemeBadge } from './sectionThemes';
+import { startPolling } from '@/lib/polling';
 
 /**
  * «Бриф за 60 секунд» (этап 3 дорожной карты).
@@ -188,10 +189,10 @@ export default function DailyBrief() {
       setTensionLoaded(true);
     }
     void load();
-    const interval = window.setInterval(load, 300_000);
+    const stopPolling = startPolling(() => void load());
     return () => {
       mounted = false;
-      window.clearInterval(interval);
+      stopPolling();
     };
   }, []);
 
@@ -204,10 +205,10 @@ export default function DailyBrief() {
       setInsightsLoaded(true);
     }
     void load();
-    const interval = window.setInterval(load, 300_000);
+    const stopPolling = startPolling(() => void load());
     return () => {
       mounted = false;
-      window.clearInterval(interval);
+      stopPolling();
     };
   }, []);
 
@@ -221,10 +222,10 @@ export default function DailyBrief() {
       setSnapshotLoaded(true);
     }
     void load();
-    const interval = window.setInterval(load, 300_000);
+    const stopPolling = startPolling(() => void load());
     return () => {
       mounted = false;
-      window.clearInterval(interval);
+      stopPolling();
     };
   }, []);
 
@@ -237,10 +238,10 @@ export default function DailyBrief() {
       setForecastsLoaded(true);
     }
     void load();
-    const interval = window.setInterval(load, 300_000);
+    const stopPolling = startPolling(() => void load());
     return () => {
       mounted = false;
-      window.clearInterval(interval);
+      stopPolling();
     };
   }, []);
 

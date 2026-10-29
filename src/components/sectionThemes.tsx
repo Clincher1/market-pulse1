@@ -104,10 +104,10 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
   forecasts: {
     id: 'forecasts',
     order: '05',
-    label: 'Сигналы по активам',
-    navLabel: 'Сигналы',
+    label: 'Журнал проверок',
+    navLabel: 'Проверки',
     href: '#forecasts',
-    description: 'Баланс новостного фона и порог 60/40',
+    description: 'Что ожидалось до факта и что вышло',
     icon: Target,
     badgeClass: 'border-emerald-300/30 bg-emerald-400/10 text-emerald-200',
     cardClass:

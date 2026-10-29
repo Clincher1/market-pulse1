@@ -25,6 +25,7 @@ import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
 import ExpandHint from './ExpandHint';
+import { startPolling } from '@/lib/polling';
 import {
   fetchMarketMemory,
   type MarketMemoryData,
@@ -542,10 +543,10 @@ export default function MarketMemory() {
   useEffect(() => {
     mountedRef.current = true;
     void load();
-    const interval = setInterval(() => void load(), 300_000);
+    const stopPolling = startPolling(() => void load());
     return () => {
       mountedRef.current = false;
-      clearInterval(interval);
+      stopPolling();
     };
   }, [load]);
 
