@@ -203,9 +203,9 @@ export function buildKeyRateSteps(records, fromISO) {
   return steps;
 }
 
-async function fetchImoexHistory(fromISO, tillISO) {
+async function fetchMoexIndexHistory(secid, fromISO, tillISO) {
   const url =
-    'https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX.json' +
+    `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` +
     `?iss.meta=off&from=${fromISO}&till=${tillISO}`;
   const payload = await fetchJson(url);
   const block = payload?.history;
@@ -219,7 +219,7 @@ async function fetchImoexHistory(fromISO, tillISO) {
     .filter((point) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value) && point.value > 0)
     .map((point) => ({ date: point.date, value: round(point.value, 2) }))
     .sort((a, b) => a.date.localeCompare(b.date));
-  if (points.length === 0) throw new Error('ISS вернул пустую историю IMOEX');
+  if (points.length === 0) throw new Error(`ISS вернул пустую историю ${secid}`);
   return { points, total: Number.isFinite(total) ? total : points.length };
 }
 
@@ -265,7 +265,17 @@ const SERIES = [
     provider: 'Мосбиржа ISS',
     sourceUrl: 'https://www.moex.com/ru/index/IMOEX/',
     note: 'Закрытие торгового дня. Текущая сессия в историю попадает только после закрытия.',
-    load: (from, till) => fetchImoexHistory(from, till),
+    load: (from, till) => fetchMoexIndexHistory('IMOEX', from, till),
+  },
+  {
+    id: 'rgbi',
+    name: 'RGBI',
+    unit: 'пункта',
+    kind: 'line',
+    provider: 'Мосбиржа ISS',
+    sourceUrl: 'https://www.moex.com/ru/index/RGBI/',
+    note: 'Закрытие торгового дня. RGBI считается по ценам гособлигаций, а не по доходностям: рост индекса — это рост цен ОФЗ.',
+    load: (from, till) => fetchMoexIndexHistory('RGBI', from, till),
   },
   {
     id: 'usd-rub',
@@ -346,6 +356,7 @@ export default async function handler(req, res) {
       'Окно истории — 92 дня. Точка появляется только там, где её отдал источник: пропущенные торговые дни и выходные не заполняются.',
       'Линия между соседними точками — просто соединение двух наблюдений, а не интерполяция и не оценка пропущенных дней.',
       'Ключевая ставка показана ступенями: она меняется решением регулятора, а не каждую торговую сессию.',
+      'Истории доходности ОФЗ здесь нет: Мосбиржа отдаёт по дням только коэффициенты кривой, и доходность пришлось бы считать из них заново — это модель, а не наблюдение. Текущая кривая показана выше, в блоке «Стоимость денег».',
     ],
   });
 }

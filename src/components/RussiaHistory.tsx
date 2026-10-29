@@ -138,6 +138,9 @@ function Chart({ series, window }: { series: HistorySeries; window: RussiaHistor
             className="fill-amber-300"
           />
         ))}
+      <text x={PAD_X} y={12} className="fill-slate-400 text-[10px]">
+        значения: {series.unit}
+      </text>
       <text x={PAD_X} y={HEIGHT - 4} className="fill-slate-400 text-[10px]">
         {ruDate(window.from)}
       </text>
@@ -275,7 +278,7 @@ export default function RussiaHistory() {
                 .{series.truncated ? ' Источник отдал больше строк, чем поместилось в один ответ.' : ''}
               </span>
             </div>
-            {data.notes.slice(0, 2).map((note) => (
+            {data.notes.map((note) => (
               <div key={note} className="flex items-start gap-1.5">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
                 <span>{note}</span>
