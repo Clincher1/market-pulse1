@@ -43,7 +43,7 @@ type Status = 'calm' | 'watch' | 'pressure' | 'unknown';
 
 // Ставка и кривая ОФЗ — про стоимость денег, а не про курс. Держим их
 // отдельной строкой, чтобы ряд из пяти курсовых плиток не разъезжался.
-const MONEY_INDICATOR_IDS = ['key-rate', 'ofz-10y'];
+const MONEY_INDICATOR_IDS = ['key-rate', 'ruonia', 'ofz-10y'];
 
 // Что должно быть в российском контуре. Если строка не пришла, сайт говорит
 // об этом словами, а не оставляет дырку без объяснения.
@@ -53,6 +53,7 @@ const EXPECTED_INDICATOR_NAMES: Record<string, string> = {
   imoex: 'IMOEX',
   rgbi: 'RGBI',
   'key-rate': 'ключевая ставка',
+  ruonia: 'RUONIA',
   'ofz-10y': 'доходность ОФЗ',
 };
 
@@ -834,9 +835,9 @@ export default function RussiaBusiness() {
                 {moneyIndicators.length > 0 && (
                   <>
                     <div className="mt-5 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
-                      Стоимость денег — ставка ЦБ и кривая ОФЗ
+                      Стоимость денег — ставка ЦБ, RUONIA и кривая ОФЗ
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       {moneyIndicators.map((indicator) => (
                         <MarketTile key={indicator.id} indicator={indicator} />
                       ))}
