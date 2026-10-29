@@ -184,7 +184,7 @@ function ForecastScoreboard({ track }: { track: TrackRecordRow | null }) {
         </h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div>
           <div className="text-xs text-text-secondary mb-0.5">Выдано</div>
           <div className="text-xl font-bold tabular-nums text-text-primary">
@@ -197,7 +197,16 @@ function ForecastScoreboard({ track }: { track: TrackRecordRow | null }) {
             {track.scored}
           </div>
           <div className="text-[11px] text-text-secondary">
-            ещё {track.pending} в работе
+            из {track.directional} с направлением
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-text-secondary mb-0.5">Без направления</div>
+          <div className="text-xl font-bold tabular-nums text-text-primary">
+            {Math.max(track.issued - track.directional, 0)}
+          </div>
+          <div className="text-[11px] text-text-secondary">
+            «нет сигнала» — такое не оценивают
           </div>
         </div>
         <div>
