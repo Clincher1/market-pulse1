@@ -746,17 +746,32 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       }
       const latestDate = String(rows[0]?.issue_date ?? '').slice(0, 10);
       const sameDay = rows.filter((r) => String(r.issue_date ?? '').slice(0, 10) === latestDate);
-      const calibrated = sameDay.filter((r) => {
-        const aggregation = ((r.raw as AnyRecord)?.aggregation as AnyRecord) ?? {};
-        return (
-          aggregation.calibration === CALIBRATION_MARKER &&
-          typeof aggregation.base_rate_up === 'number' &&
-          typeof aggregation.score_calibrated === 'number'
-        );
+      // A snapshot with no directional evidence is a normal outcome, not a
+      // broken row: the writer stores score_raw and score_calibrated as null
+      // when no forecast-bearing event pointed either way. BTC sat like that on
+      // 18 of its first 21 days. Demanding a number there made this check fail
+      // on any day when at least one of the five assets stayed quiet — most
+      // days — and every failure filed an issue that could never close.
+      const hasDirectional = (row: AnyRecord): boolean => {
+        const aggregation = ((row.raw as AnyRecord)?.aggregation as AnyRecord) ?? {};
+        return typeof aggregation.score_raw === 'number';
+      };
+      const quiet = sameDay.filter((row) => !hasDirectional(row)).length;
+      const calibrated = sameDay.filter((row) => {
+        const aggregation = ((row.raw as AnyRecord)?.aggregation as AnyRecord) ?? {};
+        if (aggregation.calibration !== CALIBRATION_MARKER) return false;
+        if (typeof aggregation.base_rate_up !== 'number') return false;
+        // Null is required, not tolerated: it proves the row was written by a
+        // writer that knew there was nothing to calibrate, rather than by an
+        // older one that never set the field at all.
+        return hasDirectional(row)
+          ? typeof aggregation.score_calibrated === 'number'
+          : aggregation.score_calibrated === null;
       });
       return {
         ok: calibrated.length === sameDay.length,
-        detail: `за ${latestDate}: ${calibrated.length} из ${sameDay.length} прогнозов записаны с калибровкой`,
+        detail: `за ${latestDate}: ${calibrated.length} из ${sameDay.length} прогнозов записаны с калибровкой` +
+          (quiet ? ` (${quiet} без направленных доказательств — «нет сигнала», а не поломка)` : ''),
       };
     }),
   ])) {
