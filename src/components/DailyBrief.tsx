@@ -383,26 +383,36 @@ export default function DailyBrief() {
     }
 
     // --- Последствия: те же пороги, что у каналов «России и бизнеса» ---
+    //
+    // Раньше здесь стояло «давит на экспортную выручку» и «поддерживает
+    // экспортную выручку». Это причинное утверждение, которого страница не
+    // доказывает: у неё есть только два числа. Теперь рядом с движением Brent
+    // стоят измеренные движения рубля и IMOEX за то же время, и сказано, что
+    // это соседство, а не связь.
+    const russiaReaction = ['usd-rub', 'imoex']
+      .map((id) => indicatorById.get(id))
+      .filter(
+        (indicator): indicator is RussiaMarketIndicator =>
+          Boolean(indicator) && typeof indicator?.changePct === 'number',
+      )
+      .map((indicator) => `${indicator.name} ${formatPct(indicator.changePct)}`)
+      .join(', ');
+
     const Brent = liveAssets.find((asset) => asset.id === 'brent') ?? null;
     if (Brent && Math.abs(Brent.change) >= 1) {
       consequences.push({
         id: 'cons-Brent',
         href: '#russia-business',
-        body:
-          Brent.change < 0 ? (
-            <>
-              Сырьевой канал: падение Brent на{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(Brent.change)}</strong>{' '}
-              давит на экспортную выручку и бюджетные ожидания; важно, подхватит ли движение
-              рубль.
-            </>
-          ) : (
-            <>
-              Сырьевой канал: рост Brent на{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(Brent.change)}</strong>{' '}
-              поддерживает экспортную выручку; проверяем реакцию рубля и IMOEX.
-            </>
-          ),
+        body: (
+          <>
+            Сырьевой канал: Brent{' '}
+            <strong className="tabular-nums text-text-primary">{formatPct(Brent.change)}</strong>{' '}
+            за наблюдение.{' '}
+            {russiaReaction
+              ? `Российский контур на это время: ${russiaReaction}. Это два факта рядом, а не доказанная причинная связь.`
+              : 'Российские курсы и IMOEX сейчас недоступны, поэтому сопоставить движение не с чем.'}
+          </>
+        ),
       });
     }
 
@@ -416,24 +426,27 @@ export default function DailyBrief() {
       fxChanges.length >= 2
         ? fxChanges.reduce((sum, value) => sum + value, 0) / fxChanges.length
         : null;
-    if (fxAverage !== null && Math.abs(fxAverage) > 0.15 && consequences.length < 2) {
+    const fxList = fxIndicators
+      .filter((indicator) => typeof indicator.changePct === 'number')
+      .map((indicator) => `${indicator.name} ${formatPct(indicator.changePct)}`)
+      .join(', ');
+    if (
+      fxAverage !== null &&
+      fxList &&
+      Math.abs(fxAverage) > 0.15 &&
+      consequences.length < 2
+    ) {
       consequences.push({
         id: 'cons-fx',
         href: '#russia-business',
-        body:
-          fxAverage > 0 ? (
-            <>
-              Валютный канал: иностранные валюты в среднем{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(fxAverage)}</strong>{' '}
-              к рублю — импорт и валютные платежи требуют внимания.
-            </>
-          ) : (
-            <>
-              Валютный канал: корзина валют в среднем{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(fxAverage)}</strong>{' '}
-              к рублю — импорт дешевле в рублях, а валютная выручка при конвертации ниже.
-            </>
-          ),
+        body: (
+          <>
+            Валютный канал: {fxList}. Среднее{' '}
+            <strong className="tabular-nums text-text-primary">{formatPct(fxAverage)}</strong> —
+            простое арифметическое по {fxChanges.length}{' '}
+            {plural(fxChanges.length, ['паре', 'парам', 'парам'])}, без весов по объёму торгов.
+          </>
+        ),
       });
     }
 
@@ -459,8 +472,7 @@ export default function DailyBrief() {
             <>
               Стоимость денег: RGBI{' '}
               <strong className="tabular-nums text-text-primary">{formatPct(rgbi.changePct)}</strong>{' '}
-              — цены гособлигаций снижаются, доходности при прочих равных растут и финансовые
-              условия жёстче.
+              — цены гособлигаций снижаются, доходности при прочих равных растут.
             </>
           ),
       });
