@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import GuideLink from './GuideLink';
 import OfzCurve from './OfzCurve';
+import RussiaHistory from './RussiaHistory';
 import { SectionThemeBadge } from './sectionThemes';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
@@ -835,6 +836,7 @@ export default function RussiaBusiness() {
                     {ofzIndicator && <OfzCurve indicator={ofzIndicator} />}
                   </>
                 )}
+                <RussiaHistory />
               </>
             ) : (
               <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100">
