@@ -389,7 +389,7 @@ function EventCard({ scored }: { scored: ScoredNews }) {
       {primaryChannel && (
         <div className="mt-4 rounded-xl border border-accent/25 bg-accent/10 p-3.5">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-200">
-            Что это значит для бизнеса в России
+            К какому каналу отнесён заголовок
           </div>
           <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
             {CHANNEL_EXPLANATIONS[primaryChannel]}
@@ -615,8 +615,9 @@ export default function RussiaBusiness() {
                 Пульс российского бизнеса
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-300 sm:text-base">
-                Официальные курсы, Мосбиржа и мировые события — в переводе на язык последствий:
-                что произошло, кого это может затронуть, как уже отреагировал рынок и что проверить дальше.
+                Официальные курсы, Мосбиржа и мировые события: что произошло, к какому каналу
+                отнесён заголовок, какие числа этого канала видны сейчас и что стоит сверить с
+                первоисточником. Кого именно затронет событие, сайт не вычисляет и не утверждает.
               </p>
             </div>
             <GuideLink href="#guide-russia" label="Как читать блок" mobileLabel="Справка" />
@@ -711,9 +712,9 @@ export default function RussiaBusiness() {
               Российский блок · продолжение
             </span>
             <div>
-              <h3 className="text-lg font-extrabold text-white">Причины: события и российские первоисточники</h3>
+              <h3 className="text-lg font-extrabold text-white">События и российские первоисточники</h3>
               <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
-                Выше — российские курсы, рынок и каналы влияния. Ниже — события и первоисточники, которые помогают объяснить движение каналов. Мировые котировки вынесены в следующий отдельный раздел.
+                Выше — российские курсы, рынок и каналы влияния. Ниже — заголовки, которые классификатор отнёс к этим каналам, со ссылкой на первоисточник. Сайт не доказывает, что событие вызвало движение: он показывает, к какому каналу его отнесли и по какому правилу. Мировые котировки вынесены в следующий отдельный раздел.
               </p>
             </div>
           </div>
