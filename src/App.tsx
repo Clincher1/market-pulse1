@@ -257,7 +257,7 @@ function App() {
               fallback={
                 <SectionFallback
                   id="forecasts"
-                  title="Сигналы по активам"
+                  title="Журнал проверок"
                   message="Раздел загрузится при приближении к нему; слабый баланс по-прежнему будет показан как «Нет сигнала»."
                   minHeightClass="min-h-[520px]"
                   className="mb-10 lg:mb-12"
@@ -268,14 +268,14 @@ function App() {
                 fallback={
                   <SectionFallback
                     id="forecasts"
-                    title="Сигналы по активам"
+                    title="Журнал проверок"
                     message="Проверяем баланс свидетельств и порог 60/40…"
                     minHeightClass="min-h-[520px]"
                     className="mb-10 lg:mb-12"
                   />
                 }
               >
-                <SectionBoundary title="Сигналы по активам" id="forecasts">
+                <SectionBoundary title="Журнал проверок" id="forecasts">
                   <Forecasts />
                 </SectionBoundary>
               </Suspense>
