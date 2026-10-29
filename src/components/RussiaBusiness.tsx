@@ -334,6 +334,8 @@ interface ScoredNews {
   channels: ChannelId[];
   /** Каким словом текст отнесён к каналу — чтобы отнесение можно было проверить. */
   matchedKeywords: Partial<Record<ChannelId, string>>;
+  /** Каналы, добавленные не по тексту, а по разметке источника (impacts). */
+  impactAssets: Partial<Record<ChannelId, string>>;
   directRussia: boolean;
   score: number;
   reasons: string[];
@@ -353,13 +355,21 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
       const matches = classifyText(text);
       const matchedKeywords: Partial<Record<ChannelId, string>> = {};
       for (const match of matches) matchedKeywords[match.channel] = match.keyword;
-      const channels = new Set<ChannelId>(matches.map((match) => match.channel));
+      // Каналы из текста идут первыми: это видимая причина. Разметка источника
+      // (impacts) добавляет каналы, которых в тексте нет, и подписывается
+      // отдельно — иначе карточка выдавала бы чужое решение за своё.
+      const textChannels = matches.map((match) => match.channel);
+      const impactAssets: Partial<Record<ChannelId, string>> = {};
       for (const impact of item.impacts ?? []) {
         const asset = impact.asset.toLowerCase();
-        if (asset.includes('brent') || asset.includes('oil')) channels.add('commodities');
-        if (asset.includes('usd') || asset.includes('eur')) channels.add('currency');
+        if (asset.includes('brent') || asset.includes('oil')) {
+          impactAssets.commodities ??= impact.asset;
+        }
+        if (asset.includes('usd') || asset.includes('eur')) {
+          impactAssets.currency ??= impact.asset;
+        }
       }
-      const channelList = [...channels];
+      const channelList = [...new Set<ChannelId>([...textChannels, ...(Object.keys(impactAssets) as ChannelId[])])];
       const directRussia = includesAny(text, RUSSIA_KEYWORDS);
       const ageHours = item.published_at
         ? Math.max(0, (now - new Date(item.published_at).getTime()) / 3_600_000)
@@ -376,7 +386,7 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
       if (directRussia) reasons.push('прямая связь с Россией, рублём или российскими институтами');
       if (profileMatches) reasons.push('совпадает с вашим бизнес-профилем');
       reasons.push(`важность ${item.importance}/10 и уверенность классификации ${Math.round(confidence * 100)}%`);
-      return { item, channels: channelList, matchedKeywords, directRussia, score, reasons };
+      return { item, channels: channelList, matchedKeywords, impactAssets, directRussia, score, reasons };
     })
     .filter(
       (entry) =>
@@ -389,9 +399,10 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
 }
 
 function EventCard({ scored }: { scored: ScoredNews }) {
-  const { item, channels, matchedKeywords, reasons } = scored;
+  const { item, channels, matchedKeywords, impactAssets, reasons } = scored;
   const primaryChannel = channels[0];
   const primaryKeyword = primaryChannel ? matchedKeywords[primaryChannel] : undefined;
+  const primaryImpact = primaryChannel ? impactAssets[primaryChannel] : undefined;
   return (
     <article className="rounded-2xl border border-white/10 bg-black/20 p-5">
       <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
@@ -431,6 +442,12 @@ function EventCard({ scored }: { scored: ScoredNews }) {
           {primaryKeyword && (
             <p className="mt-1.5 text-[11px] leading-relaxed text-blue-100/80">
               Отнесено по слову «{primaryKeyword}» в заголовке, описании или теме.
+            </p>
+          )}
+          {!primaryKeyword && primaryImpact && (
+            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-100/80">
+              В тексте заголовка ключевых слов канала нет: отнесение взято из разметки
+              источника — актив «{primaryImpact}».
             </p>
           )}
           <p className="mt-2 inline-flex items-start gap-1.5 text-xs font-semibold text-blue-100">
