@@ -4,28 +4,22 @@ import { supabase } from '@/lib/supabase';
  * Данные самопроверки. Таблицы `site_health` и `news_source_health` читаются
  * публичным ключом — ровно тем же, что использует сам сайт, поэтому страница
  * состояния видит то же, что видит посетитель.
+ *
+ * Типы и группировка сбоев живут отдельно (`healthTypes.ts`, `incidents.ts`),
+ * чтобы чистую логику можно было проверить без сети.
  */
 
-export interface HealthCheck {
-  ok: boolean;
-  detail: string;
-}
+export type {
+  FeedRow,
+  HealthCheck,
+  HealthIncident,
+  HealthRow,
+  HealthRun,
+} from './healthTypes';
 
-export interface HealthRow {
-  id: number;
-  checked_at: string;
-  ok: boolean;
-  trigger: 'cron' | 'manual';
-  checks: Record<string, HealthCheck>;
-}
+export { groupIncidents } from './incidents';
 
-export interface FeedRow {
-  source: string;
-  last_seen_at: string;
-  last_new_at: string | null;
-  items: number;
-  fresh: number;
-}
+import type { FeedRow, HealthCheck, HealthRow, HealthRun } from './healthTypes';
 
 export interface CheckRunResult {
   ok: boolean;
@@ -57,7 +51,10 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string }> = {
   },
   forecasts_fresh: {
     title: 'Прогнозы пересчитываются',
-    hint: 'Публичный кэш прогнозов обновлялся в последние 3 часа',
+    // Прогнозы пишет задание, запускаемое раз в сутки в 05:45 UTC, поэтому
+    // допуск в 26 часов, а не «3 часа»: проверка и писатель должны быть
+    // согласованы по расписанию, иначе индикатор красный почти всегда.
+    hint: 'Раз в сутки в 05:45 UTC; проверка допускает возраст до 26 часов',
   },
   snapshot_taken: {
     title: 'Снимок дня сделан',
@@ -113,15 +110,15 @@ export async function fetchLatestHealth(): Promise<HealthRow | null> {
   }
 }
 
-export async function fetchHealthHistory(limit = 24): Promise<Array<{ checked_at: string; ok: boolean; trigger: string }>> {
+export async function fetchHealthHistory(limit = 24): Promise<HealthRun[]> {
   try {
     const { data, error } = await supabase
       .from('site_health')
-      .select('checked_at, ok, trigger')
+      .select('checked_at, ok, trigger, checks')
       .order('checked_at', { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return data as Array<{ checked_at: string; ok: boolean; trigger: string }>;
+    return data as HealthRun[];
   } catch (e) {
     console.error('Ошибка загрузки истории проверок:', e);
     return [];

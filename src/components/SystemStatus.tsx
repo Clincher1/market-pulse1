@@ -14,13 +14,13 @@ import {
   fetchHealthHistory,
   fetchLatestHealth,
   formatCheckedAt,
+  groupIncidents,
   hoursSince,
   runCheckNow,
   type FeedRow,
   type HealthRow,
+  type HealthRun,
 } from '@/data/systemStatus';
-
-type HistoryPoint = { checked_at: string; ok: boolean; trigger: string };
 
 function feedAgeLabel(hours: number | null): string {
   if (hours === null) return 'нет данных';
@@ -29,9 +29,26 @@ function feedAgeLabel(hours: number | null): string {
   return `${Math.round(hours / 24)} дн назад`;
 }
 
+/** Компактная московская метка: «29.10 08:45». */
+function mskLabel(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  const msk = new Date(date.getTime() + 3 * 3600_000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(msk.getUTCDate())}.${pad(msk.getUTCMonth() + 1)} ${pad(msk.getUTCHours())}:${pad(msk.getUTCMinutes())}`;
+}
+
+function durationLabel(minutes: number | null): string {
+  if (minutes === null) return 'продолжается';
+  if (minutes < 60) return `${minutes} мин`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} ч ${rest} мин` : `${hours} ч`;
+}
+
 export default function SystemStatus() {
   const [row, setRow] = useState<HealthRow | null>(null);
-  const [history, setHistory] = useState<HistoryPoint[]>([]);
+  const [history, setHistory] = useState<HealthRun[]>([]);
   const [feeds, setFeeds] = useState<FeedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
@@ -85,6 +102,8 @@ export default function SystemStatus() {
   const checks = row?.checks ?? {};
   const failing = Object.entries(checks).filter(([, value]) => !value.ok);
   const allOk = Boolean(row?.ok);
+  // Свежие сбои сверху: последнее, что сломалось, важнее того, что было вчера.
+  const incidents = groupIncidents(history).slice().reverse();
 
   return (
     <section id="status" className="mx-auto max-w-5xl scroll-mt-24 px-1 pt-2">
@@ -192,32 +211,57 @@ export default function SystemStatus() {
             )}
           </motion.div>
 
-          {/* История за сутки */}
+          {/* История за сутки — как список сбоев, а не как россыпь красных точек */}
           {history.length > 1 && (
             <div className="mb-5 rounded-xl2 border border-border-subtle bg-bg-card p-5">
-              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-text-secondary">
-                Последние {history.length} проверок
+              <div className="mb-1 text-xs font-bold uppercase tracking-widest text-text-secondary">
+                Сбои за последние {history.length} проверок
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {[...history].reverse().map((point) => (
-                  <span
-                    key={point.checked_at}
-                    title={`${formatCheckedAt(point.checked_at)} · ${
-                      point.ok ? 'ок' : 'есть проблемы'
-                    } · ${point.trigger === 'manual' ? 'вручную' : 'по расписанию'}`}
-                    className={`h-3 w-3 rounded-sm ${
-                      point.ok
-                        ? point.trigger === 'manual'
-                          ? 'bg-emerald-200'
-                          : 'bg-emerald-400/70'
-                        : 'bg-rose-400'
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="mt-2 text-[11px] text-text-secondary">
-                Светлые квадраты — запуски кнопкой, насыщенные — по расписанию.
-              </div>
+              <p className="mb-3 text-[11px] leading-relaxed text-text-secondary">
+                Подряд идущие красные проверки считаются одним сбоем: восемь часов
+                простоя — это одна строка, а не восемь.
+              </p>
+              {incidents.length === 0 ? (
+                <div className="flex items-center gap-2 text-sm text-emerald-200">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  Ни одной красной проверки в этом окне.
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {incidents.map((incident) => (
+                    <li
+                      key={incident.start}
+                      className={`rounded-xl border p-3 ${
+                        incident.open
+                          ? 'border-rose-300/30 bg-rose-400/[0.06]'
+                          : 'border-border-subtle bg-white/[0.02]'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                        <span className="text-sm font-bold text-text-primary">
+                          {incident.checks
+                            .map((name) => CHECK_LABELS[name]?.title ?? name)
+                            .join(', ')}
+                        </span>
+                        <span
+                          className={`text-xs font-bold tabular-nums ${
+                            incident.open ? 'text-rose-200' : 'text-text-secondary'
+                          }`}
+                        >
+                          {incident.open ? 'идёт сейчас' : durationLabel(incident.minutes)}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-[11px] text-text-secondary">
+                        {incident.startedBeforeWindow
+                          ? 'начался раньше окна истории'
+                          : `${mskLabel(incident.start)} МСК`}
+                        {incident.end ? ` → ${mskLabel(incident.end)} МСК` : ''}
+                        {` · проверок внутри: ${incident.runs}`}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
@@ -315,6 +359,15 @@ export default function SystemStatus() {
             нельзя было завалить повторами. Если подключён Linear, при провале
             проверки задача заводится сама и сама закрывается, когда проверка
             снова зелёная.
+          </p>
+
+          <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+            Почему состояние меряется свежестью данных, а не отчётом планировщика.
+            Задание в расписании отправляет запрос и сразу считается выполненным —
+            оно не ждёт ответа функции. Поэтому «задание выполнено» означает лишь
+            «запрос отправлен»: пайплайн может восемь часов подряд отвечать
+            успехом и не записать ни одной строки. Свежесть самих данных такого
+            не пропускает.
           </p>
         </>
       )}
