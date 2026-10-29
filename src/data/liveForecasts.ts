@@ -45,6 +45,8 @@ export interface TrackRecordRow {
   pending: number;
   last_evaluated_at: string | null;
   verdict: 'insufficient_data' | 'no_edge' | 'edge';
+  /** Сколько прогнозов вообще имели направление. Без него Брайер посчитать нельзя. */
+  directional: number;
 }
 
 const ALLOWED_CONFIDENCE: ForecastData['confidence'][] = [
@@ -100,7 +102,7 @@ export async function fetchForecastTrackRecord(assetKey = 'ALL'): Promise<TrackR
     const { data, error } = await supabase
       .from('forecast_track_record')
       .select(
-        'asset_key, issued, resolved, scored, mean_brier, hit_rate, mean_return_pct, pending, last_evaluated_at, verdict',
+        'asset_key, issued, resolved, scored, mean_brier, hit_rate, mean_return_pct, pending, last_evaluated_at, verdict, directional',
       )
       .eq('asset_key', assetKey)
       .maybeSingle();
@@ -119,7 +121,7 @@ async function fetchTrackRecordsByAsset(): Promise<Map<string, TrackRecordRow>> 
     const { data, error } = await supabase
       .from('forecast_track_record')
       .select(
-        'asset_key, issued, resolved, scored, mean_brier, hit_rate, mean_return_pct, pending, last_evaluated_at, verdict',
+        'asset_key, issued, resolved, scored, mean_brier, hit_rate, mean_return_pct, pending, last_evaluated_at, verdict, directional',
       );
     if (error || !data) return new Map();
     return new Map((data as TrackRecordRow[]).map((row) => [row.asset_key, row]));
