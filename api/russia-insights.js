@@ -208,13 +208,20 @@ export function parseKeyRateXml(xml) {
   return records.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/**
+ * Точка кривой доходности на 10 лет.
+ *
+ * ISS отдаёт её в блоке `yearyields`: tradedate, tradetime, period, value,
+ * где period — срок в ГОДАХ (0,25 … 20). Проверено на живом ответе
+ * /iss/engines/stock/zcyc.json, а не на предположении о формате.
+ */
 export function pickOfz10y(payload) {
-  const rows = rowsToObjects(payload?.zcyc);
+  const rows = rowsToObjects(payload?.yearyields);
   const withPeriod = rows
     .map((row) => ({ row, period: Number(row.period), value: Number(row.value) }))
     .filter((item) => Number.isFinite(item.period) && Number.isFinite(item.value));
   if (withPeriod.length === 0) throw new Error('В кривой доходности нет периодов');
-  const target = 3650;
+  const target = 10;
   const best = withPeriod.reduce((acc, item) =>
     Math.abs(item.period - target) < Math.abs(acc.period - target) ? item : acc,
   );
@@ -238,7 +245,20 @@ async function fetchCbrKeyRate() {
   if (records.length === 0) throw new Error('ЦБ не отдал ключевую ставку');
 
   const latest = records[records.length - 1];
-  const previous = [...records].reverse().find((record) => record.rate !== latest.rate) ?? null;
+  // Дата вступления в силу — не «последняя запись», а первый день, с которого
+  // действует текущее значение. Сервис ЦБ может отдавать как точки изменения,
+  // так и подневный ряд; при подневном ряде «действует с» = дата последней
+  // записи было бы неправдой (сегодняшним числом каждый день).
+  let changeIndex = -1;
+  for (let index = records.length - 1; index >= 0; index -= 1) {
+    if (records[index].rate !== latest.rate) {
+      changeIndex = index;
+      break;
+    }
+  }
+  const effective = changeIndex >= 0 ? records[changeIndex + 1] : null;
+  const previous = changeIndex >= 0 ? records[changeIndex] : null;
+  const formatRate = (rate) => rate.toFixed(2).replace('.', ',');
 
   return {
     id: 'key-rate',
@@ -247,12 +267,12 @@ async function fetchCbrKeyRate() {
     value: round(latest.rate, 2),
     unit: '%',
     changePct: null,
-    asOf: latest.date,
+    asOf: effective?.date ?? latest.date,
     previousDate: previous?.date ?? null,
     provider: 'Банк России',
-    basis: previous
-      ? `Действует с ${ruDate(latest.date)}; до этого — ${previous.rate.toFixed(2).replace('.', ',')} % с ${ruDate(previous.date)}`
-      : `Действует с ${ruDate(latest.date)}`,
+    basis: effective
+      ? `Действует с ${ruDate(effective.date)}; до этого — ${formatRate(previous.rate)} % с ${ruDate(previous.date)}`
+      : `Текущее значение ${formatRate(latest.rate)} %; даты вступления в силу в доступном окне нет`,
     sourceUrl: 'https://www.cbr.ru/hd_base/KeyRate/',
   };
 }
@@ -280,7 +300,7 @@ async function fetchMoexOfz10y() {
     provider: 'Мосбиржа ISS',
     basis: exact
       ? 'Точка кривой бескупонной доходности на 10 лет; публичный поток может быть задержан'
-      : `Ближайшая точка кривой к 10 годам: ${Math.round(best.period / 365)} г.`,
+      : `Точки на 10 лет в кривой нет: показана ближайшая — ${best.period} г.`,
     sourceUrl: 'https://www.moex.com/ru/marketdata/indices/state/gcurve/',
   };
 }
