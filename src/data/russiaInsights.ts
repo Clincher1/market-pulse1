@@ -5,6 +5,8 @@ export interface RussiaMarketIndicator {
   value: number;
   unit: string;
   changePct: number | null;
+  /** Изменение в процентных пунктах, когда процент от процента бессмыслен. */
+  changeAbs?: number | null;
   asOf: string;
   previousDate?: string | null;
   provider: string;

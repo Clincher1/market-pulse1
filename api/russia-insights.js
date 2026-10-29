@@ -338,6 +338,10 @@ async function fetchRuonia() {
     changePct: null,
     asOf: latest.date,
     previousDate: previous?.date ?? null,
+    // Разница с предыдущим опубликованным значением в процентных пунктах:
+    // процент от процента читался бы как «ставка выросла на 0,36 %», и это
+    // было бы неправдой. Для RUONIA важна именно разница в п.п.
+    changeAbs: previous ? round(latest.rate - previous.rate, 2) : null,
     provider: 'Банк России',
     basis: volume
       ? `Ставка за ${ruDate(latest.date)}; объём сделок ${volume} млрд ₽. ЦБ публикует значение за дату на следующий день`
