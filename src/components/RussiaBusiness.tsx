@@ -614,12 +614,23 @@ export default function RussiaBusiness() {
       // Стоимость денег: ключевая ставка ЦБ и точка кривой ОФЗ. Обе строки
       // приходят из тех же публичных источников, что и остальные числа.
       'key-rate',
+      'ruonia',
       'ofz-10y',
     ]
       .map((id) => byId.get(id))
       .filter((indicator): indicator is RussiaMarketIndicator => Boolean(indicator));
     if (!byId.has('cny-rub-moex') && byId.has('cny-rub-cbr')) {
       ordered.splice(2, 0, byId.get('cny-rub-cbr')!);
+    }
+    // Порядок задан списком, но прятать незнакомый id нельзя: сервер добавил
+    // RUONIA, а страница полгода показывала «плитки нет», хотя строка в ответе
+    // была. Всё, что пришло и не попало в список, показываем в конце. Курс ЦБ
+    // на юань — не дубль: он нужен только когда биржевого юаня нет.
+    const shown = new Set(ordered.map((indicator) => indicator.id));
+    for (const indicator of insights.markets) {
+      if (shown.has(indicator.id) || indicator.id === 'cny-rub-cbr') continue;
+      shown.add(indicator.id);
+      ordered.push(indicator);
     }
     return ordered;
   }, [insights.markets]);
