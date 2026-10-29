@@ -8,6 +8,7 @@
  * Ничего не достраивается: точка есть только там, где источник её отдал.
  */
 
+import { fetchReservesRecords } from './_shared/cbrReserves.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
 
 const TIMEOUT_MS = 9000;
@@ -330,6 +331,26 @@ const SERIES = [
       const records = await fetchRuoniaRecords(from, till);
       const points = records.map((record) => ({ date: record.date, value: record.rate }));
       if (points.length === 0) throw new Error('ЦБ не отдал историю RUONIA');
+      return { points, total: points.length };
+    },
+  },
+  {
+    id: 'reserves',
+    name: 'Международные резервы',
+    unit: 'млрд $',
+    kind: 'line',
+    provider: 'Банк России',
+    sourceUrl: 'https://www.cbr.ru/hd_base/mrrf/mrrf_7d/',
+    note: 'Отчётная дата — пятница; ЦБ публикует значение на следующей неделе. Точки идут с недельным шагом: это частота публикации, а не пропущенные дни.',
+    load: async (from, till) => {
+      // Недельный ряд: запрашиваем шире окна, чтобы первая точка не была
+      // искусственно обрезана началом графика.
+      const wideFrom = isoDate(new Date(new Date(`${from}T00:00:00Z`).getTime() - 14 * 24 * 60 * 60 * 1000));
+      const records = await fetchReservesRecords(wideFrom, till);
+      const points = records
+        .filter((record) => record.date >= from && record.date <= till)
+        .map((record) => ({ date: record.date, value: record.value }));
+      if (points.length === 0) throw new Error('ЦБ не отдал историю резервов');
       return { points, total: points.length };
     },
   },

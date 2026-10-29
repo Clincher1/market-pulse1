@@ -1,3 +1,4 @@
+import { fetchReservesRecords } from './_shared/cbrReserves.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
 
 const TIMEOUT_MS = 6500;
@@ -342,11 +343,49 @@ async function fetchRuonia() {
     // процент от процента читался бы как «ставка выросла на 0,36 %», и это
     // было бы неправдой. Для RUONIA важна именно разница в п.п.
     changeAbs: previous ? round(latest.rate - previous.rate, 2) : null,
+    changeAbsUnit: 'п.п.',
     provider: 'Банк России',
     basis: volume
       ? `Ставка за ${ruDate(latest.date)}; объём сделок ${volume} млрд ₽. ЦБ публикует значение за дату на следующий день`
       : `Ставка за ${ruDate(latest.date)}; ЦБ публикует значение за дату на следующий день`,
     sourceUrl: 'https://www.cbr.ru/hd_base/ruonia/',
+  };
+}
+
+/**
+ * Международные резервы — валютные активы и монетарное золото ЦБ.
+ *
+ * Это не «ещё один индекс»: резервы показывают, из какой подушки ЦБ проводит
+ * операции на валютном рынке и чем отвечает по внешним обязательствам.
+ * Ряд недельный, отчётная дата — пятница, значение публикуется на следующей
+ * неделе. Поэтому последняя точка честно вчерашняя по отчётной дате, и это
+ * подписано в базисе, чтобы «не сегодня» не выглядело поломкой загрузки.
+ *
+ * Изменение даётся в млрд долларов, а не в процентах: разница — то же число,
+ * что и в первоисточнике, без пересчёта.
+ */
+async function fetchReserves() {
+  const to = new Date();
+  const from = new Date(to.getTime() - 60 * 24 * 60 * 60 * 1000);
+  const records = await fetchReservesRecords(isoDate(from), isoDate(to));
+  if (records.length === 0) throw new Error('ЦБ не отдал международные резервы');
+  const latest = records[records.length - 1];
+  const previous = records[records.length - 2] ?? null;
+
+  return {
+    id: 'reserves',
+    name: 'Международные резервы',
+    label: 'Валютные активы и монетарное золото',
+    value: round(latest.value, 2),
+    unit: 'млрд $',
+    changePct: null,
+    asOf: latest.date,
+    previousDate: previous?.date ?? null,
+    changeAbs: previous ? round(latest.value - previous.value, 2) : null,
+    changeAbsUnit: 'млрд $',
+    provider: 'Банк России',
+    basis: `На конец отчётной даты ${ruDate(latest.date)}. Ряд недельный: значение публикуется на следующей неделе, поэтому последняя точка — за прошлую пятницу`,
+    sourceUrl: 'https://www.cbr.ru/hd_base/mrrf/mrrf_7d/',
   };
 }
 
@@ -545,6 +584,7 @@ export default async function handler(req, res) {
     fetchMoexCny(),
     fetchCbrKeyRate(),
     fetchRuonia(),
+    fetchReserves(),
     fetchMoexOfz10y(),
   ];
   const marketLabels = [
@@ -554,6 +594,7 @@ export default async function handler(req, res) {
     'CNY MOEX',
     'Ключевая ставка ЦБ',
     'RUONIA',
+    'Международные резервы',
     'Кривая доходности ОФЗ',
   ];
   const rssLabels = RSS_SOURCES.map((source) => source.name);
