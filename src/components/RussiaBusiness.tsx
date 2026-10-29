@@ -39,6 +39,10 @@ import {
 type ChannelId = 'currency' | 'rates' | 'commodities' | 'demand' | 'trade';
 type Status = 'calm' | 'watch' | 'pressure' | 'unknown';
 
+// Ставка и кривая ОФЗ — про стоимость денег, а не про курс. Держим их
+// отдельной строкой, чтобы ряд из пяти курсовых плиток не разъезжался.
+const MONEY_INDICATOR_IDS = ['key-rate', 'ofz-10y'];
+
 const CHANNEL_LABELS: Record<ChannelId, string> = {
   currency: 'Валюта и платежи',
   rates: 'Ставки и кредиты',
@@ -82,7 +86,7 @@ const CHANNEL_EXPLANATIONS: Record<ChannelId, string> = {
   currency:
     'Канал влияния: валютная выручка, импортные закупки и трансграничные платежи. Один заголовок не задаёт курс: сайт не прогнозирует рубль по новости. Рядом — USD/RUB, EUR/RUB и CNY/RUB с временем источника.',
   rates:
-    'Канал влияния: стоимость кредитов, спрос на заёмное финансирование и оценка активов. Из данных этого канала на сайте есть только RGBI — индекс цен гособлигаций. Инфляция и решения Банка России здесь не загружаются, поэтому о них сайт не пишет.',
+    'Канал влияния: стоимость кредитов, спрос на заёмное финансирование и оценка активов. Из данных этого канала на сайте есть ключевая ставка ЦБ, доходность ОФЗ на 10 лет и RGBI. Инфляция не публикуется: её источник — таблицы Росстата, а не машинный поток, и выдумывать её сайт не будет.',
   commodities:
     'Канал влияния: экспортная выручка, бюджетные доходы и внутренние цены на топливо и сырьё. Из этих рядов на сайте есть только Brent; внутренние цены на топливо не загружаются.',
   demand:
@@ -96,7 +100,7 @@ const CHANNEL_EXPLANATIONS: Record<ChannelId, string> = {
 // их на сайте нет, и указатель вёл в пустоту.
 const CHANNEL_WATCH: Record<ChannelId, string> = {
   currency: 'USD/RUB, EUR/RUB и CNY/RUB на Мосбирже',
-  rates: 'RGBI на Мосбирже',
+  rates: 'ключевую ставку, доходность ОФЗ и RGBI',
   commodities: 'Brent, валютные пары и IMOEX',
   demand: 'IMOEX и первоисточник события',
   trade: 'курсы валют и первоисточник события',
@@ -278,10 +282,14 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
           {formatIndicatorValue(indicator)}
         </span>
         <span className="text-xs font-semibold text-slate-400">{indicator.unit}</span>
-        <span className={`inline-flex items-center gap-1 text-sm font-extrabold tabular-nums ${changeClass}`}>
-          <Icon className="h-3.5 w-3.5" />
-          {formatPercent(indicator.changePct)}
-        </span>
+        {indicator.changePct !== null && (
+          <span
+            className={`inline-flex items-center gap-1 text-sm font-extrabold tabular-nums ${changeClass}`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {formatPercent(indicator.changePct)}
+          </span>
+        )}
       </div>
       <div className="mb-3 mt-3 border-t border-white/10 pt-2.5 text-[11px] leading-relaxed text-slate-400">
         <span className="font-bold text-slate-200">{indicator.provider}</span> · {formatAsOf(indicator)}
@@ -556,7 +564,17 @@ export default function RussiaBusiness() {
 
   const indicators = useMemo(() => {
     const byId = new Map(insights.markets.map((indicator) => [indicator.id, indicator]));
-    const ordered = ['usd-rub', 'eur-rub', 'cny-rub-moex', 'imoex', 'rgbi']
+    const ordered = [
+      'usd-rub',
+      'eur-rub',
+      'cny-rub-moex',
+      'imoex',
+      'rgbi',
+      // Стоимость денег: ключевая ставка ЦБ и точка кривой ОФЗ. Обе строки
+      // приходят из тех же публичных источников, что и остальные числа.
+      'key-rate',
+      'ofz-10y',
+    ]
       .map((id) => byId.get(id))
       .filter((indicator): indicator is RussiaMarketIndicator => Boolean(indicator));
     if (!byId.has('cny-rub-moex') && byId.has('cny-rub-cbr')) {
@@ -565,10 +583,20 @@ export default function RussiaBusiness() {
     return ordered;
   }, [insights.markets]);
 
+  const moneyIndicators = useMemo(
+    () => indicators.filter((indicator) => MONEY_INDICATOR_IDS.includes(indicator.id)),
+    [indicators],
+  );
+  const mainIndicators = useMemo(
+    () => indicators.filter((indicator) => !MONEY_INDICATOR_IDS.includes(indicator.id)),
+    [indicators],
+  );
+
   const indicatorById = useMemo(
     () => new Map(insights.markets.map((indicator) => [indicator.id, indicator])),
     [insights.markets],
   );
+
   const assetById = useMemo(() => new Map(assets.map((asset) => [asset.id, asset])), [assets]);
   const topEvents = useMemo(() => scoreNews(news, selectedProfiles), [news, selectedProfiles]);
 
@@ -621,7 +649,18 @@ export default function RussiaBusiness() {
         icon: Percent,
         title: 'Рынок и стоимость денег',
         status: marketStatus,
-        basis: `IMOEX ${formatPercent(imoex?.changePct)} · RGBI ${formatPercent(rgbi?.changePct)}`,
+        basis: [
+          `IMOEX ${formatPercent(imoex?.changePct)}`,
+          `RGBI ${formatPercent(rgbi?.changePct)}`,
+          indicatorById.get('key-rate')
+            ? `ставка ${formatIndicatorValue(indicatorById.get('key-rate')!)} %`
+            : null,
+          indicatorById.get('ofz-10y')
+            ? `ОФЗ 10 лет ${formatIndicatorValue(indicatorById.get('ofz-10y')!)} %`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
         explanation:
           rgbi?.changePct === null || rgbi?.changePct === undefined
             ? 'RGBI временно недоступен, поэтому вывод о стоимости денег не делается.'
@@ -742,11 +781,25 @@ export default function RussiaBusiness() {
                 ))}
               </div>
             ) : indicators.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-                {indicators.map((indicator) => (
-                  <MarketTile key={indicator.id} indicator={indicator} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+                  {mainIndicators.map((indicator) => (
+                    <MarketTile key={indicator.id} indicator={indicator} />
+                  ))}
+                </div>
+                {moneyIndicators.length > 0 && (
+                  <>
+                    <div className="mt-5 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+                      Стоимость денег — ставка ЦБ и кривая ОФЗ
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {moneyIndicators.map((indicator) => (
+                        <MarketTile key={indicator.id} indicator={indicator} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
