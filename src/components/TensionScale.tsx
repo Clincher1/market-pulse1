@@ -501,10 +501,16 @@ export default function TensionScale() {
 
             {sourceMix && sourceMix.length > 0 && (
               <p className="-mt-3 mb-6 text-xs leading-relaxed text-slate-400">
-                Источники в выборке: {sourceMix.map((s) => `${s.name} ${s.count}`).join(' · ')}
+                Ленты в потоке за сутки: {sourceMix.map((s) => `${s.name} ${s.count}`).join(' · ')}
                 {sourceMix.length < 4
-                  ? ' — в окно попали не все четыре ленты, взгляд уже, чем заявлено'
+                  ? ' — в окно попали не все ленты, взгляд уже, чем заявлено'
                   : ''}
+                .{' '}
+                <span className="text-slate-500">
+                  Это состав всего потока, а не выборки индекса: повторы заголовков здесь
+                  не схлопываются, поэтому сумма может быть больше числа новостей под
+                  шкалой.
+                </span>
               </p>
             )}
 
@@ -594,6 +600,11 @@ export default function TensionScale() {
                 )}
               </div>
               <TensionHistoryChart history={data.history} />
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                Каждая точка — значение, зафиксированное в начале суток, а не среднее за
+                день. Поэтому история показывает, каким фон был на утро, и её нельзя
+                сравнивать с текущим числом как «среднее против мгновенного».
+              </p>
             </div>
 
             <div className="mt-6 border-t border-border-subtle pt-5 text-sm text-text-secondary">
