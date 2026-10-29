@@ -88,7 +88,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
           <div className="text-sm font-extrabold text-white">Кривая доходности ОФЗ по срокам</div>
           <div className="mt-0.5 text-[11px] font-medium text-slate-400">
             {curve.length} точек от {formatTerm(minPeriod)} до {formatTerm(maxPeriod)};{' '}
-            {indicator.provider.toLowerCase()}, {asOf}
+            {indicator.provider}, {asOf}
           </div>
         </div>
         <a
