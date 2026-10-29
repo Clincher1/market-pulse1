@@ -24,7 +24,12 @@ export interface TensionHistoryStats {
 export interface TensionData {
   current: number;
   label: string;
-  history: { day: string; value: number }[];
+  /**
+   * История шкалы. `date` — ISO-дата записи, если бэкенд её отдал; без неё
+   * точки нельзя расставить по календарю, и график не имеет права выглядеть
+   * как ровный ряд дней.
+   */
+  history: { day: string; value: number; date?: string }[];
   newsCount: number;
   updatedAt?: string;
   historyStats?: TensionHistoryStats | null;

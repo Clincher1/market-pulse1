@@ -42,13 +42,16 @@ function parseHistoryStats(raw: unknown): TensionHistoryStats | null {
  * Оставляем последнее значение дня; порядок дней сохраняем.
  */
 function dedupeHistory(
-  history: { day: string; value: number }[] | null | undefined
-): { day: string; value: number }[] {
+  history: { day: string; value: number; date?: string }[] | null | undefined
+): { day: string; value: number; date?: string }[] {
   if (!history) return [];
-  const byDay = new Map<string, { day: string; value: number }>();
+  const byDay = new Map<string, { day: string; value: number; date?: string }>();
   for (const point of history) {
     if (!point?.day || !Number.isFinite(point.value)) continue;
-    byDay.set(point.day, { day: point.day, value: point.value });
+    // Дата нужна графику, чтобы точки стояли по календарю, а не на равном
+    // расстоянии: иначе пропуск в наблюдениях на экране не виден.
+    const date = typeof point.date === 'string' ? point.date : undefined;
+    byDay.set(point.day, { day: point.day, value: point.value, ...(date ? { date } : {}) });
   }
   return [...byDay.values()];
 }
