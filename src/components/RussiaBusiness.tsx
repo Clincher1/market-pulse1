@@ -231,6 +231,22 @@ function formatPercent(value: number | null | undefined): string {
   return `${sign}${value.toFixed(2).replace('.', ',')}%`;
 }
 
+function formatPp(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toFixed(2).replace('.', ',')} п.п.`;
+}
+
+/** Короткая дата для подписи «к 27.10» — только там, где рядом стоит дельта. */
+function formatShortDate(value: string | null | undefined): string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value ?? '';
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: 'Europe/Moscow',
+  }).format(new Date(`${value}T12:00:00+03:00`));
+}
+
 function formatIndicatorValue(indicator: RussiaMarketIndicator): string {
   const decimals = indicator.unit === '₽' ? 4 : 2;
   return new Intl.NumberFormat('ru-RU', {
@@ -265,7 +281,10 @@ function formatMoscowDateTime(value: string | undefined): string {
 }
 
 function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
-  const change = indicator.changePct ?? 0;
+  // У ставок процент от процента читался бы как «ставка выросла на 0,36 %»,
+  // поэтому для них показывается разница в процентных пунктах с датой
+  // предыдущего опубликованного значения.
+  const change = indicator.changePct ?? indicator.changeAbs ?? 0;
   const isIndex = indicator.id === 'imoex' || indicator.id === 'rgbi';
   const changeClass = !isIndex
     ? 'text-blue-200'
@@ -296,14 +315,29 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
           {formatIndicatorValue(indicator)}
         </span>
         <span className="text-xs font-semibold text-slate-400">{indicator.unit}</span>
-        {indicator.changePct !== null && (
+        {indicator.changePct !== null ? (
           <span
             className={`inline-flex items-center gap-1 text-sm font-extrabold tabular-nums ${changeClass}`}
           >
             <Icon className="h-3.5 w-3.5" />
             {formatPercent(indicator.changePct)}
           </span>
-        )}
+        ) : indicator.changeAbs !== null && indicator.changeAbs !== undefined ? (
+          <span
+            className={`inline-flex items-center gap-1 text-sm font-extrabold tabular-nums ${changeClass}`}
+            title={`Разница с предыдущим опубликованным значением${
+              indicator.previousDate ? ` за ${formatShortDate(indicator.previousDate)}` : ''
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {formatPp(indicator.changeAbs)}
+            {indicator.previousDate && (
+              <span className="text-[10px] font-semibold text-slate-400">
+                к {formatShortDate(indicator.previousDate)}
+              </span>
+            )}
+          </span>
+        ) : null}
       </div>
       <div className="mb-3 mt-3 border-t border-white/10 pt-2.5 text-[11px] leading-relaxed text-slate-400">
         <span className="font-bold text-slate-200">{indicator.provider}</span> · {formatAsOf(indicator)}
