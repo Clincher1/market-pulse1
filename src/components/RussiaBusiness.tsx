@@ -448,11 +448,30 @@ function EventCard({ scored }: { scored: ScoredNews }) {
           <Clock className="h-3.5 w-3.5" />
           {formatMoscowDateTime(item.published_at)}
         </span>
-        {channels.slice(0, 3).map((channel) => (
-          <span key={channel} className="rounded-full border border-white/10 bg-white/6 px-2 py-1 text-slate-200">
-            {CHANNEL_LABELS[channel]}
-          </span>
-        ))}
+        {channels.slice(0, 3).map((channel) => {
+          // Разметку источника видно и в чипах: канал, найденный по слову в
+          // тексте, — сплошная рамка, канал только из разметки — пунктир и
+          // подсказка. Иначе второй и третий чип выглядят как доказательство,
+          // хотя объяснение под карточкой дано лишь для первого канала.
+          const markupOnly = !matchedKeywords[channel] && Boolean(impactAssets[channel]);
+          return (
+            <span
+              key={channel}
+              title={
+                markupOnly
+                  ? `Канал из разметки источника (${impactAssets[channel]}), в тексте его слов нет`
+                  : `Канал найден по слову «${matchedKeywords[channel]}»`
+              }
+              className={`rounded-full border px-2 py-1 text-slate-200 ${
+                markupOnly
+                  ? 'border-dashed border-amber-300/40 bg-amber-400/5 text-amber-100'
+                  : 'border-white/10 bg-white/6'
+              }`}
+            >
+              {CHANNEL_LABELS[channel]}
+            </span>
+          );
+        })}
       </div>
 
       {item.url ? (
