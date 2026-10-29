@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NewsItem } from '@/data/mockData';
 import { fetchRawNews } from '@/data/liveNews';
+import { startPolling } from '@/lib/polling';
 
 export function useLiveNews(): {
   news: NewsItem[];
@@ -43,10 +44,10 @@ export function useLiveNews(): {
   useEffect(() => {
     isMounted.current = true;
     void load();
-    const interval = setInterval(() => void load(), 300_000); // каждые 5 минут
+    const stopPolling = startPolling(() => void load());
     return () => {
       isMounted.current = false;
-      clearInterval(interval);
+      stopPolling();
     };
   }, [load]);
 

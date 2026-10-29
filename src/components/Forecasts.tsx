@@ -20,6 +20,7 @@ import {
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
+import { startPolling } from '@/lib/polling';
 
 function confidenceColor(confidence: string): string {
   if (confidence === 'Высокая') return 'text-positive';
@@ -197,15 +198,18 @@ function ForecastScoreboard({ track }: { track: TrackRecordRow | null }) {
       <div className="mb-4 flex items-center gap-2">
         <BarChart3 className="h-4 w-4 shrink-0 text-emerald-300" />
         <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary">
-          Честный счёт прогнозов
+          Честный счёт журнала
         </h3>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div>
-          <div className="text-xs text-text-secondary mb-0.5">Выдано</div>
+          <div className="text-xs text-text-secondary mb-0.5">Записей в журнале</div>
           <div className="text-xl font-bold tabular-nums text-text-primary">
             {track.issued}
+          </div>
+          <div className="text-[11px] text-text-secondary">
+            три горизонта на актив в день: 1, 3 и 10
           </div>
         </div>
         <div>
@@ -241,6 +245,11 @@ function ForecastScoreboard({ track }: { track: TrackRecordRow | null }) {
           <div className="text-[11px] text-text-secondary">монетка 0.25, идеал 0</div>
         </div>
       </div>
+
+      <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
+        Карточки показывают только дневной горизонт. Счёт считается по всем трём
+        горизонтам сразу, поэтому записей в журнале больше, чем карточек на экране.
+      </p>
 
       <p className="mt-4 text-xs leading-relaxed text-text-secondary">
         {enough
@@ -293,10 +302,10 @@ export default function Forecasts() {
   useEffect(() => {
     mountedRef.current = true;
     void load();
-    const interval = setInterval(() => void load(), 300_000); // каждые 5 минут
+    const stopPolling = startPolling(() => void load());
     return () => {
       mountedRef.current = false;
-      clearInterval(interval);
+      stopPolling();
     };
   }, [load]);
 
@@ -311,7 +320,7 @@ export default function Forecasts() {
     >
       <SectionThemeBadge themeId="forecasts" className="mb-4" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Сигналы по активам</h2>
+        <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Журнал проверок</h2>
         <GuideLink
           href="#guide-forecasts"
           label="Что значит процент"
@@ -321,6 +330,12 @@ export default function Forecasts() {
           <span className="text-xs font-semibold text-slate-500">обновление…</span>
         )}
       </div>
+
+      <p className="mb-6 max-w-4xl text-sm leading-relaxed text-text-secondary">
+        Это не рекомендация и не обещание цены. Сайт записывает ожидание до факта, а
+        потом сверяет его с рынком — и показывает счёт целиком, включая промахи.
+        Пока проверенных записей меньше порога, вывод о точности не делается.
+      </p>
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-5" aria-busy="true" aria-label="Загрузка сигналов">
@@ -345,7 +360,7 @@ export default function Forecasts() {
         </div>
       ) : forecasts.length === 0 ? (
         <ErrorNotice
-          title="Сигналы временно недоступны"
+          title="Журнал временно недоступен"
           message="Не удалось прочитать публичный кэш прогнозов. Это не означает «нет сигнала» по рынку: направленный вывод просто не может быть показан без данных."
           onRetry={() => void load()}
           actionLabel={isRefreshing ? 'Проверяем…' : 'Повторить загрузку'}

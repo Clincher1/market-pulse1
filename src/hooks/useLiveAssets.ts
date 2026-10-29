@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AssetData, assets as fallbackAssets } from '@/data/mockData';
 import { fetchLiveAssets } from '@/data/liveAssets';
+import { startPolling } from '@/lib/polling';
 
 function isUsableLiveAsset(asset: AssetData | undefined): asset is AssetData {
   return Boolean(asset && asset.price !== '—' && asset.sparkline?.length);
@@ -92,11 +93,11 @@ export function useLiveAssets(): {
     void load();
 
     // Обновление раз в 5 минут — стабильно, без лимитов.
-    const interval = setInterval(() => void load(), 300_000);
+    const stopPolling = startPolling(() => void load());
 
     return () => {
       isMounted.current = false;
-      clearInterval(interval);
+      stopPolling();
     };
   }, [load]);
 

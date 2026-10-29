@@ -28,6 +28,7 @@ import { SectionThemeBadge } from './sectionThemes';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
+import { startPolling } from '@/lib/polling';
 import {
   fetchRussiaInsights,
   RussiaHeadline,
@@ -471,10 +472,10 @@ export default function RussiaBusiness() {
       setInsightsLoading(false);
     }
     load();
-    const interval = window.setInterval(load, 300_000);
+    const stopPolling = startPolling(() => void load());
     return () => {
       mounted = false;
-      window.clearInterval(interval);
+      stopPolling();
     };
   }, []);
 
