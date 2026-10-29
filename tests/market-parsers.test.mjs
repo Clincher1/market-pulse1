@@ -72,8 +72,10 @@ test('ключевая ставка: точки изменения дают ту
   assert.deepEqual(buildKeyRateSteps(changePoints, '2026-07-29'), [
     { date: '2026-07-29', value: 14, since: '2026-07-27' },
   ]);
+  // Ряд начинается ровно с началом окна: дату вступления в силу в такой
+  // выборке не видно, поэтому она не утверждается (null), а не подставляется.
   assert.deepEqual(buildKeyRateSteps(changePoints, '2026-07-24'), [
-    { date: '2026-07-24', value: 14.25, since: '2026-07-24' },
+    { date: '2026-07-24', value: 14.25, since: null },
     { date: '2026-07-27', value: 14, since: '2026-07-27' },
   ]);
 

@@ -183,13 +183,26 @@ export function buildKeyRateSteps(records, fromISO) {
     else break;
   }
 
+  // Дату вступления в силу не утверждаем, если она совпала с началом окна:
+  // запрос всегда шире окна на 400 дней, поэтому такая запись означает, что
+  // до окна данных в ответе не было, и настоящая дата изменения неизвестна.
+  const sinceOf = (date) => (date === fromISO ? null : date);
+
   const steps = [];
   if (current) {
     // Дата ступени — начало окна, но «действует с» — настоящая дата изменения.
-    steps.push({ date: fromISO, value: current.rate, since: current.date });
+    steps.push({ date: fromISO, value: current.rate, since: sinceOf(current.date) });
   } else {
     const firstChange = changes.find((change) => change.date > fromISO) ?? changes[0];
-    steps.push({ date: firstChange.date, value: firstChange.rate, since: firstChange.date });
+    // Если самая ранняя запись совпадает с началом окна, значит ЦБ отдал ряд
+    // только с этой даты (запрос всегда шире окна на 400 дней). Дату вступления
+    // в силу в такой выборке не видно, и подставлять её — врать: пишем null,
+    // а таблица говорит «начало окна».
+    steps.push({
+      date: firstChange.date,
+      value: firstChange.rate,
+      since: sinceOf(firstChange.date),
+    });
   }
 
   for (const change of changes) {
