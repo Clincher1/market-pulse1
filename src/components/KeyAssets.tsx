@@ -96,11 +96,33 @@ export default function KeyAssets() {
             </div>
           )}
 
-          <MarketHeatmap
-            assets={assets}
-            loading={loading}
-            fallbackAssetIds={fallbackAssetIds}
-          />
+          {loading && !hasLiveData ? (
+            <div
+              className="rounded-xl2 border border-border-subtle bg-bg-card p-5"
+              aria-busy="true"
+              aria-label="Загрузка живых котировок"
+            >
+              <p className="text-sm leading-relaxed text-text-secondary">
+                Получаем живые котировки. Резервные значения в это время не
+                показываем: цифра без свежей цены выглядела бы как настоящая.
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-[202px] animate-pulse rounded-xl bg-white/[0.05]"
+                    style={{ animationDelay: `${i * 120}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <MarketHeatmap
+              assets={assets}
+              loading={loading}
+              fallbackAssetIds={fallbackAssetIds}
+            />
+          )}
         </>
       )}
     </motion.section>

@@ -9,6 +9,7 @@ import GuideTeaser from '@/components/GuideTeaser';
 import DashboardQuickNav from '@/components/DashboardQuickNav';
 import { SectionThemeBadge } from '@/components/sectionThemes';
 import { DeferredMount, SectionFallback } from '@/components/SectionFallback';
+import { SectionBoundary } from '@/components/SectionBoundary';
 
 const NewsFeed = lazy(() => import('@/components/NewsFeed'));
 const Forecasts = lazy(() => import('@/components/Forecasts'));
@@ -148,7 +149,9 @@ function App() {
               />
             }
           >
-            <SystemStatus />
+            <SectionBoundary title="Состояние системы">
+              <SystemStatus />
+            </SectionBoundary>
           </Suspense>
         ) : view === 'guide' ? (
           <Suspense
@@ -161,7 +164,9 @@ function App() {
               />
             }
           >
-            <AnalyticsGuide />
+            <SectionBoundary title="Методология">
+              <AnalyticsGuide />
+            </SectionBoundary>
           </Suspense>
         ) : (
           <>
@@ -181,7 +186,9 @@ function App() {
 
             <DashboardQuickNav />
 
-            <RussiaBusiness />
+            <SectionBoundary title="Россия">
+              <RussiaBusiness />
+            </SectionBoundary>
 
             <section
               id="global-economy"
@@ -203,11 +210,17 @@ function App() {
                 </p>
               </div>
 
-              <TensionScale />
-              <KeyAssets />
+              <SectionBoundary title="Шкала напряжённости">
+                <TensionScale />
+              </SectionBoundary>
+              <SectionBoundary title="Мировые рынки">
+                <KeyAssets />
+              </SectionBoundary>
             </section>
 
-            <DailyBrief />
+            <SectionBoundary title="Бриф">
+              <DailyBrief />
+            </SectionBoundary>
 
             <DeferredMount
               targetId="news"
@@ -232,7 +245,9 @@ function App() {
                   />
                 }
               >
-                <NewsFeed />
+                <SectionBoundary title="Глобальные новости" id="news">
+                  <NewsFeed />
+                </SectionBoundary>
               </Suspense>
             </DeferredMount>
 
@@ -259,7 +274,9 @@ function App() {
                   />
                 }
               >
-                <Forecasts />
+                <SectionBoundary title="Сигналы по активам" id="forecasts">
+                  <Forecasts />
+                </SectionBoundary>
               </Suspense>
             </DeferredMount>
 
@@ -286,7 +303,9 @@ function App() {
                   />
                 }
               >
-                <MarketMemory />
+                <SectionBoundary title="Память рынка" id="market-memory">
+                  <MarketMemory />
+                </SectionBoundary>
               </Suspense>
             </DeferredMount>
 
@@ -316,7 +335,9 @@ function App() {
                   />
                 }
               >
-                <AboutProject />
+                <SectionBoundary title="О проекте" id="about">
+                  <AboutProject />
+                </SectionBoundary>
               </Suspense>
             </DeferredMount>
           </>

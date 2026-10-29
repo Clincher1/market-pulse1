@@ -1062,6 +1062,16 @@ function AssetPanel({
               paletteId={paletteId}
             />
 
+            {history.unfinishedDayExcluded && (
+              <p className="mt-2 rounded-lg border border-cyan-300/20 bg-cyan-400/[0.07] px-3 py-2 text-[11px] leading-relaxed text-cyan-100">
+                Сегодняшний день ещё не закрыт, поэтому последняя точка графика —
+                закрытие {formatDateLong(lastHistoryPoint.date)}. Текущая цена дня
+                показана на плитке выше и меняется в течение суток; на график она
+                не подмешивается, чтобы закрытый и незакрытый день не сравнивались
+                как одно и то же.
+              </p>
+            )}
+
             {isHistoryPartial && historyPoints[0] && (
               <p className="mt-2 rounded-lg border border-amber-300/20 bg-amber-400/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-100">
                 Доступная датированная история начинается {formatDateLong(historyPoints[0].date)},
