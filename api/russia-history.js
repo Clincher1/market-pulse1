@@ -160,21 +160,45 @@ export function parseKeyRateXml(xml) {
  */
 export function buildKeyRateSteps(records, fromISO) {
   if (records.length === 0) return [];
-  const steps = [];
-  let startLevel = null;
+
+  // ЦБ отдаёт то точки изменения, то подневный ряд — формат меняется без
+  // предупреждения. Схлопываем подневный ряд в изменения: ступень появляется
+  // там, где значение впервые отличается от предыдущего.
+  const changes = [];
+  let previousRate = null;
   for (const record of records) {
-    if (record.date <= fromISO) startLevel = record;
+    if (previousRate === null || record.rate !== previousRate) {
+      changes.push({ date: record.date, rate: record.rate });
+    }
+    previousRate = record.rate;
+  }
+  if (changes.length === 0) return [];
+
+  // Уровень, действовавший на начало окна: последнее изменение не позже него.
+  let current = null;
+  for (const change of changes) {
+    if (change.date <= fromISO) current = change;
     else break;
   }
-  const first = startLevel ?? records[0];
-  if (!first) return [];
-  steps.push({ date: startLevel ? fromISO : first.date, value: first.rate, since: first.date });
-  let previous = first.rate;
-  for (const record of records) {
-    if (record.date <= fromISO) continue;
-    if (record.rate === previous) continue;
-    steps.push({ date: record.date, value: record.rate, since: record.date });
-    previous = record.rate;
+
+  const steps = [];
+  if (current) {
+    // Дата ступени — начало окна, но «действует с» — настоящая дата изменения.
+    steps.push({ date: fromISO, value: current.rate, since: current.date });
+  } else {
+    const firstChange = changes.find((change) => change.date > fromISO) ?? changes[0];
+    steps.push({ date: firstChange.date, value: firstChange.rate, since: firstChange.date });
+  }
+
+  for (const change of changes) {
+    if (change.date <= fromISO) continue;
+    const last = steps[steps.length - 1];
+    if (change.rate === last.value) continue;
+    if (change.date === last.date) {
+      steps[steps.length - 1] = { date: change.date, value: change.rate, since: change.date };
+      continue;
+    }
+    steps.push({ date: change.date, value: change.rate, since: change.date });
   }
   return steps;
 }
