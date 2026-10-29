@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import Header from '@/components/Header';
+import DailyPassport from './components/DailyPassport';
 import TensionScale from '@/components/TensionScale';
 import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
@@ -187,6 +188,10 @@ function App() {
 
             <DashboardQuickNav />
 
+            <SectionBoundary title="Паспорт дня">
+              <DailyPassport />
+            </SectionBoundary>
+
             <SectionBoundary title="Россия">
               <RussiaBusiness />
             </SectionBoundary>
@@ -257,7 +262,7 @@ function App() {
               fallback={
                 <SectionFallback
                   id="forecasts"
-                  title="Сигналы по активам"
+                  title="Журнал проверок"
                   message="Раздел загрузится при приближении к нему; слабый баланс по-прежнему будет показан как «Нет сигнала»."
                   minHeightClass="min-h-[520px]"
                   className="mb-10 lg:mb-12"
@@ -268,14 +273,14 @@ function App() {
                 fallback={
                   <SectionFallback
                     id="forecasts"
-                    title="Сигналы по активам"
+                    title="Журнал проверок"
                     message="Проверяем баланс свидетельств и порог 60/40…"
                     minHeightClass="min-h-[520px]"
                     className="mb-10 lg:mb-12"
                   />
                 }
               >
-                <SectionBoundary title="Сигналы по активам" id="forecasts">
+                <SectionBoundary title="Журнал проверок" id="forecasts">
                   <Forecasts />
                 </SectionBoundary>
               </Suspense>
