@@ -405,10 +405,14 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
       const freshness = ageHours <= 6 ? 1 : ageHours <= 24 ? 0.86 : ageHours <= 48 ? 0.68 : 0.45;
       const confidence = item.confidence ?? 0.5;
       const profileMatches = channelList.filter((channel) => profileChannels.has(channel)).length;
+      // Вес канала из текста и канала из разметки разный: текст — доказательство,
+      // разметка источника — подсказка. Иначе заголовок про ЕЦБ, помеченный в
+      // разметке как «Brent», обгоняет новость про рубль и попадает в «главное».
       const score =
         item.importance * (0.55 + confidence * 0.45) * freshness +
         (directRussia ? 3 : 0) +
-        channelList.length * 0.6 +
+        textChannels.length * 0.6 +
+        Object.keys(impactAssets).length * 0.2 +
         profileMatches * 1.4;
       const reasons: string[] = [];
       if (directRussia) reasons.push('прямая связь с Россией, рублём или российскими институтами');
@@ -420,7 +424,11 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
       (entry) =>
         entry.item.importance >= 5 &&
         (entry.item.confidence ?? 0.5) >= 0.4 &&
-        (entry.directRussia || entry.channels.length > 0),
+        // Раздел называется «главное по каналам влияния», поэтому в него идёт
+        // только то, что отнесено к каналу по тексту или прямо касается России.
+        // Заголовок, попавший в канал лишь по разметке источника, в главное не
+        // поднимается: карточка объяснила бы канал, которого в тексте нет.
+        (entry.directRussia || Object.keys(entry.matchedKeywords).length > 0),
     )
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
@@ -709,12 +717,12 @@ export default function RussiaBusiness() {
         icon: Globe,
         title: 'Глобальный риск',
         status: globalStatus,
-        basis: `S&P 500 ${formatPercent(sp500?.change)} · Gold ${formatPercent(gold?.change)} · негативных заголовков: ${negativeTop} из ${news.length}`,
+        basis: `S&P 500 ${formatPercent(sp500?.change)} · Gold ${formatPercent(gold?.change)} · негативных среди трёх главных: ${negativeTop} из ${topEvents.length || 3}`,
         explanation:
-          'Статус — большая из двух величин: изменение S&P 500 к порогу 1,5 % и число заголовков с тональностью ниже −0,3 к трём. До 0,45 — «Спокойно», до 0,85 — «Внимание», выше — «Повышенное движение». Тональность ставит классификатор, это оценка текста, а не движение цены.',
+          'Статус — большая из двух величин: изменение S&P 500 к порогу 1,5 % и число негативных (тональность ниже −0,3) среди трёх главных событий к трём: все три негативные — это верх шкалы. До 0,45 — «Спокойно», до 0,85 — «Внимание», выше — «Повышенное движение». Тональность ставит классификатор, это оценка текста, а не движение цены.',
       },
     ];
-  }, [assetById, indicatorById, topEvents, news.length]);
+  }, [assetById, indicatorById, topEvents]);
 
   const toggleProfile = (profileId: ProfileId) => {
     setSelectedProfiles((previous) =>
