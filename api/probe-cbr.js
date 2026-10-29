@@ -4,16 +4,16 @@ const URL = 'https://www.cbr.ru/DailyInfoWebServ/DailyInfo.asmx';
 
 export default async function handler(req, res) {
   const till = new Date();
-  const from = new Date(till.getTime() - 120 * 24 * 60 * 60 * 1000);
+  const from = new Date(till.getTime() - 200 * 24 * 60 * 60 * 1000);
   const iso = (d) => d.toISOString().slice(0, 10);
   const body =
     '<?xml version="1.0" encoding="utf-8"?>' +
     '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
     'xmlns:xsd="http://www.w3.org/2001/XMLSchema" ' +
     'xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
-    '<soap:Body><mrrfXML xmlns="http://web.cbr.ru/">' +
+    '<soap:Body><mrrf7DXML xmlns="http://web.cbr.ru/">' +
     `<fromDate>${iso(from)}</fromDate><ToDate>${iso(till)}</ToDate>` +
-    '</mrrfXML></soap:Body></soap:Envelope>';
+    '</mrrf7DXML></soap:Body></soap:Envelope>';
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 9000);
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'content-type': 'text/xml; charset=utf-8',
-        soapaction: 'http://web.cbr.ru/mrrfXML',
+        soapaction: 'http://web.cbr.ru/mrrf7DXML',
         'user-agent': 'MarketPulse/1.0',
       },
       body,
