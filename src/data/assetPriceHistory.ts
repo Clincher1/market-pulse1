@@ -11,6 +11,15 @@ export interface AssetPriceHistory {
   provider: string;
   providerSymbol: string;
   points: AssetHistoryPoint[];
+  /**
+   * Сегодняшняя точка исключена, потому что день ещё не закрыт.
+   *
+   * Дневной ряд обновляется в течение дня, поэтому последняя точка за сегодня
+   * — это незавершённая свеча. На графике она выглядела бы как закрытие дня и
+   * не совпадала бы с живой ценой на плитке: у BTC расхождение доходило до
+   * 0,73 %. Завершённые дни не двигаются, незавершённый — двигается.
+   */
+  unfinishedDayExcluded: boolean;
 }
 
 /**
@@ -96,7 +105,14 @@ export async function fetchAssetPriceHistory(
       byDate.set(date, { date, value });
     }
 
-    const points = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+    const allPoints = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+
+    // Сегодняшний день ещё формируется: убираем его из графика, чтобы последняя
+    // точка была закрытием, а не промежуточным значением.
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const unfinishedDayExcluded =
+      allPoints.length > 1 && allPoints[allPoints.length - 1].date === todayIso;
+    const points = unfinishedDayExcluded ? allPoints.slice(0, -1) : allPoints;
     if (points.length < 2) return null;
 
     const latestRow = rows.find((row) => row.instrument_id === instrumentId);
@@ -106,6 +122,7 @@ export async function fetchAssetPriceHistory(
       provider: latestRow?.provider ?? '',
       providerSymbol: latestRow?.provider_symbol ?? '',
       points,
+      unfinishedDayExcluded,
     };
   } catch (error) {
     console.error('Ошибка загрузки датированной истории актива:', error);

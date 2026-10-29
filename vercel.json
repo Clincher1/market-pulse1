@@ -4,6 +4,9 @@
     "api/brief-image.js": {
       "includeFiles": "api/assets/**",
       "maxDuration": 30
+    },
+    "api/russia-insights.js": {
+      "maxDuration": 30
     }
   },
   "headers": [
