@@ -719,6 +719,32 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       return { ok: res.ok, detail: `HTTP ${res.status} за ${Date.now() - started} мс` };
     }),
 
+    // 13a. The «Россия» block is built by our own Vercel function, which reads
+    //     the CBR rates and the Russian feeds on the server. When it breaks the
+    //     browser gets an empty block and says nothing: the page stays green and
+    //     a whole section is quietly gone. Nothing watched it, so it is watched
+    //     here — asked the same way the page asks.
+    check('ru_insights', async () => {
+      const started = Date.now();
+      const res = await fetch(`${SITE}/api/russia-insights`, { signal: AbortSignal.timeout(25000) });
+      if (!res.ok) {
+        return { ok: false, detail: `HTTP ${res.status} за ${Date.now() - started} мс` };
+      }
+      const payload = (await res.json().catch(() => null)) as
+        | { markets?: unknown[]; headlines?: unknown[]; errors?: unknown[] }
+        | null;
+      if (!payload) return { ok: false, detail: 'ответ пришёл, но это не JSON' };
+      const markets = Array.isArray(payload.markets) ? payload.markets.length : 0;
+      const headlines = Array.isArray(payload.headlines) ? payload.headlines.length : 0;
+      const errors = Array.isArray(payload.errors) ? payload.errors.length : 0;
+      return {
+        // Three CBR currencies are what the block is built on. One missing means
+        // a visibly incomplete block, so it is red, not "почти хорошо".
+        ok: markets >= 3,
+        detail: `курсов ЦБ ${markets} из 3, заголовков ${headlines}${errors ? `, ошибок источников ${errors}` : ''} за ${Date.now() - started} мс`,
+      };
+    }),
+
     // 13. The site promises no trackers, no analytics, no telemetry. Promise is
     //     cheap: this looks for the actual markers in the shipped markup, so a
     //     metric quietly switched on in the dashboard shows up here — even when

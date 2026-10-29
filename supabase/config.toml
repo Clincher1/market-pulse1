@@ -1,8 +1,19 @@
 project_id = "hekzplfftannlzwvgwwm"
 
-# Shadow writers keep gateway JWT verification AND verify the exact
-# service-role bearer in code. The guarded dispatcher is the only no-JWT entry:
-# it verifies x-cron-secret in code and calls one allowlisted step.
+# Every deployed function is declared here on purpose.
+#
+# Why this matters: a function missing from this file gets whatever the CLI
+# decides to apply at deploy time. Six cron-called functions were running with
+# verify_jwt = false while saying nothing here. They work today only because the
+# platform kept the old value — one CLI default change and every scheduled job
+# starts collecting 401s, silently: no rows, no data, no obvious error.
+#
+# The rule below is the one the code actually enforces:
+#   - shadow writers: gateway JWT AND an exact service-role bearer in code;
+#   - cron targets:   no gateway JWT, but x-cron-secret checked in code, fail closed;
+#   - proxy / probe:  read-only, no writes, no secrets.
+
+# --- Shadow writers: JWT at the gateway, service key in code -----------------
 [functions.ingest-news-v2-shadow]
 verify_jwt = true
 
@@ -24,11 +35,47 @@ verify_jwt = true
 [functions.evaluate-forecasts-v2-shadow]
 verify_jwt = true
 
+[functions.price-probe-v2-shadow]
+verify_jwt = true
+
+# Diagnostic tool, called by hand only. Fetches RSS feeds from a fixed list and
+# writes nothing; it still checks the service key in code so that the publishable
+# key shipped in the site bundle cannot spend our egress.
+[functions.source-probe]
+verify_jwt = true
+
+# --- Cron targets: no gateway JWT, x-cron-secret checked in code -------------
+# The hourly cron calls this and the «Проверить сейчас» button calls it with the
+# public key; the throttle in code is what protects it.
+[functions.selfcheck]
+verify_jwt = false
+
+# The only no-JWT shadow entry: verifies x-cron-secret and calls one allowlisted step.
 [functions.run-shadow-pipeline]
 verify_jwt = false
 
-# The self-check is called by the hourly cron (x-cron-secret, checked in code)
-# and by the «Проверить сейчас» button with the public key. No gateway JWT gate:
-# the throttle in code is what protects it.
-[functions.selfcheck]
+[functions.update-assets]
+verify_jwt = false
+
+[functions.update-tension]
+verify_jwt = false
+
+[functions.update-forecasts]
+verify_jwt = false
+
+[functions.update-news-v2]
+verify_jwt = false
+
+[functions.snapshot-morning]
+verify_jwt = false
+
+# Disabled safety stop: returns {disabled: true} and writes nothing. Kept as a
+# live slug so an old external caller gets a clean answer instead of a 404.
+[functions.update-gdelt]
+verify_jwt = false
+
+# --- Read-only RSS helper ----------------------------------------------------
+# GET-only, four allowlisted hosts, redirects checked hop by hop, 2 MB cap,
+# no secrets involved.
+[functions.proxy]
 verify_jwt = false

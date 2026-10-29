@@ -83,6 +83,10 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string }> = {
     title: 'Сайт отвечает',
     hint: 'Главная страница возвращает HTTP 200',
   },
+  ru_insights: {
+    title: 'Блок «Россия» наполнен',
+    hint: 'Курсы ЦБ и российские заголовки приходят с нашего серверного API',
+  },
   calibration_applied: {
     title: 'Калибровка прогнозов не откатилась',
     hint: 'Свежие прогнозы пишутся со сжатием к базовой частоте, а не прямой долей',
