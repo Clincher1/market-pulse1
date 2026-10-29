@@ -1,3 +1,5 @@
+import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
+
 const TIMEOUT_MS = 6500;
 const USER_AGENT = 'MarketPulse/1.0 (+https://market-pulse1-eta.vercel.app/)';
 
@@ -311,6 +313,40 @@ async function fetchCbrKeyRate() {
 }
 
 /**
+ * RUONIA — эталонная ставка однодневных межбанковских кредитов.
+ *
+ * На неё ссылаются плавающие ставки в кредитных договорах, поэтому для бизнеса
+ * это не «ещё один процент», а та ставка, которую видно в договоре. ЦБ
+ * публикует значение за дату на следующий день — это подписано в базисе,
+ * чтобы «вчера» не выглядело задержкой загрузки.
+ */
+async function fetchRuonia() {
+  const to = new Date();
+  const from = new Date(to.getTime() - 20 * 24 * 60 * 60 * 1000);
+  const records = await fetchRuoniaRecords(isoDate(from), isoDate(to));
+  if (records.length === 0) throw new Error('ЦБ не отдал RUONIA');
+  const latest = records[records.length - 1];
+  const previous = records[records.length - 2] ?? null;
+  const volume = latest.volume === null ? null : latest.volume.toFixed(2).replace('.', ',');
+
+  return {
+    id: 'ruonia',
+    name: 'RUONIA',
+    label: 'Ставка однодневных кредитов',
+    value: round(latest.rate, 2),
+    unit: '%',
+    changePct: null,
+    asOf: latest.date,
+    previousDate: previous?.date ?? null,
+    provider: 'Банк России',
+    basis: volume
+      ? `Ставка за ${ruDate(latest.date)}; объём сделок ${volume} млрд ₽. ЦБ публикует значение за дату на следующий день`
+      : `Ставка за ${ruDate(latest.date)}; ЦБ публикует значение за дату на следующий день`,
+    sourceUrl: 'https://www.cbr.ru/hd_base/ruonia/',
+  };
+}
+
+/**
  * Доходность ОФЗ из кривой бескупонной доходности Мосбиржи (ZCYC).
  *
  * Это тот же публичный ISS, что и у IMOEX, поэтому источник и время рядом
@@ -504,6 +540,7 @@ export default async function handler(req, res) {
     fetchMoexIndex('RGBI', 'RGBI', 'Индекс гособлигаций'),
     fetchMoexCny(),
     fetchCbrKeyRate(),
+    fetchRuonia(),
     fetchMoexOfz10y(),
   ];
   const marketLabels = [
@@ -512,6 +549,7 @@ export default async function handler(req, res) {
     'RGBI',
     'CNY MOEX',
     'Ключевая ставка ЦБ',
+    'RUONIA',
     'Кривая доходности ОФЗ',
   ];
   const rssLabels = RSS_SOURCES.map((source) => source.name);

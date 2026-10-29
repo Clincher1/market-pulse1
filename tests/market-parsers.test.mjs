@@ -7,6 +7,7 @@ import {
   parseCbrDynamicXml,
   parseIssHistory,
 } from '../api/russia-history.js';
+import { parseRuoniaXml } from '../api/_shared/cbrRuonia.js';
 
 /**
  * Разборщики первоисточников — единственное место, где сайт может молча
@@ -114,4 +115,26 @@ test('кривая ОФЗ: блок yearyields, срок в годах, дубл
   assert.equal(pickOfz10y(payload).value, 16.44);
   assert.deepEqual(extractCurve({ zcyc: {} }), []);
   assert.throws(() => pickOfz10y({ zcyc: {} }), /В кривой доходности нет периодов/);
+});
+
+test('RUONIA: форма ответа ЦБ (ro/D0/ruo/vol), мусор отбрасывается', () => {
+  // Ответ снят с живого вызова RuoniaXML 29.10.2026; значения сверены
+  // с публичной таблицей ЦБ: 28.10 — 14,09 % и 992,86 млрд руб.
+  const xml =
+    '<RuoniaXMLResult><Ruonia>' +
+    '<ro><D0>2026-10-28T00:00:00+03:00</D0><ruo>14.0900</ruo><vol>992.8600</vol>' +
+    '<DateUpdate>2026-10-29T14:19:26.19+03:00</DateUpdate></ro>' +
+    '<ro><D0>2026-10-27T00:00:00+03:00</D0><ruo>14.0400</ruo><vol>736.0900</vol>' +
+    '<DateUpdate>2026-10-28T14:24:58.8+03:00</DateUpdate></ro>' +
+    '<ro><D0>2026-10-26T00:00:00+03:00</D0><ruo></ruo><vol>810.27</vol></ro>' +
+    '</Ruonia></RuoniaXMLResult>';
+
+  const records = parseRuoniaXml(xml);
+  assert.deepEqual(
+    records.map((record) => record.date),
+    ['2026-10-27', '2026-10-28'],
+  );
+  assert.equal(records.at(-1).rate, 14.09);
+  assert.equal(records.at(-1).volume, 992.86);
+  assert.deepEqual(parseRuoniaXml('<Ruonia></Ruonia>'), []);
 });

@@ -8,6 +8,8 @@
  * Ничего не достраивается: точка есть только там, где источник её отдал.
  */
 
+import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
+
 const TIMEOUT_MS = 9000;
 const USER_AGENT = 'MarketPulse/1.0 (+https://market-pulse1-eta.vercel.app/)';
 
@@ -302,6 +304,21 @@ const SERIES = [
     sourceUrl: 'https://www.cbr.ru/currency_base/daily/',
     note: 'Официальный курс ЦБ на дату. Записи идут не только по рабочим дням: если ЦБ установил курс на выходной, сайт показывает его как есть, а не прореживает ряд и не достраивает пропуски.',
     load: (from, till) => fetchCbrHistory('R01235', from, till),
+  },
+  {
+    id: 'ruonia',
+    name: 'RUONIA',
+    unit: '%',
+    kind: 'line',
+    provider: 'Банк России',
+    sourceUrl: 'https://www.cbr.ru/hd_base/ruonia/',
+    note: 'Эталонная ставка однодневных межбанковских кредитов: значение за дату ЦБ публикует на следующий день, поэтому последняя точка обычно вчерашняя.',
+    load: async (from, till) => {
+      const records = await fetchRuoniaRecords(from, till);
+      const points = records.map((record) => ({ date: record.date, value: record.rate }));
+      if (points.length === 0) throw new Error('ЦБ не отдал историю RUONIA');
+      return { points, total: points.length };
+    },
   },
   {
     id: 'key-rate',
