@@ -585,7 +585,15 @@ export default async function handler(req, res) {
     })
     .slice(0, 18);
 
-  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=900');
+  // Неполный снимок не кэшируем надолго: если один источник не ответил,
+  // плитка исчезает честно, но восстанавливаться должна за минуту-две, а не
+  // висеть без значения четверть часа уже после того, как источник ожил.
+  res.setHeader(
+    'Cache-Control',
+    errors.length > 0
+      ? 'public, s-maxage=60, stale-while-revalidate=120'
+      : 'public, s-maxage=300, stale-while-revalidate=900',
+  );
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.status(200).json({
     generatedAt: new Date().toISOString(),
