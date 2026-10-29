@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import {
   BookOpen,
   BrainCircuit,
+  CalendarCheck,
   Globe,
   Info,
   Landmark,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react';
 
 export type SectionThemeId =
+  | 'passport'
   | 'russia'
   | 'global'
   | 'brief'
@@ -37,6 +39,22 @@ export interface SectionTheme {
 }
 
 export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
+  passport: {
+    id: 'passport',
+    order: '00',
+    label: 'Паспорт дня',
+    navLabel: 'Паспорт',
+    href: '#daily-passport',
+    description: 'Запись дня, которую нельзя переписать',
+    icon: CalendarCheck,
+    badgeClass: 'border-emerald-300/30 bg-emerald-400/10 text-emerald-200',
+    cardClass:
+      'border-emerald-300/25 bg-emerald-400/[0.07] hover:border-emerald-300/60 hover:bg-emerald-400/[0.12]',
+    iconClass: 'bg-emerald-600 text-white',
+    dotClass: 'bg-emerald-400',
+    activeClass: 'border-emerald-300 bg-emerald-600 text-white shadow-lg shadow-emerald-500/25',
+    textClass: 'text-emerald-200',
+  },
   russia: {
     id: 'russia',
     order: '01',

@@ -1,5 +1,12 @@
 import { ArrowDownRight } from 'lucide-react';
-import { DASHBOARD_THEME_ORDER, SECTION_THEMES } from './sectionThemes';
+import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from './sectionThemes';
+
+/**
+ * Порядок карточек в «Карте страницы». Паспорт дня стоит первым: это
+ * единственная запись, которая фиксируется один раз и дальше не меняется.
+ * В шапке его нет намеренно — там уже восемь пунктов.
+ */
+const QUICK_NAV_ORDER: SectionThemeId[] = ['passport', ...DASHBOARD_THEME_ORDER];
 
 export default function DashboardQuickNav() {
   return (
@@ -15,8 +22,8 @@ export default function DashboardQuickNav() {
             Карта страницы
           </h2>
           <p className="mt-1 text-sm leading-relaxed text-text-secondary">
-            Сначала Россия, затем глобальная экономика. После основных данных — новости,
-            сигналы и проверка истории.
+            Сначала запись дня и факты: Россия, затем мировая экономика. Потом брифинг,
+            новости и — в конце — журнал проверок, где видно, насколько модель была права.
           </p>
         </div>
         <p className="max-w-sm text-xs leading-relaxed text-text-secondary">
@@ -26,7 +33,7 @@ export default function DashboardQuickNav() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {DASHBOARD_THEME_ORDER.map((themeId) => {
+        {QUICK_NAV_ORDER.map((themeId) => {
           const theme = SECTION_THEMES[themeId];
           const Icon = theme.icon;
 

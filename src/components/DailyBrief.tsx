@@ -693,7 +693,7 @@ export default function DailyBrief() {
           : 55 + Math.min(10, balanceDelta / 2),
         body: (
           <>
-            Сигнал по <strong className="text-text-primary">{forecast.asset}</strong>: баланс
+            Ожидание по <strong className="text-text-primary">{forecast.asset}</strong>: баланс
             свидетельств{' '}
             <strong className="tabular-nums text-text-primary">
               {Math.round(base.probability)} → {Math.round(forecast.probability)}
