@@ -312,7 +312,11 @@ export default function RussiaHistory() {
                     <tr key={point.date}>
                       <td className="py-0.5 pr-3">{ruDate(point.date)}</td>
                       <td className="py-0.5 pr-3">{formatValue(point.value, series.unit)}</td>
-                      {series.kind === 'step' && <td className="py-0.5">{ruDate(point.since)}</td>}
+                      {series.kind === 'step' && (
+                        <td className="py-0.5">
+                          {point.since ? ruDate(point.since) : '—'}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
