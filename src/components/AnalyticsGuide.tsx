@@ -233,7 +233,9 @@ export default function AnalyticsGuide() {
           see={
             <>
               Курсы ЦБ (USD/RUB, EUR/RUB, CNY/RUB), биржевые IMOEX, RGBI и CNY/RUB с
-              Мосбиржи ISS. У каждой строки — значение, изменение и время источника.
+              Мосбиржи ISS, ключевая ставка Банка России и доходность ОФЗ на 10 лет из
+              кривой бескупонной доходности Мосбиржи. У каждой строки — значение, изменение
+              и время источника.
             </>
           }
           means={
@@ -250,6 +252,16 @@ export default function AnalyticsGuide() {
             </>
           }
         />
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
+          <strong className="text-text-primary">Ключевая ставка</strong> — из публичного
+          SOAP-сервиса Банка России: подписано, с какого дня она действует и какое значение
+          было до неё. Это не рыночная доходность и не ставка по кредиту.{' '}
+          <strong className="text-text-primary">Доходность ОФЗ на 10 лет</strong> — точка
+          кривой бескупонной доходности Мосбиржи (ZCYC), то есть расчётная величина по
+          сделкам с ОФЗ, а не доходность конкретной бумаги. Если точки ровно на 10 лет нет,
+          подписано, какая точка взята. Инфляции на сайте нет: её источник — таблицы
+          Росстата, а не машинный поток.
+        </div>
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">RGBI</strong> — ценовой индекс
           государственных облигаций: он считается по ценам, а не по доходностям. Поэтому

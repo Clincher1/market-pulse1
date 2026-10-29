@@ -92,6 +92,33 @@ async function fetchJson(url) {
   return fetchWithTimeout(url, (response) => response.json());
 }
 
+/**
+ * POST для SOAP-сервиса ЦБ. Курсы отдаются обычным XML по GET, а ключевая
+ * ставка — только через DailyInfo.asmx, поэтому нужен отдельный вызов.
+ */
+async function fetchTextPost(url, body, soapAction) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'user-agent': USER_AGENT,
+        'content-type': 'text/xml; charset=utf-8',
+        soapaction: soapAction,
+        accept: 'text/xml, application/xml;q=0.9, */*;q=0.5',
+      },
+      body,
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const buffer = await response.arrayBuffer();
+    return decodeBuffer(buffer, response.headers.get('content-type') || '');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function formatCbrDate(date) {
   const dd = String(date.getUTCDate()).padStart(2, '0');
   const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -144,6 +171,117 @@ async function fetchCbrIndicator(currency) {
     provider: 'Банк России',
     basis: 'Официальный курс',
     sourceUrl: 'https://www.cbr.ru/currency_base/daily/',
+  };
+}
+
+const KEY_RATE_SOAP_URL = 'https://www.cbr.ru/DailyInfoWebServ/DailyInfo.asmx';
+
+function isoDate(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function ruDate(iso) {
+  const match = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[3]}.${match[2]}.${match[1]}` : String(iso);
+}
+
+/**
+ * Ключевая ставка Банка России.
+ *
+ * Источник — публичный SOAP-сервис ЦБ DailyInfo, метод KeyRateXML: он отдаёт
+ * историю ставки с датами вступления в силу. Берём последнюю запись и
+ * предыдущее отличающееся значение, чтобы подпись «действует с» была фактом,
+ * а не догадкой.
+ */
+export function parseKeyRateXml(xml) {
+  const records = [];
+  const pattern = /<KR\b[^>]*>([\s\S]*?)<\/KR>/gi;
+  let match;
+  while ((match = pattern.exec(xml)) !== null) {
+    const rate = Number(
+      match[1].match(/<Rate>\s*([-\d.,]+)\s*<\/Rate>/i)?.[1]?.replace(',', '.'),
+    );
+    const dt = match[1].match(/<DT>\s*([^<]+?)\s*<\/DT>/i)?.[1] ?? '';
+    if (!Number.isFinite(rate) || !dt) continue;
+    records.push({ date: dt.slice(0, 10), rate });
+  }
+  return records.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export function pickOfz10y(payload) {
+  const rows = rowsToObjects(payload?.zcyc);
+  const withPeriod = rows
+    .map((row) => ({ row, period: Number(row.period), value: Number(row.value) }))
+    .filter((item) => Number.isFinite(item.period) && Number.isFinite(item.value));
+  if (withPeriod.length === 0) throw new Error('В кривой доходности нет периодов');
+  const target = 3650;
+  const best = withPeriod.reduce((acc, item) =>
+    Math.abs(item.period - target) < Math.abs(acc.period - target) ? item : acc,
+  );
+  return { ...best, exact: best.period === target };
+}
+
+async function fetchCbrKeyRate() {
+  const to = new Date();
+  const from = new Date(to.getTime() - 400 * 24 * 60 * 60 * 1000);
+  const body =
+    '<?xml version="1.0" encoding="utf-8"?>' +
+    '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
+    'xmlns:xsd="http://www.w3.org/2001/XMLSchema" ' +
+    'xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+    '<soap:Body><KeyRateXML xmlns="http://web.cbr.ru/">' +
+    `<fromDate>${isoDate(from)}</fromDate><ToDate>${isoDate(to)}</ToDate>` +
+    '</KeyRateXML></soap:Body></soap:Envelope>';
+
+  const xml = await fetchTextPost(KEY_RATE_SOAP_URL, body, 'http://web.cbr.ru/KeyRateXML');
+  const records = parseKeyRateXml(xml);
+  if (records.length === 0) throw new Error('ЦБ не отдал ключевую ставку');
+
+  const latest = records[records.length - 1];
+  const previous = [...records].reverse().find((record) => record.rate !== latest.rate) ?? null;
+
+  return {
+    id: 'key-rate',
+    name: 'Ключевая ставка',
+    label: 'Ставка Банка России',
+    value: round(latest.rate, 2),
+    unit: '%',
+    changePct: null,
+    asOf: latest.date,
+    previousDate: previous?.date ?? null,
+    provider: 'Банк России',
+    basis: previous
+      ? `Действует с ${ruDate(latest.date)}; до этого — ${previous.rate.toFixed(2).replace('.', ',')} % с ${ruDate(previous.date)}`
+      : `Действует с ${ruDate(latest.date)}`,
+    sourceUrl: 'https://www.cbr.ru/hd_base/KeyRate/',
+  };
+}
+
+/**
+ * Доходность ОФЗ из кривой бескупонной доходности Мосбиржи (ZCYC).
+ *
+ * Это тот же публичный ISS, что и у IMOEX, поэтому источник и время рядом
+ * с числом те же. Берём точку на 10 лет; если её нет — ближайшую к 10 годам
+ * и говорим об этом в подписи.
+ */
+async function fetchMoexOfz10y() {
+  const payload = await fetchJson('https://iss.moex.com/iss/engines/stock/zcyc.json?iss.meta=off');
+  const { exact, ...best } = pickOfz10y(payload);
+
+  return {
+    id: 'ofz-10y',
+    name: 'ОФЗ 10 лет',
+    label: 'Доходность гособлигаций',
+    value: round(best.value, 2),
+    unit: '%',
+    changePct: null,
+    asOf: `${best.row.tradedate ?? ''} ${best.row.tradetime ?? ''}`.trim(),
+    previousDate: null,
+    provider: 'Мосбиржа ISS',
+    basis: exact
+      ? 'Точка кривой бескупонной доходности на 10 лет; публичный поток может быть задержан'
+      : `Ближайшая точка кривой к 10 годам: ${Math.round(best.period / 365)} г.`,
+    sourceUrl: 'https://www.moex.com/ru/marketdata/indices/state/gcurve/',
   };
 }
 
@@ -308,8 +446,17 @@ export default async function handler(req, res) {
     fetchMoexIndex('IMOEX', 'IMOEX', 'Индекс МосБиржи'),
     fetchMoexIndex('RGBI', 'RGBI', 'Индекс гособлигаций'),
     fetchMoexCny(),
+    fetchCbrKeyRate(),
+    fetchMoexOfz10y(),
   ];
-  const marketLabels = [...CBR_CURRENCIES.map((currency) => currency.name), 'IMOEX', 'RGBI', 'CNY MOEX'];
+  const marketLabels = [
+    ...CBR_CURRENCIES.map((currency) => currency.name),
+    'IMOEX',
+    'RGBI',
+    'CNY MOEX',
+    'Ключевая ставка ЦБ',
+    'Кривая доходности ОФЗ',
+  ];
   const rssLabels = RSS_SOURCES.map((source) => source.name);
 
   const [marketResults, rssResults] = await Promise.all([
