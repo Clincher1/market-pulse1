@@ -59,16 +59,24 @@ function formatStatValue(value: number | null): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',');
 }
 
+/**
+ * Время пересчёта — всегда по Москве и с подписью пояса.
+ *
+ * Без timeZone формат берёт пояс того, кто рисует страницу: на сервере это
+ * UTC−7, и посетитель видел «05:45» без пометки, то есть время, которое
+ * нельзя проверить. Руководство обещает обратное: время на сайте по Москве.
+ */
 function formatDateTime(value?: string) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat('ru-RU', {
+  return `${new Intl.DateTimeFormat('ru-RU', {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date);
+    timeZone: 'Europe/Moscow',
+  }).format(date)} МСК`;
 }
 
 function pointColor(value: number) {

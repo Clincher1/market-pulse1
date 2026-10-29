@@ -77,12 +77,15 @@ function formatDateTime(value?: string): string {
   if (!value) return '—';
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return value;
-  return new Intl.DateTimeFormat('ru-RU', {
+  // Москва и подпись пояса: иначе на серверной сборке время уезжает на несколько
+  // часов, а рядом с ним не написано, чей это пояс.
+  return `${new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date);
+    timeZone: 'Europe/Moscow',
+  }).format(date)} МСК`;
 }
 
 function formatDate(value?: string): string {
@@ -93,6 +96,7 @@ function formatDate(value?: string): string {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
+    timeZone: 'Europe/Moscow',
   }).format(date);
 }
 
