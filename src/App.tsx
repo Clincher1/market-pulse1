@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import Header from '@/components/Header';
+import DailyPassport from './components/DailyPassport';
 import TensionScale from '@/components/TensionScale';
 import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
@@ -186,6 +187,10 @@ function App() {
             </section>
 
             <DashboardQuickNav />
+
+            <SectionBoundary title="Паспорт дня">
+              <DailyPassport />
+            </SectionBoundary>
 
             <SectionBoundary title="Россия">
               <RussiaBusiness />
