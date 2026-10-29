@@ -1,5 +1,6 @@
 // Market Pulse source probe.
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { isAuthorizedService, unauthorized } from "../_shared/auth.ts";
 //
 // Purpose: verify that candidate RSS/Atom feeds are reachable from Supabase
 // Edge Function egress and return parseable feed XML. This function is
@@ -180,6 +181,13 @@ async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => P
 }
 
 serveWithErrorReporting("source-probe", async (request) => {
+  // The publishable key that ships in the site bundle also passes gateway JWT
+  // verification, so verify_jwt alone does not make this private. This probe
+  // makes the server fetch 24 external feeds; handed to the public it becomes a
+  // free egress and reputation burner against hosts the news pipeline depends
+  // on. Fail closed: service key or cron secret only.
+  if (!isAuthorizedService(request)) return unauthorized();
+
   if (request.method !== "GET") {
     return Response.json({ error: "Method not allowed" }, { status: 405 });
   }
