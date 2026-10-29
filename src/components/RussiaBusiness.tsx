@@ -53,7 +53,7 @@ const CHANNEL_KEYWORDS: Record<ChannelId, string[]> = {
     'платеж', 'swift', 'доллар', 'dollar', 'евро', 'euro',
   ],
   rates: [
-    'ключев', 'ставк', 'инфляц', 'центробанк', 'банк россии', 'фрс',
+    'ключев', 'ставк', 'инфляц', 'центробанк', 'банк россии', 'цб', 'фрс',
     'federal reserve', 'облигац', 'кредит', 'ипотек', 'доходност', 'rate',
   ],
   commodities: [
@@ -72,7 +72,7 @@ const CHANNEL_KEYWORDS: Record<ChannelId, string[]> = {
 
 const RUSSIA_KEYWORDS = [
   'росси', 'russia', 'russian', 'рубль', 'рубля', 'мосбирж', 'москв',
-  'банк россии', 'центробанк', 'минфин', 'кремл', 'ofz', 'офз',
+  'банк россии', 'центробанк', 'цб', 'минфин', 'кремл', 'ofz', 'офз',
 ];
 
 const CHANNEL_EXPLANATIONS: Record<ChannelId, string> = {
@@ -165,11 +165,39 @@ function includesAny(text: string, words: string[]): boolean {
   return words.some((word) => text.includes(word));
 }
 
-function classifyText(text: string): ChannelId[] {
+/**
+ * Совпадает ли ключевое слово с текстом.
+ *
+ * Кириллические ключи — намеренно основы («валют», «ставк», «нефт»): они должны
+ * находиться внутри слова «валютный», «ставка». Латинские ключи так проверять
+ * нельзя: «rate» находится внутри «corporate», «cny» — внутри случайных букв, и
+ * заголовок про отчётность попадал в канал валют. Латинские слова ищем только
+ * целиком.
+ */
+function keywordMatches(text: string, keyword: string): boolean {
+  if (/^[a-z0-9]+$/i.test(keyword)) {
+    // Латинское слово — целиком, с простым множественным числом: «rate» не
+    // должно находиться в «corporate», но «rates» в «interest rates» — должно.
+    return new RegExp(`\\b${keyword}(?:s|es)?\\b`, 'i').test(text);
+  }
+  return text.includes(keyword);
+}
+
+function firstKeyword(text: string, keywords: string[]): string | null {
+  for (const keyword of keywords) {
+    if (keywordMatches(text, keyword.toLowerCase())) return keyword;
+  }
+  return null;
+}
+
+function classifyText(text: string): { channel: ChannelId; keyword: string }[] {
   const normalized = text.toLowerCase();
-  return (Object.keys(CHANNEL_KEYWORDS) as ChannelId[]).filter((channel) =>
-    includesAny(normalized, CHANNEL_KEYWORDS[channel]),
-  );
+  return (Object.keys(CHANNEL_KEYWORDS) as ChannelId[])
+    .map((channel) => {
+      const keyword = firstKeyword(normalized, CHANNEL_KEYWORDS[channel]);
+      return keyword ? { channel, keyword } : null;
+    })
+    .filter((value): value is { channel: ChannelId; keyword: string } => value !== null);
 }
 
 function formatPercent(value: number | null | undefined): string {
@@ -304,6 +332,8 @@ function ChannelCard({
 interface ScoredNews {
   item: NewsItem;
   channels: ChannelId[];
+  /** Каким словом текст отнесён к каналу — чтобы отнесение можно было проверить. */
+  matchedKeywords: Partial<Record<ChannelId, string>>;
   directRussia: boolean;
   score: number;
   reasons: string[];
@@ -320,10 +350,13 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
   return news
     .map((item) => {
       const text = `${item.title} ${item.summary} ${item.topic}`.toLowerCase();
-      const channels = new Set<ChannelId>(classifyText(text));
+      const matches = classifyText(text);
+      const matchedKeywords: Partial<Record<ChannelId, string>> = {};
+      for (const match of matches) matchedKeywords[match.channel] = match.keyword;
+      const channels = new Set<ChannelId>(matches.map((match) => match.channel));
       for (const impact of item.impacts ?? []) {
         const asset = impact.asset.toLowerCase();
-        if (asset.includes('Brent') || asset.includes('oil')) channels.add('commodities');
+        if (asset.includes('brent') || asset.includes('oil')) channels.add('commodities');
         if (asset.includes('usd') || asset.includes('eur')) channels.add('currency');
       }
       const channelList = [...channels];
@@ -343,7 +376,7 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
       if (directRussia) reasons.push('прямая связь с Россией, рублём или российскими институтами');
       if (profileMatches) reasons.push('совпадает с вашим бизнес-профилем');
       reasons.push(`важность ${item.importance}/10 и уверенность классификации ${Math.round(confidence * 100)}%`);
-      return { item, channels: channelList, directRussia, score, reasons };
+      return { item, channels: channelList, matchedKeywords, directRussia, score, reasons };
     })
     .filter(
       (entry) =>
@@ -356,8 +389,9 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
 }
 
 function EventCard({ scored }: { scored: ScoredNews }) {
-  const { item, channels, reasons } = scored;
+  const { item, channels, matchedKeywords, reasons } = scored;
   const primaryChannel = channels[0];
+  const primaryKeyword = primaryChannel ? matchedKeywords[primaryChannel] : undefined;
   return (
     <article className="rounded-2xl border border-white/10 bg-black/20 p-5">
       <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
@@ -394,6 +428,11 @@ function EventCard({ scored }: { scored: ScoredNews }) {
           <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
             {CHANNEL_EXPLANATIONS[primaryChannel]}
           </p>
+          {primaryKeyword && (
+            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-100/80">
+              Отнесено по слову «{primaryKeyword}» в заголовке, описании или теме.
+            </p>
+          )}
           <p className="mt-2 inline-flex items-start gap-1.5 text-xs font-semibold text-blue-100">
             <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             Смотреть дальше: {CHANNEL_WATCH[primaryChannel]}.
@@ -409,7 +448,11 @@ function EventCard({ scored }: { scored: ScoredNews }) {
 }
 
 function HeadlineRow({ headline }: { headline: RussiaHeadline }) {
-  const channels = classifyText(`${headline.title} ${headline.categories.join(' ')}`).slice(0, 2);
+  const channels = classifyText(
+    `${headline.title} ${headline.categories.join(' ')}`,
+  )
+    .map((match) => match.channel)
+    .slice(0, 2);
   return (
     <a
       href={headline.url}
