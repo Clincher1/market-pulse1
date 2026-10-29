@@ -1,20 +1,37 @@
-// ВРЕМЕННЫЙ пробник: читает контракт SOAP-сервиса ЦБ (WSDL) и показывает, как
-// называется операция по международным резервам и какие у неё параметры.
-// Удаляется в том же коммите, что и рабочая реализация.
-const WSDL_URL = 'https://www.cbr.ru/DailyInfoWebServ/DailyInfo.asmx?WSDL';
+// ВРЕМЕННЫЙ пробник: читает живой ответ ЦБ по международным резервам (mrrfXML),
+// чтобы не угадывать форму. Удаляется в том же коммите, что и рабочая версия.
+const URL = 'https://www.cbr.ru/DailyInfoWebServ/DailyInfo.asmx';
 
-export default async function handler(_req, res) {
+export default async function handler(req, res) {
+  const till = new Date();
+  const from = new Date(till.getTime() - 120 * 24 * 60 * 60 * 1000);
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const body =
+    '<?xml version="1.0" encoding="utf-8"?>' +
+    '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
+    'xmlns:xsd="http://www.w3.org/2001/XMLSchema" ' +
+    'xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+    '<soap:Body><mrrfXML xmlns="http://web.cbr.ru/">' +
+    `<fromDate>${iso(from)}</fromDate><ToDate>${iso(till)}</ToDate>` +
+    '</mrrfXML></soap:Body></soap:Envelope>';
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 9000);
-  let wsdl = '';
   let status = null;
+  let xml = '';
   try {
-    const response = await fetch(WSDL_URL, {
-      headers: { 'user-agent': 'MarketPulse/1.0' },
+    const response = await fetch(URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'text/xml; charset=utf-8',
+        soapaction: 'http://web.cbr.ru/mrrfXML',
+        'user-agent': 'MarketPulse/1.0',
+      },
+      body,
       signal: controller.signal,
     });
     status = response.status;
-    wsdl = await response.text();
+    xml = await response.text();
   } catch (error) {
     res.status(200).json({ error: String(error) });
     return;
@@ -22,16 +39,16 @@ export default async function handler(_req, res) {
     clearTimeout(timer);
   }
 
-  const names = [];
-  for (const match of wsdl.matchAll(/<(?:wsdl:)?operation\b[^>]*name="([^"]+)"/g)) {
-    if (!names.includes(match[1])) names.push(match[1]);
+  const tags = [];
+  for (const match of xml.matchAll(/<([a-zA-Z0-9:_]+)[\s>/]/g)) {
+    if (!tags.includes(match[1])) tags.push(match[1]);
   }
-  const reservIndex = wsdl.search(/[Rr]eserv|[Mm]rrf/);
   res.status(200).json({
     status,
-    length: wsdl.length,
-    operations: names,
-    reservSnippet:
-      reservIndex >= 0 ? wsdl.slice(Math.max(0, reservIndex - 1200), reservIndex + 2200) : null,
+    sent: { from: iso(from), till: iso(till) },
+    length: xml.length,
+    tags,
+    head: xml.slice(0, 1200),
+    tail: xml.slice(-900),
   });
 }
