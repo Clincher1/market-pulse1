@@ -34,7 +34,13 @@ const MIN_CONFIDENCE = 0.5;
 const BLOCKED_SOURCES = new Set(['GDELT (Global)', 'GDELT']);
 const FRESH_NEWS_HOURS = 6;
 const FRESH_ASSETS_MINUTES = 45;
-const FRESH_FORECAST_HOURS = 3;
+// Forecasts are written once a day, not every 15 minutes: forecast_latest_v2
+// takes its issued_at from pg_cron job shadow-write-forecasts-v2, scheduled at
+// 05:45 UTC. The threshold therefore has to cover a day plus slack, or the
+// check can never be green between 08:45 and the next morning — it would fail
+// 21 hours out of 24, every day, by construction. Green now means "the daily
+// run happened"; red means a daily run was missed.
+const FRESH_FORECAST_HOURS = 26;
 const FRESH_FEED_HOURS = 24;
 const MIN_SAMPLE = 20;
 const TENSION_TOLERANCE = 2;
@@ -48,9 +54,14 @@ const VERDICT_SCORED_MIN = 30;
 const HEAL_TIMEOUT_MS = 25_000;
 
 // Which job is responsible for which red check. One retry, nothing more.
+//
+// forecasts_fresh is deliberately absent. It watches a daily writer, so the
+// only thing a nudge could do is re-run the day's forecast; and because heal()
+// retries the FIRST red check in this map, a permanently red entry here used to
+// swallow the single attempt that news_fresh needed. A check that cannot be
+// healed should not compete for the healer.
 const HEAL_BY_CHECK: Record<string, string> = {
   assets_fresh: 'update-assets',
-  forecasts_fresh: 'update-forecasts',
   news_fresh: 'update-news-v2',
 };
 
