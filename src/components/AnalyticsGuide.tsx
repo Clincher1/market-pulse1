@@ -267,6 +267,14 @@ export default function AnalyticsGuide() {
           таблицы Росстата, а не машинный поток.
         </div>
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
+          <strong className="text-text-primary">Динамика за 3 месяца</strong> — из тех же
+          первоисточников: закрытие торгового дня IMOEX из истории Мосбиржи ISS, официальный
+          курс доллара ЦБ и ступени ключевой ставки. Рисуются только пришедшие точки: выходные
+          и пропущенные торговые дни не заполняются повтором предыдущего значения, а линия
+          между двумя точками — просто соединение двух наблюдений, а не оценка пропущенных
+          дней. У каждого ряда подписано, сколько в нём точек и где первоисточник.
+        </div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">RGBI</strong> — ценовой индекс
           государственных облигаций: он считается по ценам, а не по доходностям. Поэтому
           рост индекса означает рост цен облигаций, а не рост доходности. Это не ставка ЦБ
