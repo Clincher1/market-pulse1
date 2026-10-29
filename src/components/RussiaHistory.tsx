@@ -41,7 +41,9 @@ function formatValue(value: number, unit: string): string {
 function formatChange(series: HistorySeries, first: HistoryPoint, last: HistoryPoint): string | null {
   if (series.unit === '%') {
     const delta = last.value - first.value;
-    if (!Number.isFinite(delta)) return null;
+    // «0,00 п.п.» читается как измерение, а не как «ставка не менялась»:
+    // для ступеней это разные утверждения, поэтому нулевую дельту не рисуем.
+    if (!Number.isFinite(delta) || delta === 0) return null;
     const sign = delta > 0 ? '+' : delta < 0 ? '−' : '';
     return `${sign}${Math.abs(delta).toFixed(2).replace('.', ',')} п.п.`;
   }
@@ -244,6 +246,9 @@ export default function RussiaHistory() {
               <span className="text-xs font-semibold text-slate-300">
                 {stats.change} с {ruDate(stats.first.date)}
               </span>
+            )}
+            {!stats.change && series.kind === 'step' && (
+              <span className="text-xs text-slate-400">в этом окне ставка не менялась</span>
             )}
             <span className="text-xs text-slate-400">
               минимум {formatValue(stats.min, series.unit)} · максимум {formatValue(stats.max, series.unit)}

@@ -212,13 +212,17 @@ async function fetchCbrHistory(currencyCode, fromISO, tillISO) {
 }
 
 async function fetchKeyRateHistory(fromISO, tillISO) {
+  // Окно запроса шире окна графика: иначе ЦБ не отдаст предыдущую ступень и
+  // «действует с» превратится в дату начала окна — то есть в неправду.
+  const soapFromDate = new Date(new Date(`${fromISO}T00:00:00Z`).getTime() - 400 * 24 * 60 * 60 * 1000);
+  const soapFrom = isoDate(soapFromDate);
   const body =
     '<?xml version="1.0" encoding="utf-8"?>' +
     '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
     'xmlns:xsd="http://www.w3.org/2001/XMLSchema" ' +
     'xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
     '<soap:Body><KeyRateXML xmlns="http://web.cbr.ru/">' +
-    `<fromDate>${fromISO}</fromDate><ToDate>${tillISO}</ToDate>` +
+    `<fromDate>${soapFrom}</fromDate><ToDate>${tillISO}</ToDate>` +
     '</KeyRateXML></soap:Body></soap:Envelope>';
   const xml = await fetchTextPost(KEY_RATE_SOAP_URL, body, 'http://web.cbr.ru/KeyRateXML');
   const records = parseKeyRateXml(xml);
@@ -246,7 +250,7 @@ const SERIES = [
     kind: 'line',
     provider: 'Банк России',
     sourceUrl: 'https://www.cbr.ru/currency_base/daily/',
-    note: 'Официальный курс ЦБ. Выходные и праздники в ряду отсутствуют — они не заполняются повтором пятницы.',
+    note: 'Официальный курс ЦБ на дату. Записи идут не только по рабочим дням: если ЦБ установил курс на выходной, сайт показывает его как есть, а не прореживает ряд и не достраивает пропуски.',
     load: (from, till) => fetchCbrHistory('R01235', from, till),
   },
   {
