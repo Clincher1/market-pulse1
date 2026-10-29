@@ -24,6 +24,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import GuideLink from './GuideLink';
+import OfzCurve from './OfzCurve';
 import { SectionThemeBadge } from './sectionThemes';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
@@ -602,6 +603,10 @@ export default function RussiaBusiness() {
     () => indicators.filter((indicator) => !MONEY_INDICATOR_IDS.includes(indicator.id)),
     [indicators],
   );
+  const ofzIndicator = useMemo(
+    () => indicators.find((indicator) => indicator.id === 'ofz-10y') ?? null,
+    [indicators],
+  );
   const missingIndicators = useMemo(() => {
     const present = new Set(indicators.map((indicator) => indicator.id));
     const hasCny = present.has('cny-rub-moex') || present.has('cny-rub-cbr');
@@ -827,6 +832,7 @@ export default function RussiaBusiness() {
                         <MarketTile key={indicator.id} indicator={indicator} />
                       ))}
                     </div>
+                    {ofzIndicator && <OfzCurve indicator={ofzIndicator} />}
                   </>
                 )}
               </>
