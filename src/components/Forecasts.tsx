@@ -33,14 +33,29 @@ function confidenceBg(confidence: string): string {
   return 'bg-negative/10';
 }
 
-function ForecastCard({ forecast, index }: { forecast: ForecastData; index: number }) {
+function ForecastCard({
+  forecast,
+  index,
+  directionProven,
+}: {
+  forecast: ForecastData;
+  index: number;
+  directionProven: boolean;
+}) {
   // Защитный порог и на фронте: даже если старая строка бэкенда ещё
   // содержит up/down при балансе ниже 60/40, направленный вывод не показываем.
-  const hasSignal = forecast.direction !== 'none' && forecast.probability >= 60;
+  // Второе условие — право на вывод: пока счёт не подтвердил преимущество над
+  // монеткой, стрелка вверх/вниз не рисуется. Баланс новостей остаётся видимым,
+  // потому что это наблюдение, а не предсказание.
+  const tilted = forecast.direction !== 'none' && forecast.probability >= 60;
+  const suppressed = tilted && !directionProven;
+  const hasSignal = tilted && directionProven;
   const isUp = hasSignal && forecast.direction === 'up';
   const isWeakTilt = hasSignal && forecast.probability < 70;
   const directionLabel = !hasSignal
-    ? 'Нет сигнала'
+    ? suppressed
+      ? 'Направление скрыто'
+      : 'Нет сигнала'
     : isWeakTilt
       ? `Слабый перекос ${isUp ? 'вверх' : 'вниз'}`
       : isUp
@@ -89,7 +104,9 @@ function ForecastCard({ forecast, index }: { forecast: ForecastData; index: numb
         <p className="text-xs text-text-secondary leading-relaxed mb-3">
           {hasSignal
             ? 'Доля взвешенных новостных сигналов на стороне стрелки. 50% — перевеса нет; это не шанс движения цены.'
-            : 'Доля взвешенных сигналов на большей стороне. Ниже порога 60% сигналы считаются шумом, поэтому направленный вывод не делается.'}
+            : suppressed
+              ? 'Новостной фон перевешивает, но это не прогноз: сайт ещё не доказал точность, поэтому стрелка не рисуется. Показываем только сам баланс новостей — наблюдение, а не предсказание.'
+              : 'Доля взвешенных сигналов на большей стороне. Ниже порога 60% сигналы считаются шумом, поэтому направленный вывод не делается.'}
         </p>
         <div className="relative">
           <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
@@ -234,7 +251,9 @@ function ForecastScoreboard({ track }: { track: TrackRecordRow | null }) {
                 ? 'преимущество подтверждено.'
                 : 'преимущества над монеткой не видно, поэтому сигналы не выдаются за торговую рекомендацию.'
             }`
-          : `Проверено ${track.scored} прогнозов из ${MIN_SCORED_FOR_VERDICT}, нужных для вывода — сайт не утверждает, что умеет предсказывать. Первая неделя отработала хуже монетки: девять из одиннадцати прогнозов говорили «вверх», а рынок в те дни падал. Причина была в шкале, а не в пороге: двум слабым совпавшим новостям хватало, чтобы получить оценку 1.000 — уверенность из почти ничего. С 28.10.2026 оценка сжимается к собственной базовой частоте актива, а направленный вывод требует минимум трёх независимых событий. Старые строки из истории не удалены: счёт не переписывается задним числом.`}
+          : `Проверено ${track.scored} прогнозов из ${MIN_SCORED_FOR_VERDICT}, нужных для вывода — сайт не утверждает, что умеет предсказывать. Попаданий ${percent(track.hit_rate)}, точность ${
+              track.mean_brier === null ? '—' : track.mean_brier.toFixed(2)
+            } против 0.25 у подбрасывания монеты: результат не лучше случайного. 29.10.2026 нашлась ошибка в самой оценке: базовая цена бралась из устаревшего снимка, поэтому часть прогнозов получала доходность, которой не было. У Brent было «5 попаданий из 5» — после пересчёта по правильной базе стало 2 из 5. Оценки пересчитаны, прежние значения сохранены в поле raw${' '}— они не удалены. Сами прогнозы не удаляются и не подгоняются задним числом: неудачные строки остаются на месте. Отдельно с 28.10.2026 оценка сжимается к собственной базовой частоте актива, а направленный вывод требует минимум трёх независимых событий.`}
       </p>
     </motion.div>
   );
@@ -352,7 +371,12 @@ export default function Forecasts() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
             {forecasts.map((f, i) => (
-              <ForecastCard key={f.id} forecast={f} index={i} />
+              <ForecastCard
+                key={f.id}
+                forecast={f}
+                index={i}
+                directionProven={track?.verdict === 'edge'}
+              />
             ))}
           </div>
           <ForecastScoreboard track={track} />
