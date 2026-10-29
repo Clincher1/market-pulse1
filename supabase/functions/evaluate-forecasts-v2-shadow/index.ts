@@ -116,18 +116,32 @@ serveWithErrorReporting("evaluate-forecasts-v2-shadow", async (request) => {
       const forecast = forecastsById.get(String(outcomeRow.forecast_id));
       if (!forecast) continue;
       const prices = pricesByInstrument.get(String(forecast.instrument_id)) ?? [];
-      const baseDate = String(forecast.base_observation_date ?? "");
-      const basePrice = finiteNumber(forecast.base_price);
       const issueDate = String(forecast.issue_date ?? "");
       const horizon = finiteNumber(forecast.horizon_trading_days) ?? 0;
 
-      const baseIndex = prices.findIndex((point) => point.date === baseDate);
-      if (baseIndex < 0 || !basePrice || basePrice <= 0 || !horizon) {
+      // Базовая цена берётся из ТОГО ЖЕ ряда, по которому считается исход, а не
+      // из поля forecast.base_price. Поле заполняет писатель в момент выпуска;
+      // если в тот час ценовой пайплайн отставал, там остаётся цена нескольких
+      // дней давности. Именно так 26, 27 и 28 октября база застряла на 20-м, и
+      // все три прогноза получили один и тот же «+11.2 %» — доходность, которой
+      // не было. Считать вход и выход по одному источнику дешевле, чем доверять
+      // чужому полю, и так расхождение невозможно по построению.
+      let baseIndex = -1;
+      for (let index = 0; index < prices.length; index += 1) {
+        if (prices[index].date < issueDate && prices[index].price > 0) baseIndex = index;
+      }
+      const basePrice = baseIndex >= 0 ? prices[baseIndex].price : null;
+
+      if (baseIndex < 0 || basePrice === null || basePrice <= 0 || !horizon) {
         updates.push({
           forecast_id: String(forecast.id),
           status: "insufficient_price_data",
           evaluated_at: null,
-          raw: { reason: "base_price_missing_or_not_found", base_observation_date: baseDate || null },
+          raw: {
+            reason: "no_price_observation_before_issue_date",
+            issue_date: issueDate || null,
+            stored_base_observation_date: forecast.base_observation_date ?? null,
+          },
           updated_at: new Date().toISOString(),
         });
         continue;
@@ -191,7 +205,10 @@ serveWithErrorReporting("evaluate-forecasts-v2-shadow", async (request) => {
         brier_score: Brier,
         evaluated_at: new Date().toISOString(),
         raw: {
-          alignment: "Outcome is the horizon-th daily observation strictly after issue_date. Base may lag issue_date when the provider publishes with delay.",
+          alignment:
+            "Base is the last observation strictly before issue_date in this same price series; outcome is the horizon-th observation strictly after issue_date. Both come from one series, so a stale writer field cannot shift the start of the measurement.",
+          base_observation_date: prices[baseIndex]?.date ?? null,
+          base_price: basePrice,
           observation_steps_from_base: steps,
           baseline_observations: baseline.count,
           binary_up_for_brier: binaryUp,

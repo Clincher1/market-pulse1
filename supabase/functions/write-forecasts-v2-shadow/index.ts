@@ -165,18 +165,33 @@ serveWithErrorReporting("write-forecasts-v2-shadow", async (request) => {
       for (const event of events) eventsById.set(String(event.id), event);
     }
 
-    const baseByInstrument = new Map<string, { date: string; price: number }>();
+    const baseByInstrument = new Map<string, { date: string; price: number; source: string }>();
     for (const instrument of instruments) {
       const instrumentId = String(instrument.id);
-      const rows = await restJson(
+      // Теневые снимки обновляются дважды в сутки, а сайт читает историю
+      // каждые пять минут. Когда снимки отстают, база молча уезжает на
+      // несколько дней назад — так 26-28 октября вход застрял на 20-м числе.
+      // Поэтому берём более свежее из двух источников, а не первый попавшийся.
+      const snapshotRows = (await restJson(
         `asset_price_snapshots_v2?select=observation_date,price,close&instrument_id=eq.${encodeURIComponent(instrumentId)}` +
         `&observation_date=lte.${issueDate}&order=observation_date.desc&limit=1`,
-      ) as AnyRecord[];
-      const row = rows[0];
-      const price = finiteNumber(row?.close ?? row?.price);
-      if (row && price !== null && price > 0) {
-        baseByInstrument.set(instrumentId, { date: String(row.observation_date), price });
+      )) as AnyRecord[];
+      const historyRows = (await restJson(
+        `asset_price_history_v1?select=observation_date,close,price&instrument_id=eq.${encodeURIComponent(instrumentId)}` +
+        `&is_primary=eq.true&observation_date=lte.${issueDate}&order=observation_date.desc&limit=1`,
+      )) as AnyRecord[];
+
+      const candidates: Array<{ date: string; price: number; source: string }> = [];
+      for (const [rows, source] of [[snapshotRows, "snapshot"], [historyRows, "history"]] as const) {
+        const row = rows[0];
+        const price = finiteNumber(row?.close ?? row?.price);
+        if (row && price !== null && price > 0) {
+          candidates.push({ date: String(row.observation_date), price, source });
+        }
       }
+      candidates.sort((left, right) => (left.date < right.date ? 1 : left.date > right.date ? -1 : 0));
+      const best = candidates[0];
+      if (best) baseByInstrument.set(instrumentId, best);
     }
 
     const models = [...new Set(classifications.map((row) => String(row.model ?? "")).filter(Boolean))];
