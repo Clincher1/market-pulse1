@@ -370,7 +370,7 @@ function HeatTile({
     'Площадь плитки одинакова для всех активов и ничего не кодирует. ' +
     'Нажмите на плитку, чтобы развернуть график, статистику периода, текущий сигнал и источник данных.' +
     (isFallback
-      ? ' Внимание: свежая цена для этой плитки не получена, показано резервное значение — не используйте его как текущую котировку.'
+      ? ' Внимание: свежая цена для этой плитки не получена, поэтому цена и изменение не показаны.'
       : '');
 
   return (
@@ -402,12 +402,12 @@ function HeatTile({
       )}
 
       <div className="mt-3 text-xl font-extrabold tabular-nums leading-none">
-        {asset.price}
+        {isFallback ? '—' : asset.price}
       </div>
 
       <div className="mt-3 flex items-end justify-between gap-2">
         <span className="text-base font-extrabold tabular-nums">
-          {horizonChangeValue === null ? '—' : nearlyFlat ? '0.00%' : formatChange(change)}
+          {isFallback || horizonChangeValue === null ? '—' : nearlyFlat ? '0.00%' : formatChange(change)}
         </span>
         <span className="text-[10px] font-semibold uppercase tracking-wider text-white/65">
           шкала ±{formatCap(cap)}
@@ -945,6 +945,19 @@ function AssetPanel({
     historyPoints[0] && dateMs(historyPoints[0].date) > historyDomainStartMs,
   );
 
+  // Ровно те точки, из которых нарисована линия: их можно сверить с
+  // первоисточником по дате. Больше тридцати строк не показываем, чтобы
+  // раскрытый список не превращался в полотно.
+  const checkRows = visibleHistoryPoints.slice(-30).map((point) => {
+    const index = visibleHistoryPoints.findIndex((item) => item.date === point.date);
+    const previous = index > 0 ? visibleHistoryPoints[index - 1] : null;
+    const delta =
+      previous && previous.value !== 0
+        ? ((point.value - previous.value) / previous.value) * 100
+        : null;
+    return { point, delta };
+  });
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -979,7 +992,7 @@ function AssetPanel({
             <span
               className={`font-extrabold tabular-nums ${directionalTextClass(asset.change ?? 0, paletteId)}`}
             >
-              {formatChange(asset.change ?? 0)}
+              {isFallback ? '—' : formatChange(asset.change ?? 0)}
             </span>{' '}
             за день
           </p>
@@ -997,8 +1010,8 @@ function AssetPanel({
 
       {isFallback && (
         <p className="mt-3 rounded-lg border border-amber-300/20 bg-amber-400/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100">
-          Свежая цена по этому активу не получена: график и цифры ниже — резервный снимок,
-          не используйте его как текущую котировку.
+          Свежая цена по этому активу не получена, поэтому цена и изменение не показаны:
+          подставлять вместо них сохранённое или выдуманное число мы не будем.
         </p>
       )}
 
@@ -1166,6 +1179,58 @@ function AssetPanel({
             </dd>
           </div>
         </dl>
+      )}
+
+      {history && visibleHistoryPoints.length > 0 && (
+        <details className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+          <summary className="cursor-pointer text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+            Проверить данные · {visibleHistoryPoints.length}{' '}
+            {observationsWord(visibleHistoryPoints.length)}
+          </summary>
+          <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+            Это ровно те точки, из которых построена линия выше: ряд{' '}
+            <span className="font-bold text-text-primary">{history.providerSymbol}</span>{' '}
+            ({history.instrumentId}), источник — {history.provider}. Каждую строку можно
+            сверить с первоисточником по дате. Сегодняшний незакрытый день в список не
+            входит.
+          </p>
+          <div className="mt-2 max-h-56 overflow-auto">
+            <table className="w-full text-left text-[11px] tabular-nums">
+              <thead className="sticky top-0 bg-[#0A1424] text-text-secondary">
+                <tr>
+                  <th scope="col" className="py-1 pr-2 font-bold">Дата</th>
+                  <th scope="col" className="py-1 pr-2 font-bold">Закрытие</th>
+                  <th scope="col" className="py-1 font-bold">К предыдущему</th>
+                </tr>
+              </thead>
+              <tbody>
+                {checkRows.map(({ point, delta }) => (
+                  <tr key={point.date} className="border-t border-white/[0.06]">
+                    <td className="py-1 pr-2 text-text-secondary">
+                      {formatDateShort(point.date)}
+                    </td>
+                    <td className="py-1 pr-2 font-bold text-text-primary">
+                      {formatValue(point.value)}
+                    </td>
+                    <td
+                      className={`py-1 font-bold ${
+                        delta === null ? 'text-text-secondary' : directionalTextClass(delta, paletteId)
+                      }`}
+                    >
+                      {delta === null ? '—' : formatChange(delta)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {visibleHistoryPoints.length > 30 && (
+            <p className="mt-2 text-[11px] text-text-secondary">
+              Показаны последние 30 записей из {visibleHistoryPoints.length}: весь диапазон
+              целиком на графике, здесь — конец ряда.
+            </p>
+          )}
+        </details>
       )}
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
