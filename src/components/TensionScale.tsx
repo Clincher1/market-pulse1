@@ -77,26 +77,55 @@ function pointColor(value: number) {
   return '#FB7185';
 }
 
-function smoothPath(points: { x: number; y: number }[]) {
+/**
+ * Линия истории — прямые отрезки между сохранёнными точками.
+ *
+ * Раньше здесь был сглаженный сплайн: он красивее, но между двумя
+ * наблюдениями рисует значения, которых не было, и может уходить выше или
+ * ниже обеих точек. Для шкалы, где важен именно уровень, это выдумка.
+ */
+function historyPath(points: { x: number; y: number }[]) {
   if (points.length === 0) return '';
-  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-  if (points.length === 2) {
-    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
-  }
+  return points
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
+    .join(' ');
+}
 
-  let path = `M ${points[0].x} ${points[0].y}`;
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const current = points[index];
-    const next = points[index + 1];
-    const previous = points[index - 1] ?? current;
-    const afterNext = points[index + 2] ?? next;
-    const control1X = current.x + (next.x - previous.x) / 6;
-    const control1Y = current.y + (next.y - previous.y) / 6;
-    const control2X = next.x - (afterNext.x - current.x) / 6;
-    const control2Y = next.y - (afterNext.y - current.y) / 6;
-    path += ` C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${next.x} ${next.y}`;
+/** Короткие русские названия месяцев, как их печатает toLocaleDateString. */
+const SHORT_MONTHS: Record<string, number> = {
+  янв: 0, фев: 1, мар: 2, апр: 3, май: 4, мая: 4, июн: 5,
+  июл: 6, авг: 7, сен: 8, сент: 8, окт: 9, ноя: 10, дек: 11,
+};
+
+/**
+ * Достаёт календарную дату точки истории.
+ *
+ * Бэкенд присылает готовую ISO-дату, но в старых записях кэша её нет — там
+ * только подпись «23 окт». Без даты точки нельзя поставить по календарю, и
+ * график превращался бы в ровный ряд, скрывая пропуски в наблюдениях.
+ */
+function pointDateMs(point: TensionPoint, todayMs: number): number | null {
+  if (point.date) {
+    const parsed = Date.parse(`${point.date}T12:00:00Z`);
+    if (Number.isFinite(parsed)) return parsed;
   }
-  return path;
+  const match = point.day.match(/(\d{1,2})\s*([а-яё]+)/i);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = SHORT_MONTHS[match[2].toLowerCase().replace('.', '').slice(0, 4)];
+  if (!Number.isFinite(day) || month === undefined) return null;
+
+  const today = new Date(todayMs);
+  const thisYear = Date.UTC(today.getUTCFullYear(), month, day, 12);
+  // Через Новый год подпись «31 дек» относится к прошлому году.
+  return thisYear > todayMs + 2 * 86_400_000
+    ? Date.UTC(today.getUTCFullYear() - 1, month, day, 12)
+    : thisYear;
+}
+
+/** Сколько календарных дней между двумя точками (по датам, а не по индексам). */
+function dayGap(fromMs: number, toMs: number): number {
+  return Math.round((toMs - fromMs) / 86_400_000);
 }
 
 function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
@@ -112,16 +141,46 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
     const chartRight = width - 18;
     const chartTop = 18;
     const chartBottom = 168;
+    const todayMs = Date.now();
+
+    // Сначала пытаемся поставить точки по календарю. Ряд из семи записей
+    // может покрывать и семь дней, и месяц с пропусками: на равном шаге эти
+    // два случая на экране неразличимы, а это разные факты.
+    const dates = history.map((point) => pointDateMs(point, todayMs));
+    const dated = dates.every((value): value is number => value !== null);
+    const firstDate = dated ? Math.min(...dates) : null;
+    const lastDate = dated ? Math.max(...dates) : null;
+    const span = firstDate !== null && lastDate !== null ? lastDate - firstDate : 0;
 
     return history.map((point, index) => {
-      const x =
-        history.length === 1
-          ? (chartLeft + chartRight) / 2
-          : chartLeft + (index / (history.length - 1)) * (chartRight - chartLeft);
+      let x: number;
+      if (dated && firstDate !== null && span > 0) {
+        x = chartLeft + (((dates[index] as number) - firstDate) / span) * (chartRight - chartLeft);
+      } else {
+        x =
+          history.length === 1
+            ? (chartLeft + chartRight) / 2
+            : chartLeft + (index / (history.length - 1)) * (chartRight - chartLeft);
+      }
       const value = clampTension(point.value);
       const y = chartBottom - (value / 100) * (chartBottom - chartTop);
       return { ...point, value, x, y };
     });
+  }, [history]);
+
+  /**
+   * Пропуски в наблюдениях. Показываются отдельной строкой, потому что сама
+   * линия их не объясняет: у неё нет ни выходных, ни праздников.
+   */
+  const gapNote = useMemo(() => {
+    const todayMs = Date.now();
+    const dated = history.map((point) => pointDateMs(point, todayMs));
+    if (!dated.every((value): value is number => value !== null)) return null;
+    let maxGap = 1;
+    for (let index = 1; index < dated.length; index += 1) {
+      maxGap = Math.max(maxGap, dayGap(dated[index - 1] as number, dated[index] as number));
+    }
+    return maxGap > 1 ? maxGap : null;
   }, [history]);
 
   if (points.length === 0) {
@@ -139,7 +198,7 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
   const chartRight = width - 18;
   const chartTop = 18;
   const chartBottom = 168;
-  const linePath = smoothPath(points);
+  const linePath = historyPath(points);
   const areaPath =
     points.length > 1
       ? `${linePath} L ${points[points.length - 1].x} ${chartBottom} L ${points[0].x} ${chartBottom} Z`
@@ -316,6 +375,13 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
           {change > 0 ? `+${change}` : change} {pointsWord(Math.abs(change))} за период
         </span>
       </div>
+      {gapNote !== null && (
+        <p className="mt-2 rounded-lg border border-amber-300/25 bg-amber-400/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-100">
+          В истории есть пропуск: между соседними точками до {gapNote} дней без
+          наблюдений. Линия соединяет только сохранённые значения и ничего не
+          достраивает, поэтому участок без данных выглядит как обычный отрезок.
+        </p>
+      )}
     </div>
   );
 }
@@ -591,19 +657,23 @@ export default function TensionScale() {
             <div className="mt-6">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="text-sm font-medium text-text-secondary">
-                  Изменение за последние 7 дней
+                  Изменение за последние {data.history.length}{' '}
+                  {data.history.length === 1 ? 'запись' : 'записей'}
                 </div>
                 {data.history.length < 7 && (
                   <div className="text-xs font-medium text-warning">
-                    Накоплено {data.history.length} из 7 дней
+                    Накоплено {data.history.length} из 7 записей
                   </div>
                 )}
               </div>
               <TensionHistoryChart history={data.history} />
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
                 Каждая точка — значение, зафиксированное в начале суток, а не среднее за
-                день. Поэтому история показывает, каким фон был на утро, и её нельзя
-                сравнивать с текущим числом как «среднее против мгновенного».
+                день. Точки стоят по календарным датам, поэтому пропуск в наблюдениях
+                виден как разрыв, а не как ровный шаг. Ось Y — абсолютная шкала 0–100,
+                цвет закреплён за уровнем, а не за наклоном. Точки соединены прямыми
+                отрезками: между двумя наблюдениями значений нет, и линия их не
+                придумывает.
               </p>
             </div>
 

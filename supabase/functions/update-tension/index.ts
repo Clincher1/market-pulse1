@@ -272,9 +272,13 @@ serveWithErrorReporting("update-tension", async (req) => {
         }
       : null;
 
+    // `date` (ISO) отдаём вместе с подписью: по подписи «23 окт» нельзя
+    // отличить семь дней подряд от семи записей за месяц, а на графике это
+    // разные факты. Фронтенд ставит точки по календарю, если дата есть.
     const formattedHistory = [...history].reverse().map((row) => {
       const date = new Date(String(row.date));
       return {
+        date: String(row.date),
         day: date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }),
         value: row.value,
       };
