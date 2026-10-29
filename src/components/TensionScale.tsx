@@ -46,6 +46,15 @@ function hoursWord(n: number): string {
   return 'часов';
 }
 
+/** Число новостей в именительном падеже: 1 новость, 2 новости, 291 новость. */
+function newsWord(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'новость';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'новости';
+  return 'новостей';
+}
+
 function daysWord(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
@@ -694,11 +703,11 @@ export default function TensionScale() {
             </div>
 
             <div className="mt-6 border-t border-border-subtle pt-5 text-sm text-text-secondary">
-              На основе анализа{' '}
+              В выборке за сутки —{' '}
               <span className="font-semibold text-text-primary">
                 {(data.newsCount ?? 0).toLocaleString('ru-RU')}
               </span>{' '}
-              новостей за сутки
+              {newsWord(data.newsCount ?? 0)}
               {phase === 'stale' && (
                 <span className="mt-1 block text-xs text-amber-200/80">
                   Обновление временно не удалось; автоматическая проверка повторится через пять минут.
