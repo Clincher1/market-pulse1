@@ -43,6 +43,17 @@ type Status = 'calm' | 'watch' | 'pressure' | 'unknown';
 // отдельной строкой, чтобы ряд из пяти курсовых плиток не разъезжался.
 const MONEY_INDICATOR_IDS = ['key-rate', 'ofz-10y'];
 
+// Что должно быть в российском контуре. Если строка не пришла, сайт говорит
+// об этом словами, а не оставляет дырку без объяснения.
+const EXPECTED_INDICATOR_NAMES: Record<string, string> = {
+  'usd-rub': 'USD/RUB',
+  'eur-rub': 'EUR/RUB',
+  imoex: 'IMOEX',
+  rgbi: 'RGBI',
+  'key-rate': 'ключевая ставка',
+  'ofz-10y': 'доходность ОФЗ',
+};
+
 const CHANNEL_LABELS: Record<ChannelId, string> = {
   currency: 'Валюта и платежи',
   rates: 'Ставки и кредиты',
@@ -591,6 +602,14 @@ export default function RussiaBusiness() {
     () => indicators.filter((indicator) => !MONEY_INDICATOR_IDS.includes(indicator.id)),
     [indicators],
   );
+  const missingIndicators = useMemo(() => {
+    const present = new Set(indicators.map((indicator) => indicator.id));
+    const hasCny = present.has('cny-rub-moex') || present.has('cny-rub-cbr');
+    return Object.entries(EXPECTED_INDICATOR_NAMES)
+      .filter(([id]) => !present.has(id))
+      .map(([, name]) => name)
+      .filter((name) => !(name === 'CNY/RUB' && hasCny));
+  }, [indicators]);
 
   const indicatorById = useMemo(
     () => new Map(insights.markets.map((indicator) => [indicator.id, indicator])),
@@ -614,12 +633,12 @@ export default function RussiaBusiness() {
 
     const imoex = indicatorById.get('imoex');
     const rgbi = indicatorById.get('rgbi');
-    const marketMoves = [imoex?.changePct, rgbi?.changePct].filter(
-      (value): value is number => typeof value === 'number',
-    );
-    const marketStress = marketMoves.length
-      ? Math.max(Math.abs(imoex?.changePct ?? 0) / 1.5, Math.abs(rgbi?.changePct ?? 0) / 0.6)
-      : null;
+    // Статус считается только когда есть оба числа: по одному RGBI нельзя
+    // назвать рынок спокойным, не зная IMOEX.
+    const marketStress =
+      typeof imoex?.changePct === 'number' && typeof rgbi?.changePct === 'number'
+        ? Math.max(Math.abs(imoex.changePct) / 1.5, Math.abs(rgbi.changePct) / 0.6)
+        : null;
     const marketStatus: Status = marketStress === null ? 'unknown' : marketStress < 0.5 ? 'calm' : marketStress < 1 ? 'watch' : 'pressure';
 
     const Brent = assetById.get('brent');
@@ -662,7 +681,9 @@ export default function RussiaBusiness() {
           .filter(Boolean)
           .join(' · '),
         explanation:
-          rgbi?.changePct === null || rgbi?.changePct === undefined
+          marketStress === null
+            ? 'Статус не считается: нет IMOEX или RGBI — по половине данных нельзя назвать рынок спокойным. Показаны только те числа, что пришли.'
+            : rgbi?.changePct === null || rgbi?.changePct === undefined
             ? 'RGBI временно недоступен, поэтому вывод о стоимости денег не делается.'
             : `${
                 rgbi.changePct >= 0
@@ -787,6 +808,15 @@ export default function RussiaBusiness() {
                     <MarketTile key={indicator.id} indicator={indicator} />
                   ))}
                 </div>
+                {missingIndicators.length > 0 && (
+                  <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Сейчас не получены: {missingIndicators.join(', ')}. Плитки нет до ответа
+                      источника — число вместо неё не подставляется.
+                    </span>
+                  </div>
+                )}
                 {moneyIndicators.length > 0 && (
                   <>
                     <div className="mt-5 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
