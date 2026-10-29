@@ -731,17 +731,24 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         return { ok: false, detail: `HTTP ${res.status} за ${Date.now() - started} мс` };
       }
       const payload = (await res.json().catch(() => null)) as
-        | { markets?: unknown[]; headlines?: unknown[]; errors?: unknown[] }
+        | { markets?: Array<{ id?: string; provider?: string }>; headlines?: unknown[]; errors?: unknown[] }
         | null;
       if (!payload) return { ok: false, detail: 'ответ пришёл, но это не JSON' };
-      const markets = Array.isArray(payload.markets) ? payload.markets.length : 0;
+      const markets = Array.isArray(payload.markets) ? payload.markets : [];
       const headlines = Array.isArray(payload.headlines) ? payload.headlines.length : 0;
       const errors = Array.isArray(payload.errors) ? payload.errors.length : 0;
+      // The block has two halves and both are visible rows: three CBR rates and
+      // three exchange figures (IMOEX, RGBI, CNY/MOEX). Counting all six as one
+      // number would hide a dead exchange half behind a healthy currency half.
+      const cbr = markets.filter(
+        (m) => /-cbr$/.test(String(m?.id ?? '')) || String(m?.provider ?? '') === 'Банк России',
+      ).length;
+      const exchange = markets.length - cbr;
       return {
-        // Three CBR currencies are what the block is built on. One missing means
-        // a visibly incomplete block, so it is red, not "почти хорошо".
-        ok: markets >= 3,
-        detail: `курсов ЦБ ${markets} из 3, заголовков ${headlines}${errors ? `, ошибок источников ${errors}` : ''} за ${Date.now() - started} мс`,
+        ok: cbr >= 3 && exchange >= 3,
+        detail:
+          `курсов ЦБ ${cbr} из 3, биржевых ${exchange} из 3, заголовков ${headlines}` +
+          `${errors ? `, ошибок источников ${errors}` : ''} за ${Date.now() - started} мс`,
       };
     }),
 
