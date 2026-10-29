@@ -7,6 +7,7 @@ import {
   parseCbrDynamicXml,
   parseIssHistory,
 } from '../api/russia-history.js';
+import { parseReservesXml } from '../api/_shared/cbrReserves.js';
 import { parseRuoniaXml } from '../api/_shared/cbrRuonia.js';
 
 /**
@@ -139,4 +140,30 @@ test('RUONIA: форма ответа ЦБ (ro/D0/ruo/vol), мусор отбр�
   assert.equal(records.at(-1).rate, 14.09);
   assert.equal(records.at(-1).volume, 992.86);
   assert.deepEqual(parseRuoniaXml('<Ruonia></Ruonia>'), []);
+});
+
+test('международные резервы: недельный ряд mmrf7d, дубль val и мусор', () => {
+  // Ответ снят с живого вызова mrrf7DXML 29.10.2026. В нём реально встречается
+  // строка с двумя <val> подряд (24.07.2026). Значения сверены с публичной
+  // таблицей ЦБ: 23.10 — 729,6; 16.10 — 723,2; 24.07 — 732,1 (одно число,
+  // а не сумма двух).
+  const xml =
+    '<mrrf7DXMLResult><mmrf7d>' +
+    '<mr><D0>2026-10-16T00:00:00+03:00</D0><val>723.20</val></mr>' +
+    '<mr><D0>2026-10-23T00:00:00+03:00</D0><val>729.60</val></mr>' +
+    '<mr><D0>2026-07-24T00:00:00+03:00</D0><val>732.10</val><val>732.10</val></mr>' +
+    '<mr><D0>2026-10-09T00:00:00+03:00</D0><val></val></mr>' +
+    '<mr><D0>не дата</D0><val>700.00</val></mr>' +
+    '<mr><D0>2026-10-02T00:00:00+03:00</D0><val>0</val></mr>' +
+    '</mmrf7d></mrrf7DXMLResult>';
+
+  const records = parseReservesXml(xml);
+  assert.deepEqual(
+    records.map((record) => record.date),
+    ['2026-07-24', '2026-10-16', '2026-10-23'],
+  );
+  // Дубль <val> не складывается: это одно и то же наблюдение.
+  assert.equal(records[0].value, 732.1);
+  assert.equal(records.at(-1).value, 729.6);
+  assert.deepEqual(parseReservesXml('<mmrf7d></mmrf7d>'), []);
 });

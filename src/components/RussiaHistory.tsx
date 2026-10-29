@@ -33,7 +33,10 @@ function dayNumber(iso: string): number {
 }
 
 function formatValue(value: number, unit: string): string {
-  const digits = unit === 'пункта' ? 2 : 4;
+  // Рубли — четыре знака, как на плитках курсов. Пункты, проценты и млрд $
+  // публикуются с двумя знаками: показывать «729,6000 млрд $» значит обещать
+  // точность, которой у источника нет.
+  const digits = unit === '₽' ? 4 : 2;
   const text = value.toFixed(digits).replace('.', ',');
   return unit === '₽' ? `${text} ₽` : `${text} ${unit}`;
 }

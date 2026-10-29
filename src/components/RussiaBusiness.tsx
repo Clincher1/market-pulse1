@@ -44,6 +44,9 @@ type Status = 'calm' | 'watch' | 'pressure' | 'unknown';
 // Ставка и кривая ОФЗ — про стоимость денег, а не про курс. Держим их
 // отдельной строкой, чтобы ряд из пяти курсовых плиток не разъезжался.
 const MONEY_INDICATOR_IDS = ['key-rate', 'ruonia', 'ofz-10y'];
+// Международные резервы — не стоимость денег и не рынок: это внешний буфер,
+// у него отдельный блок и отдельное объяснение.
+const RESERVE_INDICATOR_IDS = ['reserves'];
 
 // Что должно быть в российском контуре. Если строка не пришла, сайт говорит
 // об этом словами, а не оставляет дырку без объяснения.
@@ -53,6 +56,7 @@ const EXPECTED_INDICATOR_NAMES: Record<string, string> = {
   imoex: 'IMOEX',
   rgbi: 'RGBI',
   'key-rate': 'ключевая ставка',
+  reserves: 'международные резервы',
   ruonia: 'RUONIA',
   'ofz-10y': 'доходность ОФЗ',
 };
@@ -231,10 +235,16 @@ function formatPercent(value: number | null | undefined): string {
   return `${sign}${value.toFixed(2).replace('.', ',')}%`;
 }
 
-function formatPp(value: number | null | undefined): string {
+/**
+ * Абсолютное изменение с единицей из ответа: «+0,05 п.п.» у ставок,
+ * «+6,4 млрд $» у резервов. Знаки после запятой не добиваются нулями —
+ * 6,40 и 6,4 это одно и то же число, а лишний ноль выглядит точнее, чем есть.
+ */
+function formatAbsChange(value: number | null | undefined, unit: string | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
-  const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(2).replace('.', ',')} п.п.`;
+  const sign = value > 0 ? '+' : value < 0 ? '−' : '';
+  const text = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(Math.abs(value));
+  return `${sign}${text} ${unit ?? ''}`.trim();
 }
 
 /** Короткая дата для подписи «к 27.10» — только там, где рядом стоит дельта. */
@@ -330,7 +340,7 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
             }`}
           >
             <Icon className="h-3.5 w-3.5" />
-            {formatPp(indicator.changeAbs)}
+            {formatAbsChange(indicator.changeAbs, indicator.changeAbsUnit)}
             {indicator.previousDate && (
               <span className="text-[10px] font-semibold text-slate-400">
                 к {formatShortDate(indicator.previousDate)}
@@ -674,7 +684,16 @@ export default function RussiaBusiness() {
     [indicators],
   );
   const mainIndicators = useMemo(
-    () => indicators.filter((indicator) => !MONEY_INDICATOR_IDS.includes(indicator.id)),
+    () =>
+      indicators.filter(
+        (indicator) =>
+          !MONEY_INDICATOR_IDS.includes(indicator.id) &&
+          !RESERVE_INDICATOR_IDS.includes(indicator.id),
+      ),
+    [indicators],
+  );
+  const reserveIndicator = useMemo(
+    () => indicators.find((indicator) => indicator.id === 'reserves') ?? null,
     [indicators],
   );
   const ofzIndicator = useMemo(
@@ -907,6 +926,34 @@ export default function RussiaBusiness() {
                       ))}
                     </div>
                     {ofzIndicator && <OfzCurve indicator={ofzIndicator} />}
+                  </>
+                )}
+                {reserveIndicator && (
+                  <>
+                    <div className="mt-5 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+                      Внешний буфер — международные резервы ЦБ
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                      <MarketTile indicator={reserveIndicator} />
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-xs leading-relaxed text-slate-300 md:col-span-2">
+                        <p>
+                          Международные резервы — валютные активы и монетарное золото Банка России:
+                          то, из чего он проводит операции на валютном рынке и чем отвечает по
+                          внешним обязательствам.
+                        </p>
+                        <p className="mt-2">
+                          Ряд недельный: отчётная дата — пятница, а значение публикуется на следующей
+                          неделе. Поэтому последняя точка всегда за прошлую пятницу — это правило
+                          источника, а не задержка сайта.
+                        </p>
+                        <p className="mt-2">
+                          Изменение показано в млрд долларов — тем же числом, что и в первоисточнике,
+                          без пересчёта в проценты. Сайт берёт из недельного ряда только итоговую
+                          сумму; структуру (валюта, золото, СДР) этот ряд не отдаёт, и разбирать её
+                          по частям сайт не станет.
+                        </p>
+                      </div>
+                    </div>
                   </>
                 )}
                 <RussiaHistory />

@@ -5,8 +5,13 @@ export interface RussiaMarketIndicator {
   value: number;
   unit: string;
   changePct: number | null;
-  /** Изменение в процентных пунктах, когда процент от процента бессмыслен. */
+  /**
+   * Изменение в абсолютных единицах — там, где процент от процента читался бы
+   * неверно (ставки) или просто не нужен (резервы). Единица рядом: п.п. или
+   * млрд $, чтобы плитка не подписывала разницу чужими единицами.
+   */
   changeAbs?: number | null;
+  changeAbsUnit?: string | null;
   asOf: string;
   previousDate?: string | null;
   provider: string;
