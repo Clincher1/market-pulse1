@@ -10,6 +10,9 @@ export interface RussiaMarketIndicator {
   provider: string;
   basis: string;
   sourceUrl: string;
+  /** Точки кривой доходности ОФЗ по срокам, если источник их отдал. */
+  curve?: Array<{ period: number; value: number }> | null;
+  curveAsOf?: string | null;
 }
 
 export interface RussiaHeadline {

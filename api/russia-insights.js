@@ -215,17 +215,50 @@ export function parseKeyRateXml(xml) {
  * где period — срок в ГОДАХ (0,25 … 20). Проверено на живом ответе
  * /iss/engines/stock/zcyc.json, а не на предположении о формате.
  */
+/**
+ * Строгое число из ISS. `Number(null)` и `Number('')` дают 0, а ноль в кривой —
+ * это не «нулевая доходность», а отсутствие значения. Пустые ячейки
+ * отбрасываются, а не превращаются в 0 %.
+ */
+function strictNumber(value) {
+  if (value === null || value === undefined) return Number.NaN;
+  if (typeof value === 'string' && value.trim() === '') return Number.NaN;
+  return Number(value);
+}
+
 export function pickOfz10y(payload) {
   const rows = rowsToObjects(payload?.yearyields);
   const withPeriod = rows
-    .map((row) => ({ row, period: Number(row.period), value: Number(row.value) }))
+    .map((row) => ({ row, period: strictNumber(row.period), value: strictNumber(row.value) }))
     .filter((item) => Number.isFinite(item.period) && Number.isFinite(item.value));
   if (withPeriod.length === 0) throw new Error('В кривой доходности нет периодов');
   const target = 10;
-  const best = withPeriod.reduce((acc, item) =>
-    Math.abs(item.period - target) < Math.abs(acc.period - target) ? item : acc,
-  );
+  // При повторе срока (ISS иногда отдаёт строку дважды) берём последнюю —
+  // ту же, что попадает в кривую, иначе плитка и график разойдутся в сотых.
+  const best = withPeriod.reduce((acc, item) => {
+    if (acc.period === target && item.period === target) return item;
+    return Math.abs(item.period - target) < Math.abs(acc.period - target) ? item : acc;
+  });
   return { ...best, exact: best.period === target };
+}
+
+/**
+ * Вся кривая, а не одна точка: ISS отдаёт 20 сроков (0,25 … 20 лет).
+ * Точки сортируются по сроку; при повторе срока остаётся последнее значение.
+ * Ничего не достраивается: если сроков два — в ответе будет два.
+ */
+export function extractCurve(payload) {
+  const rows = rowsToObjects(payload?.yearyields);
+  const byPeriod = new Map();
+  for (const row of rows) {
+    const period = strictNumber(row.period);
+    const value = strictNumber(row.value);
+    if (!Number.isFinite(period) || !Number.isFinite(value) || period <= 0) continue;
+    byPeriod.set(period, value);
+  }
+  return [...byPeriod.entries()]
+    .map(([period, value]) => ({ period, value: round(value, 2) }))
+    .sort((a, b) => a.period - b.period);
 }
 
 async function fetchCbrKeyRate() {
@@ -287,6 +320,7 @@ async function fetchCbrKeyRate() {
 async function fetchMoexOfz10y() {
   const payload = await fetchJson('https://iss.moex.com/iss/engines/stock/zcyc.json?iss.meta=off');
   const { exact, ...best } = pickOfz10y(payload);
+  const curve = extractCurve(payload);
 
   return {
     id: 'ofz-10y',
@@ -302,6 +336,9 @@ async function fetchMoexOfz10y() {
       ? 'Точка кривой бескупонной доходности на 10 лет; публичный поток может быть задержан'
       : `Точки на 10 лет в кривой нет: показана ближайшая — ${best.period} г.`,
     sourceUrl: 'https://www.moex.com/ru/marketdata/indices/state/gcurve/',
+    // Для рисунка кривой: точки, которые реально пришли, без сглаживания.
+    curve: curve.length >= 2 ? curve : null,
+    curveAsOf: `${best.row.tradedate ?? ''} ${best.row.tradetime ?? ''}`.trim(),
   };
 }
 
