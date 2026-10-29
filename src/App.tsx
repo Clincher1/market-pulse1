@@ -274,7 +274,7 @@ function App() {
                   <SectionFallback
                     id="forecasts"
                     title="Журнал проверок"
-                    message="Проверяем баланс свидетельств и порог 60/40…"
+                    message="Считаем записи журнала, попадания и точность…"
                     minHeightClass="min-h-[520px]"
                     className="mb-10 lg:mb-12"
                   />
@@ -303,7 +303,7 @@ function App() {
                   <SectionFallback
                     id="market-memory"
                     title="Память рынка"
-                    message="Собираем паспорта событий, замороженные сигналы и фактические исходы…"
+                    message="Поднимаем архив событий, зафиксированные ожидания и их исходы…"
                     minHeightClass="min-h-[760px]"
                     className="mb-10 lg:mb-12"
                   />

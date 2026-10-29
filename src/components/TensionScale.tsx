@@ -16,6 +16,15 @@ import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
 import { startPolling } from '@/lib/polling';
 
+/** «1 пункт», «13 пунктов», «22 пункта» — чтобы не писать «13 пункта». */
+function pointsWord(value: number): string {
+  const mod10 = value % 10;
+  const mod100 = value % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'пункт';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'пункта';
+  return 'пунктов';
+}
+
 type TensionPhase = 'loading' | 'live' | 'stale' | 'error';
 type TensionPoint = TensionData['history'][number];
 
@@ -304,7 +313,7 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
           {' · '}последнее: <strong className="text-slate-200">{Math.round(last.value)}</strong>
         </span>
         <span className={change > 0 ? 'font-bold text-amber-300' : change < 0 ? 'font-bold text-sky-300' : 'font-bold text-slate-300'}>
-          {change > 0 ? `+${change}` : change} пункта за период
+          {change > 0 ? `+${change}` : change} {pointsWord(Math.abs(change))} за период
         </span>
       </div>
     </div>
