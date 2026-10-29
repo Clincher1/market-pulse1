@@ -54,7 +54,10 @@ const CHANNEL_KEYWORDS: Record<ChannelId, string[]> = {
   ],
   rates: [
     'ключев', 'ставк', 'инфляц', 'центробанк', 'банк россии', 'цб', 'фрс',
-    'federal reserve', 'облигац', 'кредит', 'ипотек', 'доходност', 'rate',
+    'federal reserve', 'облигац', 'кредит', 'ипотек', 'доходност',
+    // Общего слова «rate» здесь нет специально: оно ловит «container rates»
+    // и «insurance rates» — это ставки за перевозку, а не стоимость денег.
+    'interest rate', 'policy rate', 'fed', 'yield', 'bond', 'credit',
   ],
   commodities: [
     'нефт', 'oil', 'Brent', 'opec', 'опек', 'газ', 'металл', 'зерн',
@@ -178,9 +181,10 @@ function includesAny(text: string, words: string[]): boolean {
  * целиком.
  */
 function keywordMatches(text: string, keyword: string): boolean {
-  if (/^[a-z0-9]+$/i.test(keyword)) {
+  if (/^[a-z0-9 ]+$/i.test(keyword)) {
     // Латинское слово — целиком, с простым множественным числом: «rate» не
     // должно находиться в «corporate», но «rates» в «interest rates» — должно.
+    // Словосочетания («interest rate») ищутся так же, как единое целое.
     return new RegExp(`\\b${keyword}(?:s|es)?\\b`, 'i').test(text);
   }
   return text.includes(keyword);
