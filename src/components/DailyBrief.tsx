@@ -415,9 +415,17 @@ export default function DailyBrief() {
       });
     }
 
-    const fxIndicators = russiaCandidates.filter((indicator) =>
-      ['usd-rub', 'eur-rub', 'cny-rub-moex', 'cny-rub-cbr'].includes(indicator.id),
-    );
+    // Один и тот же юань приходит дважды: официальный курс ЦБ и сделка на
+    // Мосбирже. В сумму должны идти три пары, а не четыре: иначе среднее по
+    // «3 парам» тихо считалось бы по четырём значениям, и юань весил вдвое
+    // больше доллара. Для валютного канала берётся биржевая пара, как в блоке
+    // «Каналы влияния»; курс ЦБ подхватывается, только если сделок нет.
+    const fxById = new Map(russiaCandidates.map((indicator) => [indicator.id, indicator]));
+    const fxIndicators = [
+      fxById.get('usd-rub'),
+      fxById.get('eur-rub'),
+      fxById.get('cny-rub-moex') ?? fxById.get('cny-rub-cbr'),
+    ].filter((indicator): indicator is NonNullable<typeof indicator> => Boolean(indicator));
     const fxChanges = fxIndicators
       .map((indicator) => indicator.changePct)
       .filter((value): value is number => typeof value === 'number');

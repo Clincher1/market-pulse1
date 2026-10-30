@@ -1270,7 +1270,7 @@ function AssetPanel({
               ориентиром. События, которые на него влияют, копятся в «Памяти рынка» ниже.
             </p>
           ) : forecastLoading ? (
-            <p className="mt-2 text-sm text-text-secondary">Загрузка сигнала…</p>
+            <p className="mt-2 text-sm text-text-secondary">Загрузка ожидания…</p>
           ) : !forecast ? (
             <p className="mt-2 text-sm leading-relaxed text-text-secondary">
               Ожидание временно недоступно. График выше построен по сохранённым ценам и от

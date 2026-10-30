@@ -14,6 +14,8 @@
  * запись обычно вчерашняя — это не задержка загрузки, а правило источника.
  */
 
+import { withRetry } from './fetchRetry.js';
+
 const SOAP_URL = 'https://www.cbr.ru/DailyInfoWebServ/DailyInfo.asmx';
 const TIMEOUT_MS = 9000;
 const USER_AGENT = 'MarketPulse/1.0 (+https://market-pulse1-eta.vercel.app/)';
@@ -61,24 +63,29 @@ export async function fetchRuoniaRecords(fromISO, tillISO) {
     `<fromDate>${fromISO}</fromDate><ToDate>${tillISO}</ToDate>` +
     '</RuoniaXML></soap:Body></soap:Envelope>';
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(SOAP_URL, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'user-agent': USER_AGENT,
-        'content-type': 'text/xml; charset=utf-8',
-        soapaction: 'http://web.cbr.ru/RuoniaXML',
-        accept: 'text/xml, application/xml;q=0.9, */*;q=0.5',
-      },
-      body,
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const text = await response.text();
-    return parseRuoniaXml(text);
-  } finally {
-    clearTimeout(timer);
-  }
+  // Один повтор: таймаут ЦБ — это чаще задумчивость сервиса, чем отказ, а
+  // стоило оно целой плитки в снимке: блок «Россия» уходил в красное, хотя
+  // через полсекунды тот же запрос отвечал нормально.
+  const text = await withRetry(async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const response = await fetch(SOAP_URL, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'user-agent': USER_AGENT,
+          'content-type': 'text/xml; charset=utf-8',
+          soapaction: 'http://web.cbr.ru/RuoniaXML',
+          accept: 'text/xml, application/xml;q=0.9, */*;q=0.5',
+        },
+        body,
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.text();
+    } finally {
+      clearTimeout(timer);
+    }
+  });
+  return parseRuoniaXml(text);
 }
