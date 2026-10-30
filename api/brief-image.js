@@ -81,6 +81,27 @@ function formatPct(value) {
     const sign = value > 0 ? '+' : value < 0 ? '−' : '';
     return `${sign}${Math.abs(value).toFixed(2).replace('.', ',')}%`;
 }
+/**
+ * Цена из кэша приходит строкой источника («$123.10», «$105,432», «0.8985»).
+ * На карточке рядом стоят российские числа с запятой, поэтому цена переводится
+ * в ту же локаль: иначе «$105,432» читается по-русски как сто пять с дробью.
+ * Неразбираемая строка возвращается как есть — выдумывать нечего.
+ */
+function formatPriceText(value) {
+    const text = stringValue(value);
+    const match = text.match(/^([^\d\-−]*)(\d[\d,]*(?:\.\d+)?)$/);
+    if (!match)
+        return text;
+    const numeric = match[2].replace(/,/g, '');
+    const number = Number(numeric);
+    if (!Number.isFinite(number))
+        return text;
+    const digits = Math.min(numeric.split('.')[1]?.length ?? 0, 4);
+    return match[1] + new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    }).format(number).replace(/\s/g, '\u00A0');
+}
 function truncateText(value, max) {
     const clean = value.replace(/\s+/g, ' ').trim();
     return clean.length > max ? `${clean.slice(0, Math.max(0, max - 1)).trimEnd()}…` : clean;
@@ -312,7 +333,7 @@ async function buildBriefCard() {
     }
     const strongestGlobal = [...liveAssets].sort((a, b) => Math.abs(finiteNumber(b.change) ?? 0) - Math.abs(finiteNumber(a.change) ?? 0))[0] ?? null;
     if (strongestGlobal && facts.length < 3) {
-        facts.push(`Сильнейшее дневное движение внешнего фона — ${stringValue(strongestGlobal.name)} ${formatPct(finiteNumber(strongestGlobal.change))} (последнее значение ${stringValue(strongestGlobal.price)}).`);
+        facts.push(`Сильнейшее дневное движение внешнего фона — ${stringValue(strongestGlobal.name)} ${formatPct(finiteNumber(strongestGlobal.change))} (последнее значение ${formatPriceText(strongestGlobal.price)}).`);
     }
     const strongestRussia = [...russiaCandidates].sort((a, b) => Math.abs(finiteNumber(b.changePct) ?? 0) - Math.abs(finiteNumber(a.changePct) ?? 0))[0] ?? null;
     if (strongestRussia && facts.length < 3) {
@@ -412,7 +433,7 @@ async function buildBriefCard() {
                 return;
             candidates.push({
                 score: 70 + Math.min(18, (Math.abs(deltaPct) / threshold) * 4),
-                text: `${stringValue(asset.name)}: ${formatPct(deltaPct)} к снимку; последнее значение ${stringValue(asset.price)}.`,
+                text: `${stringValue(asset.name)}: ${formatPct(deltaPct)} к снимку; последнее значение ${formatPriceText(asset.price)}.`,
             });
         });
         const snapshotRussiaObject = isRecord(snapshotRow.russia) ? snapshotRow.russia : null;

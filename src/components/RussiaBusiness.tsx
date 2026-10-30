@@ -29,6 +29,7 @@ import OfzCurve from './OfzCurve';
 import RussiaHistory from './RussiaHistory';
 import { SectionThemeBadge } from './sectionThemes';
 import { formatPercent as formatPercentShared } from '@/lib/percent';
+import { formatPriceText } from '@/lib/price';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
@@ -828,7 +829,7 @@ export default function RussiaBusiness() {
         icon: Fuel,
         title: 'Сырьё и экспорт',
         status: commodityStatus,
-        basis: Brent ? `Brent ${Brent.price} · ${formatPercent(Brent.change)}` : 'Brent временно недоступна.',
+        basis: Brent ? `Brent ${formatPriceText(Brent.price)} · ${formatPercent(Brent.change)}` : 'Brent временно недоступна.',
         rule: 'До 1 % — «Спокойно», 1–2,5 % — «Внимание», от 2,5 % — «Повышенное движение».',
         detail:
           'Считается только по Brent: других сырьевых рядов на сайте нет, поэтому за всю сырьевую выручку карточка не отвечает.',

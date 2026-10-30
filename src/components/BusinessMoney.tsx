@@ -3,6 +3,7 @@ import { ArrowUpRight, Landmark, Receipt, Ship, Wallet } from 'lucide-react';
 import { fetchRussiaInsightsShared, type RussiaMarketIndicator } from '@/data/russiaInsights';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import { startPolling } from '@/lib/polling';
+import { formatPriceText } from '@/lib/price';
 
 /**
  * «Деньги бизнеса сегодня» — четыре ориентира, с которыми сверяются договоры
@@ -86,30 +87,6 @@ function absText(value: number, unit: string): string {
   return `${sign}${text} ${unit}`.trim();
 }
 
-/**
- * Цена приходит из кэша строкой в формате источника («$123.10»). На одной
- * строке с «80,6761 ₽» точка смотрится как ошибка, поэтому число
- * переформатируется в русскую локаль, а префикс валюты сохраняется.
- * Если строка не разбирается — возвращается как есть: выдумывать нечего.
- */
-function priceText(raw: string): string {
-  const match = raw.match(/^([^\d\-−]*)(\d[\d,]*(?:\.\d+)?)$/);
-  if (!match) return raw;
-  const numeric = match[2].replace(/,/g, '');
-  const value = Number(numeric);
-  if (!Number.isFinite(value)) return raw;
-  // Знаков после запятой столько же, сколько в источнике: «$123.10» — это
-  // цена с точностью до цента, и «$123,1» показывал бы меньше, чем есть.
-  const digits = Math.min(numeric.split('.')[1]?.length ?? 0, 4);
-  return (
-    match[1] +
-    new Intl.NumberFormat('ru-RU', {
-      minimumFractionDigits: digits,
-      maximumFractionDigits: digits,
-    }).format(value)
-  );
-}
-
 function toneOf(value: number | null | undefined): 'up' | 'down' | 'flat' {
   if (value === null || value === undefined || !Number.isFinite(value) || value === 0) return 'flat';
   return value > 0 ? 'up' : 'down';
@@ -131,7 +108,7 @@ function brentFact(
     id: 'brent',
     icon: Ship,
     title: 'Нефть',
-    value: asset ? priceText(asset.price) : null,
+    value: asset ? formatPriceText(asset.price) : null,
     unit: 'Brent, за баррель',
     secondary: null,
     change: asset ? pctText(asset.change) : null,

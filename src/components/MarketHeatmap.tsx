@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { moscowClock, observationLabel } from '@/lib/asOf';
 import { formatCapPercent, formatPercent } from '@/lib/percent';
+import { formatPriceText } from '@/lib/price';
 import { AssetData, ForecastData } from '@/data/mockData';
 import ExpandHint from './ExpandHint';
 import {
@@ -365,7 +366,7 @@ function HeatTile({
   const observed = observationLabel(asset.asOf);
   const asOf = moscowClock(asset.updatedAt);
   const tooltip =
-    `${asset.name}: ${asset.price}` +
+    `${asset.name}: ${formatPriceText(asset.price)}` +
     // Если источник сказал, на какой момент верна цена, показываем именно это.
     // Если нет — только время записи в кэш, и тогда «обновлено», а не «на».
     (observed
@@ -413,7 +414,7 @@ function HeatTile({
       )}
 
       <div className="mt-3 text-xl font-extrabold tabular-nums leading-none">
-        {isFallback ? '—' : asset.price}
+        {isFallback ? '—' : formatPriceText(asset.price)}
       </div>
 
       {!isFallback && (observed || asset.updatedAt) && (
@@ -1004,7 +1005,9 @@ function AssetPanel({
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">
             Последнее значение:{' '}
-            <span className="font-extrabold tabular-nums text-text-primary">{asset.price}</span>
+            <span className="font-extrabold tabular-nums text-text-primary">
+              {formatPriceText(asset.price)}
+            </span>
             {!isFallback && (asset.asOf || asset.updatedAt) && (
               <span className="text-text-secondary">
                 {' '}
