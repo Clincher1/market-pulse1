@@ -642,6 +642,13 @@ function BriefImage({ card }) {
                         }, children: [_jsx("div", { style: { fontSize: 21, fontWeight: 800, color: '#7dd3fc' }, children: "market-pulse1-eta.vercel.app" }), _jsx("div", { style: { fontSize: 19, fontWeight: 700, color: '#cbd5e1' }, children: "\u0424\u0430\u043A\u0442\u044B \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E. \u0413\u0438\u043F\u043E\u0442\u0435\u0437\u044B \u2014 \u0441 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u043E\u0439." })] }), _jsx("div", { style: { display: 'flex', marginTop: 9, fontSize: 17, color: '#7c8da6' }, children: "\u0418\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u043E\u043D\u043D\u044B\u0439 \u043E\u0431\u0437\u043E\u0440 \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445. \u041D\u0435 \u0438\u043D\u0432\u0435\u0441\u0442\u0438\u0446\u0438\u043E\u043D\u043D\u0430\u044F \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F." })] })] }));
 }
 export default async function handler(req, res) {
+    // ?diag=ping отвечает до любой работы: так видно, доходит ли запрос до
+    // обработчика вообще, или функция падает ещё при загрузке модуля.
+    if (new URL(req.url ?? '/', 'https://x').searchParams.get('diag') === 'ping') {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).json({ ok: true, stage: 'entered', node: process.version });
+        return;
+    }
     if (!['GET', 'HEAD'].includes(req.method ?? '')) {
         res.setHeader('Allow', 'GET, HEAD');
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
