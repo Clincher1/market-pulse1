@@ -281,12 +281,29 @@ export default function RussiaHistory() {
                 .{series.truncated ? ' Источник отдал больше строк, чем поместилось в один ответ.' : ''}
               </span>
             </div>
-            {data.notes.map((note) => (
+            {/* Четыре абзаца методики подряд закрывали сам график. Первый —
+                про пропущенные дни — остаётся на виду, остальные раскрываются. */}
+            {data.notes.slice(0, 1).map((note) => (
               <div key={note} className="flex items-start gap-1.5">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
                 <span>{note}</span>
               </div>
             ))}
+            {data.notes.length > 1 && (
+              <details className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
+                <summary className="cursor-pointer select-none font-bold text-slate-400 transition-colors hover:text-slate-200">
+                  Как читать график
+                </summary>
+                <div className="mt-1.5 flex flex-col gap-1.5">
+                  {data.notes.slice(1).map((note) => (
+                    <span key={note} className="flex items-start gap-1.5">
+                      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                      <span>{note}</span>
+                    </span>
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
 
           <details className="mt-2 text-[11px] text-slate-400">
