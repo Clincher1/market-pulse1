@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatPercent, formatPercentCap, formatSharePercent } from '../src/lib/percent.ts';
+import { formatCapPercent, formatPercent, formatSharePercent } from '../src/lib/percent.ts';
 
 /**
  * Один формат процента на весь сайт. Проверка нужна потому, что раньше формат
@@ -34,9 +34,9 @@ test('точность задаётся на месте: у одних рядо�
   assert.equal(formatPercent(12.5, 0), `+13${NBSP}%`);
 });
 
-test('шкала насыщенности плитки: ±, без лишнего нуля после запятой', () => {
-  assert.equal(formatPercentCap(4), `±4${NBSP}%`);
-  assert.equal(formatPercentCap(2.5), `±2,5${NBSP}%`);
+test('шкала насыщенности плитки: без знака ± внутри (он в разметке) и без лишнего нуля', () => {
+  assert.equal(formatCapPercent(4), `4${NBSP}%`);
+  assert.equal(formatCapPercent(2.5), `2,5${NBSP}%`);
 });
 
 test('доля — без знака плюс', () => {

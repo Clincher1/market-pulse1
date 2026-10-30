@@ -16,10 +16,14 @@ export function formatPercent(value: number | null | undefined, digits = 2): str
   return `${sign}${Math.abs(value).toFixed(digits).replace('.', ',')}${NBSP}%`;
 }
 
-/** Шкала насыщенности плитки: «±4 %», без лишнего нуля после запятой. */
-export function formatPercentCap(cap: number): string {
+/**
+ * Шкала насыщенности плитки: «4 %» (без лишнего нуля после запятой).
+ * Знак «±» остаётся в разметке — иначе после первой же правки на экране
+ * появилось «шкала ±±4 %», как это и случилось на превью.
+ */
+export function formatCapPercent(cap: number): string {
   const digits = cap.toFixed(1).replace(/\.0$/, '').replace('.', ',');
-  return `±${digits}${NBSP}%`;
+  return `${digits}${NBSP}%`;
 }
 
 /** Доля без знака: «73 %». */

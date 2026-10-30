@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { moscowClock, observationLabel } from '@/lib/asOf';
-import { formatPercent, formatPercentCap } from '@/lib/percent';
+import { formatCapPercent, formatPercent } from '@/lib/percent';
 import { AssetData, ForecastData } from '@/data/mockData';
 import ExpandHint from './ExpandHint';
 import {
@@ -129,7 +129,7 @@ function horizonCap(assetId: string, intervals: number): number {
 }
 
 function formatCap(cap: number): string {
-  return formatPercentCap(cap);
+  return formatCapPercent(cap);
 }
 
 function observationsWord(n: number): string {
