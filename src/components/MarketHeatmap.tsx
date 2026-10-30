@@ -376,7 +376,10 @@ function HeatTile({
   const asOf = moscowClock(asset.updatedAt);
   const tooltip =
     `${asset.name}: ${asset.price}` +
-    (asOf ? ` на ${asOf} МСК` : '') +
+    // «обновлено», а не «на»: в кэше лежит время, когда писатель цен сходил
+    // за данными. У Brent, S&P 500 и золота источник — дневной ряд FRED/EIA,
+    // и «на 15:44 МСК» приписывало бы вчерашнему закрытию минутную точность.
+    (asOf ? `, обновлено ${asOf} МСК` : '') +
     `, изменение за горизонт «${horizon.label}» ` +
     `(${intervals} ${observationsWord(intervals)} источника): ` +
     `${horizonChangeValue === null ? 'недостаточно данных' : formatChange(change)}. ` +
@@ -422,7 +425,7 @@ function HeatTile({
 
       {!isFallback && asset.updatedAt && (
         <div className="mt-1 text-[10px] font-semibold text-white/70">
-          на {moscowClock(asset.updatedAt)} МСК
+          обновлено {moscowClock(asset.updatedAt)} МСК
         </div>
       )}
 
@@ -1010,7 +1013,10 @@ function AssetPanel({
             Последнее значение:{' '}
             <span className="font-extrabold tabular-nums text-text-primary">{asset.price}</span>
             {!isFallback && asset.updatedAt && (
-              <span className="text-text-secondary"> на {moscowClock(asset.updatedAt)} МСК</span>
+              <span className="text-text-secondary">
+                {' '}
+                (обновлено {moscowClock(asset.updatedAt)} МСК)
+              </span>
             )}
             {' · '}
             <span
