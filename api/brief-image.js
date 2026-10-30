@@ -682,11 +682,16 @@ export default async function handler(req, res) {
         // что угодно, поэтому ошибка не воспроизводилась, а на Vercel такая
         // отдача падала в 500 — ссылка «Снимок для Telegram» была мёртвой.
         const body = Buffer.from(png);
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Content-Length', String(body.length));
-        res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-        res.setHeader('Content-Disposition', 'attachment; filename="market-pulse-brief.png"');
-        res.status(200).send(body);
+        // writeHead + end вместо status().send(): send() на этой платформе
+        // падал на бинарном теле, хотя тот же конвейер в JSON-пробе отдавался
+        // нормально. end принимает Buffer напрямую и ничего не додумывает.
+        res.writeHead(200, {
+            'Content-Type': 'image/png',
+            'Content-Length': String(body.length),
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+            'Content-Disposition': 'attachment; filename="market-pulse-brief.png"',
+        });
+        res.end(body);
     }
     catch (error) {
         console.error('Brief image generation failed:', stage, error);
