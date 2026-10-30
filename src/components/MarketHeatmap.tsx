@@ -9,6 +9,8 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
+import { moscowClock, observationLabel } from '@/lib/asOf';
+import { formatPercent, formatPercentCap } from '@/lib/percent';
 import { AssetData, ForecastData } from '@/data/mockData';
 import ExpandHint from './ExpandHint';
 import {
@@ -127,7 +129,7 @@ function horizonCap(assetId: string, intervals: number): number {
 }
 
 function formatCap(cap: number): string {
-  return `${cap.toFixed(1).replace(/\.0$/, '')}%`;
+  return formatPercentCap(cap);
 }
 
 function observationsWord(n: number): string {
@@ -165,8 +167,7 @@ function readInitialPalette(): PaletteId {
 }
 
 function formatChange(change: number): string {
-  const sign = change > 0 ? '+' : '';
-  return `${sign}${change.toFixed(2)}%`;
+  return formatPercent(change);
 }
 
 /** Число для графика и статистики: точность зависит от масштаба актива. */
@@ -204,18 +205,6 @@ function formatDateShort(dateOrMs: string | number): string {
     year: 'numeric',
     timeZone: 'UTC',
   }).format(value);
-}
-
-/** Время источника по Москве: «12:02». Пустая строка, если времени нет. */
-function moscowClock(value?: string | null): string {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('ru-RU', {
-    timeZone: 'Europe/Moscow',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
 }
 
 function formatDateLong(date: string): string {
@@ -373,13 +362,17 @@ function HeatTile({
   const cap = horizonCap(asset.id, intervals);
   const nearlyFlat = horizonChangeValue === null || Math.abs(change) < 0.005;
   const DirectionIcon = nearlyFlat ? Minus : change > 0 ? TrendingUp : TrendingDown;
+  const observed = observationLabel(asset.asOf);
   const asOf = moscowClock(asset.updatedAt);
   const tooltip =
     `${asset.name}: ${asset.price}` +
-    // «обновлено», а не «на»: в кэше лежит время, когда писатель цен сходил
-    // за данными. У Brent, S&P 500 и золота источник — дневной ряд FRED/EIA,
-    // и «на 15:44 МСК» приписывало бы вчерашнему закрытию минутную точность.
-    (asOf ? `, обновлено ${asOf} МСК` : '') +
+    // Если источник сказал, на какой момент верна цена, показываем именно это.
+    // Если нет — только время записи в кэш, и тогда «обновлено», а не «на».
+    (observed
+      ? `, цена ${observed}`
+      : asOf
+        ? `, обновлено ${asOf} МСК`
+        : '') +
     `, изменение за горизонт «${horizon.label}» ` +
     `(${intervals} ${observationsWord(intervals)} источника): ` +
     `${horizonChangeValue === null ? 'недостаточно данных' : formatChange(change)}. ` +
@@ -423,9 +416,9 @@ function HeatTile({
         {isFallback ? '—' : asset.price}
       </div>
 
-      {!isFallback && asset.updatedAt && (
+      {!isFallback && (observed || asset.updatedAt) && (
         <div className="mt-1 text-[10px] font-semibold text-white/70">
-          обновлено {moscowClock(asset.updatedAt)} МСК
+          {observed || `обновлено ${asOf} МСК`}
         </div>
       )}
 
@@ -1012,10 +1005,10 @@ function AssetPanel({
           <p className="mt-0.5 text-sm text-text-secondary">
             Последнее значение:{' '}
             <span className="font-extrabold tabular-nums text-text-primary">{asset.price}</span>
-            {!isFallback && asset.updatedAt && (
+            {!isFallback && (asset.asOf || asset.updatedAt) && (
               <span className="text-text-secondary">
                 {' '}
-                (обновлено {moscowClock(asset.updatedAt)} МСК)
+                ({observationLabel(asset.asOf) || `обновлено ${moscowClock(asset.updatedAt)} МСК`})
               </span>
             )}
             {' · '}
