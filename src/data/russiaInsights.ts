@@ -78,3 +78,38 @@ export async function fetchRussiaInsights(): Promise<RussiaInsights> {
     window.clearTimeout(timer);
   }
 }
+
+/**
+ * Один сетевой запрос на страницу вместо одного на компонент.
+ *
+ * Российские индикаторы нужны двум блокам: «Пульс российского бизнеса» и
+ * верхней сводке про деньги. Дёргать `/api/russia-insights` дважды ради одних
+ * и тех же чисел — лишний запрос на каждом открытии. Здесь общий промис и
+ * короткий кэш: пока ответ свежий, второй блок берёт его же.
+ *
+ * Кэшируется только непустой успешный ответ: пустышку нельзя запомнить,
+ * иначе блок так и будет показывать «источник не ответил» после того, как
+ * источник ожил.
+ */
+const SHARED_TTL_MS = 120_000;
+let sharedCache: { at: number; data: RussiaInsights } | null = null;
+let sharedInflight: Promise<RussiaInsights> | null = null;
+
+export function fetchRussiaInsightsShared(): Promise<RussiaInsights> {
+  const now = Date.now();
+  if (sharedCache && now - sharedCache.at < SHARED_TTL_MS) {
+    return Promise.resolve(sharedCache.data);
+  }
+  if (sharedInflight) return sharedInflight;
+
+  sharedInflight = fetchRussiaInsights()
+    .then((data) => {
+      if (data.markets.length > 0) sharedCache = { at: Date.now(), data };
+      return data;
+    })
+    .finally(() => {
+      sharedInflight = null;
+    });
+
+  return sharedInflight;
+}

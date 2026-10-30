@@ -8,6 +8,7 @@ import KeyAssets from '@/components/KeyAssets';
 import Footer from '@/components/Footer';
 import GuideTeaser from '@/components/GuideTeaser';
 import DashboardQuickNav from '@/components/DashboardQuickNav';
+import BusinessMoney from '@/components/BusinessMoney';
 import { SectionThemeBadge } from '@/components/sectionThemes';
 import { DeferredMount, SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
@@ -186,6 +187,10 @@ function App() {
                 отдельно, называется журналом проверок и публикует свой счёт вместе с промахами.
               </p>
             </section>
+
+            <SectionBoundary title="Деньги бизнеса сегодня">
+              <BusinessMoney />
+            </SectionBoundary>
 
             <DashboardQuickNav />
 
