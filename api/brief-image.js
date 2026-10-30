@@ -669,6 +669,44 @@ export default async function handler(req, res) {
         res.status(200).json({ ok: true, step: 'resvg render', ms: Date.now() - startedAt, bytes: png.length });
         return;
     }
+    if (diagParam === 'card') {
+        const startedAt = Date.now();
+        const card = await buildBriefCard();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).json({
+            ok: true,
+            step: 'card data',
+            ms: Date.now() - startedAt,
+            facts: Array.isArray(card?.facts) ? card.facts.length : 0,
+            consequences: Array.isArray(card?.consequences) ? card.consequences.length : 0,
+            watch: typeof card?.watch === 'string' ? card.watch.length : 0,
+        });
+        return;
+    }
+    if (diagParam === 'svg') {
+        const startedAt = Date.now();
+        const [{ default: satori }, card, fonts] = await Promise.all([
+            import('satori'),
+            buildBriefCard(),
+            loadFonts(),
+        ]);
+        const dataMs = Date.now() - startedAt;
+        const svgStarted = Date.now();
+        const svg = await satori(_jsx(BriefImage, { card: card }), {
+            width: 1080,
+            height: 1600,
+            fonts,
+        });
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).json({
+            ok: true,
+            step: 'satori svg',
+            dataMs,
+            svgMs: Date.now() - svgStarted,
+            svgBytes: svg.length,
+        });
+        return;
+    }
     if (diagParam === 'fonts') {
         const fonts = await loadFonts();
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
