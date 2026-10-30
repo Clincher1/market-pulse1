@@ -42,6 +42,26 @@ const FRESH_ASSETS_MINUTES = 45;
 // run happened"; red means a daily run was missed.
 const FRESH_FORECAST_HOURS = 26;
 const FRESH_FEED_HOURS = 24;
+// Сколько может пройти без новых точек у каждого ряда истории. Это НЕ «задержка
+// сайта», а расписание источников: Мосбиржа отдаёт день после закрытия, ЦБ —
+// курс на дату и RUONIA на следующий день, резервы — раз в неделю (отчётная
+// пятница, публикация на следующей неделе). Если поставить всем один порог,
+// проверка будет красной каждые выходные по построению.
+const HISTORY_MAX_AGE_DAYS: Record<string, number> = {
+  // 7 дней на дневные ряды — не «запас на всякий случай», а цена компромисса:
+  // с 5 днями проверка краснела бы на длинных праздниках (Новый год, майские),
+  // когда закрыты и Мосбиржа, и публикации ЦБ, и это была бы ложная тревога.
+  // Ряд без новых точек дольше недели — уже поломка, а не календарь.
+  imoex: 7,
+  rgbi: 7,
+  'usd-rub': 7,
+  ruonia: 7,
+  // Резервы: отчётная пятница, публикация на следующей неделе, плюс запас.
+  reserves: 21,
+  // Ключевая ставка — ступень: она может не меняться месяцами, и это норма.
+  'key-rate': 90,
+};
+const ASSET_HISTORY_MAX_AGE_DAYS = 7;
 const MIN_SAMPLE = 20;
 const TENSION_TOLERANCE = 2;
 const MAX_ONE_SIDED_SHARE = 0.85;
@@ -737,18 +757,30 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       const markets = Array.isArray(payload.markets) ? payload.markets : [];
       const headlines = Array.isArray(payload.headlines) ? payload.headlines.length : 0;
       const errors = Array.isArray(payload.errors) ? payload.errors.length : 0;
-      // The block has two halves and both are visible rows: three CBR rates and
-      // three exchange figures (IMOEX, RGBI, CNY/MOEX). Counting all six as one
-      // number would hide a dead exchange half behind a healthy currency half.
-      const cbr = markets.filter(
-        (m) => /-cbr$/.test(String(m?.id ?? '')) || String(m?.provider ?? '') === 'Банк России',
-      ).length;
-      const exchange = markets.length - cbr;
+      // Раньше проверялись только счётчики «ЦБ ≥ 3, биржевых ≥ 3». Этого мало:
+      // курсов ЦБ приходит шесть, поэтому смерть RUONIA или недельных резервов
+      // проходила при зелёном счётчике. Теперь сверяется список по именам —
+      // каждый из девяти индикаторов, которые страница обещает показать.
+      const present = new Set(markets.map((m) => String(m?.id ?? '')));
+      const expected: Array<[string, string]> = [
+        ['usd-rub', 'USD/RUB ЦБ'],
+        ['eur-rub', 'EUR/RUB ЦБ'],
+        ['cny-rub-cbr', 'CNY/RUB ЦБ'],
+        ['imoex', 'IMOEX'],
+        ['rgbi', 'RGBI'],
+        ['cny-rub-moex', 'CNY на Мосбирже'],
+        ['key-rate', 'ключевая ставка'],
+        ['ruonia', 'RUONIA'],
+        ['ofz-10y', 'ОФЗ 10 лет'],
+        ['reserves', 'международные резервы'],
+      ];
+      const missing = expected.filter(([id]) => !present.has(id)).map(([, label]) => label);
       return {
-        ok: cbr >= 3 && exchange >= 3,
-        detail:
-          `курсов ЦБ ${cbr} из 3, биржевых ${exchange} из 3, заголовков ${headlines}` +
-          `${errors ? `, ошибок источников ${errors}` : ''} за ${Date.now() - started} мс`,
+        ok: missing.length === 0 && headlines > 0,
+        detail: missing.length
+          ? `не пришли: ${missing.join(', ')}; заголовков ${headlines} за ${Date.now() - started} мс`
+          : `все ${expected.length} индикаторов и ${headlines} заголовков за ${Date.now() - started} мс` +
+            `${errors ? `, ошибок источников ${errors}` : ''}`,
       };
     }),
 
@@ -805,6 +837,157 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         ok: calibrated.length === sameDay.length,
         detail: `за ${latestDate}: ${calibrated.length} из ${sameDay.length} прогнозов записаны с калибровкой` +
           (quiet ? ` (${quiet} без направленных доказательств — «нет сигнала», а не поломка)` : ''),
+      };
+    }),
+
+    // 14. История за три месяца — это отдельный блок на странице, который
+    //     собирает наш Vercel-функция из Мосбиржи и ЦБ. Если она упадёт, блок
+    //     просто напишет «историю получить не удалось», и никто об этом не
+    //     узнает: до сих пор её не смотрела ни одна проверка.
+    //     Порог у каждого ряда свой (HISTORY_MAX_AGE_DAYS): недельные резервы
+    //     и дневные котировки нельзя мерить одной линейкой.
+    check('ru_history_api', async () => {
+      const started = Date.now();
+      const res = await fetch(`${SITE}/api/russia-history`, { signal: AbortSignal.timeout(25000) });
+      if (!res.ok) return { ok: false, detail: `HTTP ${res.status} за ${Date.now() - started} мс` };
+      const payload = (await res.json().catch(() => null)) as
+        | { series?: Array<{ id?: string; points?: Array<{ date?: string }> }> }
+        | null;
+      if (!payload) return { ok: false, detail: 'ответ пришёл, но это не JSON' };
+      const series = Array.isArray(payload.series) ? payload.series : [];
+      const byId = new Map(series.map((item) => [String(item.id ?? ''), item]));
+      const today = Date.now();
+      const problems: string[] = [];
+      const okParts: string[] = [];
+      for (const [id, maxDays] of Object.entries(HISTORY_MAX_AGE_DAYS)) {
+        const row = byId.get(id);
+        const points = Array.isArray(row?.points) ? row!.points! : [];
+        const last = points.at(-1)?.date;
+        if (!row || !last) {
+          problems.push(`${id}: ряда нет`);
+          continue;
+        }
+        const ageDays = (today - Date.parse(`${String(last).slice(0, 10)}T00:00:00Z`)) / 86_400_000;
+        if (!Number.isFinite(ageDays)) {
+          problems.push(`${id}: дата не читается`);
+        } else if (ageDays > maxDays) {
+          problems.push(`${id}: последняя точка ${String(last)} (${Math.round(ageDays)} дн при допуске ${maxDays})`);
+        } else {
+          okParts.push(`${id} ${Math.round(ageDays)}/${maxDays} дн`);
+        }
+      }
+      return {
+        ok: problems.length === 0,
+        detail: problems.length
+          ? `просрочено: ${problems.join(', ')}`
+          : `все ${okParts.length} рядов в своём сроке: ${okParts.join(', ')} за ${Date.now() - started} мс`,
+      };
+    }),
+
+    // 15. Панель «Проверить данные» под мировой плиткой берёт датированные
+    //     закрытия из asset_price_history_v1. Если писатель истории встанет,
+    //     плитка будет показывать свежую цену, а панель — старую историю, и
+    //     расхождение никто не заметит.
+    check('asset_history_panel', async () => {
+      const rows = (await restJson(
+        'asset_price_history_v1?select=frontend_asset_id,observation_date&order=observation_date.desc&limit=400',
+      )) as AnyRecord[];
+      const latest = new Map<string, string>();
+      for (const row of rows) {
+        const id = String(row.frontend_asset_id ?? '');
+        const date = String(row.observation_date ?? '').slice(0, 10);
+        if (!id || !date) continue;
+        const seen = latest.get(id);
+        if (!seen || date > seen) latest.set(id, date);
+      }
+      const expected = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'];
+      const today = Date.now();
+      const stale = expected.filter((id) => {
+        const date = latest.get(id);
+        if (!date) return true;
+        const ageDays = (today - Date.parse(`${date}T00:00:00Z`)) / 86_400_000;
+        return !Number.isFinite(ageDays) || ageDays > ASSET_HISTORY_MAX_AGE_DAYS;
+      });
+      return {
+        ok: stale.length === 0,
+        detail: stale.length
+          ? `нет свежих датированных точек: ${stale.map((id) => `${id}${latest.get(id) ? ` (${latest.get(id)})` : ' (нет строк)'}`).join(', ')}`
+          : `по всем ${expected.length} активам есть точки не старше ${ASSET_HISTORY_MAX_AGE_DAYS} дн`,
+      };
+    }),
+
+    // 16. «Память рынка» — исследовательский раздел, который читает три
+    //     публичных представления. Пустое представление не роняет страницу:
+    //     раздел просто тихо показывает меньше, поэтому пустоту надо ловить.
+    check('market_memory', async () => {
+      const [stats, events, analogues, forecasts] = await Promise.all([
+        restJson('market_memory_stats_v1?select=*&limit=1'),
+        restJson('market_memory_events_v1?select=latest_published_at&order=latest_published_at.desc&limit=1'),
+        restJson('market_memory_analogues_v1?select=sample_size&order=sample_size.desc&limit=1'),
+        restJson('market_memory_forecasts_v1?select=issued_at&order=issued_at.desc&limit=1'),
+      ]) as [AnyRecord[], AnyRecord[], AnyRecord[], AnyRecord[]];
+      const missing: string[] = [];
+      if (!Array.isArray(stats) || stats.length === 0) missing.push('нет итоговой статистики');
+      if (!Array.isArray(events) || events.length === 0) missing.push('нет событий');
+      if (!Array.isArray(analogues) || analogues.length === 0) missing.push('нет аналогов');
+      if (!Array.isArray(forecasts) || forecasts.length === 0) missing.push('нет прогнозов раздела');
+      if (missing.length) return { ok: false, detail: missing.join(', ') };
+      const eventAge = hoursAgo(String(events[0]?.latest_published_at ?? ''));
+      const forecastAge = hoursAgo(String(forecasts[0]?.issued_at ?? ''));
+      const stale: string[] = [];
+      // Аналоги считаются по накопленной истории и не обязаны обновляться каждый
+      // день; события и прогнозы — обязаны.
+      if (eventAge === null || eventAge > 72) stale.push(`последнее событие ${eventAge?.toFixed(0) ?? '—'} ч назад`);
+      if (forecastAge === null || forecastAge > 48) stale.push(`прогнозы раздела ${forecastAge?.toFixed(0) ?? '—'} ч назад`);
+      return {
+        ok: stale.length === 0,
+        detail: stale.length
+          ? `раздел отстал: ${stale.join(', ')}`
+          : `событие ${eventAge!.toFixed(0)} ч назад, прогнозы ${forecastAge!.toFixed(0)} ч назад, аналоги ${analogues.length ? 'есть' : 'нет'}`,
+      };
+    }),
+
+    // 17. Честный счёт прогнозов — то, что читатель проверяет первым. Если
+    //     представление опустеет, раздел покажет прочерки, а не ошибку.
+    check('track_record', async () => {
+      const rows = (await restJson(
+        'forecast_track_record?select=asset_key,issued,scored,last_evaluated_at&asset_key=eq.ALL&limit=1',
+      )) as AnyRecord[];
+      const row = rows[0];
+      if (!row) return { ok: false, detail: 'счёта прогнозов нет: представление пустое' };
+      const issued = Number(row.issued ?? 0);
+      const scored = Number(row.scored ?? 0);
+      const age = hoursAgo(String(row.last_evaluated_at ?? ''));
+      return {
+        ok: issued > 0 && age !== null && age <= 36,
+        detail: `выдано ${issued}, проверено ${scored}, последняя проверка ${age === null ? '—' : `${age.toFixed(1)} ч`} назад`,
+      };
+    }),
+
+    // 18. PNG-карточка для Telegram собирается на лету из тех же чисел. Она
+    //     не видна на странице, поэтому её поломку не заметит никто, кроме
+    //     того, кто нажмёт ссылку.
+    check('brief_image', async () => {
+      const started = Date.now();
+      // ?diag=1 меняет только ответ при ошибке: вместо голого 500 приходит
+      // JSON со стадией и текстом ошибки рендерера. Так в отчёте видно, что
+      // именно сломалось, а не просто «не собралась».
+      const res = await fetch(`${SITE}/api/brief-image?diag=1`, { signal: AbortSignal.timeout(25000) });
+      const type = res.headers.get('content-type') ?? '';
+      if (type.includes('application/json')) {
+        const payload = (await res.json().catch(() => null)) as
+          | { stage?: string; error?: string }
+          | null;
+        return {
+          ok: false,
+          detail: `не собралась на стадии «${payload?.stage ?? '?'}»: ${(payload?.error ?? 'без текста').slice(0, 200)}`,
+        };
+      }
+      if (!res.ok) return { ok: false, detail: `HTTP ${res.status} за ${Date.now() - started} мс` };
+      const bytes = (await res.arrayBuffer()).byteLength;
+      return {
+        ok: type.startsWith('image/png') && bytes > 10_000,
+        detail: `${type || 'без типа'}, ${Math.round(bytes / 1024)} КБ за ${Date.now() - started} мс`,
       };
     }),
   ])) {

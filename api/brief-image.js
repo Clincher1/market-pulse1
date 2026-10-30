@@ -649,32 +649,55 @@ export default async function handler(req, res) {
         res.status(405).json({ error: 'Method not allowed' });
         return;
     }
+    // Стадия нужна, чтобы поломка не выглядела одинаково: «не загрузились
+    // шрифты», «упал рендерер» и «упала отдача байтов» чинятся по-разному.
+    let stage = 'renderers';
+    const wantsDiagnostics = new URL(req.url ?? '/', 'https://x').searchParams.get('diag') === '1';
     try {
+        stage = 'renderers';
         const rendererPromise = Promise.all([import('satori'), import('@resvg/resvg-js')]);
+        stage = 'data';
+        const cardPromise = buildBriefCard();
+        stage = 'fonts';
+        const fontsPromise = loadFonts();
         const [[{ default: satori }, { Resvg }], card, fonts] = await Promise.all([
             rendererPromise,
-            buildBriefCard(),
-            loadFonts(),
+            cardPromise,
+            fontsPromise,
         ]);
+        stage = 'satori';
         const svg = await satori(_jsx(BriefImage, { card: card }), {
             width: 1080,
             height: 1600,
             fonts,
         });
+        stage = 'resvg';
         const png = new Resvg(svg, {
             fitTo: { mode: 'width', value: 1080 },
         })
             .render()
             .asPng();
+        stage = 'send';
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
         res.setHeader('Content-Disposition', 'attachment; filename="market-pulse-brief.png"');
         res.status(200).send(png);
     }
     catch (error) {
-        console.error('Brief image generation failed:', error);
+        console.error('Brief image generation failed:', stage, error);
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Cache-Control', 'no-store');
-        res.status(500).json({ error: 'Brief image generation failed' });
+        if (wantsDiagnostics) {
+            // Только стадия и текст ошибки рендерера: ни данных, ни ключей.
+            // Сайт публичный, поэтому по умолчанию этого никто не видит, а
+            // самопроверка получает причину вместо голого «HTTP 500».
+            res.status(200).json({
+                ok: false,
+                stage,
+                error: error instanceof Error ? `${error.name}: ${error.message}`.slice(0, 400) : String(error).slice(0, 400),
+            });
+            return;
+        }
+        res.status(500).json({ error: 'Brief image generation failed', stage });
     }
 }
