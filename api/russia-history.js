@@ -11,6 +11,8 @@
 import { fetchReservesRecords } from './_shared/cbrReserves.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
 
+import { withRetry } from './_shared/fetchRetry.js';
+
 const TIMEOUT_MS = 9000;
 const USER_AGENT = 'MarketPulse/1.0 (+https://market-pulse1-eta.vercel.app/)';
 
@@ -47,22 +49,35 @@ function decodeBuffer(buffer, contentType = '') {
   }
 }
 
-async function fetchWithTimeout(url, parseResponse) {
+async function timedFetch(url, init, timeoutMs) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'user-agent': USER_AGENT,
-        accept: 'application/json, application/xml, text/xml;q=0.9, */*;q=0.5',
-      },
-    });
+    const response = await fetch(url, { ...init, signal: controller.signal });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await parseResponse(response);
+    return response;
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchWithTimeout(url, parseResponse) {
+  // Один повтор на таймаут или сетевой сбой. Ряд истории собирается из шести
+  // источников сразу, и без повтора один медленный ответ выбивал целый ряд из
+  // графика — а через полсекунды тот же запрос отвечал нормально.
+  return withRetry(async () => {
+    const response = await timedFetch(
+      url,
+      {
+        headers: {
+          'user-agent': USER_AGENT,
+          accept: 'application/json, application/xml, text/xml;q=0.9, */*;q=0.5',
+        },
+      },
+      TIMEOUT_MS,
+    );
+    return parseResponse(response);
+  });
 }
 
 async function fetchJson(url) {
@@ -78,26 +93,24 @@ async function fetchText(url) {
 
 /** SOAP ЦБ: ключевая ставка отдаётся только POST-запросом к DailyInfo.asmx. */
 async function fetchTextPost(url, body, soapAction) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'user-agent': USER_AGENT,
-        'content-type': 'text/xml; charset=utf-8',
-        soapaction: soapAction,
-        accept: 'text/xml, application/xml;q=0.9, */*;q=0.5',
+  return withRetry(async () => {
+    const response = await timedFetch(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'user-agent': USER_AGENT,
+          'content-type': 'text/xml; charset=utf-8',
+          soapaction: soapAction,
+          accept: 'text/xml, application/xml;q=0.9, */*;q=0.5',
+        },
+        body,
       },
-      body,
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      TIMEOUT_MS,
+    );
     const buffer = await response.arrayBuffer();
     return decodeBuffer(buffer, response.headers.get('content-type') || '');
-  } finally {
-    clearTimeout(timer);
-  }
+  });
 }
 
 function isoDate(date) {

@@ -136,7 +136,16 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
       )}
 
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <span className="text-xs text-text-secondary font-medium">Влияние:</span>
+        {/* Не «Влияние», а «Влияние по разметке»: чипы — это ответ
+            классификатора по тексту, а не измеренное движение цены. На карточке
+            про политику он может перечислить все пять активов сразу, и без
+            подписи это читалось как доказанная связь. */}
+        <span
+          className="text-xs text-text-secondary font-medium"
+          title="Направление влияния ставит классификатор по тексту новости и разметке ленты; это оценка текста, а не движение цены"
+        >
+          Влияние по разметке:
+        </span>
         <div className="flex items-center gap-2 flex-wrap">
           {(item.impacts ?? []).map((impact, i) => (
             <span
