@@ -651,6 +651,8 @@ export default async function handler(req, res) {
     }
     // Стадия нужна, чтобы поломка не выглядела одинаково: «не загрузились
     // шрифты», «упал рендерер» и «упала отдача байтов» чинятся по-разному.
+    // Самопроверка зовёт этот адрес с ?diag=1 и называет стадию в отчёте:
+    // снаружи бинарный ответ не посмотреть, поэтому причина нужна изнутри.
     let stage = 'renderers';
     const wantsDiagnostics = new URL(req.url ?? '/', 'https://x').searchParams.get('diag') === '1';
     try {
@@ -678,13 +680,10 @@ export default async function handler(req, res) {
             .render()
             .asPng();
         stage = 'send';
-        // asPng() отдаёт Uint8Array, а не Buffer. Локальная заглушка принимала
-        // что угодно, поэтому ошибка не воспроизводилась, а на Vercel такая
-        // отдача падала в 500 — ссылка «Снимок для Telegram» была мёртвой.
+        // asPng() отдаёт Uint8Array. Через res.end нужен именно Buffer с
+        // известной длиной: тип тела здесь не угадывается, а размер известен
+        // заранее, поэтому Content-Length ставится явно.
         const body = Buffer.from(png);
-        // writeHead + end вместо status().send(): send() на этой платформе
-        // падал на бинарном теле, хотя тот же конвейер в JSON-пробе отдавался
-        // нормально. end принимает Buffer напрямую и ничего не додумывает.
         res.writeHead(200, {
             'Content-Type': 'image/png',
             'Content-Length': String(body.length),
