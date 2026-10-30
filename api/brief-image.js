@@ -649,32 +649,64 @@ export default async function handler(req, res) {
         res.status(405).json({ error: 'Method not allowed' });
         return;
     }
+    // Стадия нужна, чтобы поломка не выглядела одинаково: «не загрузились
+    // шрифты», «упал рендерер» и «упала отдача байтов» чинятся по-разному.
+    // Самопроверка зовёт этот адрес с ?diag=1 и называет стадию в отчёте:
+    // снаружи бинарный ответ не посмотреть, поэтому причина нужна изнутри.
+    let stage = 'renderers';
+    const wantsDiagnostics = new URL(req.url ?? '/', 'https://x').searchParams.get('diag') === '1';
     try {
+        stage = 'renderers';
         const rendererPromise = Promise.all([import('satori'), import('@resvg/resvg-js')]);
+        stage = 'data';
+        const cardPromise = buildBriefCard();
+        stage = 'fonts';
+        const fontsPromise = loadFonts();
         const [[{ default: satori }, { Resvg }], card, fonts] = await Promise.all([
             rendererPromise,
-            buildBriefCard(),
-            loadFonts(),
+            cardPromise,
+            fontsPromise,
         ]);
+        stage = 'satori';
         const svg = await satori(_jsx(BriefImage, { card: card }), {
             width: 1080,
             height: 1600,
             fonts,
         });
+        stage = 'resvg';
         const png = new Resvg(svg, {
             fitTo: { mode: 'width', value: 1080 },
         })
             .render()
             .asPng();
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-        res.setHeader('Content-Disposition', 'attachment; filename="market-pulse-brief.png"');
-        res.status(200).send(png);
+        stage = 'send';
+        // asPng() отдаёт Uint8Array. Через res.end нужен именно Buffer с
+        // известной длиной: тип тела здесь не угадывается, а размер известен
+        // заранее, поэтому Content-Length ставится явно.
+        const body = Buffer.from(png);
+        res.writeHead(200, {
+            'Content-Type': 'image/png',
+            'Content-Length': String(body.length),
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+            'Content-Disposition': 'attachment; filename="market-pulse-brief.png"',
+        });
+        res.end(body);
     }
     catch (error) {
-        console.error('Brief image generation failed:', error);
+        console.error('Brief image generation failed:', stage, error);
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Cache-Control', 'no-store');
-        res.status(500).json({ error: 'Brief image generation failed' });
+        if (wantsDiagnostics) {
+            // Только стадия и текст ошибки рендерера: ни данных, ни ключей.
+            // Сайт публичный, поэтому по умолчанию этого никто не видит, а
+            // самопроверка получает причину вместо голого «HTTP 500».
+            res.status(200).json({
+                ok: false,
+                stage,
+                error: error instanceof Error ? `${error.name}: ${error.message}`.slice(0, 400) : String(error).slice(0, 400),
+            });
+            return;
+        }
+        res.status(500).json({ error: 'Brief image generation failed', stage });
     }
 }

@@ -4,6 +4,7 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle2,
+  Clock,
   RefreshCw,
   Radio,
   XCircle,
@@ -117,9 +118,10 @@ export default function SystemStatus() {
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary sm:text-base">
           Раз в час система заново пересчитывает индекс напряжённости, проверяет
-          свежесть новостей, котировок и прогнозов, опрашивает каждую ленту и
-          смотрит, отвечает ли сайт. Результат каждой проверки остаётся в базе —
-          это не «всё хорошо на словах», а запись, которую можно прочитать.
+          свежесть новостей, котировок и прогнозов, историю за три месяца, «Память
+          рынка», счёт прогнозов и PNG-карточку, опрашивает каждую ленту и смотрит,
+          отвечает ли сайт. Результат каждой проверки остаётся в базе — это не «всё
+          хорошо на словах», а запись, которую можно прочитать.
         </p>
       </div>
 
@@ -266,6 +268,15 @@ export default function SystemStatus() {
           )}
 
           {/* Все проверки */}
+          <p className="mb-3 flex items-start gap-2 rounded-xl border border-border-subtle bg-white/[0.02] px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
+            <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              Зелёный — данные пришли в пределах своего расписания, оно подписано у каждой
+              проверки. Красный — источник молчит дольше, чем ему положено: это поломка, а не
+              задержка. Недельные резервы ЦБ, RUONIA с публикацией на следующий день и закрытие
+              Мосбиржи — расписание, а не простой.
+            </span>
+          </p>
           <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {Object.entries(checks)
               .sort((a, b) => Number(a[1].ok) - Number(b[1].ok))
@@ -291,6 +302,12 @@ export default function SystemStatus() {
                       <div className="mt-0.5 text-xs text-text-secondary">
                         {CHECK_LABELS[name]?.hint ?? ''}
                       </div>
+                      {CHECK_LABELS[name]?.cadence && (
+                        <div className="mt-1 flex items-start gap-1.5 text-[11px] text-text-secondary/80">
+                          <Clock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                          <span>{CHECK_LABELS[name]?.cadence}</span>
+                        </div>
+                      )}
                       <div
                         className={`mt-1.5 text-xs ${
                           value.ok ? 'text-slate-300' : 'text-rose-100'
