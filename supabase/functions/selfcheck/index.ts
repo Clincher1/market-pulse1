@@ -58,8 +58,10 @@ const HISTORY_MAX_AGE_DAYS: Record<string, number> = {
   ruonia: 7,
   // Резервы: отчётная пятница, публикация на следующей неделе, плюс запас.
   reserves: 21,
-  // Ключевая ставка — ступень: она может не меняться месяцами, и это норма.
-  'key-rate': 90,
+  // Ключевой ставки здесь нет намеренно. Это ступень: точка появляется только
+  // в день решения ЦБ, поэтому «возраст последней точки» у неё равен времени с
+  // прошлого изменения и может быть любым. Проверять её возрастом — значит
+  // краснеть каждый месяц без единой поломки; для неё проверяется наличие ряда.
 };
 const ASSET_HISTORY_MAX_AGE_DAYS = 7;
 const MIN_SAMPLE = 20;
@@ -859,6 +861,14 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       const today = Date.now();
       const problems: string[] = [];
       const okParts: string[] = [];
+      // Ступенчатый ряд проверяется на наличие, а не на возраст: между
+      // решениями ЦБ новых точек у него быть не может.
+      const step = byId.get('key-rate');
+      if (!step || !Array.isArray(step.points) || step.points.length === 0) {
+        problems.push('key-rate: ступени ставки нет в окне');
+      } else {
+        okParts.push('key-rate ступень на месте');
+      }
       for (const [id, maxDays] of Object.entries(HISTORY_MAX_AGE_DAYS)) {
         const row = byId.get(id);
         const points = Array.isArray(row?.points) ? row!.points! : [];
