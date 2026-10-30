@@ -25,6 +25,8 @@ interface Secondary {
   value: string;
   change?: string | null;
   changeTone?: 'up' | 'down' | 'flat';
+  /** К какому моменту относится именно это число, если он отличается. */
+  note?: string | null;
 }
 
 interface Fact {
@@ -64,15 +66,38 @@ function num(value: number, digits: number): string {
   }).format(value);
 }
 
+/**
+ * Проценты печатаются через toFixed, как во всех остальных плитках сайта.
+ *
+ * Intl.NumberFormat здесь давал другой ответ на том же числе: API отдаёт
+ * changePct уже округлённым до трёх знаков (-0.235), и Intl округлял 0,235
+ * вверх до 0,24, а toFixed — вниз до 0,23. На одной странице получались
+ * «−0,24 %» сверху и «−0,23 %» ниже. Округлять дважды нельзя, поэтому
+ * формат один на весь сайт.
+ */
 function pctText(value: number): string {
   const sign = value > 0 ? '+' : value < 0 ? '−' : '';
-  return `${sign}${num(Math.abs(value), 2)} %`;
+  return `${sign}${Math.abs(value).toFixed(2).replace('.', ',')} %`;
 }
 
 function absText(value: number, unit: string): string {
   const sign = value > 0 ? '+' : value < 0 ? '−' : '';
   const text = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(Math.abs(value));
   return `${sign}${text} ${unit}`.trim();
+}
+
+/**
+ * Цена приходит из кэша строкой в формате источника («$123.10»). На одной
+ * строке с «80,6761 ₽» точка смотрится как ошибка, поэтому число
+ * переформатируется в русскую локаль, а префикс валюты сохраняется.
+ * Если строка не разбирается — возвращается как есть: выдумывать нечего.
+ */
+function priceText(raw: string): string {
+  const match = raw.match(/^([^\d\-−]*)(\d[\d,]*(?:\.\d+)?)$/);
+  if (!match) return raw;
+  const value = Number(match[2].replace(/,/g, ''));
+  if (!Number.isFinite(value)) return raw;
+  return `${match[1]}${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(value)}`;
 }
 
 function toneOf(value: number | null | undefined): 'up' | 'down' | 'flat' {
@@ -96,7 +121,7 @@ function brentFact(
     id: 'brent',
     icon: Ship,
     title: 'Нефть',
-    value: asset ? asset.price : null,
+    value: asset ? priceText(asset.price) : null,
     unit: 'Brent, за баррель',
     secondary: null,
     change: asset ? pctText(asset.change) : null,
@@ -111,7 +136,11 @@ function brentFact(
 function factsFrom(markets: RussiaMarketIndicator[], brent: { price: string; change: number } | null): Fact[] {
   const byId = new Map(markets.map((market) => [market.id, market]));
   const usd = byId.get('usd-rub') ?? null;
-  const cny = byId.get('cny-rub-moex') ?? byId.get('cny-rub-cbr') ?? null;
+  // Именно официальный курс ЦБ: он стоит рядом с официальным USD/RUB по той же
+  // дате. Биржевое значение юаня на этой дате могло быть предыдущим закрытием
+  // («сделок сегодня в потоке нет»), и на карточке «курс для расчётов» это
+  // выглядело бы как текущая котировка.
+  const cny = byId.get('cny-rub-cbr') ?? byId.get('cny-rub-moex') ?? null;
   const keyRate = byId.get('key-rate') ?? null;
   const ruonia = byId.get('ruonia') ?? null;
   const reserves = byId.get('reserves') ?? null;
@@ -138,11 +167,15 @@ function factsFrom(markets: RussiaMarketIndicator[], brent: { price: string; cha
             value: `${num(ruonia.value, 2)} %`,
             change: ruoniaChange,
             changeTone: toneOf(ruonia.changeAbs),
+            // Дата у RUONIA своя: ставка за 28.10, а плитка показывает
+            // ключевую, действующую с 27.07. Одна дата на две разные ставки
+            // приписывала бы свежесть той, которой у неё нет.
+            note: shortDate(ruonia.asOf),
           }
         : null,
       change: null,
       changeTone: 'flat',
-      asOf: shortDate(ruonia?.asOf ?? keyRate?.asOf),
+      asOf: keyRate ? `с ${shortDate(keyRate.asOf)}` : shortDate(ruonia?.asOf),
       provider: 'Банк России',
       sourceUrl: ruonia?.sourceUrl ?? keyRate?.sourceUrl ?? 'https://www.cbr.ru/hd_base/KeyRate/',
       check: 'если ставка в вашем кредите плавающая, она привязана к одной из этих двух',
@@ -155,7 +188,7 @@ function factsFrom(markets: RussiaMarketIndicator[], brent: { price: string; cha
       value: usd ? `${num(usd.value, 4)} ₽` : null,
       unit: 'USD/RUB, официальный курс ЦБ',
       secondary: cny
-        ? { label: 'CNY/RUB', value: `${num(cny.value, 4)} ₽` }
+        ? { label: 'CNY/RUB', value: `${num(cny.value, 4)} ₽`, note: shortDate(cny.asOf) }
         : null,
       change:
         usd?.changePct !== null && usd?.changePct !== undefined ? pctText(usd.changePct) : null,
@@ -174,7 +207,7 @@ function factsFrom(markets: RussiaMarketIndicator[], brent: { price: string; cha
       id: 'reserves',
       icon: Receipt,
       title: 'Буфер ЦБ',
-      value: reserves ? num(reserves.value, 1) : null,
+      value: reserves ? num(reserves.value, 2) : null,
       unit: 'млрд $, международные резервы',
       secondary: null,
       change:
@@ -185,7 +218,7 @@ function factsFrom(markets: RussiaMarketIndicator[], brent: { price: string; cha
       asOf: shortDate(reserves?.asOf),
       provider: 'Банк России',
       sourceUrl: reserves?.sourceUrl ?? 'https://www.cbr.ru/hd_base/mrrf/mrrf_7d/',
-      check: 'на ваш договор не влияет напрямую: это запас, из которого ЦБ действует на курсе',
+      check: 'на ваш договор не влияет напрямую — это запас, из которого ЦБ действует на курсе',
     },
   ];
 }
@@ -312,6 +345,9 @@ export default function BusinessMoney() {
                     >
                       {fact.secondary.change}
                     </span>
+                  )}
+                  {fact.secondary.note && (
+                    <span className="text-slate-500">· {fact.secondary.note}</span>
                   )}
                 </div>
               )}
