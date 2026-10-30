@@ -642,101 +642,6 @@ function BriefImage({ card }) {
                         }, children: [_jsx("div", { style: { fontSize: 21, fontWeight: 800, color: '#7dd3fc' }, children: "market-pulse1-eta.vercel.app" }), _jsx("div", { style: { fontSize: 19, fontWeight: 700, color: '#cbd5e1' }, children: "\u0424\u0430\u043A\u0442\u044B \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E. \u0413\u0438\u043F\u043E\u0442\u0435\u0437\u044B \u2014 \u0441 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u043E\u0439." })] }), _jsx("div", { style: { display: 'flex', marginTop: 9, fontSize: 17, color: '#7c8da6' }, children: "\u0418\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u043E\u043D\u043D\u044B\u0439 \u043E\u0431\u0437\u043E\u0440 \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445. \u041D\u0435 \u0438\u043D\u0432\u0435\u0441\u0442\u0438\u0446\u0438\u043E\u043D\u043D\u0430\u044F \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F." })] })] }));
 }
 export default async function handler(req, res) {
-    // ?diag=ping отвечает до любой работы: так видно, доходит ли запрос до
-    // обработчика вообще, или функция падает ещё при загрузке модуля.
-    const diagParam = new URL(req.url ?? '/', 'https://x').searchParams.get('diag');
-    if (diagParam === 'ping') {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.status(200).json({ ok: true, stage: 'entered', node: process.version });
-        return;
-    }
-    // Пошаговые пробы: нативный рендерер при сбое убивает процесс целиком, и
-    // try/catch такой сбой не ловит — остаётся только измерять шаги по одному.
-    if (diagParam === 'satori') {
-        const startedAt = Date.now();
-        const { default: satori } = await import('satori');
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.status(200).json({ ok: true, step: 'satori import', ms: Date.now() - startedAt, version: typeof satori });
-        return;
-    }
-    if (diagParam === 'resvg') {
-        const startedAt = Date.now();
-        const { Resvg } = await import('@resvg/resvg-js');
-        const png = new Resvg('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#000"/></svg>', {
-            fitTo: { mode: 'width', value: 10 },
-        }).render().asPng();
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.status(200).json({ ok: true, step: 'resvg render', ms: Date.now() - startedAt, bytes: png.length });
-        return;
-    }
-    if (diagParam === 'card') {
-        const startedAt = Date.now();
-        const card = await buildBriefCard();
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.status(200).json({
-            ok: true,
-            step: 'card data',
-            ms: Date.now() - startedAt,
-            facts: Array.isArray(card?.facts) ? card.facts.length : 0,
-            consequences: Array.isArray(card?.consequences) ? card.consequences.length : 0,
-            watch: typeof card?.watch === 'string' ? card.watch.length : 0,
-        });
-        return;
-    }
-    if (diagParam === 'svg') {
-        const startedAt = Date.now();
-        const [{ default: satori }, card, fonts] = await Promise.all([
-            import('satori'),
-            buildBriefCard(),
-            loadFonts(),
-        ]);
-        const dataMs = Date.now() - startedAt;
-        const svgStarted = Date.now();
-        const svg = await satori(_jsx(BriefImage, { card: card }), {
-            width: 1080,
-            height: 1600,
-            fonts,
-        });
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.status(200).json({
-            ok: true,
-            step: 'satori svg',
-            dataMs,
-            svgMs: Date.now() - svgStarted,
-            svgBytes: svg.length,
-        });
-        return;
-    }
-    if (diagParam === 'png') {
-        const startedAt = Date.now();
-        const [{ default: satori }, { Resvg }, card, fonts] = await Promise.all([
-            import('satori'),
-            import('@resvg/resvg-js'),
-            buildBriefCard(),
-            loadFonts(),
-        ]);
-        const preparedMs = Date.now() - startedAt;
-        const svg = await satori(_jsx(BriefImage, { card: card }), { width: 1080, height: 1600, fonts });
-        const svgMs = Date.now() - startedAt - preparedMs;
-        const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1080 } }).render().asPng();
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.status(200).json({
-            ok: true,
-            step: 'png',
-            preparedMs,
-            svgMs,
-            pngMs: Date.now() - startedAt - preparedMs - svgMs,
-            svgBytes: svg.length,
-            pngBytes: png.length,
-        });
-        return;
-    }
-    if (diagParam === 'fonts') {
-        const fonts = await loadFonts();
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.status(200).json({ ok: true, step: 'fonts', count: fonts.length, bytes: fonts.map((font) => font.data.byteLength) });
-        return;
-    }
     if (!['GET', 'HEAD'].includes(req.method ?? '')) {
         res.setHeader('Allow', 'GET, HEAD');
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -773,10 +678,15 @@ export default async function handler(req, res) {
             .render()
             .asPng();
         stage = 'send';
+        // asPng() отдаёт Uint8Array, а не Buffer. Локальная заглушка принимала
+        // что угодно, поэтому ошибка не воспроизводилась, а на Vercel такая
+        // отдача падала в 500 — ссылка «Снимок для Telegram» была мёртвой.
+        const body = Buffer.from(png);
         res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Length', String(body.length));
         res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
         res.setHeader('Content-Disposition', 'attachment; filename="market-pulse-brief.png"');
-        res.status(200).send(png);
+        res.status(200).send(body);
     }
     catch (error) {
         console.error('Brief image generation failed:', stage, error);
