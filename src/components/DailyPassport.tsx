@@ -166,7 +166,14 @@ export default function DailyPassport() {
             Официальный курс USD/RUB
           </div>
           <div className="mt-1 text-2xl font-extrabold tabular-nums text-text-primary">
-            {today.usdRub === null ? '—' : today.usdRub.toFixed(4)}
+            {today.usdRub === null
+              ? '—'
+              : // Через ru-RU: на той же странице курс уже напечатан как
+                // «80,6761 ₽», и «80.6761» ниже читалось как другое число.
+                `${new Intl.NumberFormat('ru-RU', {
+                  minimumFractionDigits: 4,
+                  maximumFractionDigits: 4,
+                }).format(today.usdRub)} ₽`}
           </div>
           <div className="mt-1 text-[11px] text-text-secondary">
             {today.usdRub === null

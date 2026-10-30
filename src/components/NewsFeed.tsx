@@ -166,7 +166,9 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
           <span className="text-xs text-text-secondary">Тональность:</span>
           <span className={`text-xs font-bold ${sentimentColor(item.sentiment)}`}>
             {item.sentiment > 0 ? '+' : ''}
-            {Number(item.sentiment.toFixed(2))} {sentimentLabel(item.sentiment)}
+            {/* Запятая, как у всех чисел на сайте: «−0,35», а не «-0.35». */}
+            {item.sentiment.toFixed(2).replace('.', ',').replace('-', '\u2212')}{' '}
+            {sentimentLabel(item.sentiment)}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
