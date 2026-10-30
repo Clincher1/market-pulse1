@@ -95,9 +95,19 @@ function absText(value: number, unit: string): string {
 function priceText(raw: string): string {
   const match = raw.match(/^([^\d\-−]*)(\d[\d,]*(?:\.\d+)?)$/);
   if (!match) return raw;
-  const value = Number(match[2].replace(/,/g, ''));
+  const numeric = match[2].replace(/,/g, '');
+  const value = Number(numeric);
   if (!Number.isFinite(value)) return raw;
-  return `${match[1]}${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(value)}`;
+  // Знаков после запятой столько же, сколько в источнике: «$123.10» — это
+  // цена с точностью до цента, и «$123,1» показывал бы меньше, чем есть.
+  const digits = Math.min(numeric.split('.')[1]?.length ?? 0, 4);
+  return (
+    match[1] +
+    new Intl.NumberFormat('ru-RU', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(value)
+  );
 }
 
 function toneOf(value: number | null | undefined): 'up' | 'down' | 'flat' {
