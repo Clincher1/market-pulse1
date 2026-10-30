@@ -14,6 +14,7 @@ import {
   Info,
   Landmark,
   LineChart,
+  Minus,
   Newspaper,
   Percent,
   ShieldAlert,
@@ -303,7 +304,9 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
       : change < 0
         ? 'text-red-300'
         : 'text-slate-300';
-  const Icon = change >= 0 ? TrendingUp : TrendingDown;
+  // Стрелка вверх у нулевого изменения — тоже утверждение о движении,
+  // которого не было: при 0,00 % рисуется горизонтальная черта.
+  const Icon = change === 0 ? Minus : change > 0 ? TrendingUp : TrendingDown;
 
   return (
     <a
@@ -784,9 +787,13 @@ export default function RussiaBusiness() {
             : rgbi?.changePct === null || rgbi?.changePct === undefined
             ? 'RGBI временно недоступен, поэтому вывод о стоимости денег не делается.'
             : `${
-                rgbi.changePct >= 0
-                  ? 'Цены гособлигаций растут; при прочих равных доходности снижаются.'
-                  : 'Цены гособлигаций снижаются; при прочих равных доходности растут.'
+                // Ноль — это не рост. Раньше подпись выбиралась по «>= 0», и при
+                // RGBI 0,00 % сайт утверждал, что цены облигаций растут.
+                Math.abs(rgbi.changePct) < 0.01
+                  ? 'Цены гособлигаций почти не изменились за наблюдение.'
+                  : rgbi.changePct > 0
+                    ? 'Цены гособлигаций растут; при прочих равных доходности снижаются.'
+                    : 'Цены гособлигаций снижаются; при прочих равных доходности растут.'
               } Статус — по большему из двух отношений: IMOEX к 1,5 %, RGBI к 0,6 %; до 0,5 — «Спокойно», до 1 — «Внимание».`,
       },
       {
