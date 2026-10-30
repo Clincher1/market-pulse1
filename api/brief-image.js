@@ -707,6 +707,30 @@ export default async function handler(req, res) {
         });
         return;
     }
+    if (diagParam === 'png') {
+        const startedAt = Date.now();
+        const [{ default: satori }, { Resvg }, card, fonts] = await Promise.all([
+            import('satori'),
+            import('@resvg/resvg-js'),
+            buildBriefCard(),
+            loadFonts(),
+        ]);
+        const preparedMs = Date.now() - startedAt;
+        const svg = await satori(_jsx(BriefImage, { card: card }), { width: 1080, height: 1600, fonts });
+        const svgMs = Date.now() - startedAt - preparedMs;
+        const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1080 } }).render().asPng();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).json({
+            ok: true,
+            step: 'png',
+            preparedMs,
+            svgMs,
+            pngMs: Date.now() - startedAt - preparedMs - svgMs,
+            svgBytes: svg.length,
+            pngBytes: png.length,
+        });
+        return;
+    }
     if (diagParam === 'fonts') {
         const fonts = await loadFonts();
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
