@@ -644,9 +644,35 @@ function BriefImage({ card }) {
 export default async function handler(req, res) {
     // ?diag=ping отвечает до любой работы: так видно, доходит ли запрос до
     // обработчика вообще, или функция падает ещё при загрузке модуля.
-    if (new URL(req.url ?? '/', 'https://x').searchParams.get('diag') === 'ping') {
+    const diagParam = new URL(req.url ?? '/', 'https://x').searchParams.get('diag');
+    if (diagParam === 'ping') {
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.status(200).json({ ok: true, stage: 'entered', node: process.version });
+        return;
+    }
+    // Пошаговые пробы: нативный рендерер при сбое убивает процесс целиком, и
+    // try/catch такой сбой не ловит — остаётся только измерять шаги по одному.
+    if (diagParam === 'satori') {
+        const startedAt = Date.now();
+        const { default: satori } = await import('satori');
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).json({ ok: true, step: 'satori import', ms: Date.now() - startedAt, version: typeof satori });
+        return;
+    }
+    if (diagParam === 'resvg') {
+        const startedAt = Date.now();
+        const { Resvg } = await import('@resvg/resvg-js');
+        const png = new Resvg('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#000"/></svg>', {
+            fitTo: { mode: 'width', value: 10 },
+        }).render().asPng();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).json({ ok: true, step: 'resvg render', ms: Date.now() - startedAt, bytes: png.length });
+        return;
+    }
+    if (diagParam === 'fonts') {
+        const fonts = await loadFonts();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).json({ ok: true, step: 'fonts', count: fonts.length, bytes: fonts.map((font) => font.data.byteLength) });
         return;
     }
     if (!['GET', 'HEAD'].includes(req.method ?? '')) {
