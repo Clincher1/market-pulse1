@@ -28,6 +28,7 @@ import GuideLink from './GuideLink';
 import OfzCurve from './OfzCurve';
 import RussiaHistory from './RussiaHistory';
 import { SectionThemeBadge } from './sectionThemes';
+import { formatPercent as formatPercentShared } from '@/lib/percent';
 import { NewsItem } from '@/data/mockData';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
@@ -234,9 +235,7 @@ function classifyText(text: string): { channel: ChannelId; keyword: string }[] {
 }
 
 function formatPercent(value: number | null | undefined): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
-  const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(2).replace('.', ',')}%`;
+  return formatPercentShared(value);
 }
 
 /**
@@ -484,7 +483,7 @@ function scoreNews(news: NewsItem[], selectedProfiles: ProfileId[]): ScoredNews[
       const reasons: string[] = [];
       if (directRussia) reasons.push('прямая связь с Россией, рублём или российскими институтами');
       if (profileMatches) reasons.push('совпадает с вашим бизнес-профилем');
-      reasons.push(`важность ${item.importance}/10 и уверенность классификации ${Math.round(confidence * 100)}%`);
+      reasons.push(`важность ${item.importance}/10 и уверенность классификации ${Math.round(confidence * 100)} %`);
       return { item, channels: channelList, matchedKeywords, impactAssets, directRussia, score, reasons };
     })
     .filter(

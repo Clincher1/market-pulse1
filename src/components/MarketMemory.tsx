@@ -25,6 +25,7 @@ import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
 import ExpandHint from './ExpandHint';
+import { formatPercent, formatSharePercent } from '@/lib/percent';
 import { startPolling } from '@/lib/polling';
 import {
   fetchMarketMemory,
@@ -101,13 +102,12 @@ function formatDate(value?: string): string {
 }
 
 function formatPct(value?: number, digits = 2): string {
-  if (value === undefined || !Number.isFinite(value)) return '—';
-  return `${value > 0 ? '+' : ''}${value.toFixed(digits)}%`;
+  return formatPercent(value, digits);
 }
 
 function formatShare(value?: number): string {
   if (value === undefined || !Number.isFinite(value)) return '—';
-  return `${Math.round(value * 100)}%`;
+  return formatSharePercent(value);
 }
 
 function directionMeta(direction: string) {

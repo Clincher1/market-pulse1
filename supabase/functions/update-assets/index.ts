@@ -30,6 +30,12 @@ type AssetResult = {
     change: number;
     sparkline: number[];
     updated_at: string;
+    /**
+     * Момент, на который верна цена (дата закрытия для дневных рядов, момент
+     * котировки для внутридневных). До миграции 20261030120000 колонки в
+     * cached_assets нет, и тогда поле вырезается перед записью.
+     */
+    as_of: string | null;
   };
   meta: AnyRecord;
 };
@@ -149,6 +155,20 @@ function formatFx(value: number): string {
   return value.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 }
 
+/**
+ * `as_of` в строке кэша. Если источник отдал строку, которая не разбирается как
+ * дата, в колонку timestamptz её писать нельзя: PostgREST отклонит весь запрос,
+ * и кэш останется старым. Тогда честнее null — плитка покажет только время
+ * записи, но не соврёт про дату наблюдения.
+ */
+function asOfValue(value?: string | null): string | null {
+  if (!value) return null;
+  const text = value.trim();
+  if (!text) return null;
+  const parsed = Date.parse(text.length === 10 ? `${text}T00:00:00Z` : text);
+  return Number.isFinite(parsed) ? text : null;
+}
+
 function makeAsset(input: {
   id: string;
   name: string;
@@ -187,6 +207,7 @@ function makeAsset(input: {
       change: round(change, 4),
       sparkline: points.slice(-SPARKLINE_POINTS).map((point) => round(point.value, 8)),
       updated_at: input.updatedAt,
+      as_of: asOfValue(input.asOf ?? latestPoint.date),
     },
     meta: {
       id: input.id,
@@ -358,6 +379,22 @@ async function fetchGold(updatedAt: string): Promise<AssetResult> {
   });
 }
 
+// Колонка as_of появляется миграцией 20261030120000. Пока её нет, писать её в
+// upsert нельзя: PostgREST отклонит всю строку, и кэш перестанет обновляться.
+// Проверяем один раз за запуск и запоминаем ответ.
+let asOfSupported: boolean | null = null;
+
+async function hasAsOfColumn(): Promise<boolean> {
+  if (asOfSupported !== null) return asOfSupported;
+  try {
+    await restJson("cached_assets?select=as_of&limit=1");
+    asOfSupported = true;
+  } catch {
+    asOfSupported = false;
+  }
+  return asOfSupported;
+}
+
 async function isFreshNewCache(): Promise<boolean> {
   const rows = await restJson("cached_assets?select=id,name,updated_at") as Array<{ id: string; name: string; updated_at: string }>;
   const expected = Object.entries(EXPECTED_NAMES).map(([id, name]) => rows.find((row) => row.id === id && row.name === name));
@@ -439,11 +476,17 @@ serveWithErrorReporting("update-assets", async (request) => {
 
     const order = ["usd-eur", "sp500", "brent", "gold", "btc"];
     results.sort((a, b) => order.indexOf(a.row.id) - order.indexOf(b.row.id));
+    const storeAsOf = publish ? await hasAsOfColumn() : false;
     if (publish) {
+      const rows = results.map((result) => {
+        if (storeAsOf) return result.row;
+        const { as_of: _omitted, ...rest } = result.row;
+        return rest;
+      });
       await restJson("cached_assets?on_conflict=id", {
         method: "POST",
         headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-        body: JSON.stringify(results.map((result) => result.row)),
+        body: JSON.stringify(rows),
       });
     }
 
@@ -451,6 +494,9 @@ serveWithErrorReporting("update-assets", async (request) => {
       success: true,
       publish,
       published: publish,
+      // Видно, попала ли дата наблюдения в кэш: без колонки она остаётся только
+      // в ответе функции и до плитки не доходит.
+      as_of_stored: storeAsOf,
       assets_ok: results.length,
       assets_total: tasks.length,
       assets: results.map((result) => result.meta),

@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Camera, Eye, History, Zap } from 'lucide-react';
+import { formatPercent } from '@/lib/percent';
 import type { ForecastData, NewsItem, TensionData } from '@/data/mockData';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
 import { fetchLiveTension } from '@/data/liveTension';
@@ -66,9 +67,7 @@ function plural(n: number, forms: [string, string, string]): string {
 }
 
 function formatPct(value: number | null | undefined): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
-  const sign = value > 0 ? '+' : value < 0 ? '−' : '';
-  return `${sign}${Math.abs(value).toFixed(2).replace('.', ',')}%`;
+  return formatPercent(value);
 }
 
 function formatIndicatorValue(indicator: RussiaMarketIndicator): string {
@@ -800,7 +799,7 @@ export default function DailyBrief() {
 
       {snapshot && changeView.comparable > 0 && (
         <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
-          Пороги шума: шкала — 5 пунктов; цены — 0,1–1,5% в зависимости от инструмента;
+          Пороги шума: шкала — 5 пунктов; цены — 0,1–1,5{' '}% в зависимости от инструмента;
           сигналы — смена публичного статуса или сдвиг баланса на 10.
           {changeView.totalSignificant > changeView.items.length
             ? ` Показано ${changeView.items.length} самых заметных из ${changeView.totalSignificant} изменений выше порогов.`
