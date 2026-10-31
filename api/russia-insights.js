@@ -1,4 +1,10 @@
 import { fetchReservesRecords } from './_shared/cbrReserves.js';
+import {
+  monthEndDate,
+  monthLabel,
+  parseInflationTable,
+  pickLatestInflation,
+} from './_shared/cbrInflation.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
 import { withRetry } from './_shared/fetchRetry.js';
 
@@ -465,13 +471,19 @@ function shiftDate(isoDate, days) {
  * Берётся последняя точка с датой строго раньше сегодняшней: строка текущей
  * сессии в истории может появиться до закрытия, и базой она быть не может.
  */
-export function pickPreviousClose(payload, todayIso) {
+export function pickPreviousClose(payload, todayIso, boardId = null) {
   const block = payload?.history;
   if (!block?.columns || !Array.isArray(block.data)) return null;
   const dateIndex = block.columns.indexOf('TRADEDATE');
   const closeIndex = block.columns.indexOf('CLOSE');
+  const boardIndex = block.columns.indexOf('BOARDID');
   if (dateIndex < 0 || closeIndex < 0) return null;
+  // У валютного рынка один и тот же инструмент торгуется на нескольких
+  // площадках (GLDRUB_TOM: CETS, CNGD, LICU), и закрытия у них разные.
+  // Без фильтра по площадке базой могло стать закрытие чужой сессии.
+  if (boardId && boardIndex < 0) return null;
   const rows = block.data
+    .filter((row) => !boardId || String(row?.[boardIndex] ?? '') === boardId)
     .map((row) => ({ date: String(row?.[dateIndex] ?? ''), close: Number(row?.[closeIndex]) }))
     .filter(
       (row) =>
@@ -491,6 +503,15 @@ async function fetchMoexPreviousClose(secid, todayIso) {
     `?iss.meta=off&from=${shiftDate(todayIso, -12)}&till=${shiftDate(todayIso, -1)}`;
   const payload = await fetchJson(url);
   return pickPreviousClose(payload, todayIso);
+}
+
+/** То же для валютного рынка: золото и юань торгуются там, не в индексах. */
+async function fetchMoexCurrencyPreviousClose(secid, todayIso, boardId) {
+  const url =
+    `https://iss.moex.com/iss/history/engines/currency/markets/selt/securities/${secid}.json` +
+    `?iss.meta=off&from=${shiftDate(todayIso, -12)}&till=${shiftDate(todayIso, -1)}`;
+  const payload = await fetchJson(url);
+  return pickPreviousClose(payload, todayIso, boardId);
 }
 
 function rowsToObjects(block) {
@@ -530,6 +551,129 @@ async function fetchMoexIndex(id, name, label) {
       ? `Текущее значение индекса. Изменение к закрытию не посчитано: история ISS не отдала предыдущее закрытие — показывать вместо него разницу с предыдущим значением индекса было бы другим числом`
       : `Текущее значение индекса; изменение — к закрытию ${ruDate(previous.date)} по истории ISS. Публичный поток может быть задержан`,
     sourceUrl: `https://www.moex.com/ru/index/${id}/`,
+  };
+}
+
+/**
+ * Золото на Мосбирже, GLDRUB_TOM: рубли за грамм.
+ *
+ * Зачем свой источник вместо платного ключа: это та же публичная витрина ISS,
+ * что и у индексов, — ключа не требует, не имеет лимита и отдаёт время
+ * источника. Цена здесь биржевая сделка в рублях, а не мировой спот в
+ * долларах за унцию: это разные числа с разной базой, и подписывать одно
+ * именем другого нельзя. Пересчёт рубля за грамм в доллары за унцию сюда не
+ * подставляется — российское золото торгуется со своей премией к споту, и
+ * такой пересчёт выдал бы одно за другое.
+ *
+ * База изменения — закрытие предыдущей сессии из опубликованной истории, а не
+ * PREVPRICE и не LASTCHANGE: у валютного рынка на один инструмент приходится
+ * несколько площадок, и закрытия у них разные.
+ */
+async function fetchMoexGold() {
+  const todayIso = moscowToday();
+  const url =
+    'https://iss.moex.com/iss/engines/currency/markets/selt/securities/GLDRUB_TOM.json?iss.meta=off';
+  const [payload, previous] = await Promise.all([
+    fetchJson(url),
+    fetchMoexCurrencyPreviousClose('GLDRUB_TOM', todayIso, 'CETS').catch(() => null),
+  ]);
+  const security = rowsToObjects(payload.securities).find(
+    (item) => item.SECID === 'GLDRUB_TOM' && item.BOARDID === 'CETS',
+  );
+  const market = rowsToObjects(payload.marketdata).find(
+    (item) => item.SECID === 'GLDRUB_TOM' && item.BOARDID === 'CETS',
+  );
+  if (!security || !market) throw new Error('Нет CETS для GLDRUB_TOM');
+
+  // До первой сделки дня ISS отдаёт LAST = 0/null. Тогда показывается
+  // предыдущее закрытие и изменение не считается: рисовать «0,00 %» на
+  // отсутствии сделки — значит утверждать, что рынок стоял.
+  const traded = [market.LAST, market.MARKETPRICETODAY, market.CLOSEPRICE]
+    .map(Number)
+    .find((candidate) => Number.isFinite(candidate) && candidate > 0);
+  const fallback = Number(security.PREVPRICE);
+  const value = traded ?? (Number.isFinite(fallback) ? fallback : null);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('Некорректное значение GLDRUB_TOM');
+
+  const base = previous?.close ?? null;
+  const hasTrade = traded !== undefined;
+  return {
+    id: 'gold-moex',
+    name: 'Золото',
+    label: 'Мосбиржа, рубли за грамм',
+    value: round(value, 2),
+    unit: '₽/г',
+    changePct: base === null ? null : round(((value - base) / base) * 100, 3),
+    asOf: market.SYSTIME || `${market.TRADEDATE || ''} ${market.UPDATETIME || ''}`.trim(),
+    previousDate: previous?.date ?? null,
+    provider: 'Мосбиржа ISS',
+    basis: !hasTrade
+      ? `Сделок в этой сессии ещё не было: показано закрытие предыдущей (${ruDate(previous?.date ?? todayIso)}), изменение поэтому не посчитано`
+      : base === null
+        ? 'Цена последней сделки GLDRUB_TOM. Изменение к закрытию не посчитано: история ISS не отдала предыдущее закрытие'
+        : `Цена последней сделки GLDRUB_TOM; изменение — к закрытию ${ruDate(previous.date)} по истории ISS. Это биржевая цена в рублях за грамм, а не мировой спот в долларах за унцию`,
+    sourceUrl: 'https://www.moex.com/ru/issue/GLDRUB_TOM/CETS',
+  };
+}
+
+// Страница ЦБ с таблицей «ключевая ставка / инфляция / цель». Таблица приходит
+// в самой разметке, поэтому читается обычным запросом без браузера.
+const INFLATION_PAGES = [
+  'https://www.cbr.ru/hd_base/infl/',
+  // Выгрузка той же таблицы: если вёрстка страницы изменится, данные всё равно
+  // найдутся. Идентификатор набора — часть публичной ссылки «XLSX» на странице.
+  'https://www.cbr.ru/Queries/UniDbQuery/DownloadExcel/132934',
+];
+
+/**
+ * Инфляция год к году из таблицы Банка России (данные Росстата).
+ *
+ * Последняя цифра всегда за прошлый месяц: ЦБ публикует её в середине
+ * следующего. Поэтому месяц печатается в подписи — иначе «6,35 %» в начале
+ * ноября читалось бы как инфляция за ноябрь.
+ *
+ * Изменение считается в процентных пунктах: 6,33 → 6,35 это «+0,02 п.п.», а
+ * не «+0,3 %». Процент от процента — другое число.
+ */
+async function fetchInflation() {
+  let rows = [];
+  const failures = [];
+  for (const url of INFLATION_PAGES) {
+    try {
+      const parsed = parseInflationTable(await fetchText(url));
+      if (parsed.length > 0) {
+        rows = parsed;
+        break;
+      }
+      failures.push(`${url}: строк с месяцем не найдено`);
+    } catch (error) {
+      failures.push(`${url}: ${error?.message || 'недоступно'}`);
+    }
+  }
+  const picked = pickLatestInflation(rows);
+  if (!picked) throw new Error(`таблица инфляции не разобрана (${failures.join('; ')})`);
+
+  const { latest, previous } = picked;
+  const change = previous ? round(latest.inflation - previous.inflation, 2) : null;
+  return {
+    id: 'inflation',
+    name: 'Инфляция',
+    label: 'Рост цен, год к году',
+    value: round(latest.inflation, 2),
+    unit: '%',
+    changePct: null,
+    asOf: monthEndDate(latest.month),
+    previousDate: previous ? monthEndDate(previous.month) : null,
+    changeAbs: change,
+    changeAbsUnit: 'п.п.',
+    provider: 'Банк России (данные Росстата)',
+    basis:
+      `Инфляция за ${monthLabel(latest.month)} к тому же месяцу прошлого года; ` +
+      (previous
+        ? `изменение — к ${monthLabel(previous.month).replace(/ \d{4}$/, '')}, в процентных пунктах. `
+        : '') +
+      'ЦБ публикует месячное значение в середине следующего месяца, поэтому последняя цифра всегда за прошлый месяц',
+    sourceUrl: 'https://www.cbr.ru/hd_base/infl/',
   };
 }
 
@@ -666,6 +810,8 @@ export default async function handler(req, res) {
     fetchRuonia(),
     fetchReserves(),
     fetchMoexOfz10y(),
+    fetchMoexGold(),
+    fetchInflation(),
   ];
   const marketLabels = [
     ...CBR_CURRENCIES.map((currency) => currency.name),
@@ -676,6 +822,8 @@ export default async function handler(req, res) {
     'RUONIA',
     'Международные резервы',
     'Кривая доходности ОФЗ',
+    'Золото на Мосбирже',
+    'Инфляция ЦБ',
   ];
   const rssLabels = RSS_SOURCES.map((source) => source.name);
 

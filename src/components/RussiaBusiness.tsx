@@ -46,7 +46,7 @@ type Status = 'calm' | 'watch' | 'pressure' | 'unknown';
 
 // Ставка и кривая ОФЗ — про стоимость денег, а не про курс. Держим их
 // отдельной строкой, чтобы ряд из пяти курсовых плиток не разъезжался.
-const MONEY_INDICATOR_IDS = ['key-rate', 'ruonia', 'ofz-10y'];
+const MONEY_INDICATOR_IDS = ['key-rate', 'ruonia', 'ofz-10y', 'inflation'];
 // Международные резервы — не стоимость денег и не рынок: это внешний буфер,
 // у него отдельный блок и отдельное объяснение.
 const RESERVE_INDICATOR_IDS = ['reserves'];
@@ -62,6 +62,8 @@ const EXPECTED_INDICATOR_NAMES: Record<string, string> = {
   reserves: 'международные резервы',
   ruonia: 'RUONIA',
   'ofz-10y': 'доходность ОФЗ',
+  'gold-moex': 'золото на Мосбирже',
+  inflation: 'инфляция',
 };
 
 const CHANNEL_LABELS: Record<ChannelId, string> = {
@@ -300,7 +302,11 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
   // предыдущего опубликованного значения.
   const change = indicator.changePct ?? indicator.changeAbs ?? 0;
   const isIndex = indicator.id === 'imoex' || indicator.id === 'rgbi';
-  const changeClass = !isIndex
+  // У золота база та же, что у индексов, — закрытие предыдущей сессии Мосбиржи,
+  // и её дату тоже нужно печатать рядом: субботняя сделка иначе читалась бы
+  // как движение за сутки.
+  const hasCloseBase = isIndex || indicator.id === 'gold-moex';
+  const changeClass = !hasCloseBase
     ? 'text-blue-200'
     : change > 0
       ? 'text-emerald-300'
@@ -340,7 +346,7 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
             {/* У индексов база — закрытие предыдущей сессии, и её дата
                 печатается рядом: без неё «+0,16 %» у субботней сессии
                 читалось бы как движение за сутки с нуля. */}
-            {isIndex && indicator.previousDate && (
+            {hasCloseBase && indicator.previousDate && (
               <span className="text-[10px] font-semibold text-slate-400">
                 к {formatShortDate(indicator.previousDate)}
               </span>
@@ -685,6 +691,8 @@ export default function RussiaBusiness() {
       'cny-rub-moex',
       'imoex',
       'rgbi',
+      // Золото в рублях за грамм: биржевая сделка Мосбиржи, не мировой спот.
+      'gold-moex',
       // Стоимость денег: ключевая ставка ЦБ и точка кривой ОФЗ. Обе строки
       // приходят из тех же публичных источников, что и остальные числа.
       'key-rate',
