@@ -775,6 +775,8 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         ['ruonia', 'RUONIA'],
         ['ofz-10y', 'ОФЗ 10 лет'],
         ['reserves', 'международные резервы'],
+        ['gold-moex', 'золото на Мосбирже'],
+        ['inflation', 'инфляция'],
       ];
       const missing = expected.filter(([id]) => !present.has(id)).map(([, label]) => label);
       return {
