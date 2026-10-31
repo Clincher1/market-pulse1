@@ -312,3 +312,26 @@ test('без сохранённых дат ряд остаётся бездат�
     { date: '', value: 3901.2 },
   ]);
 });
+
+test('«где в окне»: доля значений строго ниже последнего, края названы словами', () => {
+  // Ряд из 15 значений: последнее 2 509,26 — второе сверху (выше только 2 524,06).
+  const values = [2226.36, 2262.75, 2136.35, 2071.2, 2178.87, 2253.41, 2361.08, 2284.84,
+    2312.35, 2401.8, 2431.07, 2469.36, 2491.83, 2524.06, 2509.26];
+  const [row] = buildWeekComparisons([
+    series({ id: 'imoex', name: 'IMOEX', unit: 'пункта', digits: 2, points: points(values, 1) }),
+  ]);
+  assert.ok(row);
+  assert.equal(row.windowSize, 15);
+  // Ниже последнего 13 значений из 15 → 86,67 % → 87.
+  assert.equal(row.percentile, 87);
+  assert.equal(row.isWindowMax, false);
+  assert.equal(row.isWindowMin, false);
+
+  // Максимум окна назван словами, а процентиль считает строго нижние значения.
+  const rising = [2400, 2410, 2420, 2430, 2440, 2450, 2460, 2470, 2480, 2490, 2500, 2505, 2509, 2512, 2524.06];
+  const [maxRow] = buildWeekComparisons([
+    series({ id: 'imoex', unit: 'пункта', digits: 2, points: points(rising, 1) }),
+  ]);
+  assert.equal(maxRow.isWindowMax, true);
+  assert.equal(maxRow.percentile, 93);
+});

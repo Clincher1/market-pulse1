@@ -103,6 +103,8 @@ function NoteCard({ note }: { note: ChangeNote }) {
   );
 }
 
+const NBSP = '\u00A0';
+
 function formatPp(value: number): string {
   const sign = value > 0 ? '+' : value < 0 ? '\u2212' : '';
   return `${sign}${Math.abs(value).toFixed(2).replace('.', ',')}\u00A0п.п.`;
@@ -111,6 +113,13 @@ function formatPp(value: number): string {
 function WeekRow({ row }: { row: WeekComparison }) {
   const tone =
     row.deltaPct > 0 ? 'text-emerald-300' : row.deltaPct < 0 ? 'text-rose-300' : 'text-slate-300';
+  // «Выше 88 % окна» — доля значений, которые строго ниже последнего, поэтому
+  // подпись не приписывает числу лишнего. Края окна названы словами.
+  const place = row.isWindowMax
+    ? 'максимум окна'
+    : row.isWindowMin
+      ? 'минимум окна'
+      : `выше ${row.percentile}${NBSP}% окна`;
   return (
     <tr className="border-t border-white/[0.07]">
       <td className="px-3 py-2 text-left font-semibold text-text-primary">
@@ -120,6 +129,7 @@ function WeekRow({ row }: { row: WeekComparison }) {
       <td className="px-3 py-2 text-right tabular-nums text-text-primary">{row.recentLabel}</td>
       <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{row.previousLabel}</td>
       <td className={`px-3 py-2 text-right font-bold tabular-nums ${tone}`}>{formatPp(row.deltaPct)}</td>
+      <td className="px-3 py-2 text-right text-[11px] leading-tight text-slate-300">{place}</td>
     </tr>
   );
 }
@@ -245,13 +255,14 @@ export default function WhatChanged() {
             только два факта и их разница в процентных пунктах.
           </p>
           <div className="mt-3 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03]">
-            <table className="w-full min-w-[520px] border-collapse text-sm">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-[0.1em] text-slate-400">
                   <th className="px-3 py-2 text-left font-semibold">Показатель</th>
                   <th className="px-3 py-2 text-right font-semibold">Последние 7</th>
                   <th className="px-3 py-2 text-right font-semibold">7 до них</th>
                   <th className="px-3 py-2 text-right font-semibold">Разница</th>
+                  <th className="px-3 py-2 text-right font-semibold">Где в окне</th>
                 </tr>
               </thead>
               <tbody>
@@ -264,7 +275,9 @@ export default function WhatChanged() {
           <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
             «Последние 7» — семь последних наблюдений с датой у каждого: торговые дни у российских
             рядов, дни закрытия у мировых котировок. У ставок и доходностей изменения подписаны в
-            процентных пунктах: процент от процента сайт не считает.
+            процентных пунктах: процент от процента сайт не считает. «Где в окне» — доля значений
+            всего окна (три месяца торговых дней или 30 закрытий), которые не выше последнего:
+            так видно не только направление, но и место значения среди прошлых.
           </p>
         </div>
       )}
