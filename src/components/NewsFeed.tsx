@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Check, ChevronDown, TrendingUp, TrendingDown, Filter, Clock, Gauge, Heart, ExternalLink, RotateCcw, SearchX, ShieldQuestion } from 'lucide-react';
-import { NewsItem } from '@/data/mockData';
+import { NewsItem } from '@/data/marketTypes';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';

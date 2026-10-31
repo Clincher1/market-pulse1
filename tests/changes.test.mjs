@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   buildChangeNotes,
+  buildWeekComparisons,
   formatSeriesChange,
   formatSeriesValue,
   trailingRun,
@@ -165,4 +166,42 @@ test('формат чисел и процентов совпадает с сай
   assert.equal(plain(formatSeriesChange(10534, 10149.5)), '−3,65 %');
   assert.equal(plain(formatSeriesChange(80.1, 80.55)), '+0,56 %');
   assert.equal(plain(formatSeriesChange(80.5, 80.5)), '0,00 %');
+});
+
+test('неделя к неделе сравнивает два окна одинаковой длины', () => {
+  // 15 значений: первые 7 — спокойный рост, последние 7 — резкий.
+  const values = [100, 100.2, 100.4, 100.3, 100.5, 100.6, 100.7, 101, 101.6, 102.2, 102.9, 103.5, 104.1, 104.8, 105.4];
+  const [row] = buildWeekComparisons([
+    series({ id: 'imoex', name: 'IMOEX', unit: 'пункта', digits: 2, points: points(values, 1) }),
+  ]);
+  assert.ok(row, 'сравнение должно построиться');
+  assert.equal(row.days, 7);
+  // предыдущее окно: 100 → 101 = +1,00 %
+  assert.equal(plain(row.previousLabel), '+1,00 %');
+  // последнее окно: 101 → 105,4 = +4,36 %
+  assert.equal(plain(row.recentLabel), '+4,36 %');
+  // 4,36 − 1,00 = 3,36 п.п. разницы между окнами
+  assert.ok(Math.abs(row.deltaPct - 3.362) < 0.02);
+  assert.equal(row.windowLabel, '7 торговых дней');
+});
+
+test('неделя к неделе молчит, когда истории мало', () => {
+  const short = points([100, 101, 102, 103, 104, 105, 106, 107], 1);
+  assert.deepEqual(buildWeekComparisons([series({ points: short })]), []);
+});
+
+test('неделя к неделе сортирует по размеру изменения окон', () => {
+  const strong = points(
+    [100, 100.1, 100.2, 100.1, 100.3, 100.2, 100.4, 102, 103.5, 105, 106.5, 108, 109.5, 111, 112.5],
+    1,
+  );
+  const calm = points(
+    [100, 100.1, 100.05, 100.2, 100.1, 100.3, 100.2, 100.4, 100.35, 100.5, 100.45, 100.6, 100.55, 100.7, 100.65],
+    1,
+  );
+  const rows = buildWeekComparisons([
+    series({ id: 'calm', name: 'Calm', digits: 2, points: calm }),
+    series({ id: 'strong', name: 'Strong', digits: 2, points: strong }),
+  ]);
+  assert.equal(rows[0]?.id, 'strong');
 });

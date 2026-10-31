@@ -1,4 +1,4 @@
-import { AssetData } from './mockData';
+import { AssetData } from './marketTypes';
 import { supabase } from '@/lib/supabase';
 
 const ASSET_ORDER = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'];

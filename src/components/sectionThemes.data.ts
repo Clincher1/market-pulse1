@@ -14,7 +14,6 @@ import {
   Info,
   Landmark,
   Newspaper,
-  Target,
   Zap,
 } from 'lucide-react';
 
@@ -24,7 +23,6 @@ export type SectionThemeId =
   | 'global'
   | 'brief'
   | 'news'
-  | 'forecasts'
   | 'memory'
   | 'guide'
   | 'about';
@@ -126,22 +124,6 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     activeClass: 'border-amber-300 bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/25',
     textClass: 'text-amber-200',
   },
-  forecasts: {
-    id: 'forecasts',
-    order: '05',
-    label: 'Журнал проверок',
-    navLabel: 'Проверки',
-    href: '#forecasts',
-    description: 'Что ожидалось до факта и что вышло',
-    icon: Target,
-    badgeClass: 'border-emerald-300/30 bg-emerald-400/10 text-emerald-200',
-    cardClass:
-      'border-emerald-300/25 bg-emerald-400/[0.07] hover:border-emerald-300/60 hover:bg-emerald-400/[0.12]',
-    iconClass: 'bg-emerald-500 text-white',
-    dotClass: 'bg-emerald-400',
-    activeClass: 'border-emerald-300 bg-emerald-500 text-white shadow-lg shadow-emerald-500/25',
-    textClass: 'text-emerald-200',
-  },
   memory: {
     id: 'memory',
     order: '06',
@@ -197,7 +179,6 @@ export const DASHBOARD_THEME_ORDER: SectionThemeId[] = [
   'global',
   'brief',
   'news',
-  'forecasts',
   'memory',
   'guide',
   'about',

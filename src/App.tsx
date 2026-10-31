@@ -15,7 +15,6 @@ import { DeferredMount, SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
 
 const NewsFeed = lazy(() => import('@/components/NewsFeed'));
-const Forecasts = lazy(() => import('@/components/Forecasts'));
 const MarketMemory = lazy(() => import('@/components/MarketMemory'));
 const AboutProject = lazy(() => import('@/components/AboutProject'));
 const AnalyticsGuide = lazy(() => import('@/components/AnalyticsGuide'));
@@ -146,7 +145,7 @@ function App() {
             fallback={
               <SectionFallback
                 title="Состояние системы"
-                message="Читаем отчёт самопроверки: индекс, ленты, котировки, прогнозы…"
+                message="Читаем отчёт самопроверки: индекс, ленты, котировки, историю…"
                 minHeightClass="min-h-[60vh]"
                 className="rounded-[28px]"
               />
@@ -184,9 +183,10 @@ function App() {
                 Дашборд фиксирует факты: российские курсы и Мосбиржу, мировой фон, напряжённость
                 новостного фона и главные события дня. У каждого числа видно, когда оно получено,
                 а у котировок — ещё и откуда: источник подписан на плитке или в раскрытой панели.
-                Сайт не предсказывает цены и не даёт рекомендаций. Раздел «Что меняется» описывает
-                только то, что уже произошло в рядах — серии дней, края окна, узкие диапазоны, —
-                а прогнозная часть живёт отдельно и публикует свой счёт вместе с промахами.
+                Сайт не предсказывает цены и не даёт рекомендаций: здесь нет вероятностей и
+                «сигналов» на будущее. Раздел «Что меняется» описывает только то, что уже произошло
+                в рядах — серии дней, края окна, узкие диапазоны. Выдача прогнозов остановлена
+                31 октября 2026 года; старые записи остаются в архиве памяти рынка вместе с промахами.
               </p>
             </section>
 
@@ -264,35 +264,6 @@ function App() {
               >
                 <SectionBoundary title="Глобальные новости" id="news">
                   <NewsFeed />
-                </SectionBoundary>
-              </Suspense>
-            </DeferredMount>
-
-            <DeferredMount
-              targetId="forecasts"
-              fallback={
-                <SectionFallback
-                  id="forecasts"
-                  title="Журнал проверок"
-                  message="Раздел загрузится при приближении к нему; слабый баланс по-прежнему будет показан как «Нет сигнала»."
-                  minHeightClass="min-h-[520px]"
-                  className="mb-10 lg:mb-12"
-                />
-              }
-            >
-              <Suspense
-                fallback={
-                  <SectionFallback
-                    id="forecasts"
-                    title="Журнал проверок"
-                    message="Считаем записи журнала, попадания и точность…"
-                    minHeightClass="min-h-[520px]"
-                    className="mb-10 lg:mb-12"
-                  />
-                }
-              >
-                <SectionBoundary title="Журнал проверок" id="forecasts">
-                  <Forecasts />
                 </SectionBoundary>
               </Suspense>
             </DeferredMount>

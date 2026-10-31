@@ -27,7 +27,6 @@ const SECTION_IDS = [
   'global-economy',
   'brief',
   'news',
-  'forecasts',
   'market-memory',
   'about',
 ] as const;
@@ -37,7 +36,6 @@ const mobileThemeIds: SectionThemeId[] = [
   'global',
   'brief',
   'news',
-  'forecasts',
   'memory',
   'guide',
 ];
