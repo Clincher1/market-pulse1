@@ -437,6 +437,18 @@ export interface WeekComparison {
   previousLabel: string;
   /** Разница между окнами в процентных пунктах: recentPct − previousPct. */
   deltaPct: number;
+  /**
+   * Где последнее значение стоит внутри всего окна: доля значений, которые
+   * строго ниже последнего, в процентах. Именно «строго», чтобы подпись
+   * «выше N % окна» была правдой без скидки на само значение.
+   */
+  percentile: number;
+  /** Последнее значение не ниже максимума окна. */
+  isWindowMax: boolean;
+  /** Последнее значение не выше минимума окна. */
+  isWindowMin: boolean;
+  /** Сколько значений в окне: у российских рядов — торговые дни, у мировых — закрытия. */
+  windowSize: number;
   lastDate: string;
   windowLabel: string;
 }
@@ -464,6 +476,8 @@ export function buildWeekComparisons(inputs: ChangeInput[], days = 7): WeekCompa
     const recentPct = isRate ? last - mid : (last / mid - 1) * 100;
     const previousPct = isRate ? mid - start : (mid / start - 1) * 100;
     const lastPoint = points[points.length - 1];
+    const below = values.filter((value) => value < last).length;
+    const percentile = Math.round((below / values.length) * 100);
     const windowLabel =
       input.dateKind === 'day'
         ? `${days} торговых дней`
@@ -481,6 +495,10 @@ export function buildWeekComparisons(inputs: ChangeInput[], days = 7): WeekCompa
       recentLabel: formatSeriesDelta(mid, last, input.unit),
       previousLabel: formatSeriesDelta(start, mid, input.unit),
       deltaPct: recentPct - previousPct,
+      percentile,
+      isWindowMax: last >= Math.max(...values),
+      isWindowMin: last <= Math.min(...values),
+      windowSize: values.length,
       lastDate: lastPoint?.date ?? '',
       windowLabel,
     });
