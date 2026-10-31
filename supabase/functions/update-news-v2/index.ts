@@ -44,6 +44,13 @@ const CALL_SPACING_MS = 150;
 // runs an hour this is still far above the ~160 articles the feeds produce.
 const DEFAULT_MAX_ITEMS = 6;
 const HARD_MAX_ITEMS = 20;
+// How many entries of a feed are read per run. Five was too few: publishers pin
+// an old story at the top and mix video links into the first entries, so a run
+// could report "5 items, 0 fresh, 5 already stored" while positions 6-25 still
+// held articles we had never seen. A burst larger than the window between two
+// polls also pushed the tail out of it for good — those articles were lost, not
+// delayed. The model budget below still decides how many get analysed.
+const MAX_ITEMS_PER_FEED = 25;
 // Sections that are never about world markets: do not spend tokens on them.
 const SKIP_URL_PARTS = [
   '/personal-finance/', '/life/', '/sport', '/sports/', '/culture/',
@@ -292,7 +299,7 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
     // feeds in the list consumed the whole item budget: over the last week WSJ
     // contributed 0 articles and 68% of the flow came from Bloomberg, which
     // quietly turned the tension index into one newsroom's mood.
-    type Candidate = { title: string; desc: string; url: string; dateRaw: string };
+    type Candidate = { title: string; desc: string; url: string; dateRaw: string; ts: number };
     type Queue = { source: { name: string; url: string }; stats: AnyRecord; items: Candidate[] };
     const queues: Queue[] = [];
     for (const source of SOURCES) {
@@ -302,10 +309,10 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
       try {
         const feed = await fetchRss(source.url);
         const xmlText = feed.text;
-        stats.items = xmlText.split('<item>').slice(1, 6).length;
+        stats.items = xmlText.split('<item>').slice(1, MAX_ITEMS_PER_FEED + 1).length;
         stats.via = feed.via;
         if (feed.note) stats.note = feed.note;
-        for (const item of xmlText.split('<item>').slice(1, 6)) {
+        for (const item of xmlText.split('<item>').slice(1, MAX_ITEMS_PER_FEED + 1)) {
           const title = decodeHtml(matchTag(item, 'title'));
           const rawDesc = decodeHtml(matchTag(item, 'description'));
           const desc = rawDesc ? (rawDesc.length > 200 ? rawDesc.slice(0, 200) + '...' : rawDesc) : '';
@@ -336,12 +343,15 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
           if (blacklist.some((phrase) => haystack.includes(phrase))) { stats.filtered = (stats.filtered as number) + 1; continue; }
           seenUrls.add(url);
           stats.fresh = (stats.fresh as number) + 1;
-          items.push({ title, desc, url, dateRaw });
+          items.push({ title, desc, url, dateRaw, ts: Number.isFinite(parsedTs) ? parsedTs : 0 });
         }
       } catch (error) {
         perSource[source.name] = { error: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) };
         continue;
       }
+      // Newest first: a pinned old story or a tail of week-old entries must not
+      // take the slot of an article published an hour ago.
+      items.sort((a, b) => b.ts - a.ts);
       if (feedNewest !== null) stats.feed_newest = new Date(feedNewest).toISOString();
       perSource[source.name] = stats;
       queues.push({ source, stats, items });
