@@ -1,7 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { extractCurve, parseKeyRateXml, pickOfz10y } from '../api/russia-insights.js';
+import {
+  extractCurve,
+  parseKeyRateXml,
+  pickOfz10y,
+  pickPreviousClose,
+} from '../api/russia-insights.js';
 import {
   buildKeyRateSteps,
   parseCbrDynamicXml,
@@ -166,4 +171,58 @@ test('международные резервы: недельный ряд mmrf7
   assert.equal(records[0].value, 732.1);
   assert.equal(records.at(-1).value, 729.6);
   assert.deepEqual(parseReservesXml('<mmrf7d></mmrf7d>'), []);
+});
+
+test('ISS history: закрытие предыдущей сессии — база для изменения индекса', () => {
+  // Ответ снят с живого ISS 31.10.2026: строки текущей сессии в истории ещё
+  // нет, а 30.10 закрытие было 2509,26 против 2496,26 днём раньше.
+  const payload = {
+    history: {
+      columns: ['SECID', 'TRADEDATE', 'CLOSE', 'OPEN'],
+      data: [
+        ['IMOEX', '2026-10-29', 2496.26, 2525.2],
+        ['IMOEX', '2026-10-30', 2509.26, 2498.28],
+        ['IMOEX', '', 2500, 2500],
+        ['IMOEX', '2026-10-28', 0, 2528.54],
+      ],
+    },
+  };
+  assert.deepEqual(pickPreviousClose(payload, '2026-10-31'), {
+    date: '2026-10-30',
+    close: 2509.26,
+  });
+});
+
+test('ISS history: сегодняшняя (незакрытая) сессия базой не считается', () => {
+  const payload = {
+    history: {
+      columns: ['TRADEDATE', 'CLOSE'],
+      data: [
+        ['2026-10-29', 2496.26],
+        ['2026-10-30', 2509.26],
+        ['2026-10-31', 2513.26],
+      ],
+    },
+  };
+  assert.deepEqual(pickPreviousClose(payload, '2026-10-31'), {
+    date: '2026-10-30',
+    close: 2509.26,
+  });
+});
+
+test('ISS history: нет данных — null, а не ноль и не догадка', () => {
+  assert.equal(pickPreviousClose({}, '2026-10-31'), null);
+  assert.equal(pickPreviousClose({ history: { columns: ['X'], data: [] } }, '2026-10-31'), null);
+  assert.equal(
+    pickPreviousClose({ history: { columns: ['TRADEDATE'], data: [['2026-10-30']] } }, '2026-10-31'),
+    null,
+  );
+  // Все наблюдения из будущего относительно сегодня — базы нет.
+  assert.equal(
+    pickPreviousClose(
+      { history: { columns: ['TRADEDATE', 'CLOSE'], data: [['2026-10-31', 2513.26]] } },
+      '2026-10-31',
+    ),
+    null,
+  );
 });

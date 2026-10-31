@@ -435,6 +435,64 @@ async function fetchMoexOfz10y() {
   };
 }
 
+/** «Сегодня» по Москве как YYYY-MM-DD: у Мосбиржи день начинается в МСК. */
+function moscowToday() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Moscow',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
+/** YYYY-MM-DD минус N дней. */
+function shiftDate(isoDate, days) {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return isoDate;
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Предыдущее закрытие индекса из блока `history` ISS.
+ *
+ * Зачем это нужно: `LASTVALUE` в marketdata — не вчерашнее закрытие, а
+ * предыдущее значение индекса. Разница `CURRENTVALUE - LASTVALUE` — это
+ * тик, а не дневное движение: 30.10 на экране было «IMOEX +0,47 %», хотя
+ * к закрытию 29.10 (2496,26) индекс шёл на +0,25 %. Изменение к закрытию
+ * считается только по опубликованной истории, и её же видно в графике.
+ *
+ * Берётся последняя точка с датой строго раньше сегодняшней: строка текущей
+ * сессии в истории может появиться до закрытия, и базой она быть не может.
+ */
+export function pickPreviousClose(payload, todayIso) {
+  const block = payload?.history;
+  if (!block?.columns || !Array.isArray(block.data)) return null;
+  const dateIndex = block.columns.indexOf('TRADEDATE');
+  const closeIndex = block.columns.indexOf('CLOSE');
+  if (dateIndex < 0 || closeIndex < 0) return null;
+  const rows = block.data
+    .map((row) => ({ date: String(row?.[dateIndex] ?? ''), close: Number(row?.[closeIndex]) }))
+    .filter(
+      (row) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(row.date) &&
+        Number.isFinite(row.close) &&
+        row.close > 0 &&
+        row.date < todayIso,
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const last = rows[rows.length - 1];
+  return last ? { date: last.date, close: last.close } : null;
+}
+
+async function fetchMoexPreviousClose(secid, todayIso) {
+  const url =
+    `https://iss.moex.com/iss/history/engines/stock/markets/index/securities/${secid}.json` +
+    `?iss.meta=off&from=${shiftDate(todayIso, -12)}&till=${shiftDate(todayIso, -1)}`;
+  const payload = await fetchJson(url);
+  return pickPreviousClose(payload, todayIso);
+}
+
 function rowsToObjects(block) {
   if (!block?.columns || !Array.isArray(block.data)) return [];
   return block.data.map((row) =>
@@ -443,26 +501,34 @@ function rowsToObjects(block) {
 }
 
 async function fetchMoexIndex(id, name, label) {
+  const todayIso = moscowToday();
   const url = `https://iss.moex.com/iss/engines/stock/markets/index/securities/${id}.json?iss.meta=off`;
-  const payload = await fetchJson(url);
+  // История нужна только ради базы: без неё изменение считать нечем, и
+  // подставлять сюда LASTVALUE нельзя — это не закрытие предыдущей сессии.
+  const [payload, previous] = await Promise.all([
+    fetchJson(url),
+    fetchMoexPreviousClose(id, todayIso).catch(() => null),
+  ]);
   const row = rowsToObjects(payload.marketdata).find((item) => item.SECID === id);
   if (!row) throw new Error(`Нет marketdata для ${id}`);
   const value = Number(row.CURRENTVALUE ?? row.LASTVALUE);
-  const previous = Number(row.LASTVALUE);
-  if (!Number.isFinite(value) || !Number.isFinite(previous) || previous <= 0) {
+  if (!Number.isFinite(value) || value <= 0) {
     throw new Error(`Некорректное значение ${id}`);
   }
+  const base = previous?.close ?? null;
   return {
     id: id.toLowerCase(),
     name,
     label,
     value: round(value, 2),
     unit: 'пункта',
-    changePct: round(((value - previous) / previous) * 100, 3),
+    changePct: base === null ? null : round(((value - base) / base) * 100, 3),
     asOf: row.SYSTIME || `${row.TRADEDATE || ''} ${row.UPDATETIME || ''}`.trim(),
-    previousDate: null,
+    previousDate: previous?.date ?? null,
     provider: 'Мосбиржа ISS',
-    basis: 'Текущее значение индекса; публичный поток может быть задержан',
+    basis: base === null
+      ? `Текущее значение индекса. Изменение к закрытию не посчитано: история ISS не отдала предыдущее закрытие — показывать вместо него разницу с предыдущим значением индекса было бы другим числом`
+      : `Текущее значение индекса; изменение — к закрытию ${ruDate(previous.date)} по истории ISS. Публичный поток может быть задержан`,
     sourceUrl: `https://www.moex.com/ru/index/${id}/`,
   };
 }
