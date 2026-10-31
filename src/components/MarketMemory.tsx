@@ -117,7 +117,7 @@ function directionMeta(direction: string) {
   if (direction === 'down') {
     return { label: 'вниз', className: 'text-negative', Icon: ArrowDownRight };
   }
-  return { label: 'нет сигнала', className: 'text-text-secondary', Icon: MinusCircle };
+  return { label: 'без направления', className: 'text-text-secondary', Icon: MinusCircle };
 }
 
 function sampleBadge(sampleSize: number): { label: string; className: string } {
