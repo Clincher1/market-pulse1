@@ -1,5 +1,6 @@
 import { fetchReservesRecords } from './_shared/cbrReserves.js';
 import {
+  monthDative,
   monthEndDate,
   monthLabel,
   parseInflationTable,
@@ -471,29 +472,53 @@ function shiftDate(isoDate, days) {
  * Берётся последняя точка с датой строго раньше сегодняшней: строка текущей
  * сессии в истории может появиться до закрытия, и базой она быть не может.
  */
-export function pickPreviousClose(payload, todayIso, boardId = null) {
+function historyCloses(payload, boardId = null) {
   const block = payload?.history;
-  if (!block?.columns || !Array.isArray(block.data)) return null;
+  if (!block?.columns || !Array.isArray(block.data)) return [];
   const dateIndex = block.columns.indexOf('TRADEDATE');
   const closeIndex = block.columns.indexOf('CLOSE');
   const boardIndex = block.columns.indexOf('BOARDID');
-  if (dateIndex < 0 || closeIndex < 0) return null;
+  if (dateIndex < 0 || closeIndex < 0) return [];
   // У валютного рынка один и тот же инструмент торгуется на нескольких
   // площадках (GLDRUB_TOM: CETS, CNGD, LICU), и закрытия у них разные.
   // Без фильтра по площадке базой могло стать закрытие чужой сессии.
-  if (boardId && boardIndex < 0) return null;
-  const rows = block.data
+  if (boardId && boardIndex < 0) return [];
+  return block.data
     .filter((row) => !boardId || String(row?.[boardIndex] ?? '') === boardId)
     .map((row) => ({ date: String(row?.[dateIndex] ?? ''), close: Number(row?.[closeIndex]) }))
-    .filter(
-      (row) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(row.date) &&
-        Number.isFinite(row.close) &&
-        row.close > 0 &&
-        row.date < todayIso,
-    )
+    .filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(row.date) && Number.isFinite(row.close) && row.close > 0)
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export function pickPreviousClose(payload, todayIso, boardId = null) {
+  const rows = historyCloses(payload, boardId).filter((row) => row.date < todayIso);
   const last = rows[rows.length - 1];
+  return last ? { date: last.date, close: last.close } : null;
+}
+
+/**
+ * База для изменения цены, у которой дата наблюдения может быть вчерашней.
+ *
+ * Случай, который это лечит (31.10, золото): последняя сделка — закрытие 30.10
+ * (10 149,5), и предыдущее закрытие тоже 30.10, потому что сегодня торгов не
+ * было. Изменение выходило «0,00 % к 30.10» — то есть цена сравнивалась сама с
+ * собой, а −3,65 % за пятницу исчезали.
+ *
+ * Правило: если наблюдённая цена совпала с закрытием какой-то сессии, база —
+ * закрытие ПРЕДЫДУЩЕЙ сессии перед ней. Если не совпала (сделка идёт прямо
+ * сейчас), база — последнее закрытие строго раньше сегодняшнего дня.
+ */
+export function pickQuoteBase(payload, todayIso, observedValue, boardId = null) {
+  const rows = historyCloses(payload, boardId);
+  const value = Number(observedValue);
+  // Совпадение ищется только среди сессий не позже сегодняшней: закрытие из
+  // «будущего» относительно сегодняшнего дня базой быть не может.
+  const matched = [...rows]
+    .reverse()
+    .find((row) => row.date <= todayIso && Math.abs(row.close - value) < 1e-9);
+  const cutoff = matched ? matched.date : todayIso;
+  const candidates = rows.filter((row) => row.date < cutoff);
+  const last = candidates[candidates.length - 1];
   return last ? { date: last.date, close: last.close } : null;
 }
 
@@ -505,13 +530,12 @@ async function fetchMoexPreviousClose(secid, todayIso) {
   return pickPreviousClose(payload, todayIso);
 }
 
-/** То же для валютного рынка: золото и юань торгуются там, не в индексах. */
-async function fetchMoexCurrencyPreviousClose(secid, todayIso, boardId) {
+/** История валютного рынка: золото и юань торгуются там, не в индексах. */
+async function fetchCurrencyHistory(secid, todayIso) {
   const url =
     `https://iss.moex.com/iss/history/engines/currency/markets/selt/securities/${secid}.json` +
     `?iss.meta=off&from=${shiftDate(todayIso, -12)}&till=${shiftDate(todayIso, -1)}`;
-  const payload = await fetchJson(url);
-  return pickPreviousClose(payload, todayIso, boardId);
+  return fetchJson(url);
 }
 
 function rowsToObjects(block) {
@@ -573,9 +597,9 @@ async function fetchMoexGold() {
   const todayIso = moscowToday();
   const url =
     'https://iss.moex.com/iss/engines/currency/markets/selt/securities/GLDRUB_TOM.json?iss.meta=off';
-  const [payload, previous] = await Promise.all([
+  const [payload, history] = await Promise.all([
     fetchJson(url),
-    fetchMoexCurrencyPreviousClose('GLDRUB_TOM', todayIso, 'CETS').catch(() => null),
+    fetchCurrencyHistory('GLDRUB_TOM', todayIso).catch(() => null),
   ]);
   const security = rowsToObjects(payload.securities).find(
     (item) => item.SECID === 'GLDRUB_TOM' && item.BOARDID === 'CETS',
@@ -594,6 +618,9 @@ async function fetchMoexGold() {
   const fallback = Number(security.PREVPRICE);
   const value = traded ?? (Number.isFinite(fallback) ? fallback : null);
   if (!Number.isFinite(value) || value <= 0) throw new Error('Некорректное значение GLDRUB_TOM');
+  // База считается от наблюдённой цены: иначе субботняя плитка сравнивала
+  // пятничное закрытие с ним же и показывала «0,00 %».
+  const previous = history ? pickQuoteBase(history, todayIso, value, 'CETS') : null;
 
   const base = previous?.close ?? null;
   const hasTrade = traded !== undefined;
@@ -670,7 +697,7 @@ async function fetchInflation() {
     basis:
       `Инфляция за ${monthLabel(latest.month)} к тому же месяцу прошлого года; ` +
       (previous
-        ? `изменение — к ${monthLabel(previous.month).replace(/ \d{4}$/, '')}, в процентных пунктах. `
+        ? `изменение — к ${monthDative(previous.month)}, в процентных пунктах. `
         : '') +
       'ЦБ публикует месячное значение в середине следующего месяца, поэтому последняя цифра всегда за прошлый месяц',
     sourceUrl: 'https://www.cbr.ru/hd_base/infl/',

@@ -12,12 +12,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  monthDative,
   monthEndDate,
   monthLabel,
   parseInflationTable,
   pickLatestInflation,
 } from '../api/_shared/cbrInflation.js';
-import { pickPreviousClose } from '../api/russia-insights.js';
+import { pickPreviousClose, pickQuoteBase } from '../api/russia-insights.js';
 
 /** Строка таблицы ЦБ так, как она приходит в разметке. */
 function row(month, keyRate, inflation, target) {
@@ -88,6 +89,9 @@ test('месяц в подписи и дата конца месяца счит�
   assert.equal(monthEndDate('2026-02'), '2026-02-28');
   assert.equal(monthEndDate('2024-02'), '2024-02-29');
   assert.equal(monthEndDate('2026-13'), null);
+  assert.equal(monthDative('2026-08'), 'августу');
+  assert.equal(monthDative('2026-09'), 'сентябрю');
+  assert.equal(monthDative(''), '');
 });
 
 // История GLDRUB_TOM за 28–30.10.2026: площадки идут вперемешку, и закрытия у
@@ -129,4 +133,25 @@ test('без площадки в разметке истории баз нет, 
     date: '2026-10-29',
     close: 10534,
   });
+});
+
+test('субботняя плитка золота сравнивает с предыдущей сессией, а не сама с собой', () => {
+  // Что было: последняя сделка — закрытие 30.10 (10 149,5), и предыдущее
+  // закрытие тоже 30.10, потому что сегодня торгов не было. На экран попадало
+  // «0,00 % к 30.10», и падение пятницы исчезало.
+  const base = pickQuoteBase(GOLD_HISTORY, '2026-10-31', 10149.5, 'CETS');
+  assert.deepEqual(base, { date: '2026-10-29', close: 10534 });
+  const changePct = ((10149.5 - base.close) / base.close) * 100;
+  assert.equal(Math.round(changePct * 100) / 100, -3.65);
+});
+
+test('сделка идёт прямо сейчас: база — последнее закрытие строго раньше сегодня', () => {
+  // Цена не совпала ни с одним закрытием — значит это сделка текущей сессии.
+  const base = pickQuoteBase(GOLD_HISTORY, '2026-10-31', 10200, 'CETS');
+  assert.deepEqual(base, { date: '2026-10-30', close: 10149.5 });
+});
+
+test('истории нет — базы нет, изменение не выдумывается', () => {
+  assert.equal(pickQuoteBase({}, '2026-10-31', 10149.5, 'CETS'), null);
+  assert.equal(pickQuoteBase(GOLD_HISTORY, '2026-10-28', 10149.5, 'CETS'), null);
 });
