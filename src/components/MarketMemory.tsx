@@ -646,7 +646,7 @@ export default function MarketMemory() {
   const tabs: Array<{ id: MemoryTab; label: string; icon: typeof History }> = [
     { id: 'events', label: 'События', icon: History },
     { id: 'analogues', label: 'Исторические аналоги', icon: Layers3 },
-    { id: 'forecasts', label: 'Журнал прогнозов', icon: Target },
+    { id: 'forecasts', label: 'Архив прогнозов', icon: Target },
   ];
 
   return (
@@ -671,7 +671,10 @@ export default function MarketMemory() {
             </span>
           </div>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
-            Сайт запоминает событие, его классификацию и замороженный снимок прогноза — а потом сверяет это с реальными дневными ценами.
+            Сайт запоминал событие, его классификацию и замороженный снимок прогноза, а потом
+            сверял это с реальными дневными ценами. Выдача новых прогнозов остановлена
+            31 октября 2026 года: здесь остаётся архив уже сделанных записей вместе с промахами,
+            чтобы счёт нельзя было переписать задним числом.
           </p>
         </div>
         <GuideLink href="#guide-memory" label="Как работает память" mobileLabel="Справка" />
@@ -691,7 +694,7 @@ export default function MarketMemory() {
                 ))}
               </div>
               <p className="mt-4 text-center text-sm text-text-secondary">
-                Загружаем накопленную память: события, замороженные прогнозы и фактические исходы…
+                Загружаем архив: события, сделанные прогнозы и фактические исходы…
               </p>
             </div>
           ) : error && !data ? (
@@ -725,7 +728,7 @@ export default function MarketMemory() {
                 <StatCard label="Событий" value={String(data?.stats?.eventsTotal ?? 0)} hint="кластеры заголовков" />
                 <StatCard label="Классификаций" value={String(data?.stats?.classifiedEvents ?? 0)} hint="событий с каналом влияния" />
                 <StatCard label="Реакций проверено" value={String(data?.stats?.evaluatedEventOutcomes ?? 0)} hint="событие × актив × горизонт" />
-                <StatCard label="Снимков прогнозов" value={String(data?.stats?.forecastSnapshots ?? 0)} hint={`${data?.stats?.evaluatedForecasts ?? 0} уже оценено`} />
+                <StatCard label="Снимков в архиве" value={String(data?.stats?.forecastSnapshots ?? 0)} hint={`${data?.stats?.evaluatedForecasts ?? 0} уже оценено`} />
                 <StatCard label="Ценовых точек" value={String(data?.stats?.priceSnapshots ?? 0)} hint="дневные ряды V2" />
               </div>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-text-secondary">
@@ -878,7 +881,7 @@ export default function MarketMemory() {
                 </div>
               </>
             ) : (
-              <EmptyState text="Снимков прогнозов V2 пока нет. Они появятся после дневного запуска агрегатора на классифицированных событиях." />
+              <EmptyState text="Архивных снимков нет: новых прогнозов сайт не выпускает с 31 октября 2026 года, а старых записей этот контур не нашёл." />
             )
           )}
         </div>

@@ -10,7 +10,7 @@ import {
   Snowflake,
   Thermometer,
 } from 'lucide-react';
-import type { TensionData } from '@/data/mockData';
+import type { TensionData } from '@/data/marketTypes';
 import { fetchLiveTension } from '@/data/liveTension';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';

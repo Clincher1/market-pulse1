@@ -350,3 +350,69 @@ export function buildChangeNotes(inputs: ChangeInput[], limit = DEFAULT_LIMIT): 
     .sort((a, b) => b.weight - a.weight || a.name.localeCompare(b.name, 'ru'))
     .slice(0, Math.max(1, limit));
 }
+
+/** Сравнение двух соседних окон: что было за последние `days` и что до них. */
+export interface WeekComparison {
+  id: string;
+  name: string;
+  unit: string;
+  provider: string;
+  dateKind: 'day' | 'sample';
+  days: number;
+  /** Изменение за последнее окно, проценты. */
+  recentPct: number;
+  /** Изменение за предыдущее окно такой же длины, проценты. */
+  previousPct: number;
+  recentLabel: string;
+  previousLabel: string;
+  /** Разница между окнами в процентных пунктах: recentPct − previousPct. */
+  deltaPct: number;
+  lastDate: string;
+  windowLabel: string;
+}
+
+/**
+ * «Неделя к неделе»: изменение за 7 значений против предыдущих 7.
+ *
+ * Это не ускорение и не замедление «в среднем» — здесь два факта рядом:
+ * насколько ряд сдвинулся за последнюю неделю и насколько за неделю до неё.
+ * Оценку «хорошо/плохо» сайт не выставляет: он показывает числа и даты.
+ */
+export function buildWeekComparisons(inputs: ChangeInput[], days = 7): WeekComparison[] {
+  const result: WeekComparison[] = [];
+
+  for (const input of inputs) {
+    const cleaned = cleanSeries(input);
+    if (!cleaned || cleaned.values.length < days * 2 + 1) continue;
+    const { values, points } = cleaned;
+    const last = values[values.length - 1] as number;
+    const mid = values[values.length - 1 - days] as number;
+    const start = values[values.length - 1 - days * 2] as number;
+    if (!Number.isFinite(last) || !Number.isFinite(mid) || !Number.isFinite(start)) continue;
+    if (mid === 0 || start === 0) continue;
+    const recentPct = (last / mid - 1) * 100;
+    const previousPct = (mid / start - 1) * 100;
+    const lastPoint = points[points.length - 1];
+    const windowLabel =
+      input.dateKind === 'day'
+        ? `${days} торговых дней`
+        : `${days} значений`;
+    result.push({
+      id: input.id,
+      name: input.name,
+      unit: input.unit,
+      provider: input.provider,
+      dateKind: input.dateKind,
+      days,
+      recentPct,
+      previousPct,
+      recentLabel: formatSeriesChange(mid, last),
+      previousLabel: formatSeriesChange(start, mid),
+      deltaPct: recentPct - previousPct,
+      lastDate: lastPoint?.date ?? '',
+      windowLabel,
+    });
+  }
+
+  return result.sort((a, b) => Math.abs(b.deltaPct) - Math.abs(a.deltaPct));
+}

@@ -1,4 +1,4 @@
-import type { NewsItem } from '../data/mockData';
+import type { NewsItem } from '../data/marketTypes';
 
 /**
  * Conservative duplicate grouping for the public news cache.

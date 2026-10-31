@@ -1,7 +1,9 @@
-// Типы данных приложения и резервные (fallback) значения.
-// Резервные значения показываются только до первой успешной загрузки
-// или если живые данные из Supabase недоступны (в этом случае UI
-// честно показывает предупреждение — см. useLiveAssets / KeyAssets).
+// Типы данных приложения и пустые заготовки плиток.
+//
+// Файл раньше назывался mockData.ts, и это имя врало: никаких «мок-данных» с
+// числами здесь нет и не должно быть. Есть только описание форм ответа и
+// заготовки с прочерком на случай, когда живое значение ещё не пришло —
+// выдуманная котировка на экране выглядит как настоящая, поэтому её тут нет.
 
 /**
  * Распределение дневной истории шкалы напряжённости относительно
@@ -83,17 +85,6 @@ export interface NewsItem {
   /** Filled by the frontend duplicate grouper; 1 means no collapsed copies. */
   duplicateCount?: number;
   duplicateSources?: string[];
-}
-
-export interface ForecastData {
-  id: string;
-  asset: string;
-  direction: 'up' | 'down' | 'none';
-  probability: number;
-  time_window: string;
-  confidence: 'Низкая' | 'Средняя' | 'Высокая';
-  reason: string;
-  updated_at?: string;
 }
 
 // --- Заготовки плиток без чисел ---

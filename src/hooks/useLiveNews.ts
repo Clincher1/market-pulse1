@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { NewsItem } from '@/data/mockData';
+import { NewsItem } from '@/data/marketTypes';
 import { fetchRawNews } from '@/data/liveNews';
 import { startPolling } from '@/lib/polling';
 

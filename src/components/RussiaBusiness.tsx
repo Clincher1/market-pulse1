@@ -30,7 +30,7 @@ import RussiaHistory from './RussiaHistory';
 import { SectionThemeBadge } from './sectionThemes';
 import { formatPercent as formatPercentShared } from '@/lib/percent';
 import { formatPriceText } from '@/lib/price';
-import { NewsItem } from '@/data/mockData';
+import { NewsItem } from '@/data/marketTypes';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import { startPolling } from '@/lib/polling';

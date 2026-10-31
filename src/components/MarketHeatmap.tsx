@@ -12,14 +12,13 @@ import {
 import { moscowClock, observationLabel } from '@/lib/asOf';
 import { formatCapPercent, formatPercent } from '@/lib/percent';
 import { formatPriceText } from '@/lib/price';
-import { AssetData, ForecastData } from '@/data/mockData';
+import { AssetData } from '@/data/marketTypes';
 import ExpandHint from './ExpandHint';
 import {
   fetchAssetPriceHistory,
   type AssetHistoryPoint,
   type AssetPriceHistory,
 } from '@/data/assetPriceHistory';
-import { fetchLiveForecasts } from '@/data/liveForecasts';
 
 /**
  * Временные визуальные шкалы насыщенности, в процентах изменения.
@@ -294,12 +293,13 @@ const ASSET_SOURCE_META: Record<string, AssetSourceMeta> = {
   },
 };
 
-/** Какие плитки имеют публичный прогноз в cached_forecasts и под каким именем. */
-const FORECAST_ASSET_NAME: Record<string, string> = {
-  brent: 'Brent',
-  btc: 'BTC',
-  sp500: 'S&P 500',
-};
+/** Значения плитки печатаются одинаково: два знака, запятая, пробел между тысячами. */
+function formatWindowValue(value: number): string {
+  return new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
 
 function TileSparkline({ values }: { values: number[] }) {
   const points = values.filter((value) => Number.isFinite(value));
@@ -425,7 +425,7 @@ function HeatTile({
 
       <div className="mt-3 flex items-end justify-between gap-2">
         <span className="text-base font-extrabold tabular-nums">
-          {isFallback || horizonChangeValue === null ? '—' : nearlyFlat ? '0.00%' : formatChange(change)}
+          {isFallback || horizonChangeValue === null ? '—' : formatChange(nearlyFlat ? 0 : change)}
         </span>
         <span className="text-[10px] font-semibold uppercase tracking-wider text-white/65">
           шкала ±{formatCap(cap)}
@@ -854,16 +854,12 @@ function AssetPanel({
   horizonId,
   paletteId,
   isFallback,
-  forecast,
-  forecastLoading,
   onClose,
 }: {
   asset: AssetData;
   horizonId: HorizonId;
   paletteId: PaletteId;
   isFallback: boolean;
-  forecast: ForecastData | null;
-  forecastLoading: boolean;
   onClose: () => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -879,31 +875,13 @@ function AssetPanel({
       ? points.length - 1 - selectedIntervals
       : null;
   const meta = ASSET_SOURCE_META[asset.id];
-  const forecastPublishedForAsset = asset.id in FORECAST_ASSET_NAME;
-  // Тот же порог, что и в разделе «Прогнозы»: ниже 60/40 направления нет.
-  const hasSignal = Boolean(
-    forecast && forecast.direction !== 'none' && forecast.probability >= 60,
-  );
-  const signalUp = hasSignal && forecast?.direction === 'up';
-  const signalPillClass = !hasSignal
-    ? 'bg-white/10 text-text-secondary'
-    : paletteId === 'colorblind'
-      ? signalUp
-        ? 'bg-sky-400/15 text-sky-200'
-        : 'bg-orange-400/15 text-orange-200'
-      : signalUp
-        ? 'bg-emerald-400/15 text-emerald-200'
-        : 'bg-red-400/15 text-red-200';
-  const signalBarClass = !hasSignal
-    ? 'bg-slate-400'
-    : paletteId === 'colorblind'
-      ? signalUp
-        ? 'bg-sky-400'
-        : 'bg-orange-400'
-      : signalUp
-        ? 'bg-emerald-400'
-        : 'bg-red-400';
-
+  const windowValues = points.slice(-30);
+  const windowMin = windowValues.length > 0 ? Math.min(...windowValues) : null;
+  const windowMax = windowValues.length > 0 ? Math.max(...windowValues) : null;
+  const windowPositionPct =
+    windowMin !== null && windowMax !== null && last !== undefined && windowMax > windowMin
+      ? Math.round(((last - windowMin) / (windowMax - windowMin)) * 100)
+      : 0;
   const [historyRangeDays, setHistoryRangeDays] = useState<HistoryRangeDays>(90);
   const [historyState, setHistoryState] = useState<{
     assetId: string;
@@ -1261,67 +1239,35 @@ function AssetPanel({
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <section
-          aria-label="Ожидание модели по активу"
+          aria-label="Диапазон сохранённых значений"
           className="rounded-lg border border-white/10 bg-white/[0.03] p-4"
         >
           <h5 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
-            Ожидание модели
+            Диапазон 30 значений
           </h5>
-          {!forecastPublishedForAsset ? (
-            <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-              По этому активу ожидание публично не выпускается: он служит внешним
-              ориентиром. События, которые на него влияют, копятся в «Памяти рынка» ниже.
-            </p>
-          ) : forecastLoading ? (
-            <p className="mt-2 text-sm text-text-secondary">Загрузка ожидания…</p>
-          ) : !forecast ? (
-            <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-              Ожидание временно недоступно. График выше построен по сохранённым ценам и от
-              этого не зависит.
-            </p>
-          ) : (
-            <div className="mt-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-extrabold ${signalPillClass}`}
-                >
-                  {hasSignal ? (
-                    signalUp ? (
-                      <TrendingUp className="h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4" aria-hidden="true" />
-                    )
-                  ) : (
-                    <Minus className="h-4 w-4" aria-hidden="true" />
-                  )}
-                  {hasSignal ? (signalUp ? 'Вверх' : 'Вниз') : 'Нет сигнала'}
-                </span>
-                <span className="text-sm font-extrabold tabular-nums text-text-primary">
-                  {forecast.probability}%
-                </span>
-                <span className="text-xs text-text-secondary">
-                  горизонт {forecast.time_window} · уверенность: {forecast.confidence}
-                </span>
-              </div>
-              <div
-                className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10"
-                aria-hidden="true"
-              >
+          {windowValues.length >= 2 && windowMin !== null && windowMax !== null && last !== undefined ? (
+            <>
+              <p className="mt-2 text-sm font-bold text-text-primary">
+                от {formatWindowValue(windowMin)} до {formatWindowValue(windowMax)}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                последнее значение {formatWindowValue(last)} — на {windowPositionPct}% выше минимума окна
+              </p>
+              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
                 <div
-                  className={`h-full rounded-full ${signalBarClass}`}
-                  style={{ width: `${forecast.probability}%` }}
+                  className="h-full rounded-full bg-cyan-400/70"
+                  style={{ width: `${windowPositionPct}%` }}
                 />
               </div>
-              {forecast.reason && (
-                <p className="mt-2.5 text-sm leading-relaxed text-text-secondary">
-                  {forecast.reason}
-                </p>
-              )}
               <p className="mt-2 text-[11px] leading-relaxed text-text-secondary/80">
-                Процент — доля взвешенных новостных свидетельств на большей стороне. Ниже порога
-                60% направленный вывод не делается: это шум, а не сигнал.
+                Это факт по сохранённым закрытиям: где цена стоит внутри своего окна. Ожиданий и
+                рекомендаций здесь нет — выдача прогнозов остановлена 31 октября 2026 года.
               </p>
-            </div>
+            </>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+              Сохранённых значений пока меньше двух, поэтому диапазон не считается.
+            </p>
           )}
         </section>
 
@@ -1402,9 +1348,6 @@ export default function MarketHeatmap({
   const [selectedId, setSelectedId] = useState<string | null>(readInitialAssetId);
   const [horizonId, setHorizonId] = useState<HorizonId>('day');
   const [paletteId, setPaletteId] = useState<PaletteId>(readInitialPalette);
-  const [forecasts, setForecasts] = useState<ForecastData[] | null>(null);
-  const [forecastLoading, setForecastLoading] = useState(false);
-  const forecastRequestRef = useRef<Promise<ForecastData[]> | null>(null);
 
   // Палитра — функциональная настройка доступности. Хранится только
   // локально в браузере и никуда не отправляется.
@@ -1445,26 +1388,6 @@ export default function MarketHeatmap({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selectedId]);
 
-  // Прогнозы нужны только открытой панели — грузим лениво. Один общий
-  // промис в ref не даёт эффекту отменить собственный запрос при
-  // переключении состояния загрузки или смене выбранного актива.
-  useEffect(() => {
-    if (!selectedAsset) return;
-    let cancelled = false;
-    if (!forecastRequestRef.current) {
-      forecastRequestRef.current = fetchLiveForecasts();
-    }
-    setForecastLoading(true);
-    forecastRequestRef.current.then((data) => {
-      if (cancelled) return;
-      setForecasts(data);
-      setForecastLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedAsset]);
-
   const handleSelect = (id: string) => {
     setSelectedId((previous) => (previous === id ? null : id));
   };
@@ -1473,12 +1396,6 @@ export default function MarketHeatmap({
     if (selectedId) document.getElementById(`heat-tile-${selectedId}`)?.focus();
     setSelectedId(null);
   };
-
-  const selectedForecast = selectedAsset
-    ? forecasts?.find(
-        (forecast) => forecast.asset === FORECAST_ASSET_NAME[selectedAsset.id],
-      ) ?? null
-    : null;
 
   return (
     <div className="relative overflow-hidden rounded-xl2 border border-cyan-300/20 bg-[#0C1626] p-4 shadow-lg sm:p-5">
@@ -1580,8 +1497,6 @@ export default function MarketHeatmap({
               horizonId={horizonId}
               paletteId={paletteId}
               isFallback={fallbackAssetIds.includes(selectedAsset.id)}
-              forecast={selectedForecast}
-              forecastLoading={forecastLoading}
               onClose={handleClose}
             />
           )}

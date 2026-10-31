@@ -3,7 +3,13 @@ import { Activity, ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import { fetchRussiaHistory, type RussiaHistory } from '@/data/russiaHistory';
-import { buildChangeNotes, type ChangeInput, type ChangeNote } from '@/lib/changes';
+import {
+  buildChangeNotes,
+  buildWeekComparisons,
+  type ChangeInput,
+  type ChangeNote,
+  type WeekComparison,
+} from '@/lib/changes';
 import { ErrorNotice } from './SectionFallback';
 
 /**
@@ -83,6 +89,24 @@ function NoteCard({ note }: { note: ChangeNote }) {
   );
 }
 
+function formatPp(value: number): string {
+  const sign = value > 0 ? '+' : value < 0 ? '\u2212' : '';
+  return `${sign}${Math.abs(value).toFixed(2).replace('.', ',')}\u00A0п.п.`;
+}
+
+function WeekRow({ row }: { row: WeekComparison }) {
+  const tone =
+    row.deltaPct > 0 ? 'text-emerald-300' : row.deltaPct < 0 ? 'text-rose-300' : 'text-slate-300';
+  return (
+    <tr className="border-t border-white/[0.07]">
+      <td className="px-3 py-2 text-left font-semibold text-text-primary">{row.name}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-text-primary">{row.recentLabel}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{row.previousLabel}</td>
+      <td className={`px-3 py-2 text-right font-bold tabular-nums ${tone}`}>{formatPp(row.deltaPct)}</td>
+    </tr>
+  );
+}
+
 export default function WhatChanged() {
   const [history, setHistory] = useState<RussiaHistory | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -100,7 +124,7 @@ export default function WhatChanged() {
     };
   }, []);
 
-  const notes = useMemo(() => {
+  const { notes, weeks } = useMemo(() => {
     const inputs: ChangeInput[] = [];
 
     for (const series of history?.series ?? []) {
@@ -129,7 +153,10 @@ export default function WhatChanged() {
       });
     }
 
-    return buildChangeNotes(inputs);
+    return {
+      notes: buildChangeNotes(inputs),
+      weeks: buildWeekComparisons(inputs).slice(0, 8),
+    };
   }, [history, assets]);
 
   const loading = history === null || (assetsLoading && assets.length === 0);
@@ -182,6 +209,40 @@ export default function WhatChanged() {
       {historyError && (
         <div className="mt-4">
           <ErrorNotice title="История рядов не загрузилась" message={historyError} />
+        </div>
+      )}
+
+      {weeks.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-sm font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+            Неделя к неделе
+          </h3>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-400">
+            Одно и то же сравнение для всех рядов: насколько значение сдвинулось за последние
+            семь точек и насколько — за семь точек до них. Никаких выводов «хорошо/плохо»:
+            только два факта и их разница в процентных пунктах.
+          </p>
+          <div className="mt-3 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03]">
+            <table className="w-full min-w-[520px] border-collapse text-sm">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-[0.1em] text-slate-400">
+                  <th className="px-3 py-2 text-left font-semibold">Показатель</th>
+                  <th className="px-3 py-2 text-right font-semibold">Последние 7</th>
+                  <th className="px-3 py-2 text-right font-semibold">7 до них</th>
+                  <th className="px-3 py-2 text-right font-semibold">Разница</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weeks.map((row) => (
+                  <WeekRow key={row.id} row={row} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+            «Последние 7» — торговые дни с датами у российских рядов и семь последних значений у
+            мировых котировок: даты закрытий источник для них не передаёт.
+          </p>
         </div>
       )}
 

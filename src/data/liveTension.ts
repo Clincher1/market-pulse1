@@ -1,4 +1,4 @@
-import { TensionData, TensionHistoryStats } from './mockData';
+import { TensionData, TensionHistoryStats } from './marketTypes';
 import { supabase } from '@/lib/supabase';
 
 function finiteOrNull(value: unknown): number | null {

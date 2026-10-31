@@ -3,8 +3,7 @@ import { ArrowRight, Camera, Eye, History, Zap } from 'lucide-react';
 import { formatPercent } from '@/lib/percent';
 import { observationLabel } from '@/lib/asOf';
 import { formatPriceText } from '@/lib/price';
-import type { ForecastData, NewsItem, TensionData } from '@/data/mockData';
-import { fetchLiveForecasts } from '@/data/liveForecasts';
+import type { NewsItem, TensionData } from '@/data/marketTypes';
 import { fetchLiveTension } from '@/data/liveTension';
 import {
   fetchTodaySnapshot,
@@ -57,7 +56,6 @@ const RUSSIA_CHANGE_THRESHOLDS: Record<string, number> = {
   imoex: 0.5,
   rgbi: 0.1,
 };
-const SIGNAL_BALANCE_THRESHOLD = 10;
 
 function plural(n: number, forms: [string, string, string]): string {
   const abs = Math.abs(n);
@@ -128,17 +126,6 @@ function currentSparklineLast(sparkline?: number[]): number | null {
   return values.length ? values[values.length - 1] : null;
 }
 
-function publicSignalLabel(direction: string, probability: number | null): string {
-  if (
-    probability === null ||
-    probability < 60 ||
-    (direction !== 'up' && direction !== 'down')
-  ) {
-    return 'Нет сигнала';
-  }
-  const side = direction === 'up' ? 'вверх' : 'вниз';
-  return probability < 70 ? `Слабый перекос ${side}` : side === 'вверх' ? 'Вверх' : 'Вниз';
-}
 
 function eventTimestamp(item: NewsItem): number {
   const parsed = item.published_at ? new Date(item.published_at).getTime() : Number.NaN;
@@ -178,8 +165,6 @@ export default function DailyBrief() {
   const [snapshot, setSnapshot] = useState<DailySnapshot | null>(null);
   const [snapshotLoaded, setSnapshotLoaded] = useState(false);
   const [snapshotError, setSnapshotError] = useState(false);
-  const [forecasts, setForecasts] = useState<ForecastData[]>([]);
-  const [forecastsLoaded, setForecastsLoaded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -230,21 +215,6 @@ export default function DailyBrief() {
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      const data = await fetchLiveForecasts();
-      if (!mounted) return;
-      setForecasts(data);
-      setForecastsLoaded(true);
-    }
-    void load();
-    const stopPolling = startPolling(() => void load());
-    return () => {
-      mounted = false;
-      stopPolling();
-    };
-  }, []);
 
   const liveAssets = useMemo(
     () =>
@@ -696,54 +666,12 @@ export default function DailyBrief() {
         .map((candidate) => candidate.item),
     );
 
-    // Сигналы сравниваем по публичному статусу после порога 60/40.
-    // Внутренний переворот ниже порога сам по себе изменением не считаем.
-    const snapshotForecasts = new Map(
-      snapshot.forecasts.map((forecast) => [forecast.id, forecast]),
-    );
-    const signalItems: ChangeItem[] = [];
-    forecasts.forEach((forecast) => {
-      const base = snapshotForecasts.get(forecast.id);
-      if (!base || base.probability === null || !Number.isFinite(forecast.probability)) return;
-      comparable += 1;
-      const baseLabel = publicSignalLabel(base.direction, base.probability);
-      const currentLabel = publicSignalLabel(forecast.direction, forecast.probability);
-      const balanceDelta = Math.abs(forecast.probability - base.probability);
-      const statusChanged = baseLabel !== currentLabel;
-      if (!statusChanged && balanceDelta < SIGNAL_BALANCE_THRESHOLD) return;
-      signalItems.push({
-        id: `change-signal-${forecast.id}`,
-        href: '#forecasts',
-        score: statusChanged
-          ? 90 + Math.min(10, balanceDelta / 2)
-          : 55 + Math.min(10, balanceDelta / 2),
-        body: (
-          <>
-            Ожидание по <strong className="text-text-primary">{forecast.asset}</strong>: баланс
-            свидетельств{' '}
-            <strong className="tabular-nums text-text-primary">
-              {Math.round(base.probability)} → {Math.round(forecast.probability)}
-            </strong>
-            {statusChanged ? (
-              <>
-                ; публичный статус «{baseLabel}» → «{currentLabel}».
-              </>
-            ) : (
-              <>; публичный статус по-прежнему «{currentLabel}».</>
-            )}
-          </>
-        ),
-      });
-    });
-    totalSignificant += signalItems.length;
-    items.push(...signalItems.sort((a, b) => b.score - a.score).slice(0, 3));
-
     return {
       items: items.sort((a, b) => b.score - a.score).slice(0, 6),
       comparable,
       totalSignificant,
     };
-  }, [forecasts, insights, liveAssets, snapshot, tension]);
+  }, [insights, liveAssets, snapshot, tension]);
 
   // Показываем бриф только цельным снимком: полусобранный вариант мог бы
   // на секунду заявить «данных недостаточно» просто потому, что активы
@@ -753,8 +681,7 @@ export default function DailyBrief() {
     !tensionLoaded ||
     !insightsLoaded ||
     newsLoading ||
-    !snapshotLoaded ||
-    !forecastsLoaded;
+    !snapshotLoaded;
   const stamp = formatStamp([tension?.updatedAt, insights?.generatedAt]);
   const baselineStamp = snapshot ? formatStamp([snapshot.capturedAt]) : null;
   const baselineHour = snapshot ? moscowHour(snapshot.capturedAt) : null;

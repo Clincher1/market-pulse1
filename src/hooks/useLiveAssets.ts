@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AssetData, assetPlaceholders as fallbackAssets } from '@/data/mockData';
+import { AssetData, assetPlaceholders as fallbackAssets } from '@/data/marketTypes';
 import { fetchLiveAssets } from '@/data/liveAssets';
 import { startPolling } from '@/lib/polling';
 

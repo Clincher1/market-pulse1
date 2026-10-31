@@ -34,14 +34,12 @@ const MIN_CONFIDENCE = 0.5;
 const BLOCKED_SOURCES = new Set(['GDELT (Global)', 'GDELT']);
 const FRESH_NEWS_HOURS = 6;
 const FRESH_ASSETS_MINUTES = 45;
-// Forecasts are written once a day, not every 15 minutes: forecast_latest_v2
-// takes its issued_at from pg_cron job shadow-write-forecasts-v2, scheduled at
-// 05:45 UTC. The threshold therefore has to cover a day plus slack, or the
-// check can never be green between 08:45 and the next morning — it would fail
-// 21 hours out of 24, every day, by construction. Green now means "the daily
-// run happened"; red means a daily run was missed.
-const FRESH_FORECAST_HOURS = 26;
 const FRESH_FEED_HOURS = 24;
+// Дата наблюдения у мировых котировок отстаёт от публикации: FRED отдаёт
+// закрытие с задержкой в день-два, на выходных прибавляется ещё два дня.
+// Шесть суток — предел этого расписания, а не «запас на всякий случай»:
+// всё, что старше, уже не календарь источника, а застрявший писатель.
+const MAX_ASSET_ASOF_HOURS = 144;
 // Сколько может пройти без новых точек у каждого ряда истории. Это НЕ «задержка
 // сайта», а расписание источников: Мосбиржа отдаёт день после закрытия, ЦБ —
 // курс на дату и RUONIA на следующий день, резервы — раз в неделю (отчётная
@@ -66,22 +64,13 @@ const HISTORY_MAX_AGE_DAYS: Record<string, number> = {
 const ASSET_HISTORY_MAX_AGE_DAYS = 7;
 const MIN_SAMPLE = 20;
 const TENSION_TOLERANCE = 2;
-const MAX_ONE_SIDED_SHARE = 0.85;
 
-// The calibrated writer first runs at 05:45 UTC on 2026-10-29. Until then this
-// check sleeps instead of crying wolf over rows written before the change.
-const CALIBRATION_SINCE = '2026-10-29';
-const CALIBRATION_MARKER = 'empirical_bayes_v1';
-const VERDICT_SCORED_MIN = 30;
 const HEAL_TIMEOUT_MS = 25_000;
 
 // Which job is responsible for which red check. One retry, nothing more.
-//
-// forecasts_fresh is deliberately absent. It watches a daily writer, so the
-// only thing a nudge could do is re-run the day's forecast; and because heal()
-// retries the FIRST red check in this map, a permanently red entry here used to
-// swallow the single attempt that news_fresh needed. A check that cannot be
-// healed should not compete for the healer.
+// Проверки, которые нельзя вылечить повторным запуском, сюда не попадают:
+// heal() повторяет первую красную запись, и «неизлечимая» строка съедала бы
+// попытку у той, которую действительно можно починить.
 const HEAL_BY_CHECK: Record<string, string> = {
   assets_fresh: 'update-assets',
   news_fresh: 'update-news-v2',
@@ -105,7 +94,6 @@ const TELEMETRY_MARKERS = [
 ];
 
 const DIGEST_TITLE = 'Дайджест недели: Market Pulse';
-const VERDICT_TITLE = 'Решение: вердикт по прогнозам готов';
 
 type AnyRecord = Record<string, unknown>;
 type Check = { ok: boolean; detail: string };
@@ -356,42 +344,6 @@ async function raiseDecision(ctx: LinearCtx | null, title: string, body: string)
   return Boolean(await createIssue(ctx, title, body, 3));
 }
 
-// The honest moment for the forecast block: enough scored calls to say whether
-// the system beats a coin. What to do with the answer is a human decision.
-async function escalateForecastVerdict(ctx: LinearCtx | null): Promise<string> {
-  const rows = (await restJson(
-    'forecast_track_record?select=asset_key,issued,resolved,scored,verdict,hit_rate,mean_brier,pending&asset_key=eq.ALL&limit=1',
-  )) as AnyRecord[];
-  const row = rows[0];
-  if (!row) return '';
-  const scored = Number(row.scored ?? 0);
-  if (scored < VERDICT_SCORED_MIN) return '';
-
-  const hitRate = Number(row.hit_rate ?? 0);
-  const brier = Number(row.mean_brier ?? 0);
-  const verdict = String(row.verdict ?? '');
-  const better = brier < 0.25;
-
-  const raised = await raiseDecision(ctx, VERDICT_TITLE, [
-    `Проверенных прогнозов: **${scored}** — порог в ${VERDICT_SCORED_MIN} пройден, молчаливое обещание пора either подтвердить или снять.`,
-    '',
-    `- Попаданий: ${Math.round(hitRate * 100)} %`,
-    `- Брайер: ${brier.toFixed(3)} против 0.250 у подбрасывания монетки (${better ? 'лучше монетки' : 'не лучше монетки'})`,
-    `- Вердикт системы: \`${verdict}\``,
-    '',
-    '**Что решить человеку:**',
-    '',
-    '1. Оставить блок прогнозов как есть — если преимущество над монеткой подтвердилось.',
-    '2. Честно упростить до «сигнала нет» и убрать направление — если не подтвердилось.',
-    '3. Поднять порог и копить дальше — если разница в пределах шума.',
-    '',
-    `Отчёт и текущий счёт: ${SITE}/#status`,
-    'Эту задачу автоматика не закроет: она ждёт решения.',
-  ].join('\n'));
-
-  return raised ? `задача на решение: «${VERDICT_TITLE}»` : '';
-}
-
 // ---------------------------------------------------------------------------
 // Weekly digest: one standing issue, one comment a week. Notifications are for
 // exceptions; this is for the person who wants to see the trend.
@@ -431,27 +383,26 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
   )) as AnyRecord[];
   const red = history.filter((r) => !r.ok).length;
 
-  const track = (await restJson(
-    'forecast_track_record?select=scored,issued,resolved,hit_rate,mean_brier,verdict&asset_key=eq.ALL&limit=1',
-  )) as AnyRecord[];
-  const scored = Number(track[0]?.scored ?? 0);
-  const hit = Math.round(Number(track[0]?.hit_rate ?? 0) * 100);
-  const brier = Number(track[0]?.mean_brier ?? 0);
-
   const tension = (await restJson('cached_tension?select=value,news_count&id=eq.1')) as AnyRecord[];
-  const feeds = (await restJson('news_source_health?select=source,last_new_at')) as AnyRecord[];
-  const silent = feeds.filter((f) => {
-    const age = hoursAgo(String(f.last_new_at ?? ''));
-    return age === null || age > FRESH_FEED_HOURS;
-  }).map((f) => String(f.source));
+  const feeds = (await restJson('news_source_health_v2?select=source_id,created_at&ok=eq.true&created_at=gte.' + encodeURIComponent(weekAgo))) as AnyRecord[];
+  const lastFeedRun = new Map<string, number>();
+  for (const run of feeds) {
+    const id = String(run.source_id ?? '');
+    const age = hoursAgo(String(run.created_at ?? ''));
+    if (!id || age === null) continue;
+    const known = lastFeedRun.get(id);
+    if (known === undefined || age < known) lastFeedRun.set(id, age);
+  }
+  const silent = [...lastFeedRun.entries()]
+    .filter(([, age]) => age > FRESH_FEED_HOURS)
+    .map(([id]) => id);
 
   const lines = [
     `**Неделя ${now.toISOString().slice(0, 10)} (UTC)**`,
     '',
     `- Самопроверок: ${history.length}, из них красных: ${red}`,
     `- Индекс напряжённости: ${tension[0]?.value ?? '—'} (${tension[0]?.news_count ?? 0} материалов в окне)`,
-    `- Прогнозы: выдано ${track[0]?.issued ?? 0}, проверено ${scored}, попаданий ${hit} %, Брайер ${brier.toFixed(3)}`,
-    `- Ленты: ${silent.length ? `молчат ${silent.join(', ')}` : `все ${feeds.length} давали материалы`}`,
+    `- Ленты: ${silent.length ? `молчат ${silent.join(', ')}` : `все ${lastFeedRun.size} давали материалы`}`,
     '',
     `Полный отчёт: ${SITE}/#status`,
   ];
@@ -648,13 +599,25 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 5. Forecasts must be recalculated on schedule.
-    check('forecasts_fresh', async () => {
-      const rows = (await restJson('forecast_latest_v2?select=issued_at&order=issued_at.desc&limit=1')) as AnyRecord[];
-      const age = hoursAgo(String(rows[0]?.issued_at ?? ''));
+    // 5b. Кэш может быть свежим, а наблюдение — старым: FRED отдаёт закрытие
+    //     с задержкой, и «обновлено 5 минут назад» ничего не говорит о том,
+    //     за какое число цена. Проверяем именно as_of, а не updated_at.
+    check('assets_asof', async () => {
+      const rows = (await restJson('cached_assets?select=id,as_of')) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      const ages = rows.map((row) => ({
+        id: String(row.id ?? ''),
+        age: hoursAgo(String(row.as_of ?? '')),
+      }));
+      const stale = ages.filter((item) => item.age === null || item.age > MAX_ASSET_ASOF_HOURS);
+      const oldest = [...ages].sort((a, b) => (b.age ?? 0) - (a.age ?? 0))[0];
       return {
-        ok: age !== null && age <= FRESH_FORECAST_HOURS,
-        detail: age === null ? 'нет данных' : `прогнозам ${age.toFixed(1)} ч`,
+        ok: stale.length === 0,
+        detail: stale.length
+          ? `наблюдение старше ${Math.round(MAX_ASSET_ASOF_HOURS / 24)} суток: ${stale
+              .map((item) => `${item.id} (${item.age === null ? 'нет даты' : `${(item.age / 24).toFixed(1)} дн`})`)
+              .join(', ')}`
+          : `самое старое наблюдение — ${oldest?.id ?? '—'}, ${((oldest?.age ?? 0) / 24).toFixed(1)} дн`,
       };
     }),
 
@@ -669,49 +632,41 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
 
     // 7. Every feed must have produced something recently. This is the check
     //    that would have caught the frozen WSJ feed in a day instead of two years.
+    // 7. Every enabled feed in the live registry must have produced a successful
+    //    run in the last сутки. Прежняя версия смотрела в legacy-таблицу
+    //    news_source_health, где осталось пять строк: проверка была зелёной,
+    //    пока молчали пятнадцать лент. Теперь источник истины — реестр
+    //    news_sources_v2 и журнал news_source_health_v2.
     check('feeds_fresh', async () => {
-      const rows = (await restJson('news_source_health?select=source,last_new_at,last_seen_at')) as AnyRecord[];
-      if (!rows.length) return { ok: false, detail: 'здоровье источников ещё не пишется' };
-      const stale = rows.filter((r) => {
-        const age = hoursAgo(String(r.last_new_at ?? ''));
-        return age === null || age > FRESH_FEED_HOURS;
-      });
-      const names = stale.map((r) => `${String(r.source)} (${hoursAgo(String(r.last_new_at ?? ''))?.toFixed(0) ?? 'нет даты'} ч)`);
-      return {
-        ok: stale.length === 0,
-        detail: stale.length ? `молчат: ${names.join(', ')}` : `все ${rows.length} лент давали материалы за сутки`,
-      };
-    }),
-
-    // 8. A forecast that always points the same way is not a forecast. This is
-    //    the blind spot that let nine of the first eleven calls say "up" on a
-    //    falling market without anything noticing.
-    check('forecast_bias', async () => {
-      const rows = (await restJson(
-        'market_forecasts_v2?select=direction,issue_date&order=issue_date.desc&limit=40',
+      const sources = (await restJson('news_sources_v2?select=id,name&enabled=eq.true')) as AnyRecord[];
+      if (!sources.length) return { ok: false, detail: 'реестр лент пуст' };
+      const since = new Date(Date.now() - FRESH_FEED_HOURS * 3_600_000).toISOString();
+      const runs = (await restJson(
+        `news_source_health_v2?select=source_id,created_at&ok=eq.true&created_at=gte.${encodeURIComponent(since)}&order=created_at.desc&limit=2000`,
       )) as AnyRecord[];
-      const directional = rows.filter((r) => r.direction === 'up' || r.direction === 'down');
-      if (directional.length < 10) {
-        return { ok: true, detail: `направленных прогнозов ${directional.length} — мало для вывода о перекосе` };
+      const lastRun = new Map<string, number>();
+      for (const run of runs) {
+        const id = String(run.source_id ?? '');
+        const age = hoursAgo(String(run.created_at ?? ''));
+        if (!id || age === null) continue;
+        const known = lastRun.get(id);
+        if (known === undefined || age < known) lastRun.set(id, age);
       }
-      const up = directional.filter((r) => r.direction === 'up').length;
-      const share = up / directional.length;
+      const silent = sources
+        .filter((row) => {
+          const age = lastRun.get(String(row.id));
+          return age === undefined || age > FRESH_FEED_HOURS;
+        })
+        .map((row) => {
+          const age = lastRun.get(String(row.id));
+          return `${String(row.name ?? row.id)} (${age === undefined ? 'нет запусков' : `${age.toFixed(0)} ч`})`;
+        });
+      const youngest = [...lastRun.values()].sort((a, b) => a - b)[0];
       return {
-        ok: share <= MAX_ONE_SIDED_SHARE && share >= 1 - MAX_ONE_SIDED_SHARE,
-        detail: `из ${directional.length} направленных ${Math.round(share * 100)} % «вверх»`,
-      };
-    }),
-
-    // 9. Forecasts must actually reach a verdict, otherwise the track record
-    //    stays empty forever and the site can claim anything it likes.
-    check('forecasts_resolving', async () => {
-      const rows = (await restJson(
-        'forecast_outcomes_v2?select=evaluated_at&status=eq.evaluated&order=evaluated_at.desc&limit=1',
-      )) as AnyRecord[];
-      const age = hoursAgo(String(rows[0]?.evaluated_at ?? ''));
-      return {
-        ok: age !== null && age <= 36,
-        detail: age === null ? 'ни один прогноз ещё не проверен' : `последняя проверка ${age.toFixed(1)} ч назад`,
+        ok: silent.length === 0,
+        detail: silent.length
+          ? `молчат ${silent.length} из ${sources.length}: ${silent.join(', ')}`
+          : `все ${sources.length} включённых лент отработали за сутки, последняя — ${(youngest ?? 0).toFixed(0)} мин назад`,
       };
     }),
 
@@ -803,47 +758,6 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 12. The calibrated forecast writer must stay calibrated. Without this, a
-    //     later edit could quietly undo the fix that stopped two weak headlines
-    //     from producing a score of 1.000, and nobody would notice for weeks.
-    check('calibration_applied', async () => {
-      const rows = (await restJson(
-        `market_forecasts_v2?select=issue_date,raw&issue_date=gte.${CALIBRATION_SINCE}&order=issue_date.desc&limit=200`,
-      )) as AnyRecord[];
-      if (!rows.length) {
-        return { ok: true, detail: `записей после ${CALIBRATION_SINCE} пока нет — проверка встанет на дежурство сама` };
-      }
-      const latestDate = String(rows[0]?.issue_date ?? '').slice(0, 10);
-      const sameDay = rows.filter((r) => String(r.issue_date ?? '').slice(0, 10) === latestDate);
-      // A snapshot with no directional evidence is a normal outcome, not a
-      // broken row: the writer stores score_raw and score_calibrated as null
-      // when no forecast-bearing event pointed either way. BTC sat like that on
-      // 18 of its first 21 days. Demanding a number there made this check fail
-      // on any day when at least one of the five assets stayed quiet — most
-      // days — and every failure filed an issue that could never close.
-      const hasDirectional = (row: AnyRecord): boolean => {
-        const aggregation = ((row.raw as AnyRecord)?.aggregation as AnyRecord) ?? {};
-        return typeof aggregation.score_raw === 'number';
-      };
-      const quiet = sameDay.filter((row) => !hasDirectional(row)).length;
-      const calibrated = sameDay.filter((row) => {
-        const aggregation = ((row.raw as AnyRecord)?.aggregation as AnyRecord) ?? {};
-        if (aggregation.calibration !== CALIBRATION_MARKER) return false;
-        if (typeof aggregation.base_rate_up !== 'number') return false;
-        // Null is required, not tolerated: it proves the row was written by a
-        // writer that knew there was nothing to calibrate, rather than by an
-        // older one that never set the field at all.
-        return hasDirectional(row)
-          ? typeof aggregation.score_calibrated === 'number'
-          : aggregation.score_calibrated === null;
-      });
-      return {
-        ok: calibrated.length === sameDay.length,
-        detail: `за ${latestDate}: ${calibrated.length} из ${sameDay.length} прогнозов записаны с калибровкой` +
-          (quiet ? ` (${quiet} без направленных доказательств — «нет сигнала», а не поломка)` : ''),
-      };
-    }),
-
     // 14. История за три месяца — это отдельный блок на странице, который
     //     собирает наш Vercel-функция из Мосбиржи и ЦБ. Если она упадёт, блок
     //     просто напишет «историю получить не удалось», и никто об этом не
@@ -932,47 +846,28 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     //     публичных представления. Пустое представление не роняет страницу:
     //     раздел просто тихо показывает меньше, поэтому пустоту надо ловить.
     check('market_memory', async () => {
-      const [stats, events, analogues, forecasts] = await Promise.all([
+      const [stats, events, analogues] = await Promise.all([
         restJson('market_memory_stats_v1?select=*&limit=1'),
         restJson('market_memory_events_v1?select=latest_published_at&order=latest_published_at.desc&limit=1'),
         restJson('market_memory_analogues_v1?select=sample_size&order=sample_size.desc&limit=1'),
-        restJson('market_memory_forecasts_v1?select=issued_at&order=issued_at.desc&limit=1'),
-      ]) as [AnyRecord[], AnyRecord[], AnyRecord[], AnyRecord[]];
+      ]) as [AnyRecord[], AnyRecord[], AnyRecord[]];
       const missing: string[] = [];
       if (!Array.isArray(stats) || stats.length === 0) missing.push('нет итоговой статистики');
       if (!Array.isArray(events) || events.length === 0) missing.push('нет событий');
       if (!Array.isArray(analogues) || analogues.length === 0) missing.push('нет аналогов');
-      if (!Array.isArray(forecasts) || forecasts.length === 0) missing.push('нет прогнозов раздела');
       if (missing.length) return { ok: false, detail: missing.join(', ') };
       const eventAge = hoursAgo(String(events[0]?.latest_published_at ?? ''));
-      const forecastAge = hoursAgo(String(forecasts[0]?.issued_at ?? ''));
       const stale: string[] = [];
       // Аналоги считаются по накопленной истории и не обязаны обновляться каждый
-      // день; события и прогнозы — обязаны.
+      // день; события — обязаны. Прогнозы из проверки убраны вместе с выдачей:
+      // сайт больше их не делает, и требовать свежих значило бы требовать
+      // невозможного.
       if (eventAge === null || eventAge > 72) stale.push(`последнее событие ${eventAge?.toFixed(0) ?? '—'} ч назад`);
-      if (forecastAge === null || forecastAge > 48) stale.push(`прогнозы раздела ${forecastAge?.toFixed(0) ?? '—'} ч назад`);
       return {
         ok: stale.length === 0,
         detail: stale.length
           ? `раздел отстал: ${stale.join(', ')}`
-          : `событие ${eventAge!.toFixed(0)} ч назад, прогнозы ${forecastAge!.toFixed(0)} ч назад, аналоги ${analogues.length ? 'есть' : 'нет'}`,
-      };
-    }),
-
-    // 17. Честный счёт прогнозов — то, что читатель проверяет первым. Если
-    //     представление опустеет, раздел покажет прочерки, а не ошибку.
-    check('track_record', async () => {
-      const rows = (await restJson(
-        'forecast_track_record?select=asset_key,issued,scored,last_evaluated_at&asset_key=eq.ALL&limit=1',
-      )) as AnyRecord[];
-      const row = rows[0];
-      if (!row) return { ok: false, detail: 'счёта прогнозов нет: представление пустое' };
-      const issued = Number(row.issued ?? 0);
-      const scored = Number(row.scored ?? 0);
-      const age = hoursAgo(String(row.last_evaluated_at ?? ''));
-      return {
-        ok: issued > 0 && age !== null && age <= 36,
-        detail: `выдано ${issued}, проверено ${scored}, последняя проверка ${age === null ? '—' : `${age.toFixed(1)} ч`} назад`,
+          : `событие ${eventAge!.toFixed(0)} ч назад, аналоги ${analogues.length ? 'есть' : 'нет'}`,
       };
     }),
 
@@ -1040,7 +935,6 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
   const healing = ok ? '' : await guard('самолечение', () => heal(results));
   const ctx = await linearContext();
   const linear = await syncLinear(ctx, results, checkedAt);
-  const decisions = await guard('эскалация', () => escalateForecastVerdict(ctx));
   const digest = await guard('дайджест', () => weeklyDigest(ctx, now));
 
   return json({
@@ -1050,7 +944,6 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     trigger: row.trigger,
     healing: healing || '',
     linear,
-    decisions,
     digest,
     checks: results,
   });

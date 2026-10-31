@@ -1,4 +1,4 @@
-import { NewsItem } from './mockData';
+import { NewsItem } from './marketTypes';
 import { supabase } from '@/lib/supabase';
 import { safeHttpUrl } from '@/lib/safeUrl';
 import { dedupeNewsItems } from '@/lib/newsDedupe';
