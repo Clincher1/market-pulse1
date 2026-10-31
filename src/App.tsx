@@ -10,6 +10,7 @@ import GuideTeaser from '@/components/GuideTeaser';
 import DashboardQuickNav from '@/components/DashboardQuickNav';
 import BusinessMoney from '@/components/BusinessMoney';
 import { SectionThemeBadge } from '@/components/sectionThemes';
+import WhatChanged from '@/components/WhatChanged';
 import { DeferredMount, SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
 
@@ -183,8 +184,9 @@ function App() {
                 Дашборд фиксирует факты: российские курсы и Мосбиржу, мировой фон, напряжённость
                 новостного фона и главные события дня. У каждого числа видно, когда оно получено,
                 а у котировок — ещё и откуда: источник подписан на плитке или в раскрытой панели.
-                Сайт не предсказывает цены и не даёт рекомендаций: прогнозная часть живёт
-                отдельно, называется журналом проверок и публикует свой счёт вместе с промахами.
+                Сайт не предсказывает цены и не даёт рекомендаций. Раздел «Что меняется» описывает
+                только то, что уже произошло в рядах — серии дней, края окна, узкие диапазоны, —
+                а прогнозная часть живёт отдельно и публикует свой счёт вместе с промахами.
               </p>
             </section>
 
@@ -196,6 +198,10 @@ function App() {
 
             <SectionBoundary title="Паспорт дня">
               <DailyPassport />
+            </SectionBoundary>
+
+            <SectionBoundary title="Что меняется">
+              <WhatChanged />
             </SectionBoundary>
 
             <SectionBoundary title="Россия">
