@@ -1,3 +1,4 @@
+import { mapAssetCacheRow, type AssetCacheRow } from './assetCacheRow';
 import { AssetData } from './marketTypes';
 import { supabase } from '@/lib/supabase';
 
@@ -42,23 +43,16 @@ export async function fetchLiveAssets(): Promise<AssetData[]> {
       throw new Error('Нет данных в кэше');
     }
 
-    const rows = data as AssetData[];
+    const rows = data as AssetCacheRow[];
 
     const sorted = ASSET_ORDER
       .map((id) => rows.find((d) => d.id === id))
-      .filter((row): row is AssetData => Boolean(row));
+      .filter((row): row is AssetCacheRow => Boolean(row));
 
     // Активы, которых нет в ASSET_ORDER, не теряем — добавляем в конец.
     const extras = rows.filter((row) => !ASSET_ORDER.includes(row.id));
 
-    return [...sorted, ...extras].map((asset) => ({
-      ...asset,
-      change: asset.change ?? 0,
-      sparkline: asset.sparkline ?? [],
-      updatedAt: (asset as AssetData & { updated_at?: string | null }).updated_at ?? null,
-      asOf: (asset as AssetData & { as_of?: string | null }).as_of ?? null,
-      sparkDates: Array.isArray(asset.sparkDates) ? asset.sparkDates.map(String) : null,
-    }));
+    return [...sorted, ...extras].map(mapAssetCacheRow);
   } catch (e) {
     console.error('Ошибка загрузки кэша активов:', e);
     return [];
