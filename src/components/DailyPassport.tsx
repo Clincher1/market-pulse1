@@ -29,11 +29,22 @@ function changeWord(change: number): string {
 
 /**
  * «, цена за 30 окт.» — подпись из того же формата, что и на плитках.
- * Пустая строка, если источник дату не назвал: придумывать её нельзя.
+ * Если даты в снимке нет, это сказано прямо: снимки до 31 октября её не
+ * сохраняли, и молчание читалось бы как «цена сегодняшняя».
  */
 function priceAsOf(asOf: string | null): string {
   const label = observationLabel(asOf);
-  return label ? `, цена ${label}` : '';
+  return label ? `, цена ${label}` : ', дата цены в снимке не сохранена';
+}
+
+/**
+ * Хвост строки архива: «, цена за 30 окт.» только когда дата есть.
+ * В таблице места мало, поэтому отсутствие даты здесь не расшифровывается —
+ * расшифровка стоит один раз в подписи под таблицей.
+ */
+function archivePriceAsOf(asOf: string | null): string {
+  const label = observationLabel(asOf);
+  return label ? ` (цена ${label})` : '';
 }
 
 function movingWord(days: number): string {
@@ -229,7 +240,7 @@ export default function DailyPassport() {
                     </td>
                     <td className="py-1">
                       {day.topMover
-                        ? `${day.topMover.name} ${changeWord(day.topMover.change)}`
+                        ? `${day.topMover.name} ${changeWord(day.topMover.change)}${archivePriceAsOf(day.topMover.asOf)}`
                         : '—'}
                     </td>
                   </tr>
@@ -242,6 +253,9 @@ export default function DailyPassport() {
             <span>
               Архив начинается с {passportDate(days[days.length - 1]?.date ?? today.date)}:
               раньше снимки не сохранялись, и дорисовать пропущенные дни нельзя.
+              Одно и то же движение несколько дней подряд — это не пересчёт, а
+              отсутствие нового наблюдения у источника; дата цены, если снимок её
+              сохранил, стоит в скобках.
             </span>
           </p>
         </details>
