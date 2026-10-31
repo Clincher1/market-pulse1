@@ -621,6 +621,40 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
+    // 5. У мировых котировок должны быть даты наблюдений. Раньше сайт писал
+    // «источник не передаёт даты», хотя передаёт; без этой проверки отказ
+    // сохранения дат прошёл бы молча — ряд снова стал бы бездатым.
+    check('asset_dates', async () => {
+      const rows = (await restJson('cached_assets?select=id,sparkline,spark_dates')) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      const broken = rows.filter((row) => {
+        const values = Array.isArray(row.sparkline) ? row.sparkline : [];
+        const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
+        if (dates.length !== values.length || dates.length === 0) return true;
+        const iso = /^\d{4}-\d{2}-\d{2}/;
+        let previous = '';
+        return dates.some((date) => {
+          const text = String(date ?? '');
+          if (!iso.test(text) || text <= previous) return true;
+          previous = text;
+          return false;
+        });
+      });
+      const lastDate = (row: AnyRecord) => {
+        const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
+        return String(dates[dates.length - 1] ?? '');
+      };
+      const newest = rows.map(lastDate).filter(Boolean).sort().pop() ?? '';
+      return {
+        ok: broken.length === 0,
+        detail: broken.length
+          ? `даты не сохранены или не совпадают со значениями: ${broken
+              .map((row) => String(row.id ?? ''))
+              .join(', ')}`
+          : `даты есть у всех ${rows.length} рядов, последняя — ${newest}`,
+      };
+    }),
+
     // 6. The daily memory snapshot must be taken.
     check('snapshot_taken', async () => {
       const rows = (await restJson('daily_snapshots?select=date&order=date.desc&limit=1')) as AnyRecord[];
@@ -632,7 +666,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
 
     // 7. Every feed must have produced something recently. This is the check
     //    that would have caught the frozen WSJ feed in a day instead of two years.
-    // 7. Every enabled feed in the live registry must have produced a successful
+    // 8. Every enabled feed in the live registry must have produced a successful
     //    run in the last сутки. Прежняя версия смотрела в legacy-таблицу
     //    news_source_health, где осталось пять строк: проверка была зелёной,
     //    пока молчали пятнадцать лент. Теперь источник истины — реестр
@@ -670,7 +704,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 10. The site promises no trackers and no third-party resources. Once this
+    // 9. The site promises no trackers and no third-party resources. Once this
     //     check exists, a font CDN, an analytics snippet or any other outside
     //     host reappearing in the markup shows up here within the hour.
     check('no_third_party', async () => {
@@ -689,7 +723,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 11. The site itself must answer.
+    // 10. The site itself must answer.
     check('site_online', async () => {
       const started = Date.now();
       const res = await fetch(SITE, { signal: AbortSignal.timeout(20000) });
@@ -743,7 +777,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 13. The site promises no trackers, no analytics, no telemetry. Promise is
+    // 11. The site promises no trackers, no analytics, no telemetry. Promise is
     //     cheap: this looks for the actual markers in the shipped markup, so a
     //     metric quietly switched on in the dashboard shows up here — even when
     //     the beacon is served from our own domain.
@@ -758,7 +792,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 14. История за три месяца — это отдельный блок на странице, который
+    // 12. История за три месяца — это отдельный блок на странице, который
     //     собирает наш Vercel-функция из Мосбиржи и ЦБ. Если она упадёт, блок
     //     просто напишет «историю получить не удалось», и никто об этом не
     //     узнает: до сих пор её не смотрела ни одна проверка.
@@ -810,7 +844,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 15. Панель «Проверить данные» под мировой плиткой берёт датированные
+    // 13. Панель «Проверить данные» под мировой плиткой берёт датированные
     //     закрытия из asset_price_history_v1. Если писатель истории встанет,
     //     плитка будет показывать свежую цену, а панель — старую историю, и
     //     расхождение никто не заметит.
@@ -842,7 +876,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 16. «Память рынка» — исследовательский раздел, который читает три
+    // 14. «Память рынка» — исследовательский раздел, который читает три
     //     публичных представления. Пустое представление не роняет страницу:
     //     раздел просто тихо показывает меньше, поэтому пустоту надо ловить.
     check('market_memory', async () => {
@@ -871,7 +905,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 19. Отчёты об ошибках действительно доходят. Без этой проверки «Sentry
+    // 15. Отчёты об ошибках действительно доходят. Без этой проверки «Sentry
     //     настроен» — обещание, а не факт: ключ мог быть сохранён с лишним
     //     пробелом, а отправка в этом случае молча выключается, и на странице
     //     об этом не было бы ни слова.
@@ -880,7 +914,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       return { ok: result.ok, detail: result.detail };
     }),
 
-    // 18. PNG-карточка для Telegram собирается на лету из тех же чисел. Она
+    // 16. PNG-карточка для Telegram собирается на лету из тех же чисел. Она
     //     не видна на странице, поэтому её поломку не заметит никто, кроме
     //     того, кто нажмёт ссылку.
     check('brief_image', async () => {
