@@ -337,6 +337,14 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
           >
             <Icon className="h-3.5 w-3.5" />
             {formatPercent(indicator.changePct)}
+            {/* У индексов база — закрытие предыдущей сессии, и её дата
+                печатается рядом: без неё «+0,16 %» у субботней сессии
+                читалось бы как движение за сутки с нуля. */}
+            {isIndex && indicator.previousDate && (
+              <span className="text-[10px] font-semibold text-slate-400">
+                к {formatShortDate(indicator.previousDate)}
+              </span>
+            )}
           </span>
         ) : indicator.changeAbs !== null && indicator.changeAbs !== undefined ? (
           <span
