@@ -361,10 +361,18 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
           >
             <Icon className="h-3.5 w-3.5" />
             {formatAbsChange(indicator.changeAbs, indicator.changeAbsUnit)}
-            {indicator.previousDate && (
+            {indicator.previousLabel ? (
+              // Месячный ряд: «к августу» вместо «к 31.08», иначе сравнение
+              // месячных данных читается как сравнение с конкретным днём.
               <span className="text-[10px] font-semibold text-slate-400">
-                к {formatShortDate(indicator.previousDate)}
+                к {indicator.previousLabel}
               </span>
+            ) : (
+              indicator.previousDate && (
+                <span className="text-[10px] font-semibold text-slate-400">
+                  к {formatShortDate(indicator.previousDate)}
+                </span>
+              )
             )}
           </span>
         ) : null}

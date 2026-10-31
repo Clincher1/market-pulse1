@@ -691,6 +691,9 @@ async function fetchInflation() {
     changePct: null,
     asOf: monthEndDate(latest.month),
     previousDate: previous ? monthEndDate(previous.month) : null,
+    // Месячные данные нельзя сравнивать «к 31.08»: это читается как сравнение
+    // с днём. Плитка печатает то же самое, что и подпись, — «к августу».
+    previousLabel: previous ? monthDative(previous.month) : null,
     changeAbs: change,
     changeAbsUnit: 'п.п.',
     provider: 'Банк России (данные Росстата)',
