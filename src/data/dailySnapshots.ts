@@ -14,6 +14,8 @@ export interface SnapshotAsset {
   change: number | null;
   last: number | null;
   updatedAt: string | null;
+  /** Дата наблюдения от источника. Пусто — источник её не назвал. */
+  asOf: string | null;
 }
 
 export interface SnapshotRussiaMarket {
@@ -86,6 +88,7 @@ function normalizeAssets(value: unknown): SnapshotAsset[] {
     change: finiteNumber(row.change),
     last: finiteNumber(row.last),
     updatedAt: stringOrNull(row.updated_at),
+    asOf: stringOrNull(row.as_of),
   })).filter((row) => row.id);
 }
 

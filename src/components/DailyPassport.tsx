@@ -7,6 +7,7 @@ import {
   passportDateShort,
   type PassportDay,
 } from '@/data/dailyPassports';
+import { observationLabel } from '@/lib/asOf';
 import { ErrorNotice } from './SectionFallback';
 
 /**
@@ -24,6 +25,15 @@ import { ErrorNotice } from './SectionFallback';
 function changeWord(change: number): string {
   const value = change.toFixed(2).replace('.', ',');
   return change > 0 ? `+${value} %` : `${value.replace('-', '−')} %`;
+}
+
+/**
+ * «, цена за 30 окт.» — подпись из того же формата, что и на плитках.
+ * Пустая строка, если источник дату не назвал: придумывать её нельзя.
+ */
+function priceAsOf(asOf: string | null): string {
+  const label = observationLabel(asOf);
+  return label ? `, цена ${label}` : '';
 }
 
 function movingWord(days: number): string {
@@ -156,7 +166,7 @@ export default function DailyPassport() {
           </div>
           <div className="mt-1 text-[11px] text-text-secondary">
             {today.topMover
-              ? `${today.topMover.name} — среди пяти мировых индикаторов`
+              ? `${today.topMover.name} — среди пяти мировых индикаторов${priceAsOf(today.topMover.asOf)}`
               : 'в снимке нет движений за день'}
           </div>
         </div>
