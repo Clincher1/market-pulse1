@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Camera, Eye, History, Zap } from 'lucide-react';
 import { formatPercent } from '@/lib/percent';
+import { observationLabel } from '@/lib/asOf';
 import { formatPriceText } from '@/lib/price';
 import type { ForecastData, NewsItem, TensionData } from '@/data/mockData';
 import { fetchLiveForecasts } from '@/data/liveForecasts';
@@ -337,7 +338,11 @@ export default function DailyBrief() {
             <strong className="text-text-primary">
               {strongestGlobal.name} {formatPct(strongestGlobal.change)}
             </strong>{' '}
-            (последнее значение {formatPriceText(strongestGlobal.price)}).
+            (последнее значение {formatPriceText(strongestGlobal.price)}
+            {observationLabel(strongestGlobal.asOf)
+              ? `, цена ${observationLabel(strongestGlobal.asOf)}`
+              : ''}
+            ).
           </>
         ),
       });
@@ -629,7 +634,8 @@ export default function DailyBrief() {
             <>
               Внешний фон — <strong className="text-text-primary">{asset.name}</strong>:{' '}
               <strong className="tabular-nums text-text-primary">{formatPct(deltaPct)}</strong>{' '}
-              к снимку; последнее значение {formatPriceText(asset.price)}.
+              к снимку; последнее значение {formatPriceText(asset.price)}
+              {observationLabel(asset.asOf) ? ` (${observationLabel(asset.asOf)})` : ''}.
             </>
           ),
         },
