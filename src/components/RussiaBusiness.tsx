@@ -25,6 +25,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import GuideLink from './GuideLink';
+import MoneySpreads from './MoneySpreads';
 import OfzCurve from './OfzCurve';
 import RussiaHistory from './RussiaHistory';
 import { SectionThemeBadge } from './sectionThemes';
@@ -34,6 +35,7 @@ import { NewsItem } from '@/data/marketTypes';
 import { useLiveNews } from '@/hooks/useLiveNews';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import { startPolling } from '@/lib/polling';
+import { buildMoneySpreads } from '@/lib/spreads';
 import {
   fetchRussiaInsights,
   RussiaHeadline,
@@ -654,6 +656,18 @@ function readProfiles(): ProfileId[] {
   }
 }
 
+/** 2026-09-30 → «сентябрь 2026»: месячный ряд нельзя подписывать днём. */
+function monthOf(iso: string): string | null {
+  const match = /^(\d{4})-(\d{2})-/.exec(iso);
+  if (!match) return null;
+  const names = [
+    'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+    'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
+  ];
+  const name = names[Number(match[2]) - 1];
+  return name ? `за ${name} ${match[1]}` : null;
+}
+
 export default function RussiaBusiness() {
   const { news, loading: newsLoading } = useLiveNews();
   const { assets } = useLiveAssets();
@@ -759,6 +773,36 @@ export default function RussiaBusiness() {
     () => new Map(insights.markets.map((indicator) => [indicator.id, indicator])),
     [insights.markets],
   );
+
+  /**
+   * Производные факты по ставкам. Считаются только из опубликованных значений
+   * и только когда есть все слагаемые: половинчатая разность выглядела бы как
+   * настоящий результат.
+   */
+  const moneySpreads = useMemo(() => {
+    const withDate = (indicator: RussiaMarketIndicator | undefined, prefix = '') => {
+      if (!indicator || !Number.isFinite(indicator.value)) return null;
+      const day = indicator.asOf ? indicator.asOf.slice(0, 10).split('-').reverse().join('.') : 'дата не указана';
+      return { value: indicator.value, asOf: `${prefix}${day}` };
+    };
+    const ofz = indicatorById.get('ofz-10y');
+    // Инфляция — месячный ряд: её дата в ответе это конец месяца, но читателю
+    // нужно «за сентябрь 2026», иначе «30.09.2026» выглядит как дневное число.
+    const inflation = indicatorById.get('inflation');
+    const inflationMonth = inflation?.asOf ? monthOf(inflation.asOf) : null;
+    return buildMoneySpreads({
+      keyRate: withDate(indicatorById.get('key-rate'), 'с '),
+      inflation:
+        inflation && Number.isFinite(inflation.value)
+          ? { value: inflation.value, asOf: inflationMonth ?? 'месяц не указан' }
+          : null,
+      ofz10y: withDate(ofz),
+      curve: ofz?.curve ?? null,
+      curveAsOf: ofz?.curveAsOf
+        ? ofz.curveAsOf.slice(0, 10).split('-').reverse().join('.')
+        : null,
+    });
+  }, [indicatorById]);
 
   const assetById = useMemo(() => new Map(assets.map((asset) => [asset.id, asset])), [assets]);
   const topEvents = useMemo(() => scoreNews(news, selectedProfiles), [news, selectedProfiles]);
@@ -988,6 +1032,7 @@ export default function RussiaBusiness() {
                         <MarketTile key={indicator.id} indicator={indicator} />
                       ))}
                     </div>
+                    <MoneySpreads spreads={moneySpreads} />
                     {ofzIndicator && <OfzCurve indicator={ofzIndicator} />}
                   </>
                 )}
