@@ -14,6 +14,11 @@ export interface RussiaMarketIndicator {
   changeAbsUnit?: string | null;
   asOf: string;
   previousDate?: string | null;
+  /**
+   * Подпись базы сравнения словами — для месячных рядов, где дата («31.08»)
+   * читалась бы как сравнение с конкретным днём: «к августу».
+   */
+  previousLabel?: string | null;
   provider: string;
   basis: string;
   sourceUrl: string;
