@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
+import {
+  axisUnitLabel,
+  formatTick,
+  nearestIndexByFraction,
+  niceTicks,
+  tickStep,
+} from '@/lib/chartAxis';
 import {
   fetchRussiaHistory,
   type HistoryPoint,
@@ -16,10 +24,12 @@ import {
  * каждую сессию.
  */
 
-const WIDTH = 640;
-const HEIGHT = 220;
-const PAD_X = 44;
-const PAD_Y = 22;
+const WIDTH = 720;
+const HEIGHT = 260;
+const PAD_LEFT = 56;
+const PAD_RIGHT = 18;
+const PAD_TOP = 24;
+const PAD_BOTTOM = 34;
 
 function ruDate(iso: string | undefined): string {
   if (!iso) return '';
@@ -35,9 +45,13 @@ function dayNumber(iso: string): number {
 function formatValue(value: number, unit: string): string {
   // Рубли — четыре знака, как на плитках курсов. Пункты, проценты и млрд $
   // публикуются с двумя знаками: показывать «729,6000 млрд $» значит обещать
-  // точность, которой у источника нет.
+  // точность, которой у источника нет. Разряды разделяются пробелом, иначе
+  // «2509,26» здесь и «2 509,26» на плитке — два написания одного числа.
   const digits = unit === '₽' ? 4 : 2;
-  const text = value.toFixed(digits).replace('.', ',');
+  const text = new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
   return unit === '₽' ? `${text} ₽` : `${text} ${unit}`;
 }
 
@@ -56,8 +70,53 @@ function formatChange(series: HistorySeries, first: HistoryPoint, last: HistoryP
   return `${sign}${Math.abs(pct).toFixed(2).replace('.', ',')} %`;
 }
 
-function Chart({ series, window }: { series: HistorySeries; window: RussiaHistoryPayload['window'] }) {
-  const points = series.points;
+function monthStartTicks(fromIso: string, tillIso: string): string[] {
+  const matchFrom = /^(\d{4})-(\d{2})-\d{2}$/.exec(fromIso);
+  const matchTill = /^(\d{4})-(\d{2})-\d{2}$/.exec(tillIso);
+  if (!matchFrom || !matchTill) return [];
+  let year = Number(matchFrom[1]);
+  let month = Number(matchFrom[2]) + 1;
+  const till = `${matchTill[1]}-${matchTill[2]}`;
+  const fromDay = dayNumber(fromIso);
+  const tillDay = dayNumber(tillIso);
+  const ticks: string[] = [];
+  for (let guard = 0; guard < 24; guard += 1) {
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+    const key = `${year}-${String(month).padStart(2, '0')}`;
+    if (key > till) break;
+    const iso = `${key}-01`;
+    const day = dayNumber(iso);
+    // Подпись, стоящая в двух днях от края, наезжает на подпись края: окно
+    // начинается 31.07, и «01.08» встало бы вплотную к «31.07».
+    if (day - fromDay > 3 && tillDay - day > 3) ticks.push(iso);
+    month += 1;
+  }
+  return ticks;
+}
+
+function shortDate(iso: string): string {
+  const match = /^\d{4}-(\d{2})-(\d{2})$/.exec(iso);
+  return match ? `${match[2]}.${match[1]}` : iso;
+}
+
+/**
+ * График одного ряда за окно истории.
+ *
+ * Подписи вертикальной оси — круглые отметки из самого диапазона данных
+ * (2 100, 2 200, 2 300…), а не края рисунка: раньше там появлялись «2017» и
+ * «2578», которых в ряду нет, и «2017» читалось как год. Точки нажимаются и
+ * ловят курсор: выбранная дата и её значение показываются своей подсказкой,
+ * а не системной белой рамкой браузера.
+ */
+export function Chart({ series, window }: { series: HistorySeries; window: RussiaHistoryPayload['window'] }) {
+  const points = series.points.filter((point) => Number.isFinite(point?.value));
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  if (points.length === 0) return null;
+
   const values = points.map((point) => point.value);
   const rawMin = Math.min(...values);
   const rawMax = Math.max(...values);
@@ -65,17 +124,19 @@ function Chart({ series, window }: { series: HistorySeries; window: RussiaHistor
   const minValue = rawMin - span * 0.12;
   const maxValue = rawMax + span * 0.12;
 
-  const fromDay = dayNumber(window.from || points[0].date);
-  const tillDay = dayNumber(window.till || points[points.length - 1].date);
+  const fromIso = window.from || points[0].date;
+  const tillIso = window.till || points[points.length - 1].date;
+  const fromDay = dayNumber(fromIso);
+  const tillDay = dayNumber(tillIso);
   const daySpan = tillDay - fromDay || 1;
 
   const x = (iso: string) => {
     const day = dayNumber(iso);
     const ratio = Number.isFinite(day) ? (day - fromDay) / daySpan : 0;
-    return PAD_X + Math.min(1, Math.max(0, ratio)) * (WIDTH - PAD_X * 2);
+    return PAD_LEFT + Math.min(1, Math.max(0, ratio)) * (WIDTH - PAD_LEFT - PAD_RIGHT);
   };
   const y = (value: number) =>
-    PAD_Y + ((maxValue - value) / (maxValue - minValue)) * (HEIGHT - PAD_Y * 2);
+    PAD_TOP + ((maxValue - value) / (maxValue - minValue)) * (HEIGHT - PAD_TOP - PAD_BOTTOM);
 
   let path = '';
   if (series.kind === 'step') {
@@ -87,7 +148,7 @@ function Chart({ series, window }: { series: HistorySeries; window: RussiaHistor
       path += ` L${x(point.date).toFixed(1)} ${y(point.value).toFixed(1)}`;
     }
     // Уровень действует до конца окна: следующей ступени в данных нет.
-    path += ` L${x(window.till || points[points.length - 1].date).toFixed(1)} ${y(points[points.length - 1].value).toFixed(1)}`;
+    path += ` L${x(tillIso).toFixed(1)} ${y(points[points.length - 1].value).toFixed(1)}`;
   } else {
     path = points
       .map((point, index) => `${index === 0 ? 'M' : 'L'}${x(point.date).toFixed(1)} ${y(point.value).toFixed(1)}`)
@@ -96,61 +157,188 @@ function Chart({ series, window }: { series: HistorySeries; window: RussiaHistor
 
   const lowest = points.reduce((acc, point) => (point.value < acc.value ? point : acc), points[0]);
   const highest = points.reduce((acc, point) => (point.value > acc.value ? point : acc), points[0]);
+
+  const ticks = niceTicks(rawMin, rawMax);
+  const step = tickStep(ticks);
+  const positions = points.map((point) => x(point.date));
+  const active = activeIndex !== null ? points[Math.min(activeIndex, points.length - 1)] : null;
+  const activeX = active ? x(active.date) : 0;
+  const activeY = active ? y(active.value) : 0;
+  const tooltipLeft = `${(activeX / WIDTH) * 100}%`;
+  const tooltipTop = `${(activeY / HEIGHT) * 100}%`;
+  const tooltipShift = activeX / WIDTH > 0.78 ? '-92%' : activeX / WIDTH < 0.22 ? '-8%' : '-50%';
+
+  const pickNearest = (clientX: number, element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    if (!rect.width) return;
+    const viewX = ((clientX - rect.left) / rect.width) * WIDTH;
+    const left = positions[0];
+    const right = positions[positions.length - 1];
+    const fraction = right > left ? (viewX - left) / (right - left) : 0;
+    setActiveIndex(nearestIndexByFraction(positions, fraction));
+  };
+
+  const handlePointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    pickNearest(event.clientX, event.currentTarget);
+  };
+
+  const handleKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      setActiveIndex(null);
+      return;
+    }
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') {
+      return;
+    }
+    event.preventDefault();
+    const last = points.length - 1;
+    const current = activeIndex ?? last;
+    const next =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? last
+          : event.key === 'ArrowLeft'
+            ? Math.max(0, current - 1)
+            : Math.min(last, current + 1);
+    setActiveIndex(next);
+  };
+
   const aria =
     `${series.name}: ${points.length} точек с ${ruDate(points[0].date)} по ${ruDate(points[points.length - 1].date)}. ` +
     `Первое значение ${formatValue(points[0].value, series.unit)}, последнее ${formatValue(points[points.length - 1].value, series.unit)}. ` +
     `Минимум ${formatValue(lowest.value, series.unit)} (${ruDate(lowest.date)}), максимум ${formatValue(highest.value, series.unit)} (${ruDate(highest.date)}). ` +
     `Источник: ${series.provider}.`;
 
+  const labelAnchor = (iso: string) => {
+    const position = x(iso) / WIDTH;
+    return position < 0.12 ? 'start' : position > 0.88 ? 'end' : 'middle';
+  };
+
   return (
-    <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full" role="img" aria-label={aria}>
-      <title>{aria}</title>
-      {[minValue, maxValue].map((value, index) => (
-        <g key={`grid-${index}`}>
-          <line
-            x1={PAD_X}
-            x2={WIDTH - PAD_X}
-            y1={y(value)}
-            y2={y(value)}
-            stroke="currentColor"
-            className="text-white/10"
-          />
-          <text x={PAD_X - 6} y={y(value) + 3} textAnchor="end" className="fill-slate-400 text-[10px]">
-            {value.toFixed(series.unit === 'пункта' ? 0 : 2).replace('.', ',')}
+    <div>
+      <div
+        className="relative touch-pan-y select-none"
+        tabIndex={0}
+        role="group"
+        aria-label={`График ${series.name}. Стрелками влево и вправо выбирается дата, значение показывается подсказкой.`}
+        onPointerMove={handlePointer}
+        onPointerDown={handlePointer}
+        onPointerLeave={() => setActiveIndex(null)}
+        onKeyDown={handleKey}
+        onBlur={() => setActiveIndex(null)}
+      >
+        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full" role="img" aria-label={aria}>
+          <text x={PAD_LEFT} y={14} className="fill-slate-400 text-[10px]">
+            шкала — {axisUnitLabel(series.unit)}
           </text>
-        </g>
-      ))}
-      <path d={path} fill="none" stroke="currentColor" className="text-blue-300" strokeWidth="2" />
-      {series.kind === 'line' &&
-        points.map((point) => (
-          <circle
-            key={`dot-${point.date}`}
-            cx={x(point.date)}
-            cy={y(point.value)}
-            r={1.8}
-            className="fill-blue-200"
-          />
-        ))}
-      {series.kind === 'step' &&
-        points.map((point) => (
-          <circle
-            key={`step-${point.date}`}
-            cx={x(point.date)}
-            cy={y(point.value)}
-            r={3}
-            className="fill-amber-300"
-          />
-        ))}
-      <text x={PAD_X} y={12} className="fill-slate-400 text-[10px]">
-        значения: {series.unit}
-      </text>
-      <text x={PAD_X} y={HEIGHT - 4} className="fill-slate-400 text-[10px]">
-        {ruDate(window.from)}
-      </text>
-      <text x={WIDTH - PAD_X} y={HEIGHT - 4} textAnchor="end" className="fill-slate-400 text-[10px]">
-        {ruDate(window.till)}
-      </text>
-    </svg>
+
+          {ticks.map((tick) => (
+            <g key={`tick-${tick}`}>
+              <line
+                x1={PAD_LEFT}
+                x2={WIDTH - PAD_RIGHT}
+                y1={y(tick)}
+                y2={y(tick)}
+                stroke="currentColor"
+                className="text-white/10"
+              />
+              <text
+                x={PAD_LEFT - 8}
+                y={y(tick) + 3}
+                textAnchor="end"
+                className="fill-slate-400 text-[10px] tabular-nums"
+              >
+                {formatTick(tick, step)}
+              </text>
+            </g>
+          ))}
+
+          <path d={path} fill="none" stroke="currentColor" className="text-blue-300" strokeWidth="2" />
+
+          {series.kind === 'line' &&
+            points.map((point) => (
+              <circle key={`dot-${point.date}`} cx={x(point.date)} cy={y(point.value)} r={1.8} className="fill-blue-200" />
+            ))}
+          {series.kind === 'step' &&
+            points.map((point) => (
+              <circle key={`step-${point.date}`} cx={x(point.date)} cy={y(point.value)} r={3} className="fill-amber-300" />
+            ))}
+
+          {/* Минимум и максимум подписаны на самом графике: без них «высоко или
+              низко» приходилось угадывать по двум крайним числам. */}
+          <g>
+            <circle cx={x(highest.date)} cy={y(highest.value)} r={3} className="fill-emerald-300" />
+            <text
+              x={x(highest.date)}
+              y={y(highest.value) - 8}
+              textAnchor={labelAnchor(highest.date)}
+              className="fill-emerald-200 text-[10px] font-semibold tabular-nums"
+            >
+              макс {formatValue(highest.value, series.unit)}
+            </text>
+            <circle cx={x(lowest.date)} cy={y(lowest.value)} r={3} className="fill-rose-300" />
+            <text
+              x={x(lowest.date)}
+              y={y(lowest.value) + 14}
+              textAnchor={labelAnchor(lowest.date)}
+              className="fill-rose-200 text-[10px] font-semibold tabular-nums"
+            >
+              мин {formatValue(lowest.value, series.unit)}
+            </text>
+          </g>
+
+          {active && (
+            <g>
+              <line
+                x1={activeX}
+                x2={activeX}
+                y1={PAD_TOP}
+                y2={HEIGHT - PAD_BOTTOM}
+                stroke="currentColor"
+                className="text-white/30"
+                strokeDasharray="4 4"
+              />
+              <circle cx={activeX} cy={activeY} r={4.5} className="fill-white" stroke="#0A1424" strokeWidth="1.5" />
+            </g>
+          )}
+
+          {[fromIso, ...monthStartTicks(fromIso, tillIso), tillIso].map((iso) => (
+            <text
+              key={`x-${iso}`}
+              x={x(iso)}
+              y={HEIGHT - 8}
+              textAnchor={labelAnchor(iso)}
+              className="fill-slate-400 text-[10px] tabular-nums"
+            >
+              {shortDate(iso)}
+            </text>
+          ))}
+        </svg>
+
+        {active && (
+          <div
+            className="pointer-events-none absolute z-10 rounded-xl border border-white/15 bg-[#111827]/96 px-3 py-2 text-center shadow-xl"
+            style={{ left: tooltipLeft, top: tooltipTop, transform: `translate(${tooltipShift}, calc(-100% - 12px))` }}
+          >
+            <div className="whitespace-nowrap text-[11px] font-semibold text-slate-400">{ruDate(active.date)}</div>
+            <div className="whitespace-nowrap text-sm font-black text-white">
+              {formatValue(active.value, series.unit)}
+            </div>
+            {series.kind === 'step' && active.since && (
+              <div className="whitespace-nowrap text-[10px] font-semibold text-slate-400">
+                действует с {ruDate(active.since)}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
+        <span>Наведите курсор или коснитесь графика — дата и значение появятся в подсказке.</span>
+        <span>Отметки шкалы — круглые числа; пропущенные дни не заполняются.</span>
+      </div>
+    </div>
   );
 }
 

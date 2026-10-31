@@ -325,6 +325,9 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
             const isSelected = index === Math.min(selectedIndex, points.length - 1);
             return (
               <g key={`${point.day}-${index}`}>
+                {/* Системная подсказка <title> давала белую рамку браузера
+                    поверх своей тёмной: значение уже показывает подсказка
+                    компонента, поэтому здесь только aria-label. */}
                 <circle
                   cx={point.x}
                   cy={point.y}
@@ -337,9 +340,7 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
                   onMouseEnter={() => setSelectedIndex(index)}
                   onFocus={() => setSelectedIndex(index)}
                   onClick={() => setSelectedIndex(index)}
-                >
-                  <title>{`${point.day}: ${Math.round(point.value)}/100`}</title>
-                </circle>
+                />
                 <circle
                   cx={point.x}
                   cy={point.y}
