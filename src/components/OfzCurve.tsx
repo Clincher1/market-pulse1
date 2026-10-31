@@ -1,5 +1,8 @@
+import { useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { Info } from 'lucide-react';
 import type { RussiaMarketIndicator } from '@/data/russiaInsights';
+import { formatTick, nearestIndexByFraction, niceTicks, tickStep } from '@/lib/chartAxis';
 
 /**
  * Кривая бескупонной доходности ОФЗ — как её отдала Мосбиржа.
@@ -40,6 +43,9 @@ function scaleY(value: number, min: number, max: number, height: number, pad: nu
 }
 
 export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicator }) {
+  // Хук стоит до раннего возврата: порядок вызовов не должен зависеть от того,
+  // сколько точек пришло от источника.
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const curve = (indicator.curve ?? [])
     .filter((point) => Number.isFinite(point?.period) && Number.isFinite(point?.value))
     .slice()
@@ -76,6 +82,48 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
   const ticks = X_TICKS.filter((tick) => tick >= minPeriod && tick <= maxPeriod);
   const asOf = indicator.curveAsOf ? `время источника ${indicator.curveAsOf} МСК` : 'время источника не указано';
 
+  // Ось доходностей подписывается круглыми процентами внутри диапазона кривой.
+  const yTicks = niceTicks(rawMin, rawMax);
+  const yStep = tickStep(yTicks);
+  const xPositions = points.map((point) => point.x);
+  const active = activeIndex !== null ? points[Math.min(activeIndex, points.length - 1)] : null;
+
+  const pickNearest = (clientX: number, element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    if (!rect.width) return;
+    const viewX = ((clientX - rect.left) / rect.width) * width;
+    const left = xPositions[0];
+    const right = xPositions[xPositions.length - 1];
+    const fraction = right > left ? (viewX - left) / (right - left) : 0;
+    setActiveIndex(nearestIndexByFraction(xPositions, fraction));
+  };
+
+  const handlePointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    pickNearest(event.clientX, event.currentTarget);
+  };
+
+  const handleKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      setActiveIndex(null);
+      return;
+    }
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') {
+      return;
+    }
+    event.preventDefault();
+    const lastIndex = points.length - 1;
+    const current = activeIndex ?? lastIndex;
+    const next =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? lastIndex
+          : event.key === 'ArrowLeft'
+            ? Math.max(0, current - 1)
+            : Math.min(lastIndex, current + 1);
+    setActiveIndex(next);
+  };
+
   const ariaLabel =
     `Кривая бескупонной доходности ОФЗ, ${curve.length} точек по срокам от ${formatTerm(minPeriod)} ` +
     `до ${formatTerm(maxPeriod)}. Минимум ${formatRate(lowest.value)} на сроке ${formatTerm(lowest.period)}, ` +
@@ -101,88 +149,147 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
         </a>
       </figcaption>
 
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full"
-        role="img"
-        aria-label={ariaLabel}
+      <div
+        className="relative touch-pan-y select-none"
+        tabIndex={0}
+        role="group"
+        aria-label="Кривая доходности ОФЗ. Стрелками влево и вправо выбирается срок, доходность показывается подсказкой."
+        onPointerMove={handlePointer}
+        onPointerDown={handlePointer}
+        onPointerLeave={() => setActiveIndex(null)}
+        onKeyDown={handleKey}
+        onBlur={() => setActiveIndex(null)}
       >
-        <title>{ariaLabel}</title>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-auto w-full"
+          role="img"
+          aria-label={ariaLabel}
+        >
+          <text x={padX} y={11} className="fill-slate-400 text-[10px]">
+            шкала — проценты
+          </text>
 
-        {[minValue, maxValue].map((value, index) => {
-          const y = scaleY(value, minValue, maxValue, height, padY);
-          return (
-            <g key={`y-${index}`}>
-              <line
-                x1={padX}
-                x2={width - padX}
-                y1={y}
-                y2={y}
-                stroke="currentColor"
-                className="text-white/10"
-                strokeWidth="1"
-              />
+          {/* Отметки — круглые проценты внутри диапазона кривой. Раньше ось
+              подписывала только края рисунка (13,2 и 16,9), которых на кривой
+              нет, и по двум числам нельзя было понять уровень доходности. */}
+          {yTicks.map((tick) => {
+            const y = scaleY(tick, minValue, maxValue, height, padY);
+            return (
+              <g key={`y-${tick}`}>
+                <line
+                  x1={padX}
+                  x2={width - padX}
+                  y1={y}
+                  y2={y}
+                  stroke="currentColor"
+                  className="text-white/10"
+                  strokeWidth="1"
+                />
+                <text
+                  x={padX - 6}
+                  y={y + 3}
+                  textAnchor="end"
+                  className="fill-slate-400 text-[10px] tabular-nums"
+                >
+                  {formatTick(tick, yStep)}
+                </text>
+              </g>
+            );
+          })}
+
+          {ticks.map((tick) => {
+            const x = scaleX(tick, minPeriod, maxPeriod, width, padX);
+            return (
               <text
-                x={padX - 6}
-                y={y + 3}
-                textAnchor="end"
+                key={`x-${tick}`}
+                x={x}
+                y={height - 6}
+                textAnchor="middle"
                 className="fill-slate-400 text-[10px]"
               >
-                {value.toFixed(1).replace('.', ',')}
+                {formatTerm(tick)}
+              </text>
+            );
+          })}
+
+          <path d={path} fill="none" stroke="currentColor" className="text-blue-300" strokeWidth="2" />
+          {points.map((point) => (
+            <circle
+              key={`p-${point.period}`}
+              cx={point.x}
+              cy={point.y}
+              r={2}
+              className="fill-blue-200"
+            />
+          ))}
+
+          {tenYear && (
+            <g>
+              <circle cx={tenYear.x} cy={tenYear.y} r={4.5} className="fill-amber-300" />
+              <text
+                x={tenYear.x}
+                y={tenYear.y - 9}
+                textAnchor="middle"
+                className="fill-amber-200 text-[10px] font-semibold"
+              >
+                10 лет · {formatRate(tenYear.value)}
               </text>
             </g>
-          );
-        })}
+          )}
 
-        {ticks.map((tick) => {
-          const x = scaleX(tick, minPeriod, maxPeriod, width, padX);
-          return (
-            <text
-              key={`x-${tick}`}
-              x={x}
-              y={height - 6}
-              textAnchor="middle"
-              className="fill-slate-400 text-[10px]"
-            >
-              {formatTerm(tick)}
-            </text>
-          );
-        })}
+          {active && (
+            <g>
+              <line
+                x1={active.x}
+                x2={active.x}
+                y1={padY}
+                y2={height - padY}
+                stroke="currentColor"
+                className="text-white/30"
+                strokeDasharray="4 4"
+              />
+              <circle
+                cx={active.x}
+                cy={active.y}
+                r={4.5}
+                className="fill-white"
+                stroke="#0A1424"
+                strokeWidth="1.5"
+              />
+            </g>
+          )}
+        </svg>
 
-        <path d={path} fill="none" stroke="currentColor" className="text-blue-300" strokeWidth="2" />
-        {points.map((point) => (
-          <circle
-            key={`p-${point.period}`}
-            cx={point.x}
-            cy={point.y}
-            r={2}
-            className="fill-blue-200"
-          />
-        ))}
-
-        {tenYear && (
-          <g>
-            <circle cx={tenYear.x} cy={tenYear.y} r={4.5} className="fill-amber-300" />
-            <text
-              x={tenYear.x}
-              y={tenYear.y - 9}
-              textAnchor="middle"
-              className="fill-amber-200 text-[10px] font-semibold"
-            >
-              10 лет · {formatRate(tenYear.value)}
-            </text>
-          </g>
+        {active && (
+          <div
+            className="pointer-events-none absolute z-10 rounded-xl border border-white/15 bg-[#111827]/96 px-3 py-2 text-center shadow-xl"
+            style={{
+              left: `${(active.x / width) * 100}%`,
+              top: `${(active.y / height) * 100}%`,
+              transform: `translate(${
+                active.x / width > 0.78 ? '-92%' : active.x / width < 0.22 ? '-8%' : '-50%'
+              }, calc(-100% - 12px))`,
+            }}
+          >
+            <div className="whitespace-nowrap text-[11px] font-semibold text-slate-400">
+              срок {formatTerm(active.period)}
+            </div>
+            <div className="whitespace-nowrap text-sm font-black text-white">
+              {formatRate(active.value)}
+            </div>
+          </div>
         )}
-      </svg>
+      </div>
 
       <div className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-300" />
         <span>
           Минимум {formatRate(lowest.value)} на сроке {formatTerm(lowest.period)}, максимум{' '}
           {formatRate(highest.value)} на сроке {formatTerm(highest.period)}. Ось сроков
-          логарифмическая, иначе 3 месяца и год слиплись бы в одну точку. Это точки кривой
-          бескупонной доходности, а не сделки по конкретным выпускам; публичный поток может быть
-          задержан.
+          логарифмическая, иначе 3 месяца и год слиплись бы в одну точку. Наведение или касание
+          показывает доходность выбранного срока. Это точки кривой бескупонной доходности, а не
+          сделки по конкретным выпускам; публичный поток может быть задержан.
         </span>
       </div>
 
