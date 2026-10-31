@@ -973,9 +973,9 @@ export default function RussiaBusiness() {
                 {moneyIndicators.length > 0 && (
                   <>
                     <div className="mt-5 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
-                      Стоимость денег — ставка ЦБ, RUONIA и кривая ОФЗ
+                      Стоимость денег — ставка ЦБ, RUONIA, инфляция и кривая ОФЗ
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                       {moneyIndicators.map((indicator) => (
                         <MarketTile key={indicator.id} indicator={indicator} />
                       ))}
