@@ -1,5 +1,6 @@
 // Stage 2 shadow news ingestion (deterministic part only).
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { failureStreak, isPaused, pauseMessage, type FailureStreak, type HealthHistoryRow } from "../_shared/source-backoff.ts";
 //
 // Reads enabled sources from news_sources_v2, fetches RSS/Atom directly,
 // parses XML, validates dates/URLs/categories/blacklist, and stores auditable
@@ -356,30 +357,7 @@ async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => P
   return results;
 }
 
-type HealthHistoryRow = { source_id: string; ok: boolean; http_status: number | null; created_at: string };
-
-// Consecutive failures per source, newest first. A single blip never pauses a
-// source: it takes SKIP_AFTER_FAILURES in a row, and the pause expires after
-// SKIP_MINUTES so the source is always retried eventually.
-function failureStreak(rows: HealthHistoryRow[]): Map<string, { streak: number; last: number }> {
-  const bySource = new Map<string, { streak: number; last: number }>();
-  const counted = new Set<string>();
-  for (const row of rows) {
-    if (counted.has(row.source_id)) continue;
-    if (row.ok) {
-      counted.add(row.source_id);
-      continue;
-    }
-    const current = bySource.get(row.source_id) ?? { streak: 0, last: 0 };
-    current.streak += 1;
-    if (!current.last) current.last = Date.parse(row.created_at);
-    bySource.set(row.source_id, current);
-  }
-  return bySource;
-}
-
-function skippedHealth(source: Source, streak: number, lastFailure: number): SourceHealth {
-  const until = new Date(lastFailure + SKIP_MINUTES * 60_000).toISOString().slice(11, 16);
+function skippedHealth(source: Source, streak: FailureStreak): SourceHealth {
   return {
     source_id: source.id,
     ok: false,
@@ -390,7 +368,7 @@ function skippedHealth(source: Source, streak: number, lastFailure: number): Sou
     items_rejected: 0,
     latest_published_at: null,
     final_url: source.url,
-    error: `пауза: ${streak} неудачных запуска подряд, следующая попытка после ${until} UTC`,
+    error: pauseMessage(streak, SKIP_MINUTES * 60_000),
   };
 }
 
@@ -608,9 +586,9 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
     const skipped = new Set<string>();
     const results = await mapPool(sources, 4, async (source) => {
       const streak = streaks.get(source.id);
-      if (streak && streak.streak >= SKIP_AFTER_FAILURES && Date.now() - streak.last < SKIP_MINUTES * 60_000) {
+      if (isPaused(streak, Date.now(), SKIP_AFTER_FAILURES, SKIP_MINUTES * 60_000)) {
         skipped.add(source.id);
-        return { health: skippedHealth(source, streak.streak, streak.last), articles: [], rejectReasons: {} };
+        return { health: skippedHealth(source, streak!), articles: [], rejectReasons: {} };
       }
       return await processSource(source, blacklist, now);
     });
