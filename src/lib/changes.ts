@@ -29,6 +29,13 @@ export interface ChangeInput {
   id: string;
   name: string;
   unit: string;
+  /**
+   * Подпись единицы для читателя: «$ за баррель», «$ за унцию». Нужна там, где
+   * одно слово значит разные величины: золото на Мосбирже — рубли за грамм,
+   * а в мировом ряду — доллары за унцию. Без подписи два числа под одним
+   * названием выглядят как противоречие.
+   */
+  unitLabel?: string;
   provider: string;
   dateKind: 'day' | 'sample';
   /** Знаков после запятой; 2 по умолчанию. У курсов ЦБ их четыре, у резервов один. */
@@ -43,6 +50,7 @@ export interface ChangeNote {
   id: string;
   name: string;
   unit: string;
+  unitLabel?: string;
   provider: string;
   kind: ChangeKind;
   direction: ChangeDirection;
@@ -221,6 +229,7 @@ function streakNote(series: CleanSeries): ChangeNote | null {
     id: `${series.input.id}:streak`,
     name: series.input.name,
     unit: series.input.unit,
+    unitLabel: series.input.unitLabel,
     provider: series.input.provider,
     kind: 'streak',
     direction: up ? 'up' : 'down',
@@ -244,6 +253,7 @@ function reversalNote(series: CleanSeries): ChangeNote | null {
     id: `${series.input.id}:reversal`,
     name: series.input.name,
     unit: series.input.unit,
+    unitLabel: series.input.unitLabel,
     provider: series.input.provider,
     kind: 'reversal',
     direction: up ? 'up' : 'down',
@@ -292,6 +302,7 @@ function recordNote(series: CleanSeries): ChangeNote | null {
     id: `${input.id}:${isMax ? 'max' : 'min'}`,
     name: input.name,
     unit: input.unit,
+    unitLabel: input.unitLabel,
     provider: input.provider,
     kind: 'record',
     direction: isMax ? 'up' : 'down',
@@ -323,6 +334,7 @@ function rangeNote(series: CleanSeries): ChangeNote | null {
     id: `${series.input.id}:range`,
     name: series.input.name,
     unit: series.input.unit,
+    unitLabel: series.input.unitLabel,
     provider: series.input.provider,
     kind: 'range',
     direction: 'flat',
@@ -368,11 +380,52 @@ export function buildChangeNotes(inputs: ChangeInput[], limit = DEFAULT_LIMIT): 
     .slice(0, Math.max(1, limit));
 }
 
+/**
+ * Пары «значение + дата» из кэша мировых котировок.
+ *
+ * Источники (FRED, ЕЦБ, Kraken, Twelve Data) даты закрытий отдают, но раньше
+ * код их выбрасывал, и ряд честно назывался бездатым. Теперь даты хранятся
+ * рядом со значениями. Здесь они соединяются заново — с двумя проверками:
+ * длин должно быть ровно столько же, и даты обязаны идти по возрастанию.
+ * Если хотя бы одна дата не разбирается или порядок нарушен, ряд объявляется
+ * бездатым целиком: подписать значение чужой датой хуже, чем промолчать.
+ */
+export function datedPoints(
+  values: number[],
+  dates?: (string | null | undefined)[] | null,
+): { dateKind: 'day' | 'sample'; points: SeriesPoint[] } {
+  const clean: number[] = [];
+  const cleanDates: (string | null | undefined)[] = [];
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+    if (!Number.isFinite(value)) continue;
+    clean.push(value as number);
+    cleanDates.push(dates?.[index]);
+  }
+  const sample = { dateKind: 'sample' as const, points: clean.map((value) => ({ date: '', value })) };
+  if (clean.length < 2 || !dates || dates.length !== values.length) return sample;
+
+  const iso: string[] = [];
+  for (const date of cleanDates) {
+    const text = typeof date === 'string' ? date.slice(0, 10) : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return sample;
+    iso.push(text);
+  }
+  for (let index = 1; index < iso.length; index += 1) {
+    if (iso[index]! <= iso[index - 1]!) return sample;
+  }
+  return {
+    dateKind: 'day',
+    points: clean.map((value, index) => ({ date: iso[index]!, value })),
+  };
+}
+
 /** Сравнение двух соседних окон: что было за последние `days` и что до них. */
 export interface WeekComparison {
   id: string;
   name: string;
   unit: string;
+  unitLabel?: string;
   provider: string;
   dateKind: 'day' | 'sample';
   days: number;
@@ -419,6 +472,7 @@ export function buildWeekComparisons(inputs: ChangeInput[], days = 7): WeekCompa
       id: input.id,
       name: input.name,
       unit: input.unit,
+      unitLabel: input.unitLabel,
       provider: input.provider,
       dateKind: input.dateKind,
       days,

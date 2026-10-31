@@ -17,15 +17,21 @@ const ASSET_ORDER = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'];
 const BASE_COLUMNS = 'id, name, price, change, sparkline, updated_at';
 
 /**
- * as_of приходит из миграции 20261030120000. Код выкатывается отдельно от
- * миграции, поэтому запрос с колонкой может упасть — тогда читаем без неё,
- * и плитка честно покажет только время записи в кэш.
+ * as_of пришёл миграцией 20261030120000, spark_dates — 20261031193000.
+ * Код выкатывается отдельно от миграций, поэтому колонок может ещё не быть.
+ * PostgREST отклоняет весь запрос, если хотя бы одной колонки нет, — поэтому
+ * пробуем наборы от полного к базовому: без дат плитка честно покажет только
+ * время записи в кэш, а ряд останется бездатым.
  */
+const COLUMN_SETS = [`${BASE_COLUMNS}, as_of, spark_dates`, `${BASE_COLUMNS}, as_of`, BASE_COLUMNS];
+
 async function selectAssets(): Promise<{ data: unknown[] | null; error: unknown }> {
-  const withAsOf = await supabase.from('cached_assets').select(`${BASE_COLUMNS}, as_of`);
-  if (!withAsOf.error) return { data: withAsOf.data, error: null };
-  const fallback = await supabase.from('cached_assets').select(BASE_COLUMNS);
-  return { data: fallback.data, error: fallback.error };
+  let last: { data: unknown[] | null; error: unknown } = { data: null, error: new Error('Нет попыток') };
+  for (const columns of COLUMN_SETS) {
+    last = await supabase.from('cached_assets').select(columns);
+    if (!last.error) return last;
+  }
+  return last;
 }
 
 export async function fetchLiveAssets(): Promise<AssetData[]> {
@@ -51,6 +57,7 @@ export async function fetchLiveAssets(): Promise<AssetData[]> {
       sparkline: asset.sparkline ?? [],
       updatedAt: (asset as AssetData & { updated_at?: string | null }).updated_at ?? null,
       asOf: (asset as AssetData & { as_of?: string | null }).as_of ?? null,
+      sparkDates: Array.isArray(asset.sparkDates) ? asset.sparkDates.map(String) : null,
     }));
   } catch (e) {
     console.error('Ошибка загрузки кэша активов:', e);
