@@ -112,6 +112,20 @@ export function formatSeriesValue(value: number, digits = 2): string {
   }).format(value);
 }
 
+/**
+ * Ставки и доходности живут в процентах, поэтому их изменение — это разница в
+ * процентных пунктах, а не «процент от процента». Для остальных рядов —
+ * обычное относительное изменение.
+ */
+export function formatSeriesDelta(from: number, to: number, unit: string): string {
+  if (unit === '%') {
+    const diff = to - from;
+    const sign = diff > 0 ? '+' : diff < 0 ? '\u2212' : '';
+    return `${sign}${Math.abs(diff).toFixed(2).replace('.', ',')}${NBSP}п.п.`;
+  }
+  return formatSeriesChange(from, to);
+}
+
 /** Изменение в процентах: +0,39 % / −1,02 %. */
 export function formatSeriesChange(from: number, to: number): string {
   if (!Number.isFinite(from) || !Number.isFinite(to) || from === 0) return '—';
@@ -181,7 +195,7 @@ function describeStep(series: CleanSeries, days: number): string {
   const fromPoint = points[points.length - 1 - days];
   const lastPoint = points[points.length - 1];
   if (!fromPoint || !lastPoint) return '';
-  const change = formatSeriesChange(fromPoint.value, lastPoint.value);
+  const change = formatSeriesDelta(fromPoint.value, lastPoint.value, input.unit);
   if (input.dateKind === 'day') {
     return `${valueWithDate(fromPoint.value, fromPoint.date, input.digits)} → ${valueWithDate(lastPoint.value, lastPoint.date, input.digits)} · ${change} за ${days} ${dayWord(days)}`;
   }
@@ -302,6 +316,9 @@ function rangeNote(series: CleanSeries): ChangeNote | null {
     series.input.dateKind === 'day' ? ` (${shortDate(first.date)} → ${shortDate(last.date)})` : '';
   const unit =
     series.input.dateKind === 'day' ? dayWord(RANGE_WINDOW) : sampleWord(RANGE_WINDOW);
+  const isRate = series.input.unit === '%';
+  const width = isRate ? max - min : pct;
+  const widthLabel = `${width.toFixed(2).replace('.', ',')}${NBSP}${isRate ? 'п.п.' : '%'}`;
   return {
     id: `${series.input.id}:range`,
     name: series.input.name,
@@ -310,7 +327,7 @@ function rangeNote(series: CleanSeries): ChangeNote | null {
     kind: 'range',
     direction: 'flat',
     days: RANGE_WINDOW,
-    headline: `узкий диапазон: ${pct.toFixed(2).replace('.', ',')}${NBSP}%`,
+    headline: `узкий диапазон: ${widthLabel}`,
     detail: `${RANGE_WINDOW} ${unit}${dates}: от ${formatSeriesValue(min, series.input.digits)} до ${formatSeriesValue(max, series.input.digits)}`,
     lastDate: last.date,
     weight: 40,
@@ -359,9 +376,9 @@ export interface WeekComparison {
   provider: string;
   dateKind: 'day' | 'sample';
   days: number;
-  /** Изменение за последнее окно, проценты. */
+  /** Изменение за последнее окно: проценты, а для ставок — п.п. */
   recentPct: number;
-  /** Изменение за предыдущее окно такой же длины, проценты. */
+  /** Изменение за предыдущее окно такой же длины: проценты или п.п. */
   previousPct: number;
   recentLabel: string;
   previousLabel: string;
@@ -390,8 +407,9 @@ export function buildWeekComparisons(inputs: ChangeInput[], days = 7): WeekCompa
     const start = values[values.length - 1 - days * 2] as number;
     if (!Number.isFinite(last) || !Number.isFinite(mid) || !Number.isFinite(start)) continue;
     if (mid === 0 || start === 0) continue;
-    const recentPct = (last / mid - 1) * 100;
-    const previousPct = (mid / start - 1) * 100;
+    const isRate = input.unit === '%';
+    const recentPct = isRate ? last - mid : (last / mid - 1) * 100;
+    const previousPct = isRate ? mid - start : (mid / start - 1) * 100;
     const lastPoint = points[points.length - 1];
     const windowLabel =
       input.dateKind === 'day'
@@ -406,8 +424,8 @@ export function buildWeekComparisons(inputs: ChangeInput[], days = 7): WeekCompa
       days,
       recentPct,
       previousPct,
-      recentLabel: formatSeriesChange(mid, last),
-      previousLabel: formatSeriesChange(start, mid),
+      recentLabel: formatSeriesDelta(mid, last, input.unit),
+      previousLabel: formatSeriesDelta(start, mid, input.unit),
       deltaPct: recentPct - previousPct,
       lastDate: lastPoint?.date ?? '',
       windowLabel,

@@ -205,3 +205,53 @@ test('неделя к неделе сортирует по размеру изм
   ]);
   assert.equal(rows[0]?.id, 'strong');
 });
+
+test('для ставок изменение считается в п.п., а не процентом от процента', () => {
+  // RUONIA: 14,04 → 14,09 — это +0,05 п.п., а не «+0,36 %».
+  const rate = series({
+    id: 'ruonia',
+    name: 'RUONIA',
+    unit: '%',
+    digits: 2,
+    points: points([14.04, 14.05, 14.06, 14.07, 14.09]),
+  });
+  const notes = buildChangeNotes([rate]);
+  assert.equal(notes[0]?.kind, 'streak');
+  assert.equal(plain(notes[0]?.headline), 'растёт 4-й день подряд');
+  assert.match(plain(notes[0]?.detail), /\+0,05 п\.п\. за 4 дня$/);
+});
+
+test('узкий диапазон ставки подписан в п.п., а не в процентах', () => {
+  const rate = series({
+    id: 'ruonia',
+    name: 'RUONIA',
+    unit: '%',
+    digits: 2,
+    points: points([14.04, 14.05, 14.06, 14.07, 14.09]),
+  });
+  // Серия длиной 5 не даёт диапазон: он требует ровно 5 значений, но серия
+  // одновременно даёт «растёт», поэтому проверяем отдельным рядом без серии.
+  const flat = series({
+    id: 'ruonia-flat',
+    name: 'RUONIA',
+    unit: '%',
+    digits: 2,
+    points: points([14.04, 14.06, 14.05, 14.07, 14.05]),
+  });
+  const [note] = buildChangeNotes([flat]).filter((item) => item.kind === 'range');
+  assert.ok(note, 'диапазон должен быть найден');
+  assert.match(plain(note.headline), /^узкий диапазон: 0,03 п\.п\.$/);
+  void rate;
+});
+
+test('неделя к неделе для ставки считает разницу в п.п.', () => {
+  const values = [14.0, 14.02, 14.04, 14.03, 14.05, 14.06, 14.07, 14.08, 14.1, 14.12, 14.14, 14.16, 14.18, 14.2, 14.22];
+  const [row] = buildWeekComparisons([
+    series({ id: 'ruonia', name: 'RUONIA', unit: '%', digits: 2, points: points(values, 1) }),
+  ]);
+  assert.ok(row);
+  // Последние 7: 14,08 → 14,22 = +0,14 п.п.; предыдущие 7: 14,00 → 14,08 = +0,08 п.п.
+  assert.match(plain(row.recentLabel), /^\+0,14 п\.п\.$/);
+  assert.match(plain(row.previousLabel), /^\+0,08 п\.п\.$/);
+  assert.ok(Math.abs(row.deltaPct - 0.06) < 1e-9);
+});
