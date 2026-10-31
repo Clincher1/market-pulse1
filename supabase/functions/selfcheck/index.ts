@@ -1,5 +1,5 @@
 // Self-check for the whole public contour.
-import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -972,6 +972,15 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         ok: issued > 0 && age !== null && age <= 36,
         detail: `выдано ${issued}, проверено ${scored}, последняя проверка ${age === null ? '—' : `${age.toFixed(1)} ч`} назад`,
       };
+    }),
+
+    // 19. Отчёты об ошибках действительно доходят. Без этой проверки «Sentry
+    //     настроен» — обещание, а не факт: ключ мог быть сохранён с лишним
+    //     пробелом, а отправка в этом случае молча выключается, и на странице
+    //     об этом не было бы ни слова.
+    check('sentry', async () => {
+      const result = await verifyDsn('selfcheck');
+      return { ok: result.ok, detail: result.detail };
     }),
 
     // 18. PNG-карточка для Telegram собирается на лету из тех же чисел. Она

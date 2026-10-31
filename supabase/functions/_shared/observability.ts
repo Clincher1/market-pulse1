@@ -96,32 +96,163 @@ export function captureException(error: unknown, extra: Extra = {}): void {
       ],
     };
 
-    const envelope =
-      `${JSON.stringify({ event_id: event.event_id, sent_at: new Date().toISOString() })}\n` +
-      `${JSON.stringify({ type: "event", content_type: "application/json" })}\n` +
-      `${JSON.stringify(event)}\n`;
-
-    const send = (async () => {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 3000);
-        await fetch(target.endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-sentry-envelope" },
-          body: envelope,
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-      } catch {
-        // Reporting must never become the outage.
-      }
-    })();
-
-    const runtime = (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } })
-      .EdgeRuntime;
-    if (runtime && typeof runtime.waitUntil === "function") runtime.waitUntil(send);
+    sendInBackground(target.endpoint, envelopeFor(event));
   } catch {
     // Nothing to do: the original error is what matters.
+  }
+}
+
+function envelopeFor(event: Record<string, unknown>): string {
+  return (
+    `${JSON.stringify({ event_id: event.event_id, sent_at: new Date().toISOString() })}\n` +
+    `${JSON.stringify({ type: "event", content_type: "application/json" })}\n` +
+    `${JSON.stringify(event)}\n`
+  );
+}
+
+/**
+ * The send is handed to the runtime and forgotten: a report must never delay or
+ * fail the response the visitor is waiting for.
+ */
+function sendInBackground(endpoint: string, envelope: string): void {
+  const send = (async () => {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3000);
+      await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-sentry-envelope" },
+        body: envelope,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+    } catch {
+      // Reporting must never become the outage.
+    }
+  })();
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } })
+    .EdgeRuntime;
+  if (runtime && typeof runtime.waitUntil === "function") runtime.waitUntil(send);
+}
+
+// ---------------------------------------------------------------------------
+// Caught failures
+// ---------------------------------------------------------------------------
+//
+// A thrown error was never the whole story. Most refusals are caught inside the
+// function and leave as `{success: false}` with status 500 — a provider that
+// answered nothing, a view that went missing, a price source that timed out.
+// Those never reached Sentry, so the only place they were visible was the health
+// log, and only to someone who went looking.
+//
+// They are reported here, once, from a single place: the wrapper reads the status
+// of whatever the handler returned. No function had to be edited for this.
+
+// The same broken source fails every 15 minutes. A report per run would fill the
+// monthly quota with one issue and hide everything else, so a repeat of the same
+// function+status is dropped for half an hour. The first occurrence — the one
+// that matters — always goes through.
+const REPEAT_WINDOW_MS = 30 * 60 * 1000;
+const lastSent = new Map<string, number>();
+
+function shouldReport(key: string): boolean {
+  const now = Date.now();
+  const previous = lastSent.get(key);
+  if (previous !== undefined && now - previous < REPEAT_WINDOW_MS) return false;
+  // A warm instance can live for hours; keep the bookkeeping bounded.
+  if (lastSent.size > 200) lastSent.clear();
+  lastSent.set(key, now);
+  return true;
+}
+
+function baseEvent(logger: string, type: string, value: string): Record<string, unknown> {
+  return {
+    event_id: crypto.randomUUID().replace(/-/g, ""),
+    timestamp: new Date().toISOString().replace(/Z$/, ""),
+    platform: "javascript",
+    level: "error",
+    logger,
+    environment: Deno.env.get("SENTRY_ENVIRONMENT") ?? SENTRY_ENVIRONMENT,
+    release: Deno.env.get("SENTRY_RELEASE") ?? undefined,
+    server_name: "market-pulse",
+    tags: { runtime: "supabase-edge" },
+    exception: [{ type, value: value.slice(0, 8000) }],
+  };
+}
+
+/**
+ * Report a failure the function caught itself. Only the status and the text of
+ * our own response are passed on: no request body, no headers, no cookies.
+ */
+export function captureFailure(
+  name: string,
+  request: Request,
+  status: number,
+  body: string,
+): void {
+  try {
+    const target = readDsn();
+    if (!target) return;
+    const key = `${name}|${status}|${body.slice(0, 80)}`;
+    if (!shouldReport(key)) return;
+    let path = request.url;
+    try {
+      path = new URL(request.url).pathname;
+    } catch { /* keep the raw value */ }
+    const reason = body.replace(/\s+/g, " ").trim().slice(0, 400) || "без текста";
+    const event = baseEvent("edge-function", "FunctionFailure", `${status} ${name}: ${reason}`);
+    event.tags = {
+      runtime: "supabase-edge",
+      function: name,
+      status: String(status),
+      caught: "true",
+    };
+    event.extra = { method: request.method, path, response_body: body.slice(0, 1000) };
+    sendInBackground(target.endpoint, envelopeFor(event));
+  } catch {
+    // Reporting must never become the outage.
+  }
+}
+
+/**
+ * Prove that reports actually arrive. The self-check needs an answer it can
+ * print, not a promise: this sends a real probe event through the same code path
+ * and reads Sentry's HTTP status.
+ *
+ * The probe is marked `probe: true` so it is recognisable in the Sentry list and
+ * cannot be mistaken for a real failure. One probe per hourly self-check is far
+ * below the free plan's 5000 events per month.
+ */
+export async function verifyDsn(functionName = "selfcheck"): Promise<{ ok: boolean; detail: string }> {
+  const target = readDsn();
+  if (!target) {
+    return { ok: false, detail: "SENTRY_DSN не задан: об ошибках функций никто не узнает" };
+  }
+  const started = Date.now();
+  const event = baseEvent("selfcheck", "SentryProbe", "проверка доставки отчётов, это не ошибка");
+  event.level = "info";
+  event.tags = { runtime: "supabase-edge", function: functionName, probe: "true" };
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(target.endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-sentry-envelope" },
+      body: envelopeFor(event),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      return {
+        ok: false,
+        detail: `Sentry ответил ${response.status}${text ? `: ${text.replace(/\s+/g, " ").slice(0, 120)}` : ""}`,
+      };
+    }
+    return { ok: true, detail: `Sentry принял пробное событие за ${Date.now() - started} мс` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, detail: `не удалось отправить: ${message.slice(0, 160)}` };
   }
 }
 
@@ -131,8 +262,9 @@ export function withErrorReporting(
   handler: (request: Request) => Response | Promise<Response>,
 ): (request: Request) => Promise<Response> {
   return async (request: Request) => {
+    let response: Response;
     try {
-      return await handler(request);
+      response = await handler(request);
     } catch (error) {
       // Path only: a query string can carry identifiers we have no business storing.
       let path = request.url;
@@ -142,6 +274,18 @@ export function withErrorReporting(
       captureException(error, { function: name, method: request.method, path });
       throw error;
     }
+    // A 5xx that was caught and turned into a response is a failure all the
+    // same. The body is our own JSON, small, and already free of anything the
+    // visitor sent us.
+    if (response.status >= 500) {
+      try {
+        const body = await response.clone().text();
+        captureFailure(name, request, response.status, body);
+      } catch {
+        captureFailure(name, request, response.status, "");
+      }
+    }
+    return response;
   };
 }
 
