@@ -136,6 +136,35 @@ function formatStamp(values, fallbackNow = false) {
         timeZone: 'Europe/Moscow',
     }).format(new Date(time)) + ' МСК');
 }
+/**
+ * «за 27 окт.» / «на 12:02 МСК» — на какой момент верна цена.
+ * Пустая строка, если источник дату не назвал: подпись не додумывает её.
+ */
+function observationLabel(asOf) {
+    if (!asOf)
+        return '';
+    const text = stringValue(asOf).trim();
+    if (!text)
+        return '';
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(text) ||
+        /^\d{4}-\d{2}-\d{2}[T ]00:00(:00(\.0+)?)?(Z|[+-]00(:?00)?)$/.test(text);
+    const parsed = new Date(dateOnly ? `${text.slice(0, 10)}T00:00:00Z` : text);
+    if (Number.isNaN(parsed.getTime()))
+        return '';
+    if (dateOnly) {
+        return `за ${new Intl.DateTimeFormat('ru-RU', {
+            day: 'numeric',
+            month: 'short',
+            timeZone: 'Europe/Moscow',
+        }).format(parsed)}`;
+    }
+    const clock = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(parsed);
+    return clock ? `на ${clock} МСК` : '';
+}
 function formatDateOnly(value) {
     if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value))
         return null;
@@ -263,7 +292,7 @@ async function buildBriefCard() {
             fetchSupabase('cached_news?select=source,title,published_at,importance,confidence&order=published_at.desc.nullslast&limit=80'),
         ]).then((items) => items[0]),
         Promise.allSettled([
-            fetchSupabase('cached_assets?select=id,name,price,change,sparkline&limit=20'),
+            fetchSupabase('cached_assets?select=id,name,price,change,sparkline,as_of&limit=20'),
         ]).then((items) => items[0]),
         Promise.allSettled([
             fetchSupabase('cached_forecasts?select=id,asset,direction,probability,updated_at&limit=20'),
@@ -333,7 +362,7 @@ async function buildBriefCard() {
     }
     const strongestGlobal = [...liveAssets].sort((a, b) => Math.abs(finiteNumber(b.change) ?? 0) - Math.abs(finiteNumber(a.change) ?? 0))[0] ?? null;
     if (strongestGlobal && facts.length < 3) {
-        facts.push(`Сильнейшее дневное движение внешнего фона — ${stringValue(strongestGlobal.name)} ${formatPct(finiteNumber(strongestGlobal.change))} (последнее значение ${formatPriceText(strongestGlobal.price)}).`);
+        facts.push(`Сильнейшее дневное движение внешнего фона — ${stringValue(strongestGlobal.name)} ${formatPct(finiteNumber(strongestGlobal.change))} (последнее значение ${formatPriceText(strongestGlobal.price)}${observationLabel(strongestGlobal.as_of) ? `, цена ${observationLabel(strongestGlobal.as_of)}` : ''}).`);
     }
     const strongestRussia = [...russiaCandidates].sort((a, b) => Math.abs(finiteNumber(b.changePct) ?? 0) - Math.abs(finiteNumber(a.changePct) ?? 0))[0] ?? null;
     if (strongestRussia && facts.length < 3) {
@@ -433,7 +462,7 @@ async function buildBriefCard() {
                 return;
             candidates.push({
                 score: 70 + Math.min(18, (Math.abs(deltaPct) / threshold) * 4),
-                text: `${stringValue(asset.name)}: ${formatPct(deltaPct)} к снимку; последнее значение ${formatPriceText(asset.price)}.`,
+                text: `${stringValue(asset.name)}: ${formatPct(deltaPct)} к снимку; последнее значение ${formatPriceText(asset.price)}${observationLabel(asset.as_of) ? ` (${observationLabel(asset.as_of)})` : ''}.`,
             });
         });
         const snapshotRussiaObject = isRecord(snapshotRow.russia) ? snapshotRow.russia : null;
