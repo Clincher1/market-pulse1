@@ -10,6 +10,9 @@ import {
   isPaused,
   pauseMessage,
   failedRuns,
+  keepRunColumns,
+  droppedRunKeys,
+  RUN_COLUMNS,
 } from '../supabase/functions/_shared/source-backoff.ts';
 
 const MIN_FAILURES = 3;
@@ -96,4 +99,46 @@ test('сообщение о паузе называет число и время
   assert.equal(failedRuns(5), 'неудачных запусков');
   assert.equal(failedRuns(12), 'неудачных запусков');
   assert.equal(failedRuns(22), 'неудачных запуска');
+});
+
+test('в тело PATCH к запуску не попадает колонка, которой нет в таблице', () => {
+  // Регрессия 31.10: в теле оказалось поле sources_skipped, PostgREST отклонил
+  // весь PATCH, и запуск навсегда остался в статусе «running».
+  const payload = {
+    finished_at: '2026-10-31T11:35:00.000Z',
+    status: 'success',
+    sources_total: 20,
+    sources_ok: 19,
+    sources_skipped: 1,
+    stats: { gate_version: 'token_prefix_v2' },
+  };
+  assert.deepEqual(droppedRunKeys(payload), ['sources_skipped']);
+  const sent = keepRunColumns(payload);
+  assert.deepEqual(Object.keys(sent).sort(), [
+    'finished_at',
+    'sources_ok',
+    'sources_total',
+    'stats',
+    'status',
+  ]);
+  for (const key of Object.keys(sent)) {
+    assert.ok(RUN_COLUMNS.includes(key), `${key} нет в списке колонок`);
+  }
+});
+
+test('закрытие запуска сохраняет всё, что таблица умеет хранить', () => {
+  const payload = {
+    finished_at: '2026-10-31T11:35:00.000Z',
+    status: 'partial',
+    sources_total: 20,
+    sources_ok: 19,
+    items_seen: 700,
+    items_candidate: 212,
+    items_rejected: 488,
+    items_upserted: 190,
+    error: '',
+    stats: { sources_skipped: 1 },
+  };
+  assert.deepEqual(droppedRunKeys(payload), []);
+  assert.deepEqual(keepRunColumns(payload), payload);
 });

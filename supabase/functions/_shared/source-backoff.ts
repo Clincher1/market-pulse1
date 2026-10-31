@@ -81,3 +81,34 @@ export function failedRuns(count: number): string {
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "неудачных запуска";
   return "неудачных запусков";
 }
+
+/**
+ * Колонки news_ingest_runs_v2. PostgREST отклоняет PATCH целиком, если в теле
+ * есть незнакомое поле, а отклонённый PATCH оставлял запуск навсегда в статусе
+ * «running». Поэтому тело перед отправкой фильтруется по этому списку.
+ */
+export const RUN_COLUMNS = [
+  "finished_at",
+  "status",
+  "sources_total",
+  "sources_ok",
+  "items_seen",
+  "items_candidate",
+  "items_rejected",
+  "items_upserted",
+  "error",
+  "stats",
+] as const;
+
+export function keepRunColumns(payload: Record<string, unknown>): Record<string, unknown> {
+  const kept: Record<string, unknown> = {};
+  for (const key of RUN_COLUMNS) {
+    if (key in payload) kept[key] = payload[key];
+  }
+  return kept;
+}
+
+/** Поля, которые пришлось выбросить: их видно в ответе функции, а не в тишине. */
+export function droppedRunKeys(payload: Record<string, unknown>): string[] {
+  return Object.keys(payload).filter((key) => !(RUN_COLUMNS as readonly string[]).includes(key));
+}
