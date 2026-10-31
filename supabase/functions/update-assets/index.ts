@@ -29,6 +29,12 @@ type AssetResult = {
     price: string;
     change: number;
     sparkline: number[];
+    /**
+     * ISO-даты наблюдений, по одной на значение sparkline. Без них ряд нельзя
+     * подписать календарём: «третий день роста» и «−3,92 % к какому дню»
+     * остаются недоказуемыми.
+     */
+    spark_dates: string[];
     updated_at: string;
     /**
      * Момент, на который верна цена (дата закрытия для дневных рядов, момент
@@ -206,6 +212,7 @@ function makeAsset(input: {
       price: input.format(price),
       change: round(change, 4),
       sparkline: points.slice(-SPARKLINE_POINTS).map((point) => round(point.value, 8)),
+      spark_dates: points.slice(-SPARKLINE_POINTS).map((point) => point.date),
       updated_at: input.updatedAt,
       as_of: asOfValue(input.asOf ?? latestPoint.date),
     },
@@ -379,20 +386,28 @@ async function fetchGold(updatedAt: string): Promise<AssetResult> {
   });
 }
 
-// Колонка as_of появляется миграцией 20261030120000. Пока её нет, писать её в
-// upsert нельзя: PostgREST отклонит всю строку, и кэш перестанет обновляться.
-// Проверяем один раз за запуск и запоминаем ответ.
-let asOfSupported: boolean | null = null;
+// Колонки as_of (миграция 20261030120000) и spark_dates (20261031193000)
+// появляются отдельно от кода. Пока колонки нет, писать её в upsert нельзя:
+// PostgREST отклонит всю строку, и кэш перестанет обновляться. Проверяем один
+// раз за запуск и запоминаем ответ.
+type StoredColumns = { asOf: boolean; sparkDates: boolean };
+let storedColumns: StoredColumns | null = null;
 
-async function hasAsOfColumn(): Promise<boolean> {
-  if (asOfSupported !== null) return asOfSupported;
+async function supports(select: string): Promise<boolean> {
   try {
-    await restJson("cached_assets?select=as_of&limit=1");
-    asOfSupported = true;
+    await restJson(`cached_assets?select=${select}&limit=1`);
+    return true;
   } catch {
-    asOfSupported = false;
+    return false;
   }
-  return asOfSupported;
+}
+
+async function supportedColumns(): Promise<StoredColumns> {
+  if (storedColumns) return storedColumns;
+  const sparkDates = await supports("as_of,spark_dates");
+  const asOf = sparkDates ? true : await supports("as_of");
+  storedColumns = { asOf, sparkDates };
+  return storedColumns;
 }
 
 async function isFreshNewCache(): Promise<boolean> {
@@ -476,12 +491,15 @@ serveWithErrorReporting("update-assets", async (request) => {
 
     const order = ["usd-eur", "sp500", "brent", "gold", "btc"];
     results.sort((a, b) => order.indexOf(a.row.id) - order.indexOf(b.row.id));
-    const storeAsOf = publish ? await hasAsOfColumn() : false;
+    const columns = publish ? await supportedColumns() : { asOf: false, sparkDates: false };
     if (publish) {
       const rows = results.map((result) => {
-        if (storeAsOf) return result.row;
-        const { as_of: _omitted, ...rest } = result.row;
-        return rest;
+        const { as_of: asOf, spark_dates: sparkDates, ...rest } = result.row;
+        return {
+          ...rest,
+          ...(columns.asOf ? { as_of: asOf } : {}),
+          ...(columns.sparkDates ? { spark_dates: sparkDates } : {}),
+        };
       });
       await restJson("cached_assets?on_conflict=id", {
         method: "POST",
@@ -496,7 +514,8 @@ serveWithErrorReporting("update-assets", async (request) => {
       published: publish,
       // Видно, попала ли дата наблюдения в кэш: без колонки она остаётся только
       // в ответе функции и до плитки не доходит.
-      as_of_stored: storeAsOf,
+      as_of_stored: columns.asOf,
+      spark_dates_stored: columns.sparkDates,
       assets_ok: results.length,
       assets_total: tasks.length,
       assets: results.map((result) => result.meta),

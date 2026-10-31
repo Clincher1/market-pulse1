@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildChangeNotes,
   buildWeekComparisons,
+  datedPoints,
   formatSeriesChange,
   formatSeriesValue,
   trailingRun,
@@ -254,4 +255,60 @@ test('неделя к неделе для ставки считает разни
   assert.match(plain(row.recentLabel), /^\+0,14 п\.п\.$/);
   assert.match(plain(row.previousLabel), /^\+0,08 п\.п\.$/);
   assert.ok(Math.abs(row.deltaPct - 0.06) < 1e-9);
+});
+
+test('даты из кэша соединяются со значениями, и ряд становится дневным', () => {
+  const values = [3875.34, 3901.2, 3944.1, 3990.6];
+  const dates = ['2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30'];
+  const dated = datedPoints(values, dates);
+  assert.equal(dated.dateKind, 'day');
+  assert.deepEqual(dated.points.map((point) => point.date), dates);
+  assert.deepEqual(dated.points.map((point) => point.value), values);
+
+  // С датами ряд получает серию дней — то, что бездатый ряд сказать не может.
+  const notes = buildChangeNotes([
+    {
+      id: 'world-gold',
+      name: 'Gold',
+      unit: '',
+      unitLabel: '$ за тройскую унцию',
+      provider: 'кэш мировых котировок',
+      dateKind: dated.dateKind,
+      digits: 2,
+      points: dated.points,
+    },
+  ]);
+  assert.equal(notes[0]?.kind, 'streak');
+  assert.equal(plain(notes[0]?.headline), 'растёт 3-й день подряд');
+  assert.equal(
+    plain(notes[0]?.detail),
+    '3 875,34 (27.10) → 3 990,60 (30.10) · +2,97 % за 3 дня',
+  );
+  assert.equal(notes[0]?.unitLabel, '$ за тройскую унцию');
+});
+
+test('даты короче значений — ряд бездатый, а не с чужими датами', () => {
+  // Три даты на четыре значения: подставить последнюю дату к последнему
+  // значению значило бы приписать числу чужой день.
+  const dated = datedPoints([3875.34, 3901.2, 3944.1, 3990.6], ['2026-10-27', '2026-10-28', '2026-10-29']);
+  assert.equal(dated.dateKind, 'sample');
+  assert.deepEqual(dated.points.map((point) => point.date), ['', '', '', '']);
+});
+
+test('неразбираемая или непорядковая дата обнуляет даты всего ряда', () => {
+  const broken = datedPoints([100, 101, 102], ['2026-10-27', '', '2026-10-29']);
+  assert.equal(broken.dateKind, 'sample');
+  const shuffled = datedPoints([100, 101, 102], ['2026-10-29', '2026-10-27', '2026-10-30']);
+  assert.equal(shuffled.dateKind, 'sample');
+  const duplicate = datedPoints([100, 101, 102], ['2026-10-29', '2026-10-29', '2026-10-30']);
+  assert.equal(duplicate.dateKind, 'sample');
+});
+
+test('без сохранённых дат ряд остаётся бездатым, значения не теряются', () => {
+  const dated = datedPoints([3875.34, 3901.2], null);
+  assert.equal(dated.dateKind, 'sample');
+  assert.deepEqual(dated.points, [
+    { date: '', value: 3875.34 },
+    { date: '', value: 3901.2 },
+  ]);
 });

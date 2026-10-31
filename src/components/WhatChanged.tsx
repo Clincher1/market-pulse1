@@ -6,6 +6,7 @@ import { fetchRussiaHistory, type RussiaHistory } from '@/data/russiaHistory';
 import {
   buildChangeNotes,
   buildWeekComparisons,
+  datedPoints,
   type ChangeInput,
   type ChangeNote,
   type WeekComparison,
@@ -30,13 +31,25 @@ const DIGITS_BY_SERIES: Record<string, number> = {
   reserves: 1,
 };
 
-/** Мировые котировки приходят как 30 значений без дат закрытия. */
+/** Мировые котировки: 30 последних закрытий с датами наблюдения. */
 const WORLD_DIGITS: Record<string, number> = {
   brent: 2,
   sp500: 2,
   gold: 2,
-  btc: 2,
+  btc: 0,
   'usd-eur': 4,
+};
+
+/**
+ * Единица мирового ряда словами. Без неё два разных золота — 10 149,50 ₽/г на
+ * Мосбирже и 3 875,34 $/унц. в мировом блоке — выглядят как ошибка сайта.
+ */
+const WORLD_UNITS: Record<string, string> = {
+  brent: '$ за баррель',
+  sp500: 'пункты индекса',
+  gold: '$ за тройскую унцию',
+  btc: '$ за BTC',
+  'usd-eur': 'USD за 1 EUR',
 };
 
 function shortDate(iso: string): string {
@@ -75,6 +88,7 @@ function NoteCard({ note }: { note: ChangeNote }) {
         <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
             {note.name}
+            {note.unitLabel ? <span className="normal-case tracking-normal text-slate-400"> · {note.unitLabel}</span> : null}
           </div>
           <h3 className="mt-1 text-base font-extrabold leading-snug text-white">{note.headline}</h3>
         </div>
@@ -83,7 +97,7 @@ function NoteCard({ note }: { note: ChangeNote }) {
       <p className="mt-2 text-sm leading-relaxed text-text-secondary">{note.detail}</p>
       <p className="mt-2 text-[11px] text-slate-400">
         {note.provider}
-        {note.lastDate ? ` · данные на ${shortDate(note.lastDate)}` : ' · даты закрытий источник не передаёт'}
+        {note.lastDate ? ` · данные на ${shortDate(note.lastDate)}` : ' · даты наблюдений источник не передаёт'}
       </p>
     </article>
   );
@@ -99,7 +113,10 @@ function WeekRow({ row }: { row: WeekComparison }) {
     row.deltaPct > 0 ? 'text-emerald-300' : row.deltaPct < 0 ? 'text-rose-300' : 'text-slate-300';
   return (
     <tr className="border-t border-white/[0.07]">
-      <td className="px-3 py-2 text-left font-semibold text-text-primary">{row.name}</td>
+      <td className="px-3 py-2 text-left font-semibold text-text-primary">
+        {row.name}
+        {row.unitLabel ? <span className="block text-[11px] font-normal text-slate-400">{row.unitLabel}</span> : null}
+      </td>
       <td className="px-3 py-2 text-right tabular-nums text-text-primary">{row.recentLabel}</td>
       <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{row.previousLabel}</td>
       <td className={`px-3 py-2 text-right font-bold tabular-nums ${tone}`}>{formatPp(row.deltaPct)}</td>
@@ -142,14 +159,19 @@ export default function WhatChanged() {
     for (const asset of assets) {
       if (!asset.sparkline || asset.sparkline.length < 2) continue;
       if (asset.price === '—') continue;
+      // Даты закрытий приходят из кэша вместе со значениями. Если их нет или
+      // они не совпадают по длине, ряд остаётся бездатым — подставлять чужие
+      // даты нельзя, поэтому datedPoints либо берёт все пары, либо ни одной.
+      const dated = datedPoints(asset.sparkline, asset.sparkDates ?? null);
       inputs.push({
         id: `world-${asset.id}`,
         name: asset.name,
         unit: '',
+        unitLabel: WORLD_UNITS[asset.id],
         provider: 'кэш мировых котировок',
-        dateKind: 'sample',
+        dateKind: dated.dateKind,
         digits: WORLD_DIGITS[asset.id] ?? 2,
-        points: asset.sparkline.map((value) => ({ date: '', value })),
+        points: dated.points,
       });
     }
 
@@ -181,9 +203,9 @@ export default function WhatChanged() {
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
         Здесь только то, что уже произошло: сколько дней подряд ряд движется в одну сторону, где
         последнее значение относительно всего окна, насколько узок диапазон последних дней. Считается
-        по закрытиям торговых дней за три месяца и по 30 последним значениям мировых котировок.
-        Вероятностей и обещаний на будущее в этом блоке нет — по правилам проекта их место занимает
-        счёт уже проверенных фактов.
+        по закрытиям торговых дней за три месяца у российских рядов и по 30 последним закрытиям
+        мировых котировок. Вероятностей и обещаний на будущее в этом блоке нет — по правилам проекта
+        их место занимает счёт уже проверенных фактов.
       </p>
 
       {loading ? (
@@ -240,16 +262,17 @@ export default function WhatChanged() {
             </table>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-            «Последние 7» — торговые дни с датами у российских рядов и семь последних значений у
-            мировых котировок: даты закрытий источник для них не передаёт. У ставок и доходностей
-            изменения подписаны в процентных пунктах: процент от процента сайт не считает.
+            «Последние 7» — семь последних наблюдений с датой у каждого: торговые дни у российских
+            рядов, дни закрытия у мировых котировок. У ставок и доходностей изменения подписаны в
+            процентных пунктах: процент от процента сайт не считает.
           </p>
         </div>
       )}
 
       <p className="mt-4 text-[11px] leading-relaxed text-slate-400">
-        У мировых котировок источник не передаёт даты закрытий — поэтому для них считается позиция в
-        окне, а не число дней. У российских рядов даты есть, и они подписаны в каждой строке.
+        У каждого ряда подписана дата последнего наблюдения. Если источник не отдал дату, ряд
+        остаётся без неё целиком: строки говорят о позиции значения в окне, а не о числе дней.
+        Пропущенные дни не достраиваются — на графиках видно только то, что отдал источник.
       </p>
     </section>
   );
