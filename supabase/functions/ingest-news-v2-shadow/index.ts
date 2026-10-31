@@ -1,6 +1,14 @@
 // Stage 2 shadow news ingestion (deterministic part only).
 import { serveWithErrorReporting } from "../_shared/observability.ts";
-import { failureStreak, isPaused, pauseMessage, type FailureStreak, type HealthHistoryRow } from "../_shared/source-backoff.ts";
+import {
+  droppedRunKeys,
+  failureStreak,
+  isPaused,
+  keepRunColumns,
+  pauseMessage,
+  type FailureStreak,
+  type HealthHistoryRow,
+} from "../_shared/source-backoff.ts";
 //
 // Reads enabled sources from news_sources_v2, fetches RSS/Atom directly,
 // parses XML, validates dates/URLs/categories/blacklist, and stores auditable
@@ -534,6 +542,30 @@ async function processSource(source: Source, blacklist: string[], now: Date) {
   return { health, articles, rejectReasons };
 }
 
+// A run row that never gets its closing PATCH stays "running" forever, and the
+// log then lies about what happened. If the full payload is rejected, the run is
+// closed with the reason instead of being left open.
+async function finalizeRun(runId: string, payload: Record<string, unknown>): Promise<void> {
+  try {
+    await restJson(`news_ingest_runs_v2?id=eq.${encodeURIComponent(runId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify(keepRunColumns(payload)),
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message.slice(0, 400) : String(error).slice(0, 400);
+    await restJson(`news_ingest_runs_v2?id=eq.${encodeURIComponent(runId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        finished_at: new Date().toISOString(),
+        status: "error",
+        error: `закрытие запуска отклонено: ${reason}`,
+      }),
+    }).catch(() => undefined);
+  }
+}
+
 serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
   if (!isAuthorizedService(request)) return Response.json({ success: false, error: "unauthorized" }, { status: 401 });
   const requestUrl = new URL(request.url);
@@ -623,9 +655,11 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
     }
 
     const attempted = healthRows.filter((row) => !skipped.has(row.source_id));
+    // Только настоящие колонки news_ingest_runs_v2: лишнее поле в теле PATCH
+    // заставляет PostgREST отклонить запрос целиком, и запуск навсегда остаётся
+    // в статусе «running». Счёт пропущенных источников живёт в stats.
     const totals = {
       sources_total: sources.length,
-      sources_skipped: skipped.size,
       sources_ok: attempted.filter((row) => row.ok).length,
       items_seen: healthRows.reduce((sum, row) => sum + Number(row.items_seen ?? 0), 0),
       items_candidate: healthRows.reduce((sum, row) => sum + Number(row.items_candidate ?? 0), 0),
@@ -647,30 +681,31 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
         : "error";
 
     if (runId !== undefined) {
-      await restJson(`news_ingest_runs_v2?id=eq.${encodeURIComponent(String(runId))}`, {
-        method: "PATCH",
-        headers: { Prefer: "return=minimal" },
-        body: JSON.stringify({
-          finished_at: new Date().toISOString(),
-          status,
-          ...totals,
-          stats: {
-            gate_version: GATE_VERSION,
-            reject_reasons: rejectReasons,
-            sources: healthRows.map((row) => ({
-              source_id: row.source_id,
-              ok: row.ok,
-              http_status: row.http_status,
-              items_seen: row.items_seen,
-              items_candidate: row.items_candidate,
-              items_rejected: row.items_rejected,
-              latest_published_at: row.latest_published_at,
-              duration_ms: row.duration_ms,
-              error: row.error,
-            })),
-          },
-        }),
-      });
+      const runPayload = {
+        finished_at: new Date().toISOString(),
+        status,
+        ...totals,
+        stats: {
+          gate_version: GATE_VERSION,
+          sources_skipped: skipped.size,
+          skipped_sources: [...skipped],
+          reject_reasons: rejectReasons,
+          sources: healthRows.map((row) => ({
+            source_id: row.source_id,
+            ok: row.ok,
+            http_status: row.http_status,
+            items_seen: row.items_seen,
+            items_candidate: row.items_candidate,
+            items_rejected: row.items_rejected,
+            latest_published_at: row.latest_published_at,
+            duration_ms: row.duration_ms,
+            error: row.error,
+          })),
+        },
+      };
+      const dropped = droppedRunKeys(runPayload);
+      if (dropped.length) console.warn(`run payload dropped unknown columns: ${dropped.join(", ")}`);
+      await finalizeRun(String(runId), runPayload);
     }
 
     const sampleCandidates = uniqueArticles
@@ -690,6 +725,7 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
       status,
       gate_version: GATE_VERSION,
       ...totals,
+      sources_skipped: skipped.size,
       reject_reasons: rejectReasons,
       sample_candidates: sampleCandidates,
     });
