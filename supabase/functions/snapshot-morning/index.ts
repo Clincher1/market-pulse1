@@ -128,7 +128,7 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
         "cached_tension?select=value,label,news_count,updated_at&id=eq.1&limit=1",
       ) as Promise<AnyRecord[]>,
       restJson(
-        "cached_assets?select=id,name,price,change,sparkline,updated_at&limit=20",
+        "cached_assets?select=id,name,price,change,sparkline,updated_at,as_of&limit=20",
       ) as Promise<AnyRecord[]>,
       restJson(
         "cached_forecasts?select=id,asset,direction,probability,time_window,confidence,updated_at&limit=20",
@@ -146,6 +146,10 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
         }
       : null;
 
+    // as_of — дата наблюдения, которую назвал источник, updated_at — время
+    // записи в кэш. Снимок хранит оба: иначе паспорт дня приписывает пятничному
+    // закрытию субботнюю дату, потому что субботний писатель ничего нового не
+    // получил, а «сильнейшее движение» осталось прежним.
     const assets = assetRows.map((row) => ({
       id: String(row.id ?? ""),
       name: String(row.name ?? ""),
@@ -153,6 +157,7 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       change: finiteNumber(row.change),
       last: lastSparklineValue(row.sparkline),
       updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
+      as_of: typeof row.as_of === "string" ? row.as_of : null,
     }));
 
     const forecasts = forecastRows.map((row) => ({

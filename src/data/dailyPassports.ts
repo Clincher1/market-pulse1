@@ -22,8 +22,12 @@ export interface PassportDay {
   tensionValue: number | null;
   tensionLabel: string;
   tensionNewsCount: number | null;
-  /** Самое сильное дневное движение среди пяти мировых индикаторов. */
-  topMover: { name: string; change: number } | null;
+  /**
+   * Самое сильное дневное движение среди пяти мировых индикаторов.
+   * `asOf` — дата наблюдения от источника: в субботу цена закрытия пятницы
+   * остаётся прежней, и без даты паспорт приписывал бы движению сегодняшний день.
+   */
+  topMover: { name: string; change: number; asOf: string | null } | null;
   /** Официальный курс доллара на утро, если он попал в снимок. */
   usdRub: number | null;
 }
@@ -54,7 +58,7 @@ function normalizeDay(row: Record<string, unknown>): PassportDay {
     const name = typeof asset.name === 'string' ? asset.name : '';
     if (change === null || !name) continue;
     if (!topMover || Math.abs(change) > Math.abs(topMover.change)) {
-      topMover = { name, change };
+      topMover = { name, change, asOf: typeof asset.as_of === 'string' && asset.as_of ? asset.as_of : null };
     }
   }
 

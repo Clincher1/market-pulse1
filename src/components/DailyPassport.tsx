@@ -26,6 +26,29 @@ function changeWord(change: number): string {
   return change > 0 ? `+${value} %` : `${value.replace('-', '−')} %`;
 }
 
+/**
+ * Дата наблюдения для подписи: «2026-10-30» и «2026-10-30 13:17:01» дают «30.10».
+ * Если источник строку не назвал или она не разбирается — пусто, и подпись
+ * остаётся без даты, а не с придуманной.
+ */
+function observationDay(value: string): string {
+  const isoDate = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
+  const date = new Date(`${isoDate}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: '2-digit',
+    month: '2-digit',
+  }).format(date);
+}
+
+/** «, цена на 30.10» — только когда источник назвал дату, которую можно напечатать. */
+function observedSuffix(asOf: string | null): string {
+  const day = asOf ? observationDay(asOf) : '';
+  return day ? `, цена на ${day}` : '';
+}
+
 function movingWord(days: number): string {
   const mod10 = days % 10;
   const mod100 = days % 100;
@@ -156,7 +179,7 @@ export default function DailyPassport() {
           </div>
           <div className="mt-1 text-[11px] text-text-secondary">
             {today.topMover
-              ? `${today.topMover.name} — среди пяти мировых индикаторов`
+              ? `${today.topMover.name} — среди пяти мировых индикаторов${observedSuffix(today.topMover.asOf)}`
               : 'в снимке нет движений за день'}
           </div>
         </div>
