@@ -13,6 +13,13 @@ const MAX_FEED_CHARS = 5_000_000;
 const MAX_ITEMS_PER_SOURCE = 60;
 const MAX_CANDIDATES_PER_SOURCE = 20;
 const COOLDOWN_MINUTES = 10;
+// Google News answers its RSS search endpoint with 503 on most runs. Asking every
+// 30 minutes regardless produced 128 failed requests in three days. After three
+// failures in a row the source is left alone for an hour: the loop is visible in
+// the health log as "пауза", not hidden and not retried blindly.
+const SKIP_AFTER_FAILURES = 3;
+const SKIP_MINUTES = 60;
+const HEALTH_LOOKBACK_MINUTES = 180;
 const GATE_VERSION = "token_prefix_v2";
 
 type SourceHealth = {
@@ -349,6 +356,44 @@ async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => P
   return results;
 }
 
+type HealthHistoryRow = { source_id: string; ok: boolean; http_status: number | null; created_at: string };
+
+// Consecutive failures per source, newest first. A single blip never pauses a
+// source: it takes SKIP_AFTER_FAILURES in a row, and the pause expires after
+// SKIP_MINUTES so the source is always retried eventually.
+function failureStreak(rows: HealthHistoryRow[]): Map<string, { streak: number; last: number }> {
+  const bySource = new Map<string, { streak: number; last: number }>();
+  const counted = new Set<string>();
+  for (const row of rows) {
+    if (counted.has(row.source_id)) continue;
+    if (row.ok) {
+      counted.add(row.source_id);
+      continue;
+    }
+    const current = bySource.get(row.source_id) ?? { streak: 0, last: 0 };
+    current.streak += 1;
+    if (!current.last) current.last = Date.parse(row.created_at);
+    bySource.set(row.source_id, current);
+  }
+  return bySource;
+}
+
+function skippedHealth(source: Source, streak: number, lastFailure: number): SourceHealth {
+  const until = new Date(lastFailure + SKIP_MINUTES * 60_000).toISOString().slice(11, 16);
+  return {
+    source_id: source.id,
+    ok: false,
+    http_status: null,
+    duration_ms: 0,
+    items_seen: 0,
+    items_candidate: 0,
+    items_rejected: 0,
+    latest_published_at: null,
+    final_url: source.url,
+    error: `пауза: ${streak} неудачных запуска подряд, следующая попытка после ${until} UTC`,
+  };
+}
+
 async function processSource(source: Source, blacklist: string[], now: Date) {
   const started = Date.now();
   const health: SourceHealth = {
@@ -547,7 +592,28 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
     const runId = runRows[0]?.id;
 
     const now = new Date();
-    const results = await mapPool(sources, 4, (source) => processSource(source, blacklist, now));
+    let history: HealthHistoryRow[] = [];
+    try {
+      history = (await restJson(
+        `news_source_health_v2?select=source_id,ok,http_status,created_at&created_at=gt.${encodeURIComponent(
+          new Date(now.getTime() - HEALTH_LOOKBACK_MINUTES * 60_000).toISOString(),
+        )}&order=created_at.desc&limit=600`,
+      )) as HealthHistoryRow[];
+    } catch {
+      // Without history every source is attempted: a missing log must not stop
+      // the ingestion.
+      history = [];
+    }
+    const streaks = failureStreak(history);
+    const skipped = new Set<string>();
+    const results = await mapPool(sources, 4, async (source) => {
+      const streak = streaks.get(source.id);
+      if (streak && streak.streak >= SKIP_AFTER_FAILURES && Date.now() - streak.last < SKIP_MINUTES * 60_000) {
+        skipped.add(source.id);
+        return { health: skippedHealth(source, streak.streak, streak.last), articles: [], rejectReasons: {} };
+      }
+      return await processSource(source, blacklist, now);
+    });
 
     const healthRows = results.map((result) => ({ ...result.health, run_id: runId }));
     if (healthRows.length) {
@@ -578,9 +644,11 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
       });
     }
 
+    const attempted = healthRows.filter((row) => !skipped.has(row.source_id));
     const totals = {
       sources_total: sources.length,
-      sources_ok: healthRows.filter((row) => row.ok).length,
+      sources_skipped: skipped.size,
+      sources_ok: attempted.filter((row) => row.ok).length,
       items_seen: healthRows.reduce((sum, row) => sum + Number(row.items_seen ?? 0), 0),
       items_candidate: healthRows.reduce((sum, row) => sum + Number(row.items_candidate ?? 0), 0),
       items_rejected: healthRows.reduce((sum, row) => sum + Number(row.items_rejected ?? 0), 0),
@@ -592,7 +660,13 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
         rejectReasons[reason] = (rejectReasons[reason] ?? 0) + count;
       }
     }
-    const status = totals.sources_ok === totals.sources_total ? "success" : totals.sources_ok > 0 ? "partial" : "error";
+    // A paused source is a decision, not a failure: the run is judged on the
+    // sources it actually asked.
+    const status = attempted.length > 0 && totals.sources_ok === attempted.length
+      ? "success"
+      : totals.sources_ok > 0
+        ? "partial"
+        : "error";
 
     if (runId !== undefined) {
       await restJson(`news_ingest_runs_v2?id=eq.${encodeURIComponent(String(runId))}`, {
