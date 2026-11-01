@@ -741,8 +741,9 @@ export default function DailyBrief() {
 
       {snapshot && changeView.comparable > 0 && (
         <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
-          Пороги шума: шкала — 5 пунктов; цены — 0,1–1,5{' '}% в зависимости от инструмента;
-          сигналы — смена публичного статуса или сдвиг баланса на 10.
+          Пороги шума: шкала — 5 пунктов; цены — 0,1–1,5{' '}% в зависимости от инструмента.
+          Сравниваются только опубликованные значения: ни вероятностей, ни «сигналов» на
+          будущее в брифе нет.
           {changeView.totalSignificant > changeView.items.length
             ? ` Показано ${changeView.items.length} самых заметных из ${changeView.totalSignificant} изменений выше порогов.`
             : ''}
