@@ -26,14 +26,16 @@ export interface AssetPriceHistory {
  * The expanded asset panel must use the same provider series as the tile.
  * This is intentionally an explicit allowlist rather than `is_primary`:
  * shadow primary flags belong to Market Memory evaluation, while the public
- * tiles use ECB for the FX tile, Kraken for BTC and Twelve spot for gold.
- * In particular, the FRED/Nasdaq gold index must never be presented as the
- * XAU/USD spot series.
+ * tiles use Yahoo Finance for S&P 500 and Brent (с 01.11.2026, когда CSV у
+ * FRED стал требовать ключ и отвечал 404 всплесками), ECB for the FX tile,
+ * Kraken for BTC and Twelve spot for gold. In particular, the FRED/Nasdaq gold
+ * index must never be presented as the XAU/USD spot series, and спот Brent не
+ * подменяется фьючерсом внутри одной линии.
  */
 const HISTORY_INSTRUMENT_BY_ASSET: Record<string, string> = {
   'usd-eur': 'eurusd_ecb_daily',
-  sp500: 'sp500_fred_sp500',
-  brent: 'brent_fred_dcoilbrenteu',
+  sp500: 'sp500_yahoo_gspc',
+  brent: 'brent_yahoo_bzf',
   gold: 'gold_twelve_xauusd_daily',
   btc: 'btc_kraken_xbtusd_daily',
 };

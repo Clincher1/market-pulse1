@@ -1,5 +1,6 @@
 // Stage 3 shadow price snapshots.
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { parseYahooDaily } from "../_shared/yahoo-chart.ts";
 //
 // Writes numeric, provider-labelled observations to asset_price_snapshots_v2.
 // It does not touch cached_assets and does not publish forecasts/outcomes.
@@ -22,9 +23,17 @@ let activeMaxRowsPerInstrument = DEFAULT_MAX_ROWS_PER_INSTRUMENT;
 
 type AnyRecord = Record<string, unknown>;
 
+// S&P 500 и Brent с 01.11.2026 берутся из публичного чарта Yahoo: у FRED
+// программный доступ требует зарегистрированного ключа, и его CSV отвечал 404
+// всплесками (07:00-07:05 UTC, «Error - St. Louis Fed»). Ряды помечены новыми
+// instrument_id, потому что провайдер и инструмент другие: спот EIA и фьючерс
+// NYMEX — не одно и то же число.
+const YAHOO_INSTRUMENTS = [
+  { instrumentId: "sp500_yahoo_gspc", assetKey: "sp500", symbol: "^GSPC" },
+  { instrumentId: "brent_yahoo_bzf", assetKey: "Brent", symbol: "BZ=F" },
+] as const;
+
 const FRED_INSTRUMENTS = [
-  { instrumentId: "sp500_fred_sp500", assetKey: "sp500", series: "SP500" },
-  { instrumentId: "brent_fred_dcoilbrenteu", assetKey: "Brent", series: "DCOILBRENTEU" },
   { instrumentId: "eurusd_fred_dexuseu", assetKey: "eurusd", series: "DEXUSEU" },
   { instrumentId: "btc_fred_coinbase", assetKey: "btc", series: "CBBTCUSD" },
   { instrumentId: "gold_fred_nasdaq_index", assetKey: "gold", series: "NASDAQQGLDI" },
@@ -165,6 +174,30 @@ async function fetchFred(instrumentId: string, assetKey: string, series: string)
   }).filter((row) => row.date && Number.isFinite(row.value) && row.value > 0);
   if (!observations.length) throw new Error("FRED returned no valid observations");
   return dailyRows(instrumentId, assetKey, observations, url, { provider: "FRED", series });
+}
+
+/**
+ * Дневные закрытия из публичного чарта Yahoo. Ключа нет, даты источник отдаёт
+ * вместе со значениями; год глубины нужен, чтобы публичная панель не теряла
+ * 180-дневный диапазон.
+ */
+async function fetchYahoo(instrumentId: string, assetKey: string, symbol: string) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+  const series = parseYahooDaily(JSON.parse(await fetchText(url)) as unknown);
+  return dailyRows(
+    instrumentId,
+    assetKey,
+    series.points.map((point) => ({ date: point.date, value: point.value })),
+    url,
+    {
+      provider: "Yahoo Finance",
+      symbol,
+      exchange: series.exchange,
+      instrument_type: series.instrumentType,
+      quote_time: series.quoteTime,
+    },
+    HISTORY_BACKFILL_ROWS,
+  );
 }
 
 async function fetchEcb() {
@@ -384,6 +417,10 @@ serveWithErrorReporting("update-prices-v2-shadow", async (request) => {
     runId = created[0]?.id ?? null;
 
     const tasks: Array<{ instrumentId: string; load: () => Promise<AnyRecord[]> }> = [
+      ...YAHOO_INSTRUMENTS.map((item) => ({
+        instrumentId: item.instrumentId,
+        load: () => fetchYahoo(item.instrumentId, item.assetKey, item.symbol),
+      })),
       ...FRED_INSTRUMENTS.map((item) => ({
         instrumentId: item.instrumentId,
         load: () => fetchFred(item.instrumentId, item.assetKey, item.series),
