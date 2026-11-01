@@ -43,13 +43,14 @@ test('окно считается только по проверкам, кото
   // 72 + 46 + 105 + 105; строка forecasts_fresh не подмешивается.
   assert.equal(stats.samples, 328);
   assert.equal(stats.okSamples, 324);
-  assert.equal(stats.okPercent, 99);
+  // 324 из 328 — это 98,7 %, и число не округляется вверх до «99».
+  assert.equal(stats.okPercent, 98.7);
   assert.deepEqual(stats.troubles.map((item) => item.name), ['ru_insights', 'ru_history_api']);
 });
 
 test('три провала из семидесяти двух — единичные, и это сказано словами', () => {
   const stats = summariseCheckStats(realRows(), active);
-  assert.match(plain(stats.headline), /^За 7 дней пройдено 324 из 328 проверок — 99 %\./);
+  assert.match(plain(stats.headline), /^За 7 дней пройдено 324 из 328 проверок — 98,7 %\./);
   assert.match(plain(stats.headline), /Предупреждения единичные/);
   // Именно так и было: 3 провала из 72 прогонов у ru_insights.
   assert.equal(stats.troubles[0].fails, 3);
@@ -94,4 +95,30 @@ test('подпись под проверкой: без провалов и с п
   );
   assert.equal(checkWindowLabel(undefined), null);
   assert.equal(checkWindowLabel(row({ samples: 0, ok_samples: 0 })), null);
+});
+
+test('при провалах окно не печатает 100 %', () => {
+  // Настоящий случай со страницы: 1224 из 1228 при четырёх красных прогонах.
+  const stats = summariseCheckStats(
+    [
+      row({ check_name: 'ru_insights', samples: 72, ok_samples: 69 }),
+      row({ check_name: 'ru_history_api', samples: 46, ok_samples: 45 }),
+      row({ check_name: 'assets_fresh', samples: 1105, ok_samples: 1105 }),
+    ],
+    ['ru_insights', 'ru_history_api', 'assets_fresh'],
+  );
+  assert.equal(stats.samples, 1223);
+  assert.equal(stats.okSamples, 1219);
+  assert.equal(stats.okPercent, 99.6);
+  assert.doesNotMatch(plain(stats.headline), /100 %/);
+  assert.match(plain(stats.headline), /— 99,6 %\./);
+});
+
+test('без провалов окно печатает ровно 100 %', () => {
+  const stats = summariseCheckStats(
+    [row({ check_name: 'assets_fresh', samples: 105, ok_samples: 105 })],
+    ['assets_fresh'],
+  );
+  assert.equal(stats.okPercent, 100);
+  assert.match(plain(stats.headline), /— 100 %\. Ни одна проверка не падала\./);
 });
