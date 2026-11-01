@@ -34,6 +34,11 @@ const GATE_VERSION = "token_prefix_v2";
 type SourceHealth = {
   source_id: string;
   ok: boolean;
+  /**
+   * Строка «не пытались» (источник был на паузе). Без этого флага пауза
+   * считала собственные пропуски отказами и не истекала никогда.
+   */
+  paused: boolean;
   http_status: number | null;
   duration_ms: number | null;
   items_seen: number;
@@ -369,6 +374,7 @@ function skippedHealth(source: Source, streak: FailureStreak): SourceHealth {
   return {
     source_id: source.id,
     ok: false,
+    paused: true,
     http_status: null,
     duration_ms: 0,
     items_seen: 0,
@@ -385,6 +391,7 @@ async function processSource(source: Source, blacklist: string[], now: Date) {
   const health: SourceHealth = {
     source_id: source.id,
     ok: false,
+    paused: false,
     http_status: null,
     duration_ms: null,
     items_seen: 0,
@@ -604,8 +611,11 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
     const now = new Date();
     let history: HealthHistoryRow[] = [];
     try {
-      history = (await restJson(
-        `news_source_health_v2?select=source_id,ok,http_status,created_at&created_at=gt.${encodeURIComponent(
+      // paused=eq.false обязателен: иначе собственные пропуски снова попадут в
+    // историю отказов. Фильтр есть и в failureStreak — на случай, если колонки
+    // ещё нет и запрос вернёт строки без неё.
+    history = (await restJson(
+        `news_source_health_v2?select=source_id,ok,http_status,created_at,paused&paused=eq.false&created_at=gt.${encodeURIComponent(
           new Date(now.getTime() - HEALTH_LOOKBACK_MINUTES * 60_000).toISOString(),
         )}&order=created_at.desc&limit=600`,
       )) as HealthHistoryRow[];
@@ -626,12 +636,28 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
     });
 
     const healthRows = results.map((result) => ({ ...result.health, run_id: runId }));
+    let pausedColumnMissing = false;
     if (healthRows.length) {
-      await restJson("news_source_health_v2", {
-        method: "POST",
-        headers: { Prefer: "return=minimal" },
-        body: JSON.stringify(healthRows),
-      });
+      // Колонка paused приходит миграцией отдельно от кода. Пока её нет,
+      // вставка строки с незнакомым полем отклоняется целиком, и журнал
+      // здоровья молча перестал бы пополняться. Поэтому: сначала с флагом,
+      // при отказе — без него, и это видно в stats запуска.
+      try {
+        await restJson("news_source_health_v2", {
+          method: "POST",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify(healthRows),
+        });
+      } catch (error) {
+        pausedColumnMissing = true;
+        const stripped = healthRows.map(({ paused: _paused, ...rest }) => rest);
+        await restJson("news_source_health_v2", {
+          method: "POST",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify(stripped),
+        });
+        console.error("news_source_health_v2: колонки paused нет, строка записана без неё", error);
+      }
     }
 
     const byCanonical = new Map<string, Record<string, unknown>>();
@@ -688,6 +714,7 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
         stats: {
           gate_version: GATE_VERSION,
           sources_skipped: skipped.size,
+          paused_column_missing: pausedColumnMissing,
           skipped_sources: [...skipped],
           reject_reasons: rejectReasons,
           sources: healthRows.map((row) => ({
