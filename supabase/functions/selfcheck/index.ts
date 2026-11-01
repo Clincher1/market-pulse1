@@ -1,5 +1,6 @@
 // Self-check for the whole public contour.
 import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
+import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -674,6 +675,97 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
               .map((row) => String(row.id ?? ''))
               .join(', ')}`
           : `даты есть у всех ${rows.length} рядов, последняя — ${newest}`,
+      };
+    }),
+
+    // 5c. Изменение на плитке обязано сходиться с опубликованным рядом.
+    //     Почти все дефекты, которые находились на проде, были не «источник
+    //     молчит», а «два числа об одном и том же не сходятся»: 01.11.2026
+    //     при свежем кэше и зелёном assets_fresh на плитке стояло 0 % вместо
+    //     −1,26 %, потому что предыдущая точка бралась та же, что и цена.
+    check('asset_change_truth', async () => {
+      const rows = (await restJson(
+        'cached_assets?select=id,name,price,change,sparkline,spark_dates,as_of',
+      )) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      const verdicts = rows.map((row) => ({
+        id: String(row.id ?? ''),
+        verdict: checkChangeAgainstSeries({
+          id: String(row.id ?? ''),
+          name: String(row.name ?? ''),
+          price: row.price === null || row.price === undefined ? null : String(row.price),
+          change: typeof row.change === 'number' ? row.change : Number(row.change),
+          sparkline: row.sparkline,
+          as_of: row.as_of === null || row.as_of === undefined ? null : String(row.as_of),
+        }),
+      }));
+      const failed = verdicts.filter((item) => item.verdict.checked && !item.verdict.ok);
+      const skipped = verdicts.filter((item) => !item.verdict.checked).map((item) => item.id);
+      const checked = verdicts.length - skipped.length;
+      if (failed.length) {
+        return {
+          ok: false,
+          detail: failed
+            .map(({ id, verdict }) => {
+              const parts: string[] = [];
+              if (verdict.priceMismatch) {
+                parts.push(
+                  `цена ${verdict.priceMismatch.printed} не равна последней точке ряда ${verdict.priceMismatch.fromSeries}`,
+                );
+              }
+              if (verdict.stored === null || verdict.stored === undefined) {
+                parts.push('изменение не сохранено');
+              } else if (verdict.expected !== undefined) {
+                parts.push(
+                  `изменение ${verdict.stored.toFixed(2)} против ${verdict.expected.toFixed(2)} по ряду`,
+                );
+              }
+              return `${id}: ${parts.join('; ')}`;
+            })
+            .join(' | '),
+        };
+      }
+      return {
+        ok: true,
+        detail: `сходится у ${checked} из ${verdicts.length} рядов${
+          skipped.length ? `; цена из кавычки, сверка не применима: ${skipped.join(', ')}` : ''
+        }`,
+      };
+    }),
+
+    // 5d. Подпись ряда не должна противоречить типу инструмента в реестре.
+    //     01.11.2026 Brent переехал со спота EIA на фьючерс NYMEX, а имя в
+    //     кэше осталось «Brent»: одно слово для двух инструментов, которые
+    //     расходятся на 8 %.
+    check('asset_names', async () => {
+      const rows = (await restJson('cached_assets?select=id,name')) as AnyRecord[];
+      const instruments = (await restJson(
+        'asset_instruments_v2?select=asset_key,instrument_type,is_primary,enabled&enabled=eq.true&is_primary=eq.true',
+      )) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      if (!instruments.length) return { ok: false, detail: 'реестр инструментов пуст' };
+      const byId = new Map<string, string>();
+      for (const instrument of instruments) {
+        const key = String(instrument.asset_key ?? '').toLowerCase();
+        const id = key === 'eurusd' ? 'usd-eur' : key;
+        if (id && !byId.has(id)) byId.set(id, String(instrument.instrument_type ?? ''));
+      }
+      const problems: string[] = [];
+      for (const row of rows) {
+        const id = String(row.id ?? '');
+        const type = byId.get(id);
+        if (!type) continue;
+        const verdict = checkNameMatchesInstrument(
+          row.name === null || row.name === undefined ? null : String(row.name),
+          type,
+        );
+        if (!verdict.ok) problems.push(`${id}: ${verdict.reason}`);
+      }
+      return {
+        ok: problems.length === 0,
+        detail: problems.length
+          ? problems.join(' | ')
+          : `подписи не противоречат типу инструмента у ${rows.length} рядов`,
       };
     }),
 
