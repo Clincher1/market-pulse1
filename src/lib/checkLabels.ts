@@ -63,7 +63,7 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
   },
   ru_insights: {
     title: 'Блок «Россия» наполнен',
-    hint: 'Все девять индикаторов и российские заголовки приходят с нашего серверного API',
+    hint: 'Все индикаторы и российские заголовки приходят с нашего серверного API',
     cadence: 'по запросу страницы; сами ряды — по расписанию источника',
   },
   no_telemetry: {

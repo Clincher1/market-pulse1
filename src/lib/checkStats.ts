@@ -44,6 +44,13 @@ const NBSP = '\u00A0';
 /** Больше 10 % провалов — это уже не «единичный случай». */
 const RARE_SHARE = 0.1;
 
+/** Доля пройденных проверок: 100 только при нуле провалов, иначе — вниз до 0,1. */
+function troublesFree(samples: number, okSamples: number): number {
+  if (okSamples >= samples) return 100;
+  const raw = (okSamples / samples) * 100;
+  return Number((Math.floor(raw * 10) / 10).toFixed(1));
+}
+
 export function summariseCheckStats(rows: CheckStatRow[], active: string[]): CheckStats {
   const names = new Set(active);
   const scoped = rows.filter((row) => names.has(row.check_name));
@@ -72,7 +79,14 @@ export function summariseCheckStats(rows: CheckStatRow[], active: string[]): Che
 
   troubles.sort((a, b) => b.fails - a.fails || a.name.localeCompare(b.name, 'ru'));
 
-  const okPercent = samples > 0 ? Math.round((okSamples / samples) * 100) : null;
+  // 1224 из 1228 — это 99,7 %, а не «100 %». Округление до целого скрывало бы
+  // провалы: на странице стояло бы «100 %» рядом с четырьмя красными часами.
+  // Поэтому 100 % бывает только при нуле провалов, иначе — один знак после
+  // запятой и вниз, чтобы число не выглядело лучше реальности.
+  const okPercent =
+    samples > 0
+      ? troublesFree(samples, okSamples)
+      : null;
 
   if (samples === 0) {
     return {
@@ -84,7 +98,8 @@ export function summariseCheckStats(rows: CheckStatRow[], active: string[]): Che
     };
   }
 
-  const base = `За 7 дней пройдено ${okSamples} из ${samples} проверок — ${okPercent}${NBSP}%.`;
+  const percentLabel = okPercent === 100 ? '100' : String(okPercent).replace('.', ',');
+  const base = `За 7 дней пройдено ${okSamples} из ${samples} проверок — ${percentLabel}${NBSP}%.`;
   if (troubles.length === 0) {
     return { samples, okSamples, okPercent, troubles, headline: `${base} Ни одна проверка не падала.` };
   }
