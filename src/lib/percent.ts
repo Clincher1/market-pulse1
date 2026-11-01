@@ -12,8 +12,13 @@ const NBSP = '\u00A0';
 
 export function formatPercent(value: number | null | undefined, digits = 2): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
-  const sign = value > 0 ? '+' : value < 0 ? '\u2212' : '';
-  return `${sign}${Math.abs(value).toFixed(digits).replace('.', ',')}${NBSP}%`;
+  const magnitude = Math.abs(value).toFixed(digits).replace('.', ',');
+  // Знак ставится по напечатанному числу, а не по сырому: −0,0011 % — это
+  // «0,00 %», а не «−0,00 %». Минус перед нулём читается как падение,
+  // которого в напечатанной точности нет.
+  const roundedIsZero = Number(magnitude.replace(',', '.')) === 0;
+  const sign = roundedIsZero ? '' : value > 0 ? '+' : '−';
+  return `${sign}${magnitude}${NBSP}%`;
 }
 
 /**
