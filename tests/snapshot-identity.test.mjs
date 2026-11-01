@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { instrumentChanged } from '../src/lib/snapshotIdentity.ts';
+import { instrumentChanged, sameObservationDay } from '../src/lib/snapshotIdentity.ts';
 
 /**
  * Фикстуры — настоящие строки снимка дня на 01.11.2026:
@@ -23,4 +23,12 @@ test('нет снимка или имени — это не смена инст�
   assert.equal(instrumentChanged(null, { name: 'Brent' }), false);
   assert.equal(instrumentChanged({ name: '' }, { name: 'Brent' }), false);
   assert.equal(instrumentChanged({ name: 'Brent' }, { name: null }), false);
+});
+
+test('дни наблюдения сравниваются по календарной дате', () => {
+  // В снимке 01.11 лежало закрытие S&P 500 за 28.10, на плитке — за 30.10.
+  assert.equal(sameObservationDay('2026-10-28T00:00:00Z', '2026-10-30'), false);
+  assert.equal(sameObservationDay('2026-10-30', '2026-10-30T20:00:00Z'), true);
+  assert.equal(sameObservationDay(null, '2026-10-30'), false);
+  assert.equal(sameObservationDay(undefined, undefined), false);
 });
