@@ -1,5 +1,5 @@
 // Public cached_assets updater.
-import { closedHistory } from "../_shared/asset-history.ts";
+import { closedHistory, previousClosedValue } from "../_shared/asset-history.ts";
 import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
@@ -217,7 +217,10 @@ function makeAsset(input: {
     throw new Error(`${input.id}: only ${history.points.length} closed observations`);
   }
   const price = input.currentPrice ?? latestPoint.value;
-  const previous = input.previousPrice ?? history.points.at(-1)?.value;
+  // Предыдущее закрытие зависит от того, попала ли цена в историю: если это
+  // последнее закрытие — предыдущее на шаг раньше; если цена из кавычки, а бар
+  // ещё формируется — предыдущее это и есть последнее закрытие.
+  const previous = input.previousPrice ?? previousClosedValue(history.points, latestPoint.date);
   if (!previous || previous <= 0) throw new Error(`${input.id}: missing previous price`);
   const computedChange = ((price - previous) / previous) * 100;
   const change = input.changePct != null && Number.isFinite(input.changePct) ? input.changePct : computedChange;

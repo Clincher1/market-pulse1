@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { closedHistory, utcDay } from '../supabase/functions/_shared/asset-history.ts';
+import { closedHistory, previousClosedValue, utcDay } from '../supabase/functions/_shared/asset-history.ts';
 
 /**
  * Фикстуры — настоящие строки кэша на 01.11.2026, 06:25 UTC:
@@ -100,4 +100,38 @@ test('utcDay читает день из ISO-времени и не выдумы�
   assert.equal(utcDay('2026-11-01'), '2026-11-01');
   assert.equal(utcDay('вчера'), null);
   assert.equal(utcDay(''), null);
+});
+
+/**
+ * Предыдущее закрытие — то, от чего считается изменение. Фикстуры настоящие,
+ * ответ Yahoo по BZ=F от 01.11.2026: 27.10 113,88 · 28.10 115,32 ·
+ * 29.10 114,88 · 30.10 113,43. Цена в плитке 113,43, изменение −1,26 %.
+ */
+test('если цена — последнее закрытие, предыдущее берётся на шаг раньше', () => {
+  const closed = [
+    { date: '2026-10-27', value: 113.87999725341797 },
+    { date: '2026-10-28', value: 115.31999969482422 },
+    { date: '2026-10-29', value: 114.87999725341797 },
+    { date: '2026-10-30', value: 113.43000030517578 },
+  ];
+  assert.equal(previousClosedValue(closed, '2026-10-30'), 114.87999725341797);
+  const change = ((113.43000030517578 - 114.87999725341797) / 114.87999725341797) * 100;
+  // Yahoo называет для этого дня −1,26 %; плитка обязана показать то же число,
+  // а не 0 % от сравнения точки с самой собой.
+  assert.equal(change.toFixed(2), '-1.26');
+});
+
+test('если цена из кавычки, а бар ещё формируется, предыдущее — последнее закрытие', () => {
+  const closed = [
+    { date: '2026-10-29', value: 76000 },
+    { date: '2026-10-30', value: 77400 },
+    { date: '2026-10-31', value: 77500 },
+  ];
+  assert.equal(previousClosedValue(closed, '2026-11-01'), 77500);
+});
+
+test('без второго закрытия изменение не выдумывается', () => {
+  assert.equal(previousClosedValue([{ date: '2026-10-30', value: 113.43 }], '2026-10-30'), null);
+  assert.equal(previousClosedValue([], '2026-10-30'), null);
+  assert.equal(previousClosedValue([{ date: '2026-10-30', value: 113.43 }], null), 113.43);
 });

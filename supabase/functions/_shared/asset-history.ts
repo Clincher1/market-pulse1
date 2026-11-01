@@ -77,6 +77,36 @@ export function closedHistory(input: ClosedHistoryInput): ClosedHistoryResult {
   return { points, dropped: { afterAsOf, forming: formingDropped } };
 }
 
+/**
+ * Предыдущее закрытие для расчёта изменения.
+ *
+ * Правило кажется очевидным, пока история и цена — один и тот же ряд. Но когда
+ * цена берётся из кавычки, а незакрытый бар из истории выброшен, «предыдущая
+ * точка» — это последнее закрытие, а не значение на два шага назад. И наоборот:
+ * если цена и есть последнее закрытие, предыдущим будет точка до неё.
+ *
+ * Так 01.11.2026 изменение у Brent и S&P 500 стало ровно 0 %: предыдущим
+ * бралась та же самая точка, что и цена. Ноль вместо −1,26 % — это не
+ * округление, а неверное число на плитке.
+ *
+ * @param closed уже отфильтрованные закрытые наблюдения (см. `closedHistory`)
+ * @param priceDate дата наблюдения, от которого считается изменение
+ */
+export function previousClosedValue(
+  closed: HistoryPoint[],
+  priceDate: string | null | undefined,
+): number | null {
+  if (!closed.length) return null;
+  const priceDay = dayOf(priceDate);
+  const last = closed[closed.length - 1];
+  const lastDay = dayOf(last.date);
+  if (priceDay && lastDay && priceDay === lastDay) {
+    const previous = closed[closed.length - 2];
+    return previous ? previous.value : null;
+  }
+  return last.value;
+}
+
 /** День в UTC из ISO-времени получения данных: «2026-11-01T06:25:01Z» → «2026-11-01». */
 export function utcDay(iso: string): string | null {
   const day = dayOf(iso);
