@@ -658,7 +658,11 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         return {
           ok: false,
           detail: `точка истории позже момента наблюдения: ${afterAsOf
-            .map((row) => `${String(row.id ?? '')} (${String(row.spark_dates?.[row.spark_dates.length - 1] ?? '')} против as_of ${String(row.as_of ?? '').slice(0, 10)})`)
+            .map((row) => {
+              const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
+              const last = String(dates[dates.length - 1] ?? '').slice(0, 10);
+              return `${String(row.id ?? '')} (${last} против as_of ${String(row.as_of ?? '').slice(0, 10)})`;
+            })
             .join(', ')}`,
         };
       }
