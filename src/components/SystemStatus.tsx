@@ -12,6 +12,7 @@ import {
 import {
   CHECK_LABELS,
   fetchFeedHealth,
+  fetchCheckStats,
   fetchHealthHistory,
   fetchLatestHealth,
   formatCheckedAt,
@@ -22,6 +23,7 @@ import {
   type HealthRow,
   type HealthRun,
 } from '@/data/systemStatus';
+import { checkWindowLabel, summariseCheckStats, type CheckStatRow } from '@/lib/checkStats';
 
 function feedAgeLabel(hours: number | null): string {
   if (hours === null) return 'нет данных';
@@ -51,20 +53,23 @@ export default function SystemStatus() {
   const [row, setRow] = useState<HealthRow | null>(null);
   const [history, setHistory] = useState<HealthRun[]>([]);
   const [feeds, setFeeds] = useState<FeedRow[]>([]);
+  const [checkStats, setCheckStats] = useState<CheckStatRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
-    const [latest, points, feedRows] = await Promise.all([
+    const [latest, points, feedRows, stats] = await Promise.all([
       fetchLatestHealth(),
       fetchHealthHistory(24),
       fetchFeedHealth(),
+      fetchCheckStats(),
     ]);
     setRow(latest);
     setHistory(points);
     setFeeds(feedRows);
+    setCheckStats(stats);
     setFailed(!latest);
     setLoading(false);
   }, []);
@@ -101,6 +106,10 @@ export default function SystemStatus() {
   };
 
   const checks = row?.checks ?? {};
+  // Окно за 7 дней: свежий прогон отвечает «что сейчас», окно — «насколько это
+  // редко». Один красный час из ста четырёх не означает, что данные не идут.
+  const statsByName = new Map(checkStats.map((item) => [item.check_name, item]));
+  const weekStats = summariseCheckStats(checkStats, Object.keys(checks));
   const failing = Object.entries(checks).filter(([, value]) => !value.ok);
   const allOk = Boolean(row?.ok);
   // Свежие сбои сверху: последнее, что сломалось, важнее того, что было вчера.
@@ -278,6 +287,14 @@ export default function SystemStatus() {
               Мосбиржи — расписание, а не простой.
             </span>
           </p>
+          {weekStats.samples > 0 && (
+            <p className="mb-3 rounded-xl border border-border-subtle bg-white/[0.02] px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
+              <span className="font-bold text-text-primary">{weekStats.headline}</span>{' '}
+              Свежий прогон отвечает, что происходит сейчас; окно за неделю показывает, насколько
+              это часто. Источник, не ответивший в один час, — задержка, а не поломка: следующий
+              запрос уходит по расписанию, и окно это видно.
+            </p>
+          )}
           <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {Object.entries(checks)
               .sort((a, b) => Number(a[1].ok) - Number(b[1].ok))
@@ -316,6 +333,20 @@ export default function SystemStatus() {
                       >
                         {value.detail}
                       </div>
+                      {/* Окно показываем только там, где были провалы: у остальных
+                          «105 из 105» на семнадцати карточках — шум. */}
+                      {(() => {
+                        const stat = statsByName.get(name);
+                        if (!stat || stat.ok_samples >= stat.samples) return null;
+                        const label = checkWindowLabel(stat);
+                        const last = stat.last_fail_at ? mskLabel(stat.last_fail_at) : null;
+                        return (
+                          <div className="mt-1 text-[11px] leading-relaxed text-text-secondary/80">
+                            {label}
+                            {last ? ` · последнее предупреждение ${last} МСК` : ''}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

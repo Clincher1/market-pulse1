@@ -19,6 +19,7 @@ export type {
 
 export { groupIncidents } from './incidents';
 
+import type { CheckStatRow } from '@/lib/checkStats';
 import type { FeedRow, HealthCheck, HealthRow, HealthRun } from './healthTypes';
 
 export interface CheckRunResult {
@@ -61,6 +62,20 @@ export async function fetchHealthHistory(limit = 24): Promise<HealthRun[]> {
     return data as HealthRun[];
   } catch (e) {
     console.error('Ошибка загрузки истории проверок:', e);
+    return [];
+  }
+}
+
+/** Окно проверок за 7 дней: считается в базе, чтобы не тянуть всю историю. */
+export async function fetchCheckStats(): Promise<CheckStatRow[]> {
+  try {
+    const { data, error } = await supabase
+      .from('site_health_check_stats_7d')
+      .select('check_name, samples, ok_samples, last_seen_at, last_fail_at');
+    if (error || !data) return [];
+    return data as CheckStatRow[];
+  } catch (e) {
+    console.error('Ошибка загрузки статистики проверок:', e);
     return [];
   }
 }
