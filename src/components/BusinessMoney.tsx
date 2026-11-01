@@ -95,15 +95,15 @@ function toneOf(value: number | null | undefined): 'up' | 'down' | 'flat' {
 /**
  * Что показать в карточке нефти.
  *
- * Цена Brent приходит из FRED/EIA (дневной спот DCOILBRENTEU). В кэше рядом с
+ * Цена Brent приходит из Yahoo Finance (фьючерс ближайшего месяца BZ=F). В кэше рядом с
  * ценой нет даты наблюдения — только время, когда сайт сходил за ней. Поэтому
  * здесь не печатается ни «на 15:44 МСК», ни «за сегодня»: подставить время
  * загрузки вместо даты цены значило бы выдать вчерашнее закрытие за текущую
  * котировку.
  */
 /**
- * Дата наблюдения у Brent — не «сегодня»: EIA публикует спот с задержкой в
- * несколько дней, и цена за 27 октября могла стоять на плитке 31-го. Поэтому
+ * Дата наблюдения у Brent — не «сегодня»: дневной бар закрывается в свои
+ * часы, и цена за 27 октября могла стоять на плитке 31-го. Поэтому
  * дата берётся из источника, а когда её нет, плитка говорит об этом прямо:
  * молчание читалось бы как «цена сегодняшняя».
  */
@@ -116,13 +116,13 @@ function brentFact(
     icon: Ship,
     title: 'Нефть',
     value: asset ? formatPriceText(asset.price) : null,
-    unit: 'Brent, $ за баррель',
+    unit: 'Brent (фьючерс), $ за баррель',
     secondary: null,
     change: asset ? pctText(asset.change) : null,
     changeTone: toneOf(asset?.change),
     asOf: observed ?? (asset ? 'дата наблюдения не сохранена' : null),
-    provider: 'FRED/EIA · дневной спот',
-    sourceUrl: 'https://fred.stlouisfed.org/series/DCOILBRENTEU',
+    provider: 'Yahoo Finance · фьючерс BZ=F',
+    sourceUrl: 'https://finance.yahoo.com/quote/BZ%3DF',
     check: 'если продаёте сырьё или покупаете топливо — цена в договоре считается от такого ориентира',
   };
 }

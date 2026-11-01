@@ -1,20 +1,26 @@
 // Public cached_assets updater.
 import { closedHistory } from "../_shared/asset-history.ts";
+import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Security/provenance notes:
 // - Twelve Data is read only from the TWELVE_KEY Edge Function secret.
 //   There is deliberately no hardcoded fallback key.
 // - The shadow slug (update-assets-v2-shadow) never writes cached_assets.
-// - The production slug (update-assets) publishes all five rows only after
-//   every provider response has passed validation; partial failures leave
-//   the previous public cache untouched.
+// - The production slug (update-assets) publishes every row that passed
+//   validation; a partial failure leaves the failed row untouched instead of
+//   freezing the whole cache.
 // - Instruments are not silently substituted or rescaled:
-//   S&P 500 = FRED SP500 index points;
-//   Brent = FRED/EIA Brent spot USD/barrel;
+//   S&P 500 = index points, daily close (Yahoo Finance ^GSPC);
+//   Brent = front-month futures, daily close (NYMEX BZ=F), подписан как
+//           фьючерс: это не спот EIA, и одно слово «Brent» их не примиряет;
 //   USD/EUR = inverse of the ECB EUR/USD reference rate;
 //   BTC = Kraken XBT/USD daily candles (latest UTC candle may be partial);
 //   Gold = Twelve Data XAU/USD spot.
+// - Один упавший источник больше не замораживает остальные: строки, которые
+//   прошли проверку, публикуются, упавшая остаётся прежней со своей старой
+//   датой наблюдения. Раньше ответ 502 от FRED останавливал запись всего кэша,
+//   и исправление в соседнем ряду не доезжало до сайта.
 
 const FALLBACK_SUPABASE_URL = "https://hekzplfftannlzwvgwwm.supabase.co";
 const USER_AGENT = "MarketPulseBot/0.4 (+https://market-pulse1-eta.vercel.app; public asset cache)";
@@ -50,7 +56,9 @@ type AssetResult = {
 const EXPECTED_NAMES: Record<string, string> = {
   "usd-eur": "USD/EUR",
   sp500: "S&P 500",
-  brent: "Brent",
+  // Фьючерс, а не спот: у Brent спот EIA и ближайший фьючерс расходятся на
+  // несколько долларов, поэтому подпись называет инструмент, а не только сорт.
+  brent: "Brent (фьючерс)",
   gold: "Gold",
   btc: "BTC",
 };
@@ -248,41 +256,69 @@ function makeAsset(input: {
   };
 }
 
-async function fetchFredSeries(series: string): Promise<Point[]> {
-  const startDate = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10);
-  const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(series)}&cosd=${startDate}`;
-  const text = await fetchText(url);
-  return sortedPoints(text.split(/\r?\n/).slice(1).map((line) => {
-    const [date, rawValue] = line.split(",");
-    return { date: String(date ?? ""), value: positiveNumber(rawValue) ?? Number.NaN };
-  }));
+/**
+ * Дневные закрытия из публичного чарта Yahoo. Ключа нет, даты точек источник
+ * отдаёт сам — значит, подписать ряд календарём можно без догадок.
+ */
+async function fetchYahooDaily(symbol: string): Promise<{
+  points: Point[];
+  asOf: string | null;
+  formingBarDate: string | null;
+  exchange: string | null;
+  quoteTime: string | null;
+}> {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3mo&interval=1d`;
+  const series = parseYahooDaily(await fetchJson(url));
+  const now = new Date();
+  const forming = isFormingBar(series, now);
+  return {
+    points: series.points.map((point) => ({ date: point.date, value: point.value })),
+    // Момент наблюдения: у незакрытого бара — время котировки, у закрытого —
+    // сама дата закрытия. Пустая дата вместо дня наблюдения не подставляется.
+    asOf: forming ? series.quoteTime : series.points.at(-1)?.date ?? null,
+    formingBarDate: forming ? series.points.at(-1)?.date ?? null : null,
+    exchange: series.exchange,
+    quoteTime: series.quoteTime,
+  };
 }
 
 async function fetchSp500(updatedAt: string): Promise<AssetResult> {
-  const points = await fetchFredSeries("SP500");
+  const series = await fetchYahooDaily("^GSPC");
   return makeAsset({
     id: "sp500",
     name: EXPECTED_NAMES.sp500,
-    instrument: "S&P 500 cash index (FRED SP500)",
-    provider: "FRED",
-    points,
+    instrument: "S&P 500 index, daily close (Yahoo Finance ^GSPC)",
+    provider: "Yahoo Finance",
+    points: series.points,
+    asOf: series.asOf,
+    formingBarDate: series.formingBarDate,
     format: formatIndex,
     updatedAt,
-    extraMeta: { unit: "index_points" },
+    extraMeta: {
+      unit: "index_points",
+      exchange: series.exchange,
+      quote_time: series.quoteTime,
+    },
   });
 }
 
 async function fetchBrent(updatedAt: string): Promise<AssetResult> {
-  const points = await fetchFredSeries("DCOILBRENTEU");
+  const series = await fetchYahooDaily("BZ=F");
   return makeAsset({
     id: "brent",
     name: EXPECTED_NAMES.brent,
-    instrument: "Europe Brent spot FOB (FRED/EIA DCOILBRENTEU)",
-    provider: "FRED/EIA",
-    points,
+    instrument: "Brent front-month futures, daily close (NYMEX BZ=F) — не спот EIA",
+    provider: "Yahoo Finance",
+    points: series.points,
+    asOf: series.asOf,
+    formingBarDate: series.formingBarDate,
     format: formatUsd2,
     updatedAt,
-    extraMeta: { unit: "USD/barrel" },
+    extraMeta: {
+      unit: "USD/barrel",
+      exchange: series.exchange,
+      quote_time: series.quoteTime,
+    },
   });
 }
 
@@ -498,15 +534,15 @@ serveWithErrorReporting("update-assets", async (request) => {
       }
     });
 
-    if (errors.length) {
+    // Все источники упали — публиковать нечего, и ответ должен быть ошибкой.
+    if (!results.length) {
       return Response.json({
         success: false,
         publish,
         published: false,
-        assets_ok: results.length,
+        published_ids: [] as string[],
+        assets_ok: 0,
         assets_total: tasks.length,
-        assets: results.map((result) => result.meta),
-        rows: results.map((result) => result.row),
         errors,
       }, { status: 502 });
     }
@@ -531,9 +567,13 @@ serveWithErrorReporting("update-assets", async (request) => {
     }
 
     return Response.json({
-      success: true,
+      // Частичный успех — не успех: `partial` остаётся видимым, а упавший ряд
+      // не переписывается и сохраняет свою прежнюю дату наблюдения.
+      success: errors.length === 0,
+      partial: errors.length > 0,
       publish,
       published: publish,
+      published_ids: publish ? results.map((result) => result.row.id) : [],
       // Видно, попала ли дата наблюдения в кэш: без колонки она остаётся только
       // в ответе функции и до плитки не доходит.
       as_of_stored: columns.asOf,
@@ -542,7 +582,8 @@ serveWithErrorReporting("update-assets", async (request) => {
       assets_total: tasks.length,
       assets: results.map((result) => result.meta),
       rows: results.map((result) => result.row),
-    });
+      errors,
+    }, { status: errors.length ? 207 : 200 });
   } catch (error) {
     return Response.json({
       success: false,

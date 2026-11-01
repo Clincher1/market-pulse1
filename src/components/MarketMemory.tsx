@@ -39,8 +39,8 @@ import {
 type MemoryTab = 'events' | 'analogues' | 'forecasts';
 
 const ASSET_META: Record<string, { label: string; note: string }> = {
-  sp500: { label: 'S&P 500', note: 'FRED SP500, дневной индекс' },
-  Brent: { label: 'Brent', note: 'FRED/EIA Europe Brent spot' },
+  sp500: { label: 'S&P 500', note: 'Yahoo Finance ^GSPC, дневной индекс' },
+  Brent: { label: 'Brent', note: 'Yahoo Finance BZ=F, фьючерс Brent' },
   gold: { label: 'Gold index', note: 'Nasdaq gold index: доходность, не USD/oz' },
   btc: { label: 'BTC', note: 'FRED/Coinbase, дневной ряд' },
   eurusd: { label: 'EUR/USD', note: 'USD за EUR; обратная величина к плитке USD/EUR' },

@@ -36,7 +36,7 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
   assets_asof: {
     title: 'Дата наблюдения не застряла',
     hint: 'Кэш может обновиться, а цена остаться за прошлую неделю: проверяется именно as_of, допуск — 6 суток',
-    cadence: 'FRED и EIA публикуют закрытие с задержкой в день-два',
+    cadence: 'закрытие дня приходит от источника с задержкой в день-два',
   },
   asset_dates: {
     title: 'У котировок есть даты наблюдений',

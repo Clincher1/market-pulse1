@@ -66,7 +66,7 @@ export interface AssetData {
    */
   updatedAt?: string | null;
   /**
-   * То, что сказал источник: дата закрытия у дневных рядов (FRED/EIA) или
+   * То, что сказал источник: дата закрытия у дневных рядов или
    * момент котировки у внутридневных. `updatedAt` — когда кэш сходил за
    * ценой, и это не одно и то же: в 08:45 в кэше может лежать закрытие
    * вчерашнего дня. Пока колонки `as_of` нет в базе, поля не будет.
@@ -103,7 +103,7 @@ export interface NewsItem {
 export const assetPlaceholders: AssetData[] = [
   { id: 'usd-eur', name: 'USD/EUR', price: '—', change: 0, sparkline: [] },
   { id: 'sp500', name: 'S&P 500', price: '—', change: 0, sparkline: [] },
-  { id: 'brent', name: 'Brent', price: '—', change: 0, sparkline: [] },
+  { id: 'brent', name: 'Brent (фьючерс)', price: '—', change: 0, sparkline: [] },
   { id: 'gold', name: 'Gold', price: '—', change: 0, sparkline: [] },
   { id: 'btc', name: 'BTC', price: '—', change: 0, sparkline: [] },
 ];
