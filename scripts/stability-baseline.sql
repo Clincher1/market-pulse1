@@ -31,23 +31,33 @@ with
       ) as runs_with_failure
     from health_24h
   ),
+  -- Пять имён остались в окне от остановленного 31.10.2026 блока прогнозов.
+  -- Их кода больше нет, на странице состояния они не показываются, а в истории
+  -- лежат только старые записи. Считать по ним «долю успеха» — значит мерить
+  -- мёртвое; поэтому живые проверки перечислены явно, а не «всё, кроме одного».
+  live_checks as (
+    select unnest(array[
+      'tension_matches', 'news_fresh', 'sample_size', 'assets_fresh', 'assets_asof',
+      'asset_dates', 'asset_change_truth', 'asset_names', 'asset_history_panel',
+      'snapshot_taken', 'feeds_fresh', 'no_third_party', 'site_online', 'ru_insights',
+      'ru_history_api', 'no_telemetry', 'market_memory', 'sentry', 'brief_image'
+    ]) as check_name
+  ),
   stats_7d as (
     select
-      sum(samples) as samples,
-      sum(ok_samples) as ok_samples
-    from public.site_health_check_stats_7d
-    -- forecasts_fresh — мёртвая проверка: кода прогнозов нет с 31.10.2026,
-    -- в истории окна остались только её старые записи.
-    where check_name <> 'forecasts_fresh'
+      sum(s.samples) as samples,
+      sum(s.ok_samples) as ok_samples
+    from public.site_health_check_stats_7d s
+    join live_checks l on l.check_name = s.check_name
   ),
   stats_7d_trouble as (
     select string_agg(
-             check_name || ' ' || ok_samples || '/' || samples,
-             ', ' order by (samples - ok_samples) desc, check_name
+             s.check_name || ' ' || s.ok_samples || '/' || s.samples,
+             ', ' order by (s.samples - s.ok_samples) desc, s.check_name
            ) as trouble
-    from public.site_health_check_stats_7d
-    where check_name <> 'forecasts_fresh'
-      and ok_samples < samples
+    from public.site_health_check_stats_7d s
+    join live_checks l on l.check_name = s.check_name
+    where s.ok_samples < s.samples
   ),
   cron_7d as (
     select

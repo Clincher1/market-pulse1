@@ -97,6 +97,18 @@ Guarded shadow-функции деплоятся вручную workflow
 Подробный статус и журнал внедрения: **`docs/MARKET_MEMORY_MANUAL_STEPS_2026-10-22.md`**
 и **`docs/BRANDING_UX_UPDATE_2026-10-23.md`**.
 
+## Документы для внешней проверки
+
+`docs/review/` — пакет для независимой проверки сайта человеком, у которого нет
+возможности открывать ссылки: снимок страницы числами, источники каждой
+величины, формулы, чеклист и SQL-проверки. Собирается скриптом
+`python3 docs/review/build_package.py` из одного файла содержания
+`docs/review/package_content.py`, поэтому DOCX/PDF/Markdown/JSON не расходятся
+между собой.
+
+`docs/STABILITY-BASELINE-2026-11-01.md` — ориентир стабильности: 16 метрик с
+порогами «норма/поломка», снятых запросом `scripts/stability-baseline.sql`.
+
 ## Деплой
 
 Vercel, framework preset — Vite. Команда сборки `npm run build`

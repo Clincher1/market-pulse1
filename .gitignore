@@ -21,3 +21,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Python-кэш сборки пакета для проверки
+__pycache__/
