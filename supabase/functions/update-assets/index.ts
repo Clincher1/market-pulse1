@@ -1,4 +1,5 @@
 // Public cached_assets updater.
+import { closedHistory } from "../_shared/asset-history.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Security/provenance notes:
@@ -187,13 +188,28 @@ function makeAsset(input: {
   asOf?: string | null;
   format: (value: number) => string;
   updatedAt: string;
+  /** Дата бара, который у источника ещё формируется (дневная свеча Kraken). */
+  formingBarDate?: string | null;
   extraMeta?: AnyRecord;
 }): AssetResult {
   const points = sortedPoints(input.points);
   if (points.length < 8) throw new Error(`${input.id}: only ${points.length} valid price points`);
   const latestPoint = points.at(-1)!;
+  const asOf = input.asOf ?? latestPoint.date;
+  // История — только закрытые наблюдения (см. _shared/asset-history.ts).
+  // Значение цены берётся из кавычки, поэтому отбрасывание бара истории не
+  // делает плитку старее: она по-прежнему показывает текущую цену и её момент.
+  const history = closedHistory({
+    points,
+    asOf,
+    fetchedAt: input.updatedAt,
+    formingBarDate: input.formingBarDate ?? null,
+  });
+  if (history.points.length < 2) {
+    throw new Error(`${input.id}: only ${history.points.length} closed observations`);
+  }
   const price = input.currentPrice ?? latestPoint.value;
-  const previous = input.previousPrice ?? points.at(-2)?.value;
+  const previous = input.previousPrice ?? history.points.at(-1)?.value;
   if (!previous || previous <= 0) throw new Error(`${input.id}: missing previous price`);
   const computedChange = ((price - previous) / previous) * 100;
   const change = input.changePct != null && Number.isFinite(input.changePct) ? input.changePct : computedChange;
@@ -211,8 +227,8 @@ function makeAsset(input: {
       name: input.name,
       price: input.format(price),
       change: round(change, 4),
-      sparkline: points.slice(-SPARKLINE_POINTS).map((point) => round(point.value, 8)),
-      spark_dates: points.slice(-SPARKLINE_POINTS).map((point) => point.date),
+      sparkline: history.points.slice(-SPARKLINE_POINTS).map((point) => round(point.value, 8)),
+      spark_dates: history.points.slice(-SPARKLINE_POINTS).map((point) => point.date),
       updated_at: input.updatedAt,
       as_of: asOfValue(input.asOf ?? latestPoint.date),
     },
@@ -224,7 +240,9 @@ function makeAsset(input: {
       latest_price: price,
       previous_price: previous,
       change_pct: round(change, 4),
-      points: Math.min(points.length, SPARKLINE_POINTS),
+      points: Math.min(history.points.length, SPARKLINE_POINTS),
+      history_last_date: history.points.at(-1)?.date ?? null,
+      history_dropped: history.dropped,
       ...input.extraMeta,
     },
   };
@@ -312,12 +330,16 @@ async function fetchBtc(updatedAt: string): Promise<AssetResult> {
       value: positiveNumber(candle[4]) ?? Number.NaN,
     };
   }));
+  // Последняя дневная свеча Kraken — текущие сутки: её «закрытие» это последняя
+  // сделка, а не закрытие дня. В историю она не идёт, текущая цена остаётся.
+  const formingBarDate = updatedAt.slice(0, 10);
   return makeAsset({
     id: "btc",
     name: EXPECTED_NAMES.btc,
     instrument: "Bitcoin / USD spot (Kraken XBTUSD daily candles)",
     provider: "Kraken",
     points,
+    formingBarDate,
     format: formatUsd0,
     updatedAt,
     extraMeta: { unit: "USD/BTC", latest_daily_candle_may_be_partial: true },

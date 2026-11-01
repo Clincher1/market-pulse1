@@ -625,8 +625,18 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     // «источник не передаёт даты», хотя передаёт; без этой проверки отказ
     // сохранения дат прошёл бы молча — ряд снова стал бы бездатым.
     check('asset_dates', async () => {
-      const rows = (await restJson('cached_assets?select=id,sparkline,spark_dates')) as AnyRecord[];
+      const rows = (await restJson('cached_assets?select=id,sparkline,spark_dates,as_of')) as AnyRecord[];
       if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      // Отдельно от длины и порядка: точка истории не может быть позже момента
+      // наблюдения цены. Именно так 01.11.2026 у золота появился «воскресный»
+      // бар при цене от субботы — и пятничное число подписалось чужим днём.
+      const afterAsOf = rows.filter((row) => {
+        const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
+        const last = String(dates[dates.length - 1] ?? '').slice(0, 10);
+        const asOf = String(row.as_of ?? '').slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(last) || !/^\d{4}-\d{2}-\d{2}$/.test(asOf)) return false;
+        return last > asOf;
+      });
       const broken = rows.filter((row) => {
         const values = Array.isArray(row.sparkline) ? row.sparkline : [];
         const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
@@ -644,6 +654,14 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
         return String(dates[dates.length - 1] ?? '');
       };
+      if (afterAsOf.length) {
+        return {
+          ok: false,
+          detail: `точка истории позже момента наблюдения: ${afterAsOf
+            .map((row) => `${String(row.id ?? '')} (${String(row.spark_dates?.[row.spark_dates.length - 1] ?? '')} против as_of ${String(row.as_of ?? '').slice(0, 10)})`)
+            .join(', ')}`,
+        };
+      }
       const newest = rows.map(lastDate).filter(Boolean).sort().pop() ?? '';
       return {
         ok: broken.length === 0,
