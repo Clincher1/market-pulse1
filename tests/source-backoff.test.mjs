@@ -142,3 +142,65 @@ test('закрытие запуска сохраняет всё, что табл
   assert.deepEqual(droppedRunKeys(payload), []);
   assert.deepEqual(keepRunColumns(payload), payload);
 });
+
+/**
+ * 01.11.2026: пауза продлевала сама себя.
+ *
+ * Настоящие строки журнала Reuters via Google News Business:
+ *   00:05:10  503
+ *   00:35:11  503   ← третья подряд, включается пауза
+ *   01:05:00  пропуск «пауза: 3 неудачных запуска подряд, следующая попытка после 01:35 UTC»
+ *   01:35:00  пропуск «пауза: 4 неудачных запуска…»
+ *   …
+ * Каждый пропуск писался как ok: false, поэтому серия росла, а её начало
+ * сдвигалось вперёд: источник не спрашивали никогда.
+ */
+const pauseRow = (source_id, created_at) => ({
+  source_id,
+  ok: false,
+  http_status: null,
+  created_at,
+  paused: true,
+});
+
+test('пропуск по паузе не продлевает паузу и не сдвигает её начало', () => {
+  const history = [
+    row('google', false, '2026-11-01T00:05:10Z'),
+    row('google', false, '2026-11-01T00:35:11Z'),
+    pauseRow('google', '2026-11-01T01:05:00Z'),
+    pauseRow('google', '2026-11-01T01:35:00Z'),
+    pauseRow('google', '2026-11-01T02:05:00Z'),
+  ];
+  const streak = failureStreak(history).get('google');
+  assert.equal(streak.streak, 2, 'пропуски не должны попадать в серию отказов');
+  // Двух настоящих отказов подряд недостаточно, чтобы вообще включить паузу.
+  assert.equal(isPaused(streak, Date.parse('2026-11-01T02:10:00Z'), MIN_FAILURES, PAUSE_MS), false);
+});
+
+test('после трёх настоящих отказов пауза честно истекает через час', () => {
+  const history = [
+    row('google', false, '2026-11-01T00:05:10Z'),
+    row('google', false, '2026-11-01T00:35:11Z'),
+    row('google', false, '2026-11-01T01:05:00Z'),
+    pauseRow('google', '2026-11-01T01:35:00Z'),
+    pauseRow('google', '2026-11-01T02:05:00Z'),
+  ];
+  const streak = failureStreak(history).get('google');
+  assert.equal(streak.streak, 3);
+  assert.equal(streak.last, Date.parse('2026-11-01T01:05:00Z'));
+  // 01:35 — ещё внутри паузы, 02:05 — ровно час с последнего настоящего отказа,
+  // и источник снова спрашивают. Старое поведение здесь показывало «пауза» вечно.
+  assert.equal(isPaused(streak, Date.parse('2026-11-01T01:35:00Z'), MIN_FAILURES, PAUSE_MS), true);
+  assert.equal(isPaused(streak, Date.parse('2026-11-01T02:05:00Z'), MIN_FAILURES, PAUSE_MS), false);
+});
+
+test('старые строки без поля paused читаются как попытки', () => {
+  // Колонка появилась 01.11.2026; в базе остались строки, записанные до неё.
+  // Они должны считаться как раньше, а не пропускаться все подряд.
+  const legacy = [
+    { source_id: 'bbc', ok: false, http_status: 503, created_at: '2026-11-01T00:05:00Z' },
+    { source_id: 'bbc', ok: false, http_status: 503, created_at: '2026-11-01T00:35:00Z' },
+    { source_id: 'bbc', ok: false, http_status: 503, created_at: '2026-11-01T01:05:00Z' },
+  ];
+  assert.equal(failureStreak(legacy).get('bbc').streak, 3);
+});

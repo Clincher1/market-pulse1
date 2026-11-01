@@ -12,6 +12,14 @@
 //   - a success anywhere in the streak resets it;
 //   - the pause is written into the health log in words, not hidden.
 //
+// Correction of 01.11.2026: «expires on its own» was not true. The skipped runs
+// were written into the same health log as `ok: false`, so each skipped run
+// both prolonged the streak and moved its beginning to «now». The source was
+// never contacted again: Reuters via Google News stopped being asked at 00:35
+// UTC and by 10:35 the log promised «next attempt after 10:35» for the tenth
+// time. A pause row is a note that we did not try, not a failure; it carries
+// `paused: true` and is excluded from the streak.
+//
 // The module is pure on purpose: no Deno, no network, so the rules can be
 // checked by node:test with real fixtures instead of being trusted.
 
@@ -20,6 +28,11 @@ export type HealthHistoryRow = {
   ok: boolean;
   http_status: number | null;
   created_at: string;
+  /**
+   * Строка означает «не пытались»: источник был на паузе. Такие строки не
+   * считаются отказом — иначе пауза продлевает сама себя и не истекает никогда.
+   */
+  paused?: boolean | null;
 };
 
 export type FailureStreak = { streak: number; last: number };
@@ -34,6 +47,9 @@ export function failureStreak(rows: HealthHistoryRow[]): Map<string, FailureStre
   const bySource = new Map<string, FailureStreak>();
   const counted = new Set<string>();
   for (const row of sorted) {
+    // Пропуск по паузе — не попытка: он не должен ни расти в счётчике, ни
+    // сдвигать начало серии отказов вперёд.
+    if (row.paused === true) continue;
     if (counted.has(row.source_id)) continue;
     if (row.ok) {
       counted.add(row.source_id);
