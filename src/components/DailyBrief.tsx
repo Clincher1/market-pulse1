@@ -18,6 +18,7 @@ import {
 } from '@/data/russiaInsights';
 import { SectionThemeBadge } from './sectionThemes';
 import { startPolling } from '@/lib/polling';
+import { instrumentChanged } from '@/lib/snapshotIdentity';
 
 /**
  * «Бриф за 60 секунд» (этап 3 дорожной карты).
@@ -547,12 +548,21 @@ export default function DailyBrief() {
   }, [tension, news, liveAssets, insights]);
 
   const changeView = useMemo(() => {
-    const empty = { items: [] as ChangeItem[], comparable: 0, totalSignificant: 0 };
+    const empty = {
+      items: [] as ChangeItem[],
+      comparable: 0,
+      totalSignificant: 0,
+      renamed: [] as string[],
+    };
     if (!snapshot) return empty;
 
     const items: ChangeItem[] = [];
     let comparable = 0;
     let totalSignificant = 0;
+    // Ряды, у которых с момента снимка сменился инструмент (01.11.2026 Brent
+    // переехал со спота EIA на фьючерс NYMEX). Разница между двумя разными
+    // инструментами — не движение рынка, поэтому такое сравнение не считается.
+    const renamed: string[] = [];
 
     // Шкала: изменения меньше пяти пунктов считаем дневным шумом.
     if (tension && snapshot.tension?.value !== null && snapshot.tension?.value !== undefined) {
@@ -586,7 +596,12 @@ export default function DailyBrief() {
     const snapshotAssets = new Map(snapshot.assets.map((asset) => [asset.id, asset]));
     const globalCandidates: Array<{ ratio: number; item: ChangeItem }> = [];
     liveAssets.forEach((asset) => {
-      const base = snapshotAssets.get(asset.id)?.last;
+      const snap = snapshotAssets.get(asset.id);
+      if (instrumentChanged(snap, asset)) {
+        renamed.push(asset.name);
+        return;
+      }
+      const base = snap?.last;
       const current = currentSparklineLast(asset.sparkline);
       if (typeof base !== 'number' || base <= 0 || current === null || current <= 0) return;
       comparable += 1;
@@ -670,6 +685,7 @@ export default function DailyBrief() {
       items: items.sort((a, b) => b.score - a.score).slice(0, 6),
       comparable,
       totalSignificant,
+      renamed,
     };
   }, [insights, liveAssets, snapshot, tension]);
 
@@ -736,6 +752,14 @@ export default function DailyBrief() {
         <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
           Значимых изменений со снимка нет: шкала и сопоставимые цены остаются в пределах
           порогов шума.
+        </p>
+      )}
+
+      {snapshot && changeView.renamed.length > 0 && (
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
+          {changeView.renamed.join(", ")}: ряд сменил инструмент с момента снимка, поэтому
+          изменение к нему не считается — сравнение двух разных рядов выдало бы движение
+          рынка там, где изменился только источник.
         </p>
       )}
 
