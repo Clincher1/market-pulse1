@@ -18,7 +18,7 @@ import {
 } from '@/data/russiaInsights';
 import { SectionThemeBadge } from './sectionThemes';
 import { startPolling } from '@/lib/polling';
-import { instrumentChanged } from '@/lib/snapshotIdentity';
+import { instrumentChanged, sameObservationDay } from '@/lib/snapshotIdentity';
 
 /**
  * «Бриф за 60 секунд» (этап 3 дорожной карты).
@@ -620,7 +620,15 @@ export default function DailyBrief() {
               Внешний фон — <strong className="text-text-primary">{asset.name}</strong>:{' '}
               <strong className="tabular-nums text-text-primary">{formatPct(deltaPct)}</strong>{' '}
               к снимку; последнее значение {formatPriceText(asset.price)}
-              {observationLabel(asset.asOf) ? ` (${observationLabel(asset.asOf)})` : ''}.
+              {observationLabel(asset.asOf) ? ` (${observationLabel(asset.asOf)})` : ''}
+              {/* Если в снимке лежало другое наблюдение, пишем его цену и дату:
+                  иначе вчерашнее закрытие читается как движение за утро. */}
+              {sameObservationDay(snap?.asOf, asset.asOf) || !snap?.price
+                ? ''
+                : `; в снимке ${formatPriceText(snap.price)}${
+                    observationLabel(snap.asOf) ? ` (${observationLabel(snap.asOf)})` : ''
+                  }`}
+              .
             </>
           ),
         },

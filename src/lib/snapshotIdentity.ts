@@ -19,3 +19,20 @@ export function instrumentChanged(
   if (!before || !now) return false;
   return before !== now;
 }
+
+/**
+ * Совпадают ли дни наблюдения у снимка и у текущей цены.
+ *
+ * Без этой проверки «изменение к снимку» смешивает разные даты: в снимке 01.11
+ * лежало закрытие S&P 500 за 28.10, а на плитке — за 30.10, и подпись
+ * «−2,12 % к снимку» читалась как движение за утро, хотя это два дня.
+ */
+export function sameObservationDay(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  const left = a?.slice(0, 10);
+  const right = b?.slice(0, 10);
+  if (!left || !right) return false;
+  return left === right;
+}
