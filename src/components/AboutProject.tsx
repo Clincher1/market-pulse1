@@ -132,7 +132,7 @@ export default function AboutProject() {
             <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href="#guide"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-accent/25 transition-colors hover:bg-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent-strong px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-accent/25 transition-colors hover:bg-accent-strong-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
               >
                 <BookOpen className="h-4 w-4" />
                 Методология

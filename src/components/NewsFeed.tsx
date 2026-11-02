@@ -308,7 +308,7 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
                   }}
                   className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-accent/50 ${
                     selected
-                      ? 'bg-accent text-white'
+                      ? 'bg-accent-strong text-white'
                       : 'text-text-primary hover:bg-white/10 hover:text-white focus:bg-white/10'
                   }`}
                 >
@@ -742,7 +742,7 @@ export default function NewsFeed() {
           <button
             type="button"
             onClick={resetFilters}
-            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent-strong px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-accent-strong-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
           >
             <RotateCcw className="h-4 w-4" />
             Показать всю ленту

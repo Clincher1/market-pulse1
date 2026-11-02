@@ -842,7 +842,7 @@ export default function DailyBrief() {
                       key={item.id}
                       item={item}
                       marker={
-                        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500 text-[11px] font-extrabold text-white">
+                        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-extrabold text-white">
                           {index + 1}
                         </span>
                       }
