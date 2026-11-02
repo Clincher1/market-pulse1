@@ -1,0 +1,81 @@
+name: Weekly history backup
+
+# Зачем: на бесплатном тарифе Supabase автоматических копий нет. Если таблицу
+# испортит миграция или ошибка в функции, восстанавливать нечего. Ленты отдают
+# только последние дни, поэтому потерянные новости заново не собрать.
+#
+# Что делает: раз в неделю выгружает только таблицы истории (не всю базу),
+# пакует в gzip и кладёт артефактом workflow. Артефакт хранится 90 дней,
+# так что это «катящаяся» копия: аварию, замеченную в течение трёх месяцев,
+# можно откатить.
+#
+# Что нужно один раз: добавить в Settings → Secrets and variables → Actions
+# секрет SUPABASE_DB_URL — строка подключения из панели Supabase
+# (Project Settings → Database → Connection string → URI, с паролем базы).
+# Пока секрета нет, workflow завершается успешно и пишет, чего не хватает:
+# красный крест каждую неделю ничего не сообщает, а только приучает его
+# игнорировать.
+
+on:
+  schedule:
+    - cron: '30 3 * * 1' # понедельник, 03:30 UTC — после ночных чисток
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check connection string
+        id: check
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "SUPABASE_DB_URL не задан: бэкап не сделан. Добавьте секрет, см. docs/BACKUP.md."
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install PostgreSQL client
+        if: steps.check.outputs.present == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Dump history tables
+        if: steps.check.outputs.present == 'true'
+        env:
+          # Строка подключения не печатается: pg_dump берёт её из окружения,
+          # а в лог попадает только имя файла и размер.
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p backup
+          day="$(date -u +%Y-%m-%d)"
+          pg_dump "$SUPABASE_DB_URL" \
+            --no-owner --no-privileges --data-only --format=plain \
+            --table=public.news_articles_shadow \
+            --table=public.news_events_shadow \
+            --table=public.news_event_articles_shadow \
+            --table=public.news_event_classifications_shadow \
+            --table=public.event_price_impacts_v2 \
+            --table=public.market_forecasts_v2 \
+            --table=public.forecast_outcomes_v2 \
+            --table=public.daily_snapshots \
+            --table=public.asset_price_snapshots_v2 \
+            | gzip -9 > "backup/history-${day}.sql.gz"
+          ls -lh backup/
+
+      - name: Keep the backup
+        if: steps.check.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-backup-${{ github.run_id }}
+          path: backup/*.sql.gz
+          retention-days: 90
+          if-no-files-found: error

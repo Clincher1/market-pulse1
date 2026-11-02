@@ -98,6 +98,38 @@ with
     where s.enabled
     group by s.name
   ),
+  -- Место в базе. На бесплатном тарифе Supabase 500 МБ, и при достижении
+  -- лимита база становится только для чтения: сайт откроется, а сборщики
+  -- перестанут писать — данные замрут без ошибки на странице. Поэтому размер
+  -- и запас входят в замер наравне с проверками.
+  db_size as (
+    select
+      sum(pg_total_relation_size(c.oid)) as total_bytes,
+      count(*) filter (where c.relkind = 'r') as tables
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind in ('r', 'v', 'm')
+  ),
+  db_growth as (
+    -- Вставки за последние сутки по трём таблицам, которые и определяют рост:
+    -- статьи, события и журнал лент. Число берётся из самих таблиц, а не
+    -- запоминается.
+    select
+      (select count(*) from public.news_articles_shadow where fetched_at > now() - interval '24 hours') as articles_24h,
+      (select count(*) from public.news_source_health_v2 where created_at > now() - interval '24 hours') as health_24h,
+      (select count(*) from public.news_events_shadow where created_at > now() - interval '24 hours') as events_24h
+  ),
+  -- Размер строк в байтах — измерен на этой базе 02.11.2026 через
+  -- pg_column_size: статья 2 100 (вместе с индексами), событие 1 100,
+  -- строка журнала лент 270. Коэффициент 0,78 — доля статьи, которая
+  -- остаётся после обнуления raw через 30 дней (raw занимает 22 %).
+  db_rates as (
+    select
+      2100::numeric as article_bytes,
+      1100::numeric as event_bytes,
+      270::numeric as health_bytes,
+      0.78::numeric as article_keep
+  ),
   news_24h as (
     select
       count(*) as items,
@@ -128,6 +160,38 @@ union all select 'feeds_below_90pct_24h', coalesce((
   select string_agg(name || ' ' || coalesce(ok_pct::text, 'нет запусков'), ', ' order by name)
   from feeds_24h where ok_pct is null or ok_pct < 90
 ), 'нет')
+union all select 'db_size_mb', (select round(total_bytes / 1048576.0, 1)::text from db_size)
+union all select 'db_size_of_500mb_pct', (select round(100.0 * total_bytes / 524288000, 2)::text from db_size)
+union all select 'db_growth_mb_per_day_gross', (
+  -- Сколько росло бы без чистки: всё, что вставлено, остаётся навсегда.
+  select round((articles_24h * r.article_bytes + health_24h * r.health_bytes
+              + events_24h * r.event_bytes) / 1048576.0, 2)::text
+  from db_growth g, db_rates r
+)
+union all select 'db_growth_mb_per_day_kept', (
+  -- Сколько растёт с чисткой: у старых статей обнуляется raw (−22 %),
+  -- журнал лент удаляется через 90 дней, то есть его вклад упирается в потолок
+  -- и дальше не растёт.
+  select round((articles_24h * r.article_bytes * r.article_keep
+              + events_24h * r.event_bytes) / 1048576.0, 2)::text
+  from db_growth g, db_rates r
+)
+union all select 'db_logs_plateau_mb', (
+  -- Столько займёт журнал лент в устойчивом состоянии: 90 дней истории.
+  select round(90 * health_24h * r.health_bytes / 1048576.0, 1)::text
+  from db_growth g, db_rates r
+)
+union all select 'db_days_to_500mb', (
+  select case
+           when (select total_bytes from db_size) >= 524288000 then '0 — предел достигнут'
+           else round(
+             (524288000 - (select total_bytes from db_size))::numeric
+             / nullif((select articles_24h * r.article_bytes * r.article_keep
+                            + events_24h * r.event_bytes
+                       from db_growth g, db_rates r), 0)
+           )::text
+         end
+)
 union all select 'news_items_24h', (select items::text from news_24h)
 union all select 'news_newest_age_h', (select newest_age_h::text from news_24h)
 order by metric;
