@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "start:origin": "node server/origin.mjs",
+    "serve:origin": "npm run build && node server/origin.mjs"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",

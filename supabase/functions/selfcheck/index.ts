@@ -27,7 +27,13 @@ import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared
 // to it. This is that proof.
 
 const SUPABASE_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
-const SITE = 'https://market-pulse1-eta.vercel.app';
+// Адрес сайта берётся из секрета SITE_URL, а не зашит в код. Причина простая:
+// после переезда на другой хостинг проверки продолжали бы смотреть на старый
+// домен и показывать «всё зелёное» уже не про тот сайт. По умолчанию — текущий
+// прод, поэтому без секрета ничего не меняется.
+const SITE = (Deno.env.get('SITE_URL') ?? 'https://market-pulse1-eta.vercel.app')
+  .trim()
+  .replace(/\/+$/, '');
 const MANUAL_COOLDOWN_MIN = 5;
 
 const MIN_IMPORTANCE = 3;
@@ -827,7 +833,9 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         [...html.matchAll(/https?:\/\/([a-zA-Z0-9._-]+)/g)].map((m) => String(m[1]).toLowerCase()),
       )];
       // w3.org is an XML namespace in inline markup, not a request.
-      const allowed = ['vercel.app', 'supabase.co', 'w3.org'];
+      // Свой домен берётся из SITE: на новом хостинге проверка не должна
+      // объявлять чужой адрес «своим» по старой памяти.
+      const allowed = [new URL(SITE).hostname, 'supabase.co', 'w3.org'];
       const foreign = hosts.filter((h) => !allowed.some((a) => h === a || h.endsWith(`.${a}`)));
       return {
         ok: foreign.length === 0,
