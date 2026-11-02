@@ -97,6 +97,14 @@ Guarded shadow-функции деплоятся вручную workflow
 Подробный статус и журнал внедрения: **`docs/MARKET_MEMORY_MANUAL_STEPS_2026-10-22.md`**
 и **`docs/BRANDING_UX_UPDATE_2026-10-23.md`**.
 
+## Хостинг и доступность в России
+
+`docs/HOSTING.md` — сравнение провайдеров и баз, пять условий «открывается
+везде» и порядок переезда. Код для этого уже в репозитории:
+`server/origin.mjs` (статика + `api/*` + прокси `/sb` в Supabase за одним
+доменом), режим `VITE_SUPABASE_PROXY=/sb` в `src/lib/supabase.ts` и
+`SITE_URL` в `selfcheck`. Запуск: `npm run serve:origin`.
+
 ## Документы для внешней проверки
 
 `docs/review/` — пакет для независимой проверки сайта человеком, у которого нет
