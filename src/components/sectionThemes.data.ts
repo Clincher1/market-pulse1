@@ -55,9 +55,9 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     badgeClass: 'border-emerald-300/30 bg-emerald-400/10 text-emerald-200',
     cardClass:
       'border-emerald-300/25 bg-emerald-400/[0.07] hover:border-emerald-300/60 hover:bg-emerald-400/[0.12]',
-    iconClass: 'bg-emerald-600 text-white',
+    iconClass: 'bg-emerald-700 text-white',
     dotClass: 'bg-emerald-400',
-    activeClass: 'border-emerald-300 bg-emerald-600 text-white shadow-lg shadow-emerald-500/25',
+    activeClass: 'border-emerald-300 bg-emerald-700 text-white shadow-lg shadow-emerald-500/25',
     textClass: 'text-emerald-200',
   },
   russia: {
@@ -71,9 +71,9 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     badgeClass: 'border-blue-300/30 bg-blue-400/10 text-blue-200',
     cardClass:
       'border-blue-300/25 bg-blue-400/[0.07] hover:border-blue-300/60 hover:bg-blue-400/[0.12]',
-    iconClass: 'bg-blue-500 text-white',
+    iconClass: 'bg-blue-600 text-white',
     dotClass: 'bg-blue-400',
-    activeClass: 'border-blue-400 bg-blue-500 text-white shadow-lg shadow-blue-500/25',
+    activeClass: 'border-blue-400 bg-blue-600 text-white shadow-lg shadow-blue-500/25',
     textClass: 'text-blue-200',
   },
   global: {
@@ -87,9 +87,9 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     badgeClass: 'border-cyan-300/30 bg-cyan-400/10 text-cyan-200',
     cardClass:
       'border-cyan-300/25 bg-cyan-400/[0.07] hover:border-cyan-300/60 hover:bg-cyan-400/[0.12]',
-    iconClass: 'bg-cyan-500 text-white',
+    iconClass: 'bg-cyan-700 text-white',
     dotClass: 'bg-cyan-400',
-    activeClass: 'border-cyan-300 bg-cyan-500 text-white shadow-lg shadow-cyan-500/25',
+    activeClass: 'border-cyan-300 bg-cyan-700 text-white shadow-lg shadow-cyan-500/25',
     textClass: 'text-cyan-200',
   },
   brief: {
@@ -103,9 +103,9 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     badgeClass: 'border-violet-300/30 bg-violet-400/10 text-violet-200',
     cardClass:
       'border-violet-300/25 bg-violet-400/[0.07] hover:border-violet-300/60 hover:bg-violet-400/[0.12]',
-    iconClass: 'bg-violet-500 text-white',
+    iconClass: 'bg-violet-600 text-white',
     dotClass: 'bg-violet-400',
-    activeClass: 'border-violet-300 bg-violet-500 text-white shadow-lg shadow-violet-500/25',
+    activeClass: 'border-violet-300 bg-violet-600 text-white shadow-lg shadow-violet-500/25',
     textClass: 'text-violet-200',
   },
   news: {
@@ -135,9 +135,9 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     badgeClass: 'border-fuchsia-300/30 bg-fuchsia-400/10 text-fuchsia-200',
     cardClass:
       'border-fuchsia-300/25 bg-fuchsia-400/[0.07] hover:border-fuchsia-300/60 hover:bg-fuchsia-400/[0.12]',
-    iconClass: 'bg-fuchsia-500 text-white',
+    iconClass: 'bg-fuchsia-700 text-white',
     dotClass: 'bg-fuchsia-400',
-    activeClass: 'border-fuchsia-300 bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/25',
+    activeClass: 'border-fuchsia-300 bg-fuchsia-700 text-white shadow-lg shadow-fuchsia-500/25',
     textClass: 'text-fuchsia-200',
   },
   guide: {
@@ -151,9 +151,9 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     badgeClass: 'border-rose-300/30 bg-rose-400/10 text-rose-200',
     cardClass:
       'border-rose-300/25 bg-rose-400/[0.07] hover:border-rose-300/60 hover:bg-rose-400/[0.12]',
-    iconClass: 'bg-rose-500 text-white',
+    iconClass: 'bg-rose-700 text-white',
     dotClass: 'bg-rose-400',
-    activeClass: 'border-rose-300 bg-rose-500 text-white shadow-lg shadow-rose-500/25',
+    activeClass: 'border-rose-300 bg-rose-700 text-white shadow-lg shadow-rose-500/25',
     textClass: 'text-rose-200',
   },
   about: {
@@ -167,9 +167,9 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     badgeClass: 'border-slate-300/30 bg-slate-400/10 text-slate-200',
     cardClass:
       'border-slate-300/25 bg-slate-400/[0.07] hover:border-slate-300/60 hover:bg-slate-400/[0.12]',
-    iconClass: 'bg-slate-500 text-white',
+    iconClass: 'bg-slate-600 text-white',
     dotClass: 'bg-slate-300',
-    activeClass: 'border-slate-300 bg-slate-500 text-white shadow-lg shadow-slate-500/25',
+    activeClass: 'border-slate-300 bg-slate-600 text-white shadow-lg shadow-slate-500/25',
     textClass: 'text-slate-200',
   },
 };

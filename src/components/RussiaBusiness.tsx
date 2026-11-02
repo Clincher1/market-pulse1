@@ -975,7 +975,7 @@ export default function RussiaBusiness() {
                     onClick={() => toggleProfile(profile.id)}
                     className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-extrabold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
                       selected
-                        ? 'border-accent bg-accent text-white shadow-lg shadow-accent/25'
+                        ? 'border-accent-strong bg-accent-strong text-white shadow-lg shadow-accent/25'
                         : 'border-white/15 bg-white/6 text-slate-200 hover:border-accent/60 hover:bg-accent/15'
                     }`}
                   >

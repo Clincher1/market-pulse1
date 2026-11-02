@@ -44,11 +44,17 @@
   --color-bg-card: #111827;
   --color-bg-card-hover: #1a2235;
   --color-border-subtle: #1f2937;
+  /* Оттенки подобраны по контрасту, а не по номеру в палитре:
+     accent — для линий, иконок и текста на тёмном (4,8:1 на карточке);
+     accent-strong — для залитой поверхности с белым текстом (5,2:1);
+     accent-strong-hover — то же при наведении (6,7:1).
+     Прежний #2563eb в роли фона давал 3,7:1: белый текст на кнопке не
+     проходил порог 4,5:1. Проверяется тестом tests/palette-contrast.test.mjs. */
   --color-accent: #3b82f6;
-  --color-accent-hover: #2563eb;
+  --color-accent-strong: #2563eb;
+  --color-accent-strong-hover: #1d4ed8;
   --color-positive: #10b981;
   --color-negative: #ef4444;
-  --color-neutral: #6b7280;
   --color-text-primary: #f9fafb;
   --color-text-secondary: #9ca3af;
   --color-warning: #f59e0b;

@@ -150,7 +150,7 @@ function OutcomeChip({ outcome }: { outcome: MemoryEventOutcome }) {
     : hit
       ? 'border-positive/30 bg-positive/10 text-positive'
       : miss
-        ? 'border-negative/30 bg-negative/10 text-negative'
+        ? 'border-negative/30 bg-negative/10 text-red-300'
         : 'border-white/12 bg-white/5 text-text-secondary';
 
   return (
@@ -188,7 +188,7 @@ function EventCard({
         className="block w-full text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-300 rounded-lg"
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-extrabold text-accent">
+          <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-extrabold text-blue-200">
             {channelLabel(event.transmissionChannel)}
           </span>
           {event.promptVersion !== 'event_classification_v3' && (
@@ -360,7 +360,7 @@ function AnalogueCard({ analogue }: { analogue: MemoryAnalogue }) {
   return (
     <article className="rounded-xl2 border border-border-subtle bg-bg-card p-5 shadow-lg">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-extrabold text-accent">
+        <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-extrabold text-blue-200">
           {channelLabel(analogue.transmissionChannel)}
         </span>
         <span className={`rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${badge.className}`}>
@@ -495,7 +495,7 @@ function EventFilterRow({
               aria-pressed={active}
               className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
                 active
-                  ? 'bg-accent text-white shadow-lg shadow-accent/25'
+                  ? 'bg-accent-strong text-white shadow-lg shadow-accent/25'
                   : 'border border-white/12 bg-white/[0.05] text-slate-200 hover:border-accent/50 hover:bg-accent/10'
               }`}
             >
@@ -829,7 +829,7 @@ export default function MarketMemory() {
                     <button
                       type="button"
                       onClick={resetEventFilters}
-                      className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+                      className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent-strong px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-accent-strong-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
                     >
                       <RotateCcw className="h-4 w-4" />
                       Показать все события

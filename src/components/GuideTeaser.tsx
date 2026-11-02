@@ -35,7 +35,7 @@ export default function GuideTeaser() {
           <SectionThemeBadge themeId="guide" />
           <a
             href="#guide"
-            className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-rose-300/50 bg-rose-400/15 px-4 py-2 text-sm font-extrabold text-rose-50 transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500 hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+            className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-rose-300/50 bg-rose-400/15 px-4 py-2 text-sm font-extrabold text-rose-50 transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-700 hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           >
             <BookOpen className="h-4 w-4" />
             Открыть гид
@@ -54,7 +54,7 @@ export default function GuideTeaser() {
               href={href}
               className="group rounded-2xl border border-rose-300/25 bg-rose-400/[0.07] p-4 transition-colors hover:border-rose-300/60 hover:bg-rose-400/[0.12] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-400"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500 text-white">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-700 text-white">
                 <Icon className="h-4 w-4" />
               </span>
               <p className="mt-3 text-sm font-extrabold text-text-primary">{title}</p>

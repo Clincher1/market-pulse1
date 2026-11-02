@@ -320,7 +320,7 @@ export default function Header({ activeView = 'dashboard' }: HeaderProps) {
               aria-current={isActive ? 'page' : undefined}
               className={`flex min-h-12 min-w-[4.15rem] flex-1 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-1.5 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive
-                  ? link.theme?.activeClass ?? 'border-accent bg-accent text-white shadow-lg shadow-accent/25'
+                  ? link.theme?.activeClass ?? 'border-accent-strong bg-accent-strong text-white shadow-lg shadow-accent/25'
                   : link.theme
                     ? `${link.theme.cardClass} text-slate-200`
                     : 'border-transparent text-slate-300 hover:bg-white/10 hover:text-white'
