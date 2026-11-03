@@ -60,7 +60,9 @@ export function useLiveAssets(): {
     if (hasLiveDataRef.current) setIsRefreshing(true);
 
     try {
-      const live = await fetchLiveAssets();
+      // force при повторной загрузке: «обновить» не должен отдавать данные
+      // из 15-секундной памяти запроса.
+      const live = await fetchLiveAssets({ force: hasLiveDataRef.current });
       if (!isMounted.current) return;
 
       if (live.length === 0) {

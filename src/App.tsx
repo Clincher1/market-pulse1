@@ -8,6 +8,9 @@ import KeyAssets from '@/components/KeyAssets';
 import Footer from '@/components/Footer';
 import GuideTeaser from '@/components/GuideTeaser';
 import DashboardQuickNav from '@/components/DashboardQuickNav';
+import MarketTicker from '@/components/MarketTicker';
+import TrustStrip from '@/components/TrustStrip';
+import HowWeKnow from '@/components/HowWeKnow';
 import BusinessMoney from '@/components/BusinessMoney';
 import { SectionThemeBadge } from '@/components/sectionThemes';
 import WhatChanged from '@/components/WhatChanged';
@@ -214,6 +217,14 @@ function App() {
                 31 октября 2026 года; старые записи остаются в архиве памяти рынка вместе с промахами.
               </p>
             </section>
+
+            {/* Первый экран по образцу лендингов: состояние рынка одной полосой,
+                затем то, что можно проверить, затем процесс. Данные здесь только
+                из кэша — новых запросов эти блоки не делают, кроме окна
+                самопроверки за 7 дней. */}
+            <MarketTicker />
+            <TrustStrip />
+            <HowWeKnow />
 
             <SectionBoundary title="Деньги бизнеса сегодня">
               <BusinessMoney />
