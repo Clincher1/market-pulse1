@@ -1187,7 +1187,7 @@ function AssetPanel({
 
       {history && visibleHistoryPoints.length > 0 && (
         <details className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
-          <summary className="cursor-pointer text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+          <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Проверить данные · {visibleHistoryPoints.length}{' '}
             {observationsWord(visibleHistoryPoints.length)}
           </summary>

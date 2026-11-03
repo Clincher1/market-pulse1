@@ -334,7 +334,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
         )}
       </div>
 
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] font-medium text-slate-400">
         <span>Наведите курсор или коснитесь графика — дата и значение появятся в подсказке.</span>
         <span>Отметки шкалы — круглые числа; пропущенные дни не заполняются.</span>
       </div>
@@ -387,7 +387,7 @@ export default function RussiaHistory() {
           Динамика за 3 месяца — из первоисточников
         </div>
         {data?.window.from && (
-          <div className="text-[11px] font-medium text-slate-500">
+          <div className="text-[11px] font-medium text-slate-400">
             окно {ruDate(data.window.from)} — {ruDate(data.window.till)}
           </div>
         )}
@@ -462,7 +462,7 @@ export default function RussiaHistory() {
                   href={series.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-300 underline-offset-2 hover:underline"
+                  className="inline-flex min-h-6 items-center text-blue-300 underline-offset-2 hover:underline"
                 >
                   открыть источник
                 </a>
@@ -479,7 +479,7 @@ export default function RussiaHistory() {
             ))}
             {data.notes.length > 1 && (
               <details className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
-                <summary className="cursor-pointer select-none font-bold text-slate-400 transition-colors hover:text-slate-200">
+                <summary className="min-h-6 cursor-pointer select-none py-1 font-bold text-slate-400 transition-colors hover:text-slate-200">
                   Как читать график
                 </summary>
                 <div className="mt-1.5 flex flex-col gap-1.5">
@@ -495,13 +495,13 @@ export default function RussiaHistory() {
           </div>
 
           <details className="mt-2 text-[11px] text-slate-400">
-            <summary className="cursor-pointer select-none font-semibold text-slate-300">
+            <summary className="min-h-6 cursor-pointer select-none py-1 font-semibold text-slate-300">
               Все {series.points.length} значений ряда
             </summary>
             <div className="mt-2 max-h-64 overflow-auto">
               <table className="w-full text-left tabular-nums">
                 <thead>
-                  <tr className="text-slate-500">
+                  <tr className="text-slate-400">
                     <th scope="col" className="py-1 pr-3 font-medium">
                       Дата
                     </th>

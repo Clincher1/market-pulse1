@@ -438,7 +438,7 @@ function ChannelCard({
       <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">{rule}</p>
       {detail && (
         <details className="group mt-2 rounded-lg border border-white/10 bg-black/20 px-2.5 py-1.5">
-          <summary className="cursor-pointer select-none text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-200">
+          <summary className="min-h-6 cursor-pointer select-none py-1 text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-200">
             Как считается
           </summary>
           <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">{detail}</p>
@@ -603,7 +603,7 @@ function EventCard({ scored }: { scored: ScoredNews }) {
         </div>
       )}
 
-      <div className="mt-3 text-[11px] leading-relaxed text-slate-500">
+      <div className="mt-3 text-[11px] leading-relaxed text-slate-400">
         Почему в подборке: {reasons.join('; ')}.
       </div>
     </article>
@@ -959,7 +959,7 @@ export default function RussiaBusiness() {
                 <Briefcase className="h-4 w-4 text-blue-300" />
                 Показывать сначала важное для моего профиля
               </div>
-              <span className="text-[11px] font-medium text-slate-500">
+              <span className="text-[11px] font-medium text-slate-400">
                 Без регистрации: выбор хранится только в вашем браузере
               </span>
             </div>
@@ -1053,7 +1053,7 @@ export default function RussiaBusiness() {
                           Последняя точка поэтому всегда за прошлую пятницу.
                         </p>
                         <details className="mt-2 rounded-lg border border-white/10 bg-black/20 px-2.5 py-1.5">
-                          <summary className="cursor-pointer select-none text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-200">
+                          <summary className="min-h-6 cursor-pointer select-none py-1 text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-200">
                             Почему в млрд $, а не в процентах
                           </summary>
                           <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
@@ -1147,14 +1147,14 @@ export default function RussiaBusiness() {
                   {insightsLoading ? 'Загружаем российские заголовки…' : 'Российские ленты временно недоступны.'}
                 </div>
               )}
-              <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
                 Это прямая лента заголовков «Коммерсанта», «Ведомостей» и Frank Media со ссылками на первоисточники.
                 Она отделена от ИИ-подборки слева: заголовок здесь ещё не означает подтверждённое влияние на рынок.
               </p>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-2 border-t border-white/10 pt-4 text-[11px] leading-relaxed text-slate-500 md:grid-cols-3">
+          <div className="mt-6 grid gap-2 border-t border-white/10 pt-4 text-[11px] leading-relaxed text-slate-400 md:grid-cols-3">
             {insights.notes.map((note) => (
               <div key={note} className="flex items-start gap-1.5">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-300" />

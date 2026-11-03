@@ -21,7 +21,7 @@ export default function MoneySpreads({ spreads }: { spreads: MoneySpread[] }) {
           <Calculator size={13} className="text-blue-300" aria-hidden="true" />
           Что следует из этих чисел
         </span>
-        <span className="text-[11px] text-slate-500">арифметика, не прогноз</span>
+        <span className="text-[11px] text-slate-400">арифметика, не прогноз</span>
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -32,7 +32,7 @@ export default function MoneySpreads({ spreads }: { spreads: MoneySpread[] }) {
             </div>
             <div className="mt-1 text-xl font-extrabold tabular-nums text-white">{spread.value}</div>
             <div className="mt-0.5 text-[11px] tabular-nums text-slate-400">{spread.formula}</div>
-            <div className="mt-1 text-[11px] text-slate-500">{spread.basis}</div>
+            <div className="mt-1 text-[11px] text-slate-400">{spread.basis}</div>
             <p className="mt-2 text-[11px] leading-relaxed text-slate-300">{spread.meaning}</p>
           </div>
         ))}

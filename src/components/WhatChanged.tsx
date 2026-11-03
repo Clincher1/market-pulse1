@@ -254,7 +254,14 @@ export default function WhatChanged() {
             семь точек и насколько — за семь точек до них. Никаких выводов «хорошо/плохо»:
             только два факта и их разница в процентных пунктах.
           </p>
-          <div className="mt-3 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03]">
+          {/* Таблица шире экрана на телефоне: без tabIndex прокрутить её
+              клавиатурой нечем, а мышь для этого недоступна. */}
+          <div
+            className="mt-3 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+            tabIndex={0}
+            role="group"
+            aria-label="Сравнение неделя к неделе: таблица прокручивается по горизонтали стрелками."
+          >
             <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-[0.1em] text-slate-400">

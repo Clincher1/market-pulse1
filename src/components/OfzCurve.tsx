@@ -143,7 +143,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
           href="https://www.moex.com/ru/marketdata/indices/state/gcurve/"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[11px] font-semibold text-blue-300 underline-offset-2 hover:underline"
+          className="inline-flex min-h-6 items-center text-[11px] font-semibold text-blue-300 underline-offset-2 hover:underline"
         >
           Открыть источник
         </a>

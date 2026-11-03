@@ -500,7 +500,7 @@ function EventFilterRow({
               }`}
             >
               <span>{option.label}</span>
-              <span className={active ? 'text-blue-100' : 'text-slate-500'}>{option.count}</span>
+              <span className={active ? 'text-blue-100' : 'text-slate-400'}>{option.count}</span>
             </button>
           );
         })}

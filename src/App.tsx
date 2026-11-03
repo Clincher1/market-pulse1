@@ -138,8 +138,33 @@ function App() {
 
   return (
     <div className="min-h-screen bg-bg-primary pb-20 text-text-primary lg:pb-0">
+      {/*
+        Первый Tab должен вести к содержанию, а не в шапку и нижнюю панель: до
+        этого до main добирались через девять ссылок навигации на каждой
+        странице. Ссылка видна только при фокусе — иначе она влезала бы в макет.
+      */}
+      <a
+        href="#main"
+        onClick={(event) => {
+          // preventDefault обязателен: у роутера хэш — это адрес экрана, и
+          // переход по #main выбросил бы с гида на дашборд. Без скриптов
+          // ссылка остаётся рабочей как обычный якорь.
+          const main = document.getElementById('main');
+          if (!main) return;
+          event.preventDefault();
+          main.focus({ preventScroll: true });
+          main.scrollIntoView({ block: 'start' });
+        }}
+        className="sr-only rounded-full bg-accent-strong px-4 py-2 text-sm font-extrabold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+      >
+        Перейти к содержанию
+      </a>
       <Header activeView={view} />
-      <main className="mx-auto max-w-[1400px] px-4 pb-8 pt-24 sm:px-6 lg:px-10 lg:pt-28">
+      <main
+        id="main"
+        tabIndex={-1}
+        className="mx-auto max-w-[1400px] px-4 pb-8 pt-24 outline-hidden sm:px-6 lg:px-10 lg:pt-28"
+      >
         {view === 'status' ? (
           <Suspense
             fallback={
