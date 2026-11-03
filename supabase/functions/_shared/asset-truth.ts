@@ -11,6 +11,15 @@
  *   совпадать с разностью двух последних точек этого ряда, а цена — с
  *   последней точкой.
  *
+ * Одна оговорка, без которой проверка врёт: ряд хранит ЗАКРЫТЫЕ наблюдения,
+ * а цена на плитке может быть кавычкой более поздней даты (внутридневной ход
+ * Brent, S&P 500). Тогда база изменения — последнее закрытие, а не
+ * предпоследнее, и цена заведомо не равна последней точке ряда. Это не
+ * расхождение, а другая база, и она названа в вердикте (`basis: "quote"`).
+ * 03.11.2026 без этой оговорки проверка красила в красный честную плитку:
+ * цена $106.61 против закрытия 104.77 (это +1.76 %) считалась как −10.94 %
+ * по двум последним закрытиям.
+ *
  * Почему не для всех рядов: у золота и BTC цена приходит из кавычки, а база
  * изменения — `previous_close` той же кавычки, а не два последних закрытия
  * нашего ряда. Сравнивать их — значит получать «расхождение» там, где всё
@@ -74,6 +83,8 @@ export function seriesValues(row: AssetRowLike): number[] {
 }
 
 export interface ChangeVerdict {
+  /** На чём построено изменение: на двух закрытиях ряда или на кавычке. */
+  basis?: "series" | "quote";
   /** Проверка применима к этому ряду. */
   checked: boolean;
   /** Всё сходится (или проверка неприменима — тогда расхождений не выдумываем). */
@@ -107,8 +118,43 @@ export function checkChangeAgainstSeries(row: AssetRowLike): ChangeVerdict {
     return { checked: false, ok: true, reason: "в ряду нулевые значения" };
   }
 
-  const expected = ((last - previous) / previous) * 100;
   const stored = typeof row.change === "number" && Number.isFinite(row.change) ? row.change : null;
+
+  // Кавычка свежее последнего закрытия? Тогда изменение считается от последнего
+  // закрытия к цене, а не между двумя закрытиями: ряд закрытий за сегодня ещё
+  // не пополнился, и требовать совпадения с ним — значит требовать неправды.
+  const lastSeriesDate = lastSeriesDateIso(row);
+  const asOfDate = isoDate(row.as_of);
+  const quoteIsNewer = Boolean(lastSeriesDate && asOfDate && asOfDate > lastSeriesDate);
+  const priceValue = parsePriceNumber(row.price ?? null);
+
+  if (quoteIsNewer) {
+    if (!(priceValue !== null && priceValue > 0)) {
+      return { checked: false, ok: true, reason: "цена-кавычка не разобрана, сверка не применима", basis: "quote" };
+    }
+    const expectedFromQuote = ((priceValue - last) / last) * 100;
+    if (stored === null) {
+      return {
+        checked: true,
+        ok: false,
+        expected: expectedFromQuote,
+        stored: null,
+        priceMismatch: null,
+        basis: "quote",
+        reason: "изменение не сохранено",
+      };
+    }
+    return {
+      checked: true,
+      ok: Math.abs(stored - expectedFromQuote) <= CHANGE_TOLERANCE_PP,
+      expected: expectedFromQuote,
+      stored,
+      priceMismatch: null,
+      basis: "quote",
+    };
+  }
+
+  const expected = ((last - previous) / previous) * 100;
 
   // Сравниваем именно числа, а не строки: у цены в кэше есть знак валюты
   // («$113.43»), у значения ряда — нет. Символ валюты не должен выглядеть
@@ -121,10 +167,28 @@ export function checkChangeAgainstSeries(row: AssetRowLike): ChangeVerdict {
       : null;
 
   if (stored === null) {
-    return { checked: true, ok: false, expected, stored: null, priceMismatch, reason: "изменение не сохранено" };
+    return { checked: true, ok: false, expected, stored: null, priceMismatch, basis: "series", reason: "изменение не сохранено" };
   }
   const ok = Math.abs(stored - expected) <= CHANGE_TOLERANCE_PP && !priceMismatch;
-  return { checked: true, ok, expected, stored, priceMismatch };
+  return { checked: true, ok, expected, stored, priceMismatch, basis: "series" };
+}
+
+/** Похоже ли на дату вида `2026-11-03` (или ISO-момент). */
+function instanceofDate(value: unknown): boolean {
+  return /^\d{4}-\d{2}-\d{2}/.test(String(value ?? ""));
+}
+
+/** `"2026-11-03 07:30:01+00"` → `"2026-11-03"`; мусор → null. */
+function isoDate(value: string | null | undefined): string | null {
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(String(value ?? ""));
+  return match ? match[1] : null;
+}
+
+/** Дата последней точки опубликованного ряда; без дат — null. */
+function lastSeriesDateIso(row: AssetRowLike): string | null {
+  const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
+  const last = dates.at(-1);
+  return instanceofDate(last) ? isoDate(last) : null;
 }
 
 /**
