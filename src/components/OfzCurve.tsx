@@ -166,7 +166,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
           role="img"
           aria-label={ariaLabel}
         >
-          <text x={padX} y={11} className="fill-slate-400 text-[10px]">
+          <text x={padX} y={11} className="fill-slate-400 text-[11px]">
             шкала — проценты
           </text>
 
@@ -190,7 +190,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
                   x={padX - 6}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-slate-400 text-[10px] tabular-nums"
+                  className="fill-slate-400 text-[11px] tabular-nums"
                 >
                   {formatTick(tick, yStep)}
                 </text>
@@ -206,7 +206,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
                 x={x}
                 y={height - 6}
                 textAnchor="middle"
-                className="fill-slate-400 text-[10px]"
+                className="fill-slate-400 text-[11px]"
               >
                 {formatTerm(tick)}
               </text>
@@ -231,7 +231,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
                 x={tenYear.x}
                 y={tenYear.y - 9}
                 textAnchor="middle"
-                className="fill-amber-200 text-[10px] font-semibold"
+                className="fill-amber-200 text-[11px] font-semibold"
               >
                 10 лет · {formatRate(tenYear.value)}
               </text>

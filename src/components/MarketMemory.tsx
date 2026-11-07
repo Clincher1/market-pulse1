@@ -133,7 +133,7 @@ function sampleBadge(sampleSize: number): { label: string; className: string } {
 function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-bg-primary/55 p-4">
-      <div className="break-words text-[10px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:text-[11px] sm:tracking-[0.13em]">{label}</div>
+      <div className="break-words text-[11px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:text-[11px] sm:tracking-[0.13em]">{label}</div>
       <div className="mt-1.5 text-2xl font-extrabold tabular-nums text-text-primary">{value}</div>
       <div className="mt-1 text-xs leading-relaxed text-text-secondary">{hint}</div>
     </div>
@@ -231,15 +231,15 @@ function EventCard({
 
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Важность</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Важность</div>
             <div className="text-sm font-extrabold text-text-primary">{event.importance}/10</div>
           </div>
           <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Релевантность</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Релевантность</div>
             <div className="text-sm font-extrabold text-text-primary">{formatShare(event.relevance)}</div>
           </div>
           <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Уверенность</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Уверенность</div>
             <div className="text-sm font-extrabold text-text-primary">{formatShare(event.confidence)}</div>
           </div>
         </div>
@@ -336,7 +336,7 @@ function EventCard({
                     href={event.representativeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 font-extrabold text-accent hover:text-blue-300"
+                    className="inline-flex min-h-6 items-center gap-1 font-extrabold text-accent hover:text-blue-300"
                   >
                     Первоисточник{event.representativeSource ? `: ${event.representativeSource}` : ''}
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -379,17 +379,17 @@ function AnalogueCard({ analogue }: { analogue: MemoryAnalogue }) {
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
           <div className="text-sm font-extrabold text-text-primary">{analogue.horizonTradingDays} дн</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Попадания</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Попадания</div>
           <div className="text-sm font-extrabold text-text-primary">
             {analogue.hits}/{analogue.sampleSize}
           </div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Медиана</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Медиана</div>
           <div className={`text-sm font-extrabold ${median !== undefined && median < 0 ? 'text-negative' : 'text-positive'}`}>
             {formatPct(median)}
           </div>
@@ -430,19 +430,19 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
 
       <div className="grid grid-cols-2 gap-2 text-center">
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Выдан</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Выдан</div>
           <div className="text-xs font-extrabold text-text-primary">{formatDate(forecast.issueDate)}</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
           <div className="text-xs font-extrabold text-text-primary">{forecast.horizonTradingDays} торг. дн</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Вес вверх</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Вес вверх</div>
           <div className="text-xs font-extrabold text-text-primary">{formatShare(forecast.scoreUp)}</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Событий</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Событий</div>
           <div className="text-xs font-extrabold text-text-primary">{forecast.evidenceCount}</div>
         </div>
       </div>
@@ -453,7 +453,7 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
           {evaluated ? formatPct(forecast.returnPct) : 'pending'}
         </span>
       </div>
-      <div className="mt-1 text-[10px] text-text-secondary">
+      <div className="mt-1 text-[11px] text-text-secondary">
         {forecast.aggregationVersion} · {forecast.promptVersion ?? 'prompt —'}
         {forecast.aggregationVersion !== 'aggregation_v2' ? ' · архивная версия, в сводку v2 не входит' : ''}
       </div>

@@ -349,7 +349,7 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
                 печатается рядом: без неё «+0,16 %» у субботней сессии
                 читалось бы как движение за сутки с нуля. */}
             {hasCloseBase && indicator.previousDate && (
-              <span className="text-[10px] font-semibold text-slate-400">
+              <span className="text-[11px] font-semibold text-slate-400">
                 к {formatShortDate(indicator.previousDate)}
               </span>
             )}
@@ -366,12 +366,12 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
             {indicator.previousLabel ? (
               // Месячный ряд: «к августу» вместо «к 31.08», иначе сравнение
               // месячных данных читается как сравнение с конкретным днём.
-              <span className="text-[10px] font-semibold text-slate-400">
+              <span className="text-[11px] font-semibold text-slate-400">
                 к {indicator.previousLabel}
               </span>
             ) : (
               indicator.previousDate && (
-                <span className="text-[10px] font-semibold text-slate-400">
+                <span className="text-[11px] font-semibold text-slate-400">
                   к {formatShortDate(indicator.previousDate)}
                 </span>
               )
@@ -565,7 +565,13 @@ function EventCard({ scored }: { scored: ScoredNews }) {
       </div>
 
       {item.url ? (
-        <a href={item.url} target="_blank" rel="noopener noreferrer" className="group mt-3 block">
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          // py-1: заголовок-ссылка была 22 px — ниже порога 24 px для цели нажатия.
+          className="group mt-3 block py-1"
+        >
           <h3 className="text-base font-extrabold leading-snug text-white group-hover:text-blue-200">
             {item.title}
             <ExternalLink className="mb-0.5 ml-1 inline h-3.5 w-3.5" />
@@ -634,7 +640,7 @@ function HeadlineRow({ headline }: { headline: RussiaHeadline }) {
       {channels.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {channels.map((channel) => (
-            <span key={channel} className="rounded-full bg-white/[0.07] px-2 py-0.5 text-[10px] font-bold text-slate-300">
+            <span key={channel} className="rounded-full bg-white/[0.07] px-2 py-0.5 text-[11px] font-bold text-slate-300">
               {CHANNEL_LABELS[channel]}
             </span>
           ))}
@@ -994,7 +1000,7 @@ export default function RussiaBusiness() {
                 <Banknote className="h-4 w-4" />
                 Российские рынки и официальные курсы
               </div>
-              <span className="ml-auto rounded-full border border-blue-300/25 bg-blue-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-blue-100">
+              <span className="ml-auto rounded-full border border-blue-300/25 bg-blue-400/10 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-100">
                 Российский контур
               </span>
             </div>

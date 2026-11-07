@@ -408,7 +408,7 @@ function HeatTile({
         <DirectionIcon className="h-4 w-4 shrink-0 opacity-90" aria-hidden="true" />
       </div>
       {isFallback && (
-        <span className="mt-2 inline-flex w-fit rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-100">
+        <span className="mt-2 inline-flex w-fit rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100">
           нет свежей цены
         </span>
       )}
@@ -418,7 +418,7 @@ function HeatTile({
       </div>
 
       {!isFallback && (observed || asset.updatedAt) && (
-        <div className="mt-1 text-[10px] font-semibold text-white/70">
+        <div className="mt-1 text-[11px] font-semibold text-white/70">
           {observed || `обновлено ${asOf} МСК`}
         </div>
       )}
@@ -427,7 +427,7 @@ function HeatTile({
         <span className="text-base font-extrabold tabular-nums">
           {isFallback || horizonChangeValue === null ? '—' : formatChange(nearlyFlat ? 0 : change)}
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-white/65">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-white/65">
           шкала ±{formatCap(cap)}
         </span>
       </div>
@@ -976,7 +976,7 @@ function AssetPanel({
               {asset.name}
             </h4>
             {isFallback && (
-              <span className="inline-flex rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-100">
+              <span className="inline-flex rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100">
                 нет свежей цены
               </span>
             )}
@@ -1110,7 +1110,7 @@ function AssetPanel({
       {history && visibleHistoryPoints.length >= 2 && firstVisibleHistoryPoint && lastVisibleHistoryPoint && minHistoryPoint && maxHistoryPoint ? (
         <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               Изменение периода · {formatDateShort(firstVisibleHistoryPoint.date)}–
               {formatDateShort(lastVisibleHistoryPoint.date)}
             </dt>
@@ -1121,7 +1121,7 @@ function AssetPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               Минимум · {formatDateShort(minHistoryPoint.date)}
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
@@ -1129,7 +1129,7 @@ function AssetPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               Максимум · {formatDateShort(maxHistoryPoint.date)}
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
@@ -1137,7 +1137,7 @@ function AssetPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               Последнее · {formatDateShort(lastVisibleHistoryPoint.date)}
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
@@ -1148,7 +1148,7 @@ function AssetPanel({
       ) : !historyLoading && points.length >= 2 && (
         <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               За {horizon.accusative} · {selectedIntervals}{' '}
               {observationsWord(selectedIntervals)}
             </dt>
@@ -1159,7 +1159,7 @@ function AssetPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               Минимум · {points.length} {daysWord(points.length)}
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
@@ -1167,7 +1167,7 @@ function AssetPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               Максимум · {points.length} {daysWord(points.length)}
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
@@ -1175,7 +1175,7 @@ function AssetPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
               Последнее закрытие
             </dt>
             <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
@@ -1409,7 +1409,7 @@ export default function MarketHeatmap({
             <Grid2x2 className="h-5 w-5 text-cyan-300" />
             Тепловая карта мировых рынков
           </h3>
-          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-cyan-100">
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-cyan-100">
             <Globe className="h-3.5 w-3.5" />
             Глобальный контур
           </span>

@@ -122,7 +122,8 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group block mb-3"
+          // py-1: заголовок-ссылка была 22 px — ниже порога 24 px для цели нажатия.
+          className="group block mb-3 py-1"
         >
           <h3 className="text-base lg:text-lg font-bold leading-snug text-text-primary group-hover:text-amber-200 transition-colors">
             {item.title}

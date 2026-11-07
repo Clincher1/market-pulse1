@@ -229,7 +229,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
         onBlur={() => setActiveIndex(null)}
       >
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full" role="img" aria-label={aria}>
-          <text x={PAD_LEFT} y={14} className="fill-slate-400 text-[10px]">
+          <text x={PAD_LEFT} y={14} className="fill-slate-400 text-[11px]">
             шкала — {axisUnitLabel(series.unit)}
           </text>
 
@@ -247,7 +247,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
                 x={PAD_LEFT - 8}
                 y={y(tick) + 3}
                 textAnchor="end"
-                className="fill-slate-400 text-[10px] tabular-nums"
+                className="fill-slate-400 text-[11px] tabular-nums"
               >
                 {formatTick(tick, step)}
               </text>
@@ -273,7 +273,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
               x={x(highest.date)}
               y={y(highest.value) - 8}
               textAnchor={labelAnchor(highest.date)}
-              className="fill-emerald-200 text-[10px] font-semibold tabular-nums"
+              className="fill-emerald-200 text-[11px] font-semibold tabular-nums"
             >
               макс {formatValue(highest.value, series.unit)}
             </text>
@@ -282,7 +282,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
               x={x(lowest.date)}
               y={y(lowest.value) + 14}
               textAnchor={labelAnchor(lowest.date)}
-              className="fill-rose-200 text-[10px] font-semibold tabular-nums"
+              className="fill-rose-200 text-[11px] font-semibold tabular-nums"
             >
               мин {formatValue(lowest.value, series.unit)}
             </text>
@@ -309,7 +309,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
               x={x(iso)}
               y={HEIGHT - 8}
               textAnchor={labelAnchor(iso)}
-              className="fill-slate-400 text-[10px] tabular-nums"
+              className="fill-slate-400 text-[11px] tabular-nums"
             >
               {shortDate(iso)}
             </text>
@@ -326,7 +326,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
               {formatValue(active.value, series.unit)}
             </div>
             {series.kind === 'step' && active.since && (
-              <div className="whitespace-nowrap text-[10px] font-semibold text-slate-400">
+              <div className="whitespace-nowrap text-[11px] font-semibold text-slate-400">
                 действует с {ruDate(active.since)}
               </div>
             )}
@@ -334,7 +334,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
         )}
       </div>
 
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] font-medium text-slate-400">
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] font-medium text-slate-400">
         <span>Наведите курсор или коснитесь графика — дата и значение появятся в подсказке.</span>
         <span>Отметки шкалы — круглые числа; пропущенные дни не заполняются.</span>
       </div>
