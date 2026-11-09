@@ -35,7 +35,26 @@ async function selectAssets(): Promise<{ data: unknown[] | null; error: unknown 
   return last;
 }
 
-export async function fetchLiveAssets(): Promise<AssetData[]> {
+/**
+ * Короткая память запроса.
+ *
+ * Полоса рынка и плитки грузятся с одной страницы и раньше делали два
+ * одинаковых запроса в `cached_assets` подряд. Данные в кэше меняются раз в
+ * 15 минут, поэтому окно в 15 секунд ничего не скрывает: оно схлопывает только
+ * одновременные загрузки. Кнопка «обновить» идёт мимо памяти (force).
+ */
+const CACHE_TTL_MS = 15_000;
+let lastResult: { at: number; assets: AssetData[] } | null = null;
+
+/** Сбросить память запроса. Нужен тестам, чтобы прогоны не влияли друг на друга. */
+export function resetAssetsRequestCache(): void {
+  lastResult = null;
+}
+
+export async function fetchLiveAssets(options: { force?: boolean } = {}): Promise<AssetData[]> {
+  if (!options.force && lastResult && Date.now() - lastResult.at < CACHE_TTL_MS) {
+    return lastResult.assets;
+  }
   try {
     const { data, error } = await selectAssets();
 
@@ -52,7 +71,11 @@ export async function fetchLiveAssets(): Promise<AssetData[]> {
     // Активы, которых нет в ASSET_ORDER, не теряем — добавляем в конец.
     const extras = rows.filter((row) => !ASSET_ORDER.includes(row.id));
 
-    return [...sorted, ...extras].map(mapAssetCacheRow);
+    const mapped = [...sorted, ...extras].map(mapAssetCacheRow);
+    // Пустой ответ не запоминаем: иначе одна неудача на 15 секунд выглядела бы
+    // как «данных нет» и во втором блоке тоже.
+    if (mapped.length > 0) lastResult = { at: Date.now(), assets: mapped };
+    return mapped;
   } catch (e) {
     console.error('Ошибка загрузки кэша активов:', e);
     return [];

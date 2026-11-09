@@ -600,7 +600,15 @@ function BriefImage({ card }) {
             flexDirection: 'column',
             boxSizing: 'border-box',
             width: 1080,
-            height: 1600,
+            // Высота карточки — по содержимому, а не фиксированные 1600.
+            // Фиксированная высота давала два дефекта сразу: в спокойный день
+            // внизу оставалась пустая полоса в треть карточки (видно на
+            // вчерашнем брифе: контент кончался на 60 % высоты), а в день с
+            // длинными фактами или четырьмя последствиями текст уезжал за
+            // границу и обрезался — молча, потому что PNG всегда одного
+            // размера. minHeight держит нижнюю границу, чтобы короткий бриф не
+            // превращался в полоску.
+            minHeight: 1120,
             padding: '54px 58px 46px',
             background: '#050914',
             backgroundImage: 'linear-gradient(145deg, #050914 0%, #081426 54%, #04111f 100%)',
@@ -691,6 +699,38 @@ function BriefImage({ card }) {
                             width: '100%',
                         }, children: [_jsx("div", { style: { fontSize: 21, fontWeight: 800, color: '#7dd3fc' }, children: "market-pulse1-eta.vercel.app" }), _jsx("div", { style: { fontSize: 19, fontWeight: 700, color: '#cbd5e1' }, children: "\u0424\u0430\u043A\u0442\u044B \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E. \u0413\u0438\u043F\u043E\u0442\u0435\u0437\u044B \u2014 \u0441 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u043E\u0439." })] }), _jsx("div", { style: { display: 'flex', marginTop: 9, fontSize: 17, color: '#7c8da6' }, children: "\u0418\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u043E\u043D\u043D\u044B\u0439 \u043E\u0431\u0437\u043E\u0440 \u043F\u0443\u0431\u043B\u0438\u0447\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445. \u041D\u0435 \u0438\u043D\u0432\u0435\u0441\u0442\u0438\u0446\u0438\u043E\u043D\u043D\u0430\u044F \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F." })] })] }));
 }
+/**
+ * Рендер PNG из уже собранной карточки. Вынесено из обработчика, чтобы
+ * карточку можно было отрисовать в тесте и измерить: до этого единственный
+ * способ узнать, обрезался ли длинный бриф, — глазами в мессенджере.
+ *
+ * `onStage` сохраняет диагностику: снаружи бинарный ответ не посмотреть,
+ * поэтому самопроверка зовёт адрес с ?diag=1 и получает стадию, на которой
+ * всё сломалось.
+ */
+export async function renderBrief(card, onStage = () => { }) {
+    onStage('renderers');
+    const rendererPromise = Promise.all([import('satori'), import('@resvg/resvg-js')]);
+    onStage('fonts');
+    const fontsPromise = loadFonts();
+    const [[{ default: satori }, { Resvg }], fonts] = await Promise.all([rendererPromise, fontsPromise]);
+    onStage('satori');
+    const svg = await satori(_jsx(BriefImage, { card: card }), {
+        width: 1080,
+        // 'auto' — satori измеряет содержимое сам; вместе с minHeight на
+        // корне это даёт карточку по размеру текста, без пустот и обрезки.
+        height: 'auto',
+        fonts,
+    });
+    onStage('resvg');
+    const png = new Resvg(svg, {
+        fitTo: { mode: 'width', value: 1080 },
+    })
+        .render()
+        .asPng();
+    return Buffer.from(png);
+}
+
 export default async function handler(req, res) {
     if (!['GET', 'HEAD'].includes(req.method ?? '')) {
         res.setHeader('Allow', 'GET, HEAD');
@@ -703,37 +743,17 @@ export default async function handler(req, res) {
     // шрифты», «упал рендерер» и «упала отдача байтов» чинятся по-разному.
     // Самопроверка зовёт этот адрес с ?diag=1 и называет стадию в отчёте:
     // снаружи бинарный ответ не посмотреть, поэтому причина нужна изнутри.
-    let stage = 'renderers';
+    let stage = 'data';
     const wantsDiagnostics = new URL(req.url ?? '/', 'https://x').searchParams.get('diag') === '1';
     try {
-        stage = 'renderers';
-        const rendererPromise = Promise.all([import('satori'), import('@resvg/resvg-js')]);
-        stage = 'data';
-        const cardPromise = buildBriefCard();
-        stage = 'fonts';
-        const fontsPromise = loadFonts();
-        const [[{ default: satori }, { Resvg }], card, fonts] = await Promise.all([
-            rendererPromise,
-            cardPromise,
-            fontsPromise,
-        ]);
-        stage = 'satori';
-        const svg = await satori(_jsx(BriefImage, { card: card }), {
-            width: 1080,
-            height: 1600,
-            fonts,
-        });
-        stage = 'resvg';
-        const png = new Resvg(svg, {
-            fitTo: { mode: 'width', value: 1080 },
-        })
-            .render()
-            .asPng();
+        const card = await buildBriefCard();
+        // Стадии рендера сообщает сам renderBrief: renderers → fonts → satori →
+        // resvg. Здесь остаются только «данные» до вызова и «отдача» после.
+        const body = await renderBrief(card, (next) => { stage = next; });
         stage = 'send';
         // asPng() отдаёт Uint8Array. Через res.end нужен именно Buffer с
         // известной длиной: тип тела здесь не угадывается, а размер известен
         // заранее, поэтому Content-Length ставится явно.
-        const body = Buffer.from(png);
         res.writeHead(200, {
             'Content-Type': 'image/png',
             'Content-Length': String(body.length),

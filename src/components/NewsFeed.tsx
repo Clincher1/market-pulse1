@@ -122,7 +122,8 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group block mb-3"
+          // py-1: заголовок-ссылка была 22 px — ниже порога 24 px для цели нажатия.
+          className="group block mb-3 py-1"
         >
           <h3 className="text-base lg:text-lg font-bold leading-snug text-text-primary group-hover:text-amber-200 transition-colors">
             {item.title}
@@ -463,7 +464,7 @@ export default function NewsFeed() {
           mobileLabel="Справка"
         />
         {lastUpdatedLabel && !error && (
-          <span className="ml-auto hidden text-xs font-semibold text-slate-500 sm:inline">
+          <span className="ml-auto hidden text-xs font-semibold text-slate-400 sm:inline">
             Последняя проверка в {lastUpdatedLabel}
           </span>
         )}
@@ -517,7 +518,7 @@ export default function NewsFeed() {
           className={`${filtersOpen ? 'mt-4 grid' : 'hidden'} grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5`}
         >
           <div>
-            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
               Источник
             </span>
             <FilterSelect
@@ -528,7 +529,7 @@ export default function NewsFeed() {
             />
           </div>
           <div>
-            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
               Тема
             </span>
             <FilterSelect
@@ -539,7 +540,7 @@ export default function NewsFeed() {
             />
           </div>
           <div>
-            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
               Актив влияния
             </span>
             <FilterSelect
@@ -550,7 +551,7 @@ export default function NewsFeed() {
             />
           </div>
           <div>
-            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
               Тональность
             </span>
             <FilterSelect
@@ -561,7 +562,7 @@ export default function NewsFeed() {
             />
           </div>
           <div>
-            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+            <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
               Важность
             </span>
             <FilterSelect
@@ -574,7 +575,7 @@ export default function NewsFeed() {
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/8 pt-4">
-          <p className="text-xs leading-relaxed text-slate-500" aria-live="polite">
+          <p className="text-xs leading-relaxed text-slate-400" aria-live="polite">
             {activeFilterCount > 0
               ? `Активно фильтров: ${activeFilterCount}. Подходит ${filteredNews.length} из ${liveNews.length} новостей; на экране сейчас ${visibleCount}.`
               : `Новости с важностью от 3/10: подходит ${filteredNews.length} из ${liveNews.length}; на экране сейчас ${visibleCount}.`}

@@ -26,6 +26,7 @@ import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
 import ExpandHint from './ExpandHint';
 import { formatPercent, formatSharePercent } from '@/lib/percent';
+import { horizonLabel, horizonOutlook } from '@/lib/forecastHorizon';
 import { startPolling } from '@/lib/polling';
 import {
   fetchMarketMemory,
@@ -133,7 +134,7 @@ function sampleBadge(sampleSize: number): { label: string; className: string } {
 function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-bg-primary/55 p-4">
-      <div className="break-words text-[10px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:text-[11px] sm:tracking-[0.13em]">{label}</div>
+      <div className="break-words text-[11px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:text-[11px] sm:tracking-[0.13em]">{label}</div>
       <div className="mt-1.5 text-2xl font-extrabold tabular-nums text-text-primary">{value}</div>
       <div className="mt-1 text-xs leading-relaxed text-text-secondary">{hint}</div>
     </div>
@@ -231,15 +232,15 @@ function EventCard({
 
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Важность</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Важность</div>
             <div className="text-sm font-extrabold text-text-primary">{event.importance}/10</div>
           </div>
           <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Релевантность</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Релевантность</div>
             <div className="text-sm font-extrabold text-text-primary">{formatShare(event.relevance)}</div>
           </div>
           <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Уверенность</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Уверенность</div>
             <div className="text-sm font-extrabold text-text-primary">{formatShare(event.confidence)}</div>
           </div>
         </div>
@@ -336,7 +337,7 @@ function EventCard({
                     href={event.representativeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 font-extrabold text-accent hover:text-blue-300"
+                    className="inline-flex min-h-6 items-center gap-1 font-extrabold text-accent hover:text-blue-300"
                   >
                     Первоисточник{event.representativeSource ? `: ${event.representativeSource}` : ''}
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -379,17 +380,17 @@ function AnalogueCard({ analogue }: { analogue: MemoryAnalogue }) {
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
           <div className="text-sm font-extrabold text-text-primary">{analogue.horizonTradingDays} дн</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Попадания</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Попадания</div>
           <div className="text-sm font-extrabold text-text-primary">
             {analogue.hits}/{analogue.sampleSize}
           </div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Медиана</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Медиана</div>
           <div className={`text-sm font-extrabold ${median !== undefined && median < 0 ? 'text-negative' : 'text-positive'}`}>
             {formatPct(median)}
           </div>
@@ -408,13 +409,17 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
   const meta = directionMeta(forecast.direction);
   const Icon = meta.Icon;
   const evaluated = forecast.outcomeStatus === 'evaluated';
+  // Не «ждёт горизонт и цены»: у записей от 23–31 октября горизонт в 1–3
+  // торговых дня давно наступил, цены на сайте есть, а исхода нет — оценку
+  // остановили вместе с выдачей. Пишем то, что есть, и называем дату.
+  const outlook = horizonOutlook(forecast);
   const outcomeLabel = evaluated
     ? forecast.direction === 'none'
       ? 'воздержание проверено'
       : forecast.directionHit
         ? 'направление совпало'
         : 'направление не совпало'
-    : 'ждёт горизонт и цены';
+    : horizonLabel(outlook, (iso) => formatDate(iso));
 
   return (
     <article className="rounded-xl2 border border-border-subtle bg-bg-card p-5 shadow-lg">
@@ -430,30 +435,40 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
 
       <div className="grid grid-cols-2 gap-2 text-center">
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Выдан</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Выдан</div>
           <div className="text-xs font-extrabold text-text-primary">{formatDate(forecast.issueDate)}</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
           <div className="text-xs font-extrabold text-text-primary">{forecast.horizonTradingDays} торг. дн</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Вес вверх</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Вес вверх</div>
           <div className="text-xs font-extrabold text-text-primary">{formatShare(forecast.scoreUp)}</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Событий</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Событий</div>
           <div className="text-xs font-extrabold text-text-primary">{forecast.evidenceCount}</div>
         </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs">
         <span className="font-semibold text-text-secondary">{outcomeLabel}</span>
-        <span className={`font-extrabold tabular-nums ${forecast.returnPct !== undefined && forecast.returnPct < 0 ? 'text-negative' : 'text-positive'}`}>
-          {evaluated ? formatPct(forecast.returnPct) : 'pending'}
+        {/* «Не оценён» не красим ни зелёным, ни красным: это не результат,
+            а отсутствие результата. Цвет здесь читался бы как вывод. */}
+        <span
+          className={`font-extrabold tabular-nums ${
+            !evaluated
+              ? 'text-text-secondary'
+              : forecast.returnPct !== undefined && forecast.returnPct < 0
+                ? 'text-negative'
+                : 'text-positive'
+          }`}
+        >
+          {evaluated ? formatPct(forecast.returnPct) : 'не оценён'}
         </span>
       </div>
-      <div className="mt-1 text-[10px] text-text-secondary">
+      <div className="mt-1 text-[11px] text-text-secondary">
         {forecast.aggregationVersion} · {forecast.promptVersion ?? 'prompt —'}
         {forecast.aggregationVersion !== 'aggregation_v2' ? ' · архивная версия, в сводку v2 не входит' : ''}
       </div>
@@ -500,7 +515,7 @@ function EventFilterRow({
               }`}
             >
               <span>{option.label}</span>
-              <span className={active ? 'text-blue-100' : 'text-slate-500'}>{option.count}</span>
+              <span className={active ? 'text-white' : 'text-slate-400'}>{option.count}</span>
             </button>
           );
         })}
@@ -636,10 +651,18 @@ export default function MarketMemory() {
     const evaluatedDirectional = forecasts.filter(
       (forecast) => forecast.outcomeStatus === 'evaluated' && forecast.direction !== 'none',
     );
+    // Сколько записей уже не дождутся исхода: срок горизонта прошёл, а оценку
+    // остановили вместе с выдачей. Число считаем по тем строкам, что загружены,
+    // и называем это в подписи — «в загруженной части архива».
+    const overdue = forecasts.filter((forecast) => horizonOutlook(forecast).state === 'overdue').length;
+    const waiting = forecasts.filter((forecast) => horizonOutlook(forecast).state === 'waiting').length;
     return {
       evaluatedDirectional: evaluatedDirectional.length,
       hits: evaluatedDirectional.filter((forecast) => forecast.directionHit).length,
       abstentions: forecasts.filter((forecast) => forecast.direction === 'none').length,
+      overdue,
+      waiting,
+      loaded: forecasts.length,
     };
   }, [data?.forecasts]);
 
@@ -760,7 +783,7 @@ export default function MarketMemory() {
                 aria-pressed={active}
                 className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-300 ${
                   active
-                    ? 'bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/25'
+                    ? 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/25'
                     : 'border border-white/12 bg-white/5 text-slate-200 hover:border-fuchsia-300/50 hover:bg-fuchsia-400/10'
                 }`}
               >
@@ -874,6 +897,14 @@ export default function MarketMemory() {
                   <StatCard label="Совпадений направления v2" value={String(ledgerSummary.hits)} hint={ledgerSummary.evaluatedDirectional >= 30 ? 'можно начинать смотреть hit-rate' : 'точность пока не публикуем как вывод'} />
                   <StatCard label="Воздержаний v2" value={String(ledgerSummary.abstentions)} hint="«нет сигнала» — полноценный результат" />
                 </div>
+                {ledgerSummary.overdue > 0 && (
+                  <p className="mb-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-100">
+                    Срок горизонта уже прошёл у {ledgerSummary.overdue} из {ledgerSummary.loaded} записей
+                    в загруженной части архива, и исход по ним не будет посчитан: оценку остановили
+                    вместе с выдачей 31.10.2026. Записи не удаляются и не переписываются — это архив
+                    того, что сайт обещал, вместе с тем, чем это кончилось.
+                  </p>
+                )}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {data.forecasts.map((forecast) => (
                     <ForecastLedgerCard key={forecast.forecastId} forecast={forecast} />

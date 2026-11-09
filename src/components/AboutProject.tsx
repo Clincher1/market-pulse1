@@ -159,7 +159,7 @@ export default function AboutProject() {
                   key={step.title}
                   className="relative rounded-3xl border border-white/10 bg-[#0B1528]/88 p-5"
                 >
-                  <span className="absolute right-5 top-4 text-xs font-black tracking-widest text-slate-600">
+                  <span className="absolute right-5 top-4 text-xs font-black tracking-widest text-slate-400">
                     0{index + 1}
                   </span>
                   <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-cyan-400/20 via-blue-500/20 to-violet-500/20 text-cyan-200">

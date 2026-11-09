@@ -34,7 +34,7 @@ export default function Footer() {
             </a>
             <a
               href="#guide"
-              aria-label="Открыть методологию Market Pulse"
+              aria-label="Методология: как читать этот сайт"
               className="inline-flex min-h-10 items-center gap-2 rounded-full border border-rose-300/25 bg-rose-400/10 px-4 py-2 text-sm font-extrabold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300/60 hover:bg-rose-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:translate-y-0"
             >
               <BookOpen className="h-4 w-4 text-rose-200" />

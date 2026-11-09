@@ -344,7 +344,7 @@ export default function BusinessMoney() {
                     </span>
                   )}
                   {fact.secondary.note && (
-                    <span className="text-slate-500">· {fact.secondary.note}</span>
+                    <span className="text-slate-400">· {fact.secondary.note}</span>
                   )}
                 </div>
               )}

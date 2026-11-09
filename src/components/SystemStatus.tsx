@@ -362,7 +362,12 @@ export default function SystemStatus() {
                   Новостные ленты
                 </span>
               </div>
-              <div className="overflow-x-auto">
+              <div
+                className="overflow-x-auto focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+                tabIndex={0}
+                role="group"
+                aria-label="Новостные ленты: таблица прокручивается по горизонтали стрелками."
+              >
                 <table className="w-full text-left text-sm">
                   <thead className="text-xs uppercase tracking-wide text-text-secondary">
                     <tr>

@@ -117,7 +117,10 @@ const navItems = [
 
 export default function AnalyticsGuide() {
   return (
-    <div className="space-y-6 lg:space-y-8">
+    // id="guide" — адрес экрана гида: по нему ведут ссылки «Гид» из шапки,
+    // подвала и карточки-тизера. Без самого элемента такой переход работает
+    // только через hashchange-роутер, а как якорь ведёт в никуда.
+    <div id="guide" className="scroll-mt-24 space-y-6 lg:space-y-8">
       <section
         id="guide-start"
         className="scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-6 shadow-lg lg:p-8"
@@ -189,7 +192,12 @@ export default function AnalyticsGuide() {
           Почти все ошибки чтения рынка происходят от смешивания этих трёх вещей. На
           сайте они разведены по разделам и по оформлению.
         </p>
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+          tabIndex={0}
+          role="group"
+          aria-label="Таблица «факт, измерение, гипотеза»: прокручивается по горизонтали стрелками."
+        >
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="text-xs uppercase tracking-wider text-text-secondary">
               <tr>
@@ -665,7 +673,7 @@ export default function AnalyticsGuide() {
               key={q}
               className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
             >
-              <summary className="cursor-pointer text-sm font-extrabold text-text-primary">
+              <summary className="min-h-6 cursor-pointer py-1 text-sm font-extrabold text-text-primary">
                 {q}
               </summary>
               <p className="mt-2 text-sm leading-relaxed text-text-secondary">{a}</p>

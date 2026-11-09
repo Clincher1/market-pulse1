@@ -247,7 +247,15 @@ export function createOriginServer({ rootDir, supabaseUrl, apiDir, log = () => {
     const file = apiModules[pathname];
     if (!file || !apiDir) return null;
     if (!api.has(pathname)) {
-      api.set(pathname, import(new URL(`file://${resolve(apiDir, file)}`).href));
+      const loading = import(new URL(`file://${resolve(apiDir, file)}`).href);
+      api.set(pathname, loading);
+      // Упавший импорт не должен остаться в кэше навсегда: файл мог не
+      // доехать при выкладке (или быть заменён посреди неё), и один сбой на
+      // старте сделал бы адрес мёртвым до перезапуска процесса. Снимаем
+      // запись с ошибкой, чтобы следующая попытка читала диск заново.
+      loading.catch(() => {
+        if (api.get(pathname) === loading) api.delete(pathname);
+      });
     }
     const module = await api.get(pathname);
     return module.default ?? module.handler ?? null;

@@ -221,6 +221,50 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
       ? `${linePath} L ${points[points.length - 1].x} ${chartBottom} L ${points[0].x} ${chartBottom} Z`
       : '';
   const selected = points[Math.min(selectedIndex, points.length - 1)];
+  /**
+   * Тридцать точек на 320 px — это меньше 10 px на точку. Отдельная кнопка на
+   * каждую точку там физически не может быть 24 px и не может не пересекаться
+   * с соседней, поэтому график — один фокусируемый блок: стрелки выбирают день,
+   * мышь и палец — ближайшую точку. Так же сделаны график ОФЗ и история рядов.
+   */
+  const pickNearest = (clientX: number, element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    if (!rect.width) return;
+    const viewX = ((clientX - rect.left) / rect.width) * width;
+    const left = points[0].x;
+    const right = points[points.length - 1].x;
+    const fraction = right > left ? (viewX - left) / (right - left) : 0;
+    let nearest = 0;
+    let best = Number.POSITIVE_INFINITY;
+    points.forEach((point, index) => {
+      const distance = Math.abs(point.x - (left + fraction * (right - left)));
+      if (distance < best) {
+        best = distance;
+        nearest = index;
+      }
+    });
+    setSelectedIndex(nearest);
+  };
+  const handlePointer = (event: React.PointerEvent<HTMLDivElement>) => {
+    pickNearest(event.clientX, event.currentTarget);
+  };
+  const handleKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    const lastIndex = points.length - 1;
+    const current = Math.min(selectedIndex, lastIndex);
+    const next =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? lastIndex
+          : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+            ? Math.max(0, current - 1)
+            : Math.min(lastIndex, current + 1);
+    setSelectedIndex(next);
+  };
   const selectedLeft = `${(selected.x / width) * 100}%`;
   const selectedTop = `${(selected.y / height) * 100}%`;
   const tooltipTranslateX =
@@ -232,7 +276,15 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
 
   return (
     <div>
-      <div className="relative">
+      <div
+        className="relative touch-pan-y focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+        tabIndex={0}
+        role="group"
+        aria-label={`История напряжённости: ${points.length} точек с ${points[0].day} по ${last.day}. Стрелками влево и вправо выбирается день, значение показывается подсказкой.`}
+        onPointerMove={handlePointer}
+        onPointerDown={handlePointer}
+        onKeyDown={handleKey}
+      >
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="h-auto w-full overflow-visible"
@@ -325,21 +377,15 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
             const isSelected = index === Math.min(selectedIndex, points.length - 1);
             return (
               <g key={`${point.day}-${index}`}>
-                {/* Системная подсказка <title> давала белую рамку браузера
-                    поверх своей тёмной: значение уже показывает подсказка
-                    компонента, поэтому здесь только aria-label. */}
+                {/* Точка — рисунок, а не кнопка: выбор делает контейнер графика
+                    (pointer + стрелки). aria-hidden снимает с неё вопросы
+                    озвучки, ответы на них уже есть в подписи группы. */}
                 <circle
                   cx={point.x}
                   cy={point.y}
                   r="13"
                   fill="transparent"
-                  className="cursor-pointer"
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`${point.day}: индекс ${Math.round(point.value)} из 100`}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  onFocus={() => setSelectedIndex(index)}
-                  onClick={() => setSelectedIndex(index)}
+                  aria-hidden="true"
                 />
                 <circle
                   cx={point.x}
@@ -367,6 +413,10 @@ function TensionHistoryChart({ history }: { history: TensionPoint[] }) {
 
         {selected && (
           <div
+            // role="status": выбранный день озвучивается при движении стрелками
+            // и при ведении пальцем — подсказка видна только глазами.
+            role="status"
+            aria-live="polite"
             className="pointer-events-none absolute z-10 rounded-xl border border-white/15 bg-[#111827]/96 px-3 py-2 text-center shadow-xl"
             style={{
               left: selectedLeft,
@@ -522,7 +572,7 @@ export default function TensionScale() {
             <div className="mt-8 h-20 w-44 animate-pulse rounded-3xl bg-white/[0.06]" />
             <div className="mt-8 h-8 animate-pulse rounded-full bg-white/[0.07]" />
             <div className="mt-8 h-48 animate-pulse rounded-3xl bg-white/[0.045]" />
-            <p className="mt-5 text-xs leading-relaxed text-slate-500">
+            <p className="mt-5 text-xs leading-relaxed text-slate-400">
               Пока нет ответа сервера, демонстрационное значение не подставляется:
               лучше короткая загрузка, чем число, которое выглядит живым.
             </p>
@@ -590,7 +640,7 @@ export default function TensionScale() {
                   ? ' — в окно попали не все ленты, взгляд уже, чем заявлено'
                   : ''}
                 .{' '}
-                <span className="text-slate-500">
+                <span className="text-slate-400">
                   Это состав всего потока, а не выборки индекса: повторы заголовков здесь
                   не схлопываются, поэтому сумма может быть больше числа новостей под
                   шкалой.
@@ -687,13 +737,13 @@ export default function TensionScale() {
               <TensionHistoryChart history={data.history} />
               {/* Семь предложений подряд закрывали сам график. На виду остаётся
                   то, без чего точку нельзя прочитать; остальное раскрывается. */}
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
                 Одна точка — один день, а не среднее за день: завершённый день больше не
                 меняется, сегодняшняя точка пересчитывается при каждом запуске. Пропуск в
                 наблюдениях виден как разрыв.
               </p>
-              <details className="mt-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-500">
-                <summary className="cursor-pointer select-none font-bold text-slate-400 transition-colors hover:text-slate-200">
+              <details className="mt-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-400">
+                <summary className="min-h-6 cursor-pointer select-none py-1 font-bold text-slate-400 transition-colors hover:text-slate-200">
                   Как читать график
                 </summary>
                 <p className="mt-1.5">
