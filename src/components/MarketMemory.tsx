@@ -26,6 +26,7 @@ import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
 import ExpandHint from './ExpandHint';
 import { formatPercent, formatSharePercent } from '@/lib/percent';
+import { horizonLabel, horizonOutlook } from '@/lib/forecastHorizon';
 import { startPolling } from '@/lib/polling';
 import {
   fetchMarketMemory,
@@ -408,13 +409,17 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
   const meta = directionMeta(forecast.direction);
   const Icon = meta.Icon;
   const evaluated = forecast.outcomeStatus === 'evaluated';
+  // Не «ждёт горизонт и цены»: у записей от 23–31 октября горизонт в 1–3
+  // торговых дня давно наступил, цены на сайте есть, а исхода нет — оценку
+  // остановили вместе с выдачей. Пишем то, что есть, и называем дату.
+  const outlook = horizonOutlook(forecast);
   const outcomeLabel = evaluated
     ? forecast.direction === 'none'
       ? 'воздержание проверено'
       : forecast.directionHit
         ? 'направление совпало'
         : 'направление не совпало'
-    : 'ждёт горизонт и цены';
+    : horizonLabel(outlook, (iso) => formatDate(iso));
 
   return (
     <article className="rounded-xl2 border border-border-subtle bg-bg-card p-5 shadow-lg">
@@ -449,8 +454,18 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
 
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs">
         <span className="font-semibold text-text-secondary">{outcomeLabel}</span>
-        <span className={`font-extrabold tabular-nums ${forecast.returnPct !== undefined && forecast.returnPct < 0 ? 'text-negative' : 'text-positive'}`}>
-          {evaluated ? formatPct(forecast.returnPct) : 'pending'}
+        {/* «Не оценён» не красим ни зелёным, ни красным: это не результат,
+            а отсутствие результата. Цвет здесь читался бы как вывод. */}
+        <span
+          className={`font-extrabold tabular-nums ${
+            !evaluated
+              ? 'text-text-secondary'
+              : forecast.returnPct !== undefined && forecast.returnPct < 0
+                ? 'text-negative'
+                : 'text-positive'
+          }`}
+        >
+          {evaluated ? formatPct(forecast.returnPct) : 'не оценён'}
         </span>
       </div>
       <div className="mt-1 text-[11px] text-text-secondary">
@@ -636,10 +651,18 @@ export default function MarketMemory() {
     const evaluatedDirectional = forecasts.filter(
       (forecast) => forecast.outcomeStatus === 'evaluated' && forecast.direction !== 'none',
     );
+    // Сколько записей уже не дождутся исхода: срок горизонта прошёл, а оценку
+    // остановили вместе с выдачей. Число считаем по тем строкам, что загружены,
+    // и называем это в подписи — «в загруженной части архива».
+    const overdue = forecasts.filter((forecast) => horizonOutlook(forecast).state === 'overdue').length;
+    const waiting = forecasts.filter((forecast) => horizonOutlook(forecast).state === 'waiting').length;
     return {
       evaluatedDirectional: evaluatedDirectional.length,
       hits: evaluatedDirectional.filter((forecast) => forecast.directionHit).length,
       abstentions: forecasts.filter((forecast) => forecast.direction === 'none').length,
+      overdue,
+      waiting,
+      loaded: forecasts.length,
     };
   }, [data?.forecasts]);
 
@@ -874,6 +897,14 @@ export default function MarketMemory() {
                   <StatCard label="Совпадений направления v2" value={String(ledgerSummary.hits)} hint={ledgerSummary.evaluatedDirectional >= 30 ? 'можно начинать смотреть hit-rate' : 'точность пока не публикуем как вывод'} />
                   <StatCard label="Воздержаний v2" value={String(ledgerSummary.abstentions)} hint="«нет сигнала» — полноценный результат" />
                 </div>
+                {ledgerSummary.overdue > 0 && (
+                  <p className="mb-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-100">
+                    Срок горизонта уже прошёл у {ledgerSummary.overdue} из {ledgerSummary.loaded} записей
+                    в загруженной части архива, и исход по ним не будет посчитан: оценку остановили
+                    вместе с выдачей 31.10.2026. Записи не удаляются и не переписываются — это архив
+                    того, что сайт обещал, вместе с тем, чем это кончилось.
+                  </p>
+                )}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {data.forecasts.map((forecast) => (
                     <ForecastLedgerCard key={forecast.forecastId} forecast={forecast} />
