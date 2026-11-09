@@ -500,7 +500,7 @@ function EventFilterRow({
               }`}
             >
               <span>{option.label}</span>
-              <span className={active ? 'text-blue-100' : 'text-slate-400'}>{option.count}</span>
+              <span className={active ? 'text-white' : 'text-slate-400'}>{option.count}</span>
             </button>
           );
         })}
@@ -760,7 +760,7 @@ export default function MarketMemory() {
                 aria-pressed={active}
                 className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-300 ${
                   active
-                    ? 'bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/25'
+                    ? 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/25'
                     : 'border border-white/12 bg-white/5 text-slate-200 hover:border-fuchsia-300/50 hover:bg-fuchsia-400/10'
                 }`}
               >

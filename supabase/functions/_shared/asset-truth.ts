@@ -125,8 +125,29 @@ export function checkChangeAgainstSeries(row: AssetRowLike): ChangeVerdict {
   // не пополнился, и требовать совпадения с ним — значит требовать неправды.
   const lastSeriesDate = lastSeriesDateIso(row);
   const asOfDate = isoDate(row.as_of);
-  const quoteIsNewer = Boolean(lastSeriesDate && asOfDate && asOfDate > lastSeriesDate);
   const priceValue = parsePriceNumber(row.price ?? null);
+
+  // Одной даты для этого мало. 08–09.11.2026 проверка восемь часов подряд
+  // краснела на верной плитке: ряд заканчивался пятницей 06.11, цена была
+  // живой кавычкой понедельника, но `as_of` в тот момент тоже стоял 06.11 —
+  // писатель обновил цену раньше, чем отметку времени. Формулы «дата позже»
+  // здесь не хватает, потому что дата совпала.
+  //
+  // Признак, который отличает кавычку от закрытия, наблюдаемый: цена просто
+  // не равна последней точке ряда. Если она равна (в пределах той точности,
+  // с какой напечатана), то это и есть закрытие, и работают две точки ряда.
+  // Именно этот случай ловил настоящий дефект 01.11: цена = последняя точка,
+  // а изменение подменили нулём.
+  const priceEqualsLast =
+    priceValue !== null && formatLikePrice(last, row.price) === formatLikePrice(priceValue, row.price);
+  const quoteIsNewer = Boolean(
+    lastSeriesDate &&
+      priceValue !== null &&
+      !priceEqualsLast &&
+      // Кавычка не может быть старше ряда: если as_of раньше последней точки,
+      // расхождение — это расхождение, а не другая база.
+      (!asOfDate || asOfDate >= lastSeriesDate),
+  );
 
   if (quoteIsNewer) {
     if (!(priceValue !== null && priceValue > 0)) {

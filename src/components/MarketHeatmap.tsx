@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ExternalLink,
   Globe,
@@ -8,17 +8,17 @@ import {
   TrendingDown,
   TrendingUp,
   X,
-} from 'lucide-react';
-import { moscowClock, observationLabel } from '@/lib/asOf';
-import { formatCapPercent, formatPercent } from '@/lib/percent';
-import { formatPriceText } from '@/lib/price';
-import { AssetData } from '@/data/marketTypes';
-import ExpandHint from './ExpandHint';
+} from "lucide-react";
+import { moscowClock, observationLabel } from "@/lib/asOf";
+import { formatCapPercent, formatPercent } from "@/lib/percent";
+import { formatPriceText } from "@/lib/price";
+import { AssetData } from "@/data/marketTypes";
+import ExpandHint from "./ExpandHint";
 import {
   fetchAssetPriceHistory,
   type AssetHistoryPoint,
   type AssetPriceHistory,
-} from '@/data/assetPriceHistory';
+} from "@/data/assetPriceHistory";
 
 /**
  * Временные визуальные шкалы насыщенности, в процентах изменения.
@@ -29,7 +29,7 @@ import {
  * статистический z-score. Точный процент всегда напечатан на плитке.
  */
 const SATURATION_CAPS: Record<string, number> = {
-  'usd-eur': 0.8,
+  "usd-eur": 0.8,
   sp500: 2,
   gold: 2.5,
   brent: 4,
@@ -44,15 +44,15 @@ type Rgb = [number, number, number];
  * приходит позже календарного дня, и подпись обязана это честно отражать.
  */
 const HORIZON_OPTIONS = [
-  { id: 'day', label: 'День', accusative: 'день', intervals: 1 },
-  { id: 'week', label: 'Неделя', accusative: 'неделю', intervals: 5 },
-  { id: 'month', label: 'Месяц', accusative: 'месяц', intervals: 29 },
+  { id: "day", label: "День", accusative: "день", intervals: 1 },
+  { id: "week", label: "Неделя", accusative: "неделю", intervals: 5 },
+  { id: "month", label: "Месяц", accusative: "месяц", intervals: 29 },
 ] as const;
 
-type HorizonId = (typeof HORIZON_OPTIONS)[number]['id'];
-type PaletteId = 'standard' | 'colorblind';
+type HorizonId = (typeof HORIZON_OPTIONS)[number]["id"];
+type PaletteId = "standard" | "colorblind";
 
-const PALETTE_STORAGE_KEY = 'market-pulse-heatmap-palette';
+const PALETTE_STORAGE_KEY = "market-pulse-heatmap-palette";
 
 const NEUTRAL: Rgb = [30, 41, 59];
 
@@ -63,19 +63,29 @@ const NEUTRAL: Rgb = [30, 41, 59];
  */
 const PALETTES: Record<
   PaletteId,
-  { tilePositive: Rgb; tileNegative: Rgb; linePositive: string; lineNegative: string }
+  {
+    tilePositive: Rgb;
+    tileNegative: Rgb;
+    linePositive: string;
+    lineNegative: string;
+  }
 > = {
   standard: {
-    tilePositive: [5, 150, 105],
-    tileNegative: [220, 38, 38],
-    linePositive: '#34d399',
-    lineNegative: '#f87171',
+    // Заливка темнее, чем «яркий» emerald/red: белый текст на плите держится
+    // только на тёмном конце шкалы. Замер 09.11.2026: на прежнем [5, 150, 105]
+    // белый даже без прозрачности давал 3,77:1, а подписи с text-white/65 —
+    // 2,93:1. Здесь 5,48:1 и 6,54:1, подписи при /95 — не ниже 4,7:1.
+    // Насыщенность по-прежнему кодирует величину, число рядом остаётся точным.
+    tilePositive: [4, 120, 87],
+    tileNegative: [185, 28, 28],
+    linePositive: "#34d399",
+    lineNegative: "#f87171",
   },
   colorblind: {
-    tilePositive: [2, 132, 199],
-    tileNegative: [234, 88, 12],
-    linePositive: '#38bdf8',
-    lineNegative: '#fb923c',
+    tilePositive: [3, 105, 161],
+    tileNegative: [194, 65, 12],
+    linePositive: "#38bdf8",
+    lineNegative: "#fb923c",
   },
 };
 
@@ -91,7 +101,9 @@ function rgbString([r, g, b]: Rgb): string {
 }
 
 function horizonOption(id: HorizonId) {
-  return HORIZON_OPTIONS.find((option) => option.id === id) ?? HORIZON_OPTIONS[0];
+  return (
+    HORIZON_OPTIONS.find((option) => option.id === id) ?? HORIZON_OPTIONS[0]
+  );
 }
 
 /**
@@ -104,14 +116,19 @@ function horizonChange(
   asset: AssetData,
   horizonId: HorizonId,
 ): { change: number | null; intervals: number } {
-  const points = (asset.sparkline ?? []).filter((value) => Number.isFinite(value));
-  if (horizonId === 'day') {
-    if (typeof asset.change === 'number' && Number.isFinite(asset.change)) {
+  const points = (asset.sparkline ?? []).filter((value) =>
+    Number.isFinite(value),
+  );
+  if (horizonId === "day") {
+    if (typeof asset.change === "number" && Number.isFinite(asset.change)) {
       return { change: asset.change, intervals: 1 };
     }
   }
   if (points.length < 2) return { change: null, intervals: 0 };
-  const intervals = Math.min(horizonOption(horizonId).intervals, points.length - 1);
+  const intervals = Math.min(
+    horizonOption(horizonId).intervals,
+    points.length - 1,
+  );
   const base = points[points.length - 1 - intervals];
   const last = points[points.length - 1];
   if (!base) return { change: null, intervals };
@@ -135,9 +152,9 @@ function formatCap(cap: number): string {
 function observationsWord(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return 'наблюдение';
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'наблюдения';
-  return 'наблюдений';
+  if (m10 === 1 && m100 !== 11) return "наблюдение";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return "наблюдения";
+  return "наблюдений";
 }
 
 function tileColor(change: number, cap: number, paletteId: PaletteId): string {
@@ -146,23 +163,27 @@ function tileColor(change: number, cap: number, paletteId: PaletteId): string {
   // Square-root easing makes small but real moves visible without
   // pretending that colour is a precise measurement. The number is exact.
   const intensity = Math.sqrt(rawIntensity);
-  return mix(NEUTRAL, change >= 0 ? palette.tilePositive : palette.tileNegative, intensity);
+  return mix(
+    NEUTRAL,
+    change >= 0 ? palette.tilePositive : palette.tileNegative,
+    intensity,
+  );
 }
 
 function directionalTextClass(value: number, paletteId: PaletteId): string {
-  if (paletteId === 'colorblind') {
-    return value >= 0 ? 'text-sky-300' : 'text-orange-300';
+  if (paletteId === "colorblind") {
+    return value >= 0 ? "text-sky-300" : "text-orange-300";
   }
-  return value >= 0 ? 'text-emerald-300' : 'text-red-300';
+  return value >= 0 ? "text-emerald-300" : "text-red-300";
 }
 
 function readInitialPalette(): PaletteId {
   try {
-    return window.localStorage.getItem(PALETTE_STORAGE_KEY) === 'colorblind'
-      ? 'colorblind'
-      : 'standard';
+    return window.localStorage.getItem(PALETTE_STORAGE_KEY) === "colorblind"
+      ? "colorblind"
+      : "standard";
   } catch {
-    return 'standard';
+    return "standard";
   }
 }
 
@@ -174,7 +195,7 @@ function formatChange(change: number): string {
 function formatValue(value: number): string {
   const abs = Math.abs(value);
   const digits = abs < 2 ? 4 : abs < 1000 ? 2 : 0;
-  return value.toLocaleString('ru-RU', {
+  return value.toLocaleString("ru-RU", {
     minimumFractionDigits: 0,
     maximumFractionDigits: digits,
   });
@@ -183,9 +204,9 @@ function formatValue(value: number): string {
 function daysWord(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return 'торговый день';
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'торговых дня';
-  return 'торговых дней';
+  if (m10 === 1 && m100 !== 11) return "торговый день";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return "торговых дня";
+  return "торговых дней";
 }
 
 const HISTORY_RANGE_OPTIONS = [30, 90, 180] as const;
@@ -198,40 +219,41 @@ function dateMs(date: string): number {
 }
 
 function formatDateShort(dateOrMs: string | number): string {
-  const value = typeof dateOrMs === 'number' ? dateOrMs : dateMs(dateOrMs);
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'UTC',
+  const value = typeof dateOrMs === "number" ? dateOrMs : dateMs(dateOrMs);
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
   }).format(value);
 }
 
 function formatDateLong(date: string): string {
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
   }).format(dateMs(date));
 }
 
 function calendarDaysWord(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return 'календарный день';
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'календарных дня';
-  return 'календарных дней';
+  if (m10 === 1 && m100 !== 11) return "календарный день";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14))
+    return "календарных дня";
+  return "календарных дней";
 }
 
 function todayInMoscow(): string {
   try {
     // en-CA renders an ISO-like YYYY-MM-DD date in modern browsers.
-    const formatted = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Moscow',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+    const formatted = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Moscow",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     }).format(new Date());
     if (/^\d{4}-\d{2}-\d{2}$/.test(formatted)) return formatted;
   } catch {
@@ -243,9 +265,11 @@ function todayInMoscow(): string {
 function lagPhrase(lastObservationDate: string): string {
   const lagDays = Math.max(
     0,
-    Math.round((dateMs(todayInMoscow()) - dateMs(lastObservationDate)) / DAY_MS),
+    Math.round(
+      (dateMs(todayInMoscow()) - dateMs(lastObservationDate)) / DAY_MS,
+    ),
   );
-  if (lagDays === 0) return 'сегодня по календарю источника';
+  if (lagDays === 0) return "сегодня по календарю источника";
   return `отстаёт от сегодняшней даты на ${lagDays} ${calendarDaysWord(lagDays)}`;
 }
 
@@ -261,41 +285,41 @@ interface AssetSourceMeta {
  * чтобы посетитель мог проверить цифры у первоисточника.
  */
 const ASSET_SOURCE_META: Record<string, AssetSourceMeta> = {
-  'usd-eur': {
-    provider: 'Европейский центральный банк',
-    series: 'Референсный курс EUR (пересчёт в USD/EUR)',
-    url: 'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html',
-    note: 'Дневные референсные курсы ЕЦБ.',
+  "usd-eur": {
+    provider: "Европейский центральный банк",
+    series: "Референсный курс EUR (пересчёт в USD/EUR)",
+    url: "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    note: "Дневные референсные курсы ЕЦБ.",
   },
   sp500: {
-    provider: 'Yahoo Finance',
-    series: '^GSPC — индекс S&P 500, дневное закрытие',
-    url: 'https://finance.yahoo.com/quote/%5EGSPC',
-    note: 'Закрытие дня по индексу S&P 500. Последнее значение — закрытие последней завершённой сессии, поэтому может отставать от календарной даты на день-два.',
+    provider: "Yahoo Finance",
+    series: "^GSPC — индекс S&P 500, дневное закрытие",
+    url: "https://finance.yahoo.com/quote/%5EGSPC",
+    note: "Закрытие дня по индексу S&P 500. Последнее значение — закрытие последней завершённой сессии, поэтому может отставать от календарной даты на день-два.",
   },
   brent: {
-    provider: 'Yahoo Finance',
-    series: 'BZ=F — фьючерс Brent, $/баррель',
-    url: 'https://finance.yahoo.com/quote/BZ%3DF',
-    note: 'Это фьючерс ближайшего месяца на Brent (NYMEX), а не спот EIA. Спот и фьючерс расходятся на несколько долларов, поэтому плитка называет инструмент, а не только сорт нефти.',
+    provider: "Yahoo Finance",
+    series: "BZ=F — фьючерс Brent, $/баррель",
+    url: "https://finance.yahoo.com/quote/BZ%3DF",
+    note: "Это фьючерс ближайшего месяца на Brent (NYMEX), а не спот EIA. Спот и фьючерс расходятся на несколько долларов, поэтому плитка называет инструмент, а не только сорт нефти.",
   },
   gold: {
-    provider: 'Twelve Data',
-    series: 'XAU/USD — спот золота',
-    url: 'https://twelvedata.com',
-    note: 'Дневные значения спот-рынка золота.',
+    provider: "Twelve Data",
+    series: "XAU/USD — спот золота",
+    url: "https://twelvedata.com",
+    note: "Дневные значения спот-рынка золота.",
   },
   btc: {
-    provider: 'Kraken',
-    series: 'XBT/USD — дневные свечи',
-    url: 'https://www.kraken.com',
-    note: 'Крипторынок торгуется без выходных, поэтому этот ряд идёт и по субботам с воскресеньями.',
+    provider: "Kraken",
+    series: "XBT/USD — дневные свечи",
+    url: "https://www.kraken.com",
+    note: "Крипторынок торгуется без выходных, поэтому этот ряд идёт и по субботам с воскресеньями.",
   },
 };
 
 /** Значения плитки печатаются одинаково: два знака, запятая, пробел между тысячами. */
 function formatWindowValue(value: number): string {
-  return new Intl.NumberFormat('ru-RU', {
+  return new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
@@ -316,7 +340,9 @@ function TileSparkline({ values }: { values: number[] }) {
     const y = range === 0 ? 14 : 3 + ((max - value) / range) * 22;
     return { x, y };
   });
-  const line = coordinates.map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+  const line = coordinates
+    .map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`)
+    .join(" ");
   const area = `0,28 ${line} 100,28`;
   const last = coordinates[coordinates.length - 1];
 
@@ -358,92 +384,114 @@ function HeatTile({
   onSelect: (id: string) => void;
 }) {
   const horizon = horizonOption(horizonId);
-  const { change: horizonChangeValue, intervals } = horizonChange(asset, horizonId);
+  const { change: horizonChangeValue, intervals } = horizonChange(
+    asset,
+    horizonId,
+  );
   const change = horizonChangeValue ?? 0;
   const cap = horizonCap(asset.id, intervals);
   const nearlyFlat = horizonChangeValue === null || Math.abs(change) < 0.005;
-  const DirectionIcon = nearlyFlat ? Minus : change > 0 ? TrendingUp : TrendingDown;
+  const DirectionIcon = nearlyFlat
+    ? Minus
+    : change > 0
+      ? TrendingUp
+      : TrendingDown;
   const observed = observationLabel(asset.asOf);
   const asOf = moscowClock(asset.updatedAt);
   const tooltip =
     `${asset.name}: ${formatPriceText(asset.price)}` +
     // Если источник сказал, на какой момент верна цена, показываем именно это.
     // Если нет — только время записи в кэш, и тогда «обновлено», а не «на».
-    (observed
-      ? `, цена ${observed}`
-      : asOf
-        ? `, обновлено ${asOf} МСК`
-        : '') +
+    (observed ? `, цена ${observed}` : asOf ? `, обновлено ${asOf} МСК` : "") +
     `, изменение за горизонт «${horizon.label}» ` +
     `(${intervals} ${observationsWord(intervals)} источника): ` +
-    `${horizonChangeValue === null ? 'недостаточно данных' : formatChange(change)}. ` +
+    `${horizonChangeValue === null ? "недостаточно данных" : formatChange(change)}. ` +
     `Насыщенность цвета нормирована к шкале ±${formatCap(cap)} для этого актива и горизонта. ` +
-    'Белая мини-линия показывает форму последних сохранённых значений без оси цены и времени: точки стоят на равном расстоянии, поэтому пропуски в датах на ней не видны. ' +
-    'Площадь плитки одинакова для всех активов и ничего не кодирует. ' +
-    'Нажмите на плитку, чтобы развернуть график, статистику периода, диапазон сохранённых значений и источник данных.' +
+    "Белая мини-линия показывает форму последних сохранённых значений без оси цены и времени: точки стоят на равном расстоянии, поэтому пропуски в датах на ней не видны. " +
+    "Площадь плитки одинакова для всех активов и ничего не кодирует. " +
+    "Нажмите на плитку, чтобы развернуть график, статистику периода, диапазон сохранённых значений и источник данных." +
     (isFallback
-      ? ' Внимание: свежая цена для этой плитки не получена, поэтому цена и изменение не показаны.'
-      : '');
+      ? " Внимание: свежая цена для этой плитки не получена, поэтому цена и изменение не показаны."
+      : "");
 
   return (
-    <button
-      type="button"
-      id={`heat-tile-${asset.id}`}
-      title={tooltip}
-      aria-label={tooltip}
-      aria-expanded={isSelected}
-      aria-controls="asset-panel"
-      onClick={() => onSelect(asset.id)}
-      className={`flex min-h-[202px] w-full cursor-pointer flex-col rounded-xl border p-4 text-left text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
-        isSelected
-          ? 'border-cyan-200/70 ring-2 ring-cyan-300'
-          : 'border-white/10'
-      }`}
-      style={{
-        backgroundColor: isFallback ? 'rgb(51, 65, 85)' : tileColor(change, cap, paletteId),
-      }}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-extrabold tracking-wide">{asset.name}</span>
-        <DirectionIcon className="h-4 w-4 shrink-0 opacity-90" aria-hidden="true" />
-      </div>
-      {isFallback && (
-        <span className="mt-2 inline-flex w-fit rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100">
-          нет свежей цены
-        </span>
-      )}
-
-      <div className="mt-3 text-xl font-extrabold tabular-nums leading-none">
-        {isFallback ? '—' : formatPriceText(asset.price)}
-      </div>
-
-      {!isFallback && (observed || asset.updatedAt) && (
-        <div className="mt-1 text-[11px] font-semibold text-white/70">
-          {observed || `обновлено ${asOf} МСК`}
+    <>
+      <button
+        type="button"
+        id={`heat-tile-${asset.id}`}
+        title={tooltip}
+        // Имя кнопки собирается из её же видимого текста, а не из aria-label:
+        // длинное описание в aria-label не содержало видимых строк («шкала ±…»,
+        // «Нажмите, чтобы развернуть»), и axe справедливо ругался
+        // label-content-name-mismatch (WCAG 2.5.3 «Label in Name»).
+        // Описание уходит в aria-describedby — так оно читается после имени.
+        aria-describedby={`heat-help-${asset.id}`}
+        aria-expanded={isSelected}
+        aria-controls="asset-panel"
+        onClick={() => onSelect(asset.id)}
+        className={`flex min-h-[202px] w-full cursor-pointer flex-col rounded-xl border p-4 text-left text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+          isSelected
+            ? "border-cyan-200/70 ring-2 ring-cyan-300"
+            : "border-white/10"
+        }`}
+        style={{
+          backgroundColor: isFallback
+            ? "rgb(51, 65, 85)"
+            : tileColor(change, cap, paletteId),
+        }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-sm font-extrabold tracking-wide">
+            {asset.name}
+          </span>
+          <DirectionIcon
+            className="h-4 w-4 shrink-0 opacity-90"
+            aria-hidden="true"
+          />
         </div>
-      )}
+        {isFallback && (
+          <span className="mt-2 inline-flex w-fit rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100">
+            нет свежей цены
+          </span>
+        )}
 
-      <div className="mt-3 flex items-end justify-between gap-2">
-        <span className="text-base font-extrabold tabular-nums">
-          {isFallback || horizonChangeValue === null ? '—' : formatChange(nearlyFlat ? 0 : change)}
-        </span>
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-white/65">
-          шкала ±{formatCap(cap)}
-        </span>
-      </div>
+        <div className="mt-3 text-xl font-extrabold tabular-nums leading-none">
+          {isFallback ? "—" : formatPriceText(asset.price)}
+        </div>
 
-      <div className="mt-auto pt-3">
-        <TileSparkline values={asset.sparkline ?? []} />
-      </div>
+        {!isFallback && (observed || asset.updatedAt) && (
+          <div className="mt-1 text-[11px] font-semibold text-white/95">
+            {observed || `обновлено ${asOf} МСК`}
+          </div>
+        )}
 
-      <ExpandHint
-        expanded={isSelected}
-        closedLabel="Нажмите, чтобы развернуть"
-        openLabel="Нажмите, чтобы свернуть"
-        testId="heat-tile-expand-hint"
-        className="mt-3 w-full justify-center border-white/40 bg-black/25 px-2 text-center leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
-      />
-    </button>
+        <div className="mt-3 flex items-end justify-between gap-2">
+          <span className="text-base font-extrabold tabular-nums">
+            {isFallback || horizonChangeValue === null
+              ? "—"
+              : formatChange(nearlyFlat ? 0 : change)}
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-white/95">
+            шкала ±{formatCap(cap)}
+          </span>
+        </div>
+
+        <div className="mt-auto pt-3">
+          <TileSparkline values={asset.sparkline ?? []} />
+        </div>
+
+        <ExpandHint
+          expanded={isSelected}
+          closedLabel="Нажмите, чтобы развернуть"
+          openLabel="Нажмите, чтобы свернуть"
+          testId="heat-tile-expand-hint"
+          className="mt-3 w-full justify-center border-white/40 bg-black/25 px-2 text-center leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+        />
+      </button>
+      <p id={`heat-help-${asset.id}`} className="sr-only">
+        {tooltip}
+      </p>
+    </>
   );
 }
 
@@ -456,14 +504,14 @@ function AssetChart({
   values,
   paletteId,
   highlightIndex = null,
-  highlightLabel = '',
+  highlightLabel = "",
 }: {
   values: number[];
   paletteId: PaletteId;
   highlightIndex?: number | null;
   highlightLabel?: string;
 }) {
-  const gradientId = useId().replace(/:/g, '');
+  const gradientId = useId().replace(/:/g, "");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const points = values.filter((value) => Number.isFinite(value));
 
@@ -490,7 +538,9 @@ function AssetChart({
     y: padTop + ((max - value) / range) * (height - padTop - padBottom),
     value,
   }));
-  const line = coords.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const line = coords
+    .map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`)
+    .join(" ");
   const area = `0,${height} ${line} ${width},${height}`;
   const first = points[0];
   const last = points[points.length - 1];
@@ -501,19 +551,25 @@ function AssetChart({
       ? palette.linePositive
       : periodChange < -0.005
         ? palette.lineNegative
-        : '#cbd5e1';
+        : "#cbd5e1";
   const highlight =
-    highlightIndex !== null && highlightIndex > 0 && highlightIndex < coords.length
+    highlightIndex !== null &&
+    highlightIndex > 0 &&
+    highlightIndex < coords.length
       ? coords[highlightIndex]
       : null;
   const active = activeIndex !== null ? coords[activeIndex] : null;
   const activePct = active ? (active.x / width) * 100 : 0;
-  const activeOffset = activeIndex !== null ? points.length - 1 - activeIndex : 0;
+  const activeOffset =
+    activeIndex !== null ? points.length - 1 - activeIndex : 0;
 
   const handlePointer = (event: React.PointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     if (rect.width === 0) return;
-    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const ratio = Math.min(
+      1,
+      Math.max(0, (event.clientX - rect.left) / rect.width),
+    );
     setActiveIndex(Math.round(ratio * (points.length - 1)));
   };
 
@@ -521,7 +577,7 @@ function AssetChart({
     <div>
       <div
         className="relative h-52 w-full select-none"
-        style={{ touchAction: 'pan-y' }}
+        style={{ touchAction: "pan-y" }}
         onPointerMove={handlePointer}
         onPointerDown={handlePointer}
         onPointerLeave={() => setActiveIndex(null)}
@@ -575,7 +631,14 @@ function AssetChart({
                 strokeDasharray="4 4"
                 vectorEffect="non-scaling-stroke"
               />
-              <circle cx={highlight.x} cy={highlight.y} r="3.2" fill="#ffffff" stroke={stroke} strokeWidth="1.6" />
+              <circle
+                cx={highlight.x}
+                cy={highlight.y}
+                r="3.2"
+                fill="#ffffff"
+                stroke={stroke}
+                strokeWidth="1.6"
+              />
             </>
           )}
           <circle
@@ -587,7 +650,14 @@ function AssetChart({
             strokeWidth="1.4"
           />
           {active && (
-            <circle cx={active.x} cy={active.y} r="4.2" fill="#ffffff" stroke={stroke} strokeWidth="2" />
+            <circle
+              cx={active.x}
+              cy={active.y}
+              r="4.2"
+              fill="#ffffff"
+              stroke={stroke}
+              strokeWidth="2"
+            />
           )}
         </svg>
 
@@ -609,13 +679,13 @@ function AssetChart({
               className="absolute top-1 whitespace-nowrap rounded-md border border-white/15 bg-[#0B1526]/95 px-2 py-1 text-[11px] font-bold tabular-nums text-white shadow-lg"
               style={{
                 left: `${activePct}%`,
-                transform: `translateX(${activePct < 18 ? '0%' : activePct > 82 ? '-100%' : '-50%'})`,
+                transform: `translateX(${activePct < 18 ? "0%" : activePct > 82 ? "-100%" : "-50%"})`,
               }}
             >
               {formatValue(active.value)}
               <span className="ml-1.5 font-semibold text-white/60">
                 {activeOffset === 0
-                  ? 'последнее закрытие'
+                  ? "последнее закрытие"
                   : `${activeOffset} ${daysWord(activeOffset)} назад`}
               </span>
             </div>
@@ -623,12 +693,13 @@ function AssetChart({
         )}
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
-        Дневные закрытия · последние {points.length} {daysWord(points.length)} · наведите курсор
-        или коснитесь графика, чтобы увидеть значения.
+        Дневные закрытия · последние {points.length} {daysWord(points.length)} ·
+        наведите курсор или коснитесь графика, чтобы увидеть значения.
         {highlight && highlightLabel
           ? ` Пунктир — начало выбранного горизонта (${highlightLabel}).`
-          : ''}{' '}
-        Датированная история временно недоступна, поэтому календарные даты для этих точек не показываются.
+          : ""}{" "}
+        Датированная история временно недоступна, поэтому календарные даты для
+        этих точек не показываются.
       </p>
     </div>
   );
@@ -650,7 +721,7 @@ function DatedAssetChart({
   domainEndMs: number;
   paletteId: PaletteId;
 }) {
-  const gradientId = useId().replace(/:/g, '');
+  const gradientId = useId().replace(/:/g, "");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   if (points.length < 2 || domainEndMs <= domainStartMs) {
@@ -682,18 +753,21 @@ function DatedAssetChart({
       y: padTop + ((max - point.value) / range) * (height - padTop - padBottom),
     };
   });
-  const line = coords.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const line = coords
+    .map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`)
+    .join(" ");
   const area = `${coords[0].x.toFixed(1)},${height} ${line} ${coords[coords.length - 1].x.toFixed(1)},${height}`;
   const first = points[0];
   const last = points[points.length - 1];
-  const periodChange = first.value !== 0 ? ((last.value - first.value) / first.value) * 100 : 0;
+  const periodChange =
+    first.value !== 0 ? ((last.value - first.value) / first.value) * 100 : 0;
   const palette = PALETTES[paletteId];
   const stroke =
     periodChange > 0.005
       ? palette.linePositive
       : periodChange < -0.005
         ? palette.lineNegative
-        : '#cbd5e1';
+        : "#cbd5e1";
   const active = activeIndex !== null ? coords[activeIndex] : null;
   const activePct = active ? (active.x / width) * 100 : 0;
   const tickFractions = [0, 1 / 3, 2 / 3, 1];
@@ -701,7 +775,10 @@ function DatedAssetChart({
   const handlePointer = (event: React.PointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     if (rect.width === 0) return;
-    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const ratio = Math.min(
+      1,
+      Math.max(0, (event.clientX - rect.left) / rect.width),
+    );
     const targetTime = domainStartMs + ratio * domainRange;
     let nearestIndex = 0;
     let nearestDistance = Number.POSITIVE_INFINITY;
@@ -719,7 +796,7 @@ function DatedAssetChart({
     <div>
       <div
         className="relative h-52 w-full select-none"
-        style={{ touchAction: 'pan-y' }}
+        style={{ touchAction: "pan-y" }}
         onPointerMove={handlePointer}
         onPointerDown={handlePointer}
         onPointerLeave={() => setActiveIndex(null)}
@@ -782,7 +859,14 @@ function DatedAssetChart({
             strokeWidth="1.4"
           />
           {active && (
-            <circle cx={active.x} cy={active.y} r="4.2" fill="#ffffff" stroke={stroke} strokeWidth="2" />
+            <circle
+              cx={active.x}
+              cy={active.y}
+              r="4.2"
+              fill="#ffffff"
+              stroke={stroke}
+              strokeWidth="2"
+            />
           )}
         </svg>
 
@@ -805,7 +889,7 @@ function DatedAssetChart({
               className="absolute top-1 whitespace-nowrap rounded-md border border-white/15 bg-[#0B1526]/95 px-2 py-1 text-[11px] font-bold tabular-nums text-white shadow-lg"
               style={{
                 left: `${activePct}%`,
-                transform: `translateX(${activePct < 18 ? '0%' : activePct > 82 ? '-100%' : '-50%'})`,
+                transform: `translateX(${activePct < 18 ? "0%" : activePct > 82 ? "-100%" : "-50%"})`,
               }}
             >
               {formatValue(active.value)}
@@ -817,7 +901,10 @@ function DatedAssetChart({
         )}
       </div>
 
-      <div className="relative mt-1 h-5 text-[11px] font-semibold tabular-nums text-text-secondary" aria-hidden="true">
+      <div
+        className="relative mt-1 h-5 text-[11px] font-semibold tabular-nums text-text-secondary"
+        aria-hidden="true"
+      >
         {tickFractions.map((fraction) => {
           const tickMs = domainStartMs + fraction * domainRange;
           return (
@@ -826,13 +913,13 @@ function DatedAssetChart({
               className="absolute top-0 whitespace-nowrap"
               style={{
                 left: `${fraction * 100}%`,
-                transform: `translateX(${fraction === 0 ? '0%' : fraction === 1 ? '-100%' : '-50%'})`,
+                transform: `translateX(${fraction === 0 ? "0%" : fraction === 1 ? "-100%" : "-50%"})`,
               }}
             >
-              {new Intl.DateTimeFormat('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                timeZone: 'UTC',
+              {new Intl.DateTimeFormat("ru-RU", {
+                day: "2-digit",
+                month: "2-digit",
+                timeZone: "UTC",
               }).format(tickMs)}
             </span>
           );
@@ -840,10 +927,10 @@ function DatedAssetChart({
       </div>
 
       <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
-        Дневные закрытия · {points.length} {observationsWord(points.length)} ·{' '}
-        {formatDateLong(first.date)} — {formatDateLong(last.date)}. Ось X линейна по
-        календарным датам источника; наведите курсор или коснитесь графика, чтобы увидеть
-        точную дату и значение.
+        Дневные закрытия · {points.length} {observationsWord(points.length)} ·{" "}
+        {formatDateLong(first.date)} — {formatDateLong(last.date)}. Ось X
+        линейна по календарным датам источника; наведите курсор или коснитесь
+        графика, чтобы увидеть точную дату и значение.
       </p>
     </div>
   );
@@ -863,13 +950,13 @@ function AssetPanel({
   onClose: () => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const points = (asset.sparkline ?? []).filter((value) => Number.isFinite(value));
+  const points = (asset.sparkline ?? []).filter((value) =>
+    Number.isFinite(value),
+  );
   const last = points[points.length - 1];
   const horizon = horizonOption(horizonId);
-  const {
-    change: selectedChange,
-    intervals: selectedIntervals,
-  } = horizonChange(asset, horizonId);
+  const { change: selectedChange, intervals: selectedIntervals } =
+    horizonChange(asset, horizonId);
   const highlightIndex =
     points.length >= 2 && selectedIntervals > 0
       ? points.length - 1 - selectedIntervals
@@ -879,25 +966,29 @@ function AssetPanel({
   const windowMin = windowValues.length > 0 ? Math.min(...windowValues) : null;
   const windowMax = windowValues.length > 0 ? Math.max(...windowValues) : null;
   const windowPositionPct =
-    windowMin !== null && windowMax !== null && last !== undefined && windowMax > windowMin
+    windowMin !== null &&
+    windowMax !== null &&
+    last !== undefined &&
+    windowMax > windowMin
       ? Math.round(((last - windowMin) / (windowMax - windowMin)) * 100)
       : 0;
-  const [historyRangeDays, setHistoryRangeDays] = useState<HistoryRangeDays>(90);
+  const [historyRangeDays, setHistoryRangeDays] =
+    useState<HistoryRangeDays>(90);
   const [historyState, setHistoryState] = useState<{
     assetId: string;
-    status: 'loading' | 'ready' | 'error';
+    status: "loading" | "ready" | "error";
     history: AssetPriceHistory | null;
-  }>({ assetId: asset.id, status: 'loading', history: null });
+  }>({ assetId: asset.id, status: "loading", history: null });
 
   useEffect(() => {
     let cancelled = false;
     setHistoryRangeDays(90);
-    setHistoryState({ assetId: asset.id, status: 'loading', history: null });
+    setHistoryState({ assetId: asset.id, status: "loading", history: null });
     fetchAssetPriceHistory(asset.id).then((history) => {
       if (cancelled) return;
       setHistoryState({
         assetId: asset.id,
-        status: history ? 'ready' : 'error',
+        status: history ? "ready" : "error",
         history,
       });
     });
@@ -907,14 +998,16 @@ function AssetPanel({
   }, [asset.id]);
 
   const history =
-    historyState.assetId === asset.id && historyState.status === 'ready'
+    historyState.assetId === asset.id && historyState.status === "ready"
       ? historyState.history
       : null;
   const historyLoading =
-    historyState.assetId !== asset.id || historyState.status === 'loading';
+    historyState.assetId !== asset.id || historyState.status === "loading";
   const historyPoints = history?.points ?? [];
   const lastHistoryPoint = historyPoints[historyPoints.length - 1] ?? null;
-  const historyDomainEndMs = lastHistoryPoint ? dateMs(lastHistoryPoint.date) : 0;
+  const historyDomainEndMs = lastHistoryPoint
+    ? dateMs(lastHistoryPoint.date)
+    : 0;
   const historyDomainStartMs = historyDomainEndMs - historyRangeDays * DAY_MS;
   const visibleHistoryPoints = historyPoints.filter((point) => {
     const time = dateMs(point.date);
@@ -924,7 +1017,9 @@ function AssetPanel({
   const lastVisibleHistoryPoint =
     visibleHistoryPoints[visibleHistoryPoints.length - 1] ?? null;
   const historyRangeChange =
-    firstVisibleHistoryPoint && lastVisibleHistoryPoint && firstVisibleHistoryPoint.value !== 0
+    firstVisibleHistoryPoint &&
+    lastVisibleHistoryPoint &&
+    firstVisibleHistoryPoint.value !== 0
       ? ((lastVisibleHistoryPoint.value - firstVisibleHistoryPoint.value) /
           firstVisibleHistoryPoint.value) *
         100
@@ -945,7 +1040,9 @@ function AssetPanel({
   // первоисточником по дате. Больше тридцати строк не показываем, чтобы
   // раскрытый список не превращался в полотно.
   const checkRows = visibleHistoryPoints.slice(-30).map((point) => {
-    const index = visibleHistoryPoints.findIndex((item) => item.date === point.date);
+    const index = visibleHistoryPoints.findIndex(
+      (item) => item.date === point.date,
+    );
     const previous = index > 0 ? visibleHistoryPoints[index - 1] : null;
     const delta =
       previous && previous.value !== 0
@@ -956,7 +1053,10 @@ function AssetPanel({
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      panelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
     }, 60);
     return () => window.clearTimeout(timer);
   }, [asset.id]);
@@ -982,22 +1082,25 @@ function AssetPanel({
             )}
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">
-            Последнее значение:{' '}
+            Последнее значение:{" "}
             <span className="font-extrabold tabular-nums text-text-primary">
               {formatPriceText(asset.price)}
             </span>
             {!isFallback && (asset.asOf || asset.updatedAt) && (
               <span className="text-text-secondary">
-                {' '}
-                ({observationLabel(asset.asOf) || `обновлено ${moscowClock(asset.updatedAt)} МСК`})
+                {" "}
+                (
+                {observationLabel(asset.asOf) ||
+                  `обновлено ${moscowClock(asset.updatedAt)} МСК`}
+                )
               </span>
             )}
-            {' · '}
+            {" · "}
             <span
               className={`font-extrabold tabular-nums ${directionalTextClass(asset.change ?? 0, paletteId)}`}
             >
-              {isFallback ? '—' : formatChange(asset.change ?? 0)}
-            </span>{' '}
+              {isFallback ? "—" : formatChange(asset.change ?? 0)}
+            </span>{" "}
             за день
           </p>
         </div>
@@ -1014,8 +1117,9 @@ function AssetPanel({
 
       {isFallback && (
         <p className="mt-3 rounded-lg border border-amber-300/20 bg-amber-400/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100">
-          Свежая цена по этому активу не получена, поэтому цена и изменение не показаны:
-          подставлять вместо них сохранённое или выдуманное число мы не будем.
+          Свежая цена по этому активу не получена, поэтому цена и изменение не
+          показаны: подставлять вместо них сохранённое или выдуманное число мы
+          не будем.
         </p>
       )}
 
@@ -1035,15 +1139,18 @@ function AssetPanel({
                   История с датами
                 </h5>
                 <p className="mt-1 text-xs leading-relaxed text-text-secondary">
-                  Ряд: <span className="font-bold text-text-primary">{history.provider}</span>
-                  {history.providerSymbol ? ` · ${history.providerSymbol}` : ''}
-                  {' · '}последнее наблюдение:{' '}
+                  Ряд:{" "}
+                  <span className="font-bold text-text-primary">
+                    {history.provider}
+                  </span>
+                  {history.providerSymbol ? ` · ${history.providerSymbol}` : ""}
+                  {" · "}последнее наблюдение:{" "}
                   <time
                     dateTime={lastHistoryPoint.date}
                     className="font-bold text-text-primary"
                   >
                     {formatDateLong(lastHistoryPoint.date)}
-                  </time>{' '}
+                  </time>{" "}
                   ({lagPhrase(lastHistoryPoint.date)}).
                 </p>
               </div>
@@ -1061,8 +1168,8 @@ function AssetPanel({
                     onClick={() => setHistoryRangeDays(days)}
                     className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
                       historyRangeDays === days
-                        ? 'bg-cyan-300 text-[#071120]'
-                        : 'text-text-secondary hover:bg-white/10 hover:text-white'
+                        ? "bg-cyan-300 text-[#071120]"
+                        : "text-text-secondary hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {days} дн.
@@ -1072,7 +1179,7 @@ function AssetPanel({
             </div>
 
             <DatedAssetChart
-              key={`${asset.id}-${historyRangeDays}-${firstVisibleHistoryPoint?.date ?? ''}-${lastVisibleHistoryPoint?.date ?? ''}`}
+              key={`${asset.id}-${historyRangeDays}-${firstVisibleHistoryPoint?.date ?? ""}-${lastVisibleHistoryPoint?.date ?? ""}`}
               points={visibleHistoryPoints}
               domainStartMs={historyDomainStartMs}
               domainEndMs={historyDomainEndMs}
@@ -1081,19 +1188,21 @@ function AssetPanel({
 
             {history.unfinishedDayExcluded && (
               <p className="mt-2 rounded-lg border border-cyan-300/20 bg-cyan-400/[0.07] px-3 py-2 text-[11px] leading-relaxed text-cyan-100">
-                Сегодняшний день ещё не закрыт, поэтому последняя точка графика —
-                закрытие {formatDateLong(lastHistoryPoint.date)}. Текущая цена дня
-                показана на плитке выше и меняется в течение суток; на график она
-                не подмешивается, чтобы закрытый и незакрытый день не сравнивались
-                как одно и то же.
+                Сегодняшний день ещё не закрыт, поэтому последняя точка графика
+                — закрытие {formatDateLong(lastHistoryPoint.date)}. Текущая цена
+                дня показана на плитке выше и меняется в течение суток; на
+                график она не подмешивается, чтобы закрытый и незакрытый день не
+                сравнивались как одно и то же.
               </p>
             )}
 
             {isHistoryPartial && historyPoints[0] && (
               <p className="mt-2 rounded-lg border border-amber-300/20 bg-amber-400/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-100">
-                Доступная датированная история начинается {formatDateLong(historyPoints[0].date)},
-                поэтому выбранный диапазон {historyRangeDays} {calendarDaysWord(historyRangeDays)}
-                {' '}показан частично. Более ранних значений в этот ряд не подмешивали.
+                Доступная датированная история начинается{" "}
+                {formatDateLong(historyPoints[0].date)}, поэтому выбранный
+                диапазон {historyRangeDays} {calendarDaysWord(historyRangeDays)}{" "}
+                показан частично. Более ранних значений в этот ряд не
+                подмешивали.
               </p>
             )}
           </div>
@@ -1107,17 +1216,25 @@ function AssetPanel({
         )}
       </div>
 
-      {history && visibleHistoryPoints.length >= 2 && firstVisibleHistoryPoint && lastVisibleHistoryPoint && minHistoryPoint && maxHistoryPoint ? (
+      {history &&
+      visibleHistoryPoints.length >= 2 &&
+      firstVisibleHistoryPoint &&
+      lastVisibleHistoryPoint &&
+      minHistoryPoint &&
+      maxHistoryPoint ? (
         <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-              Изменение периода · {formatDateShort(firstVisibleHistoryPoint.date)}–
+              Изменение периода ·{" "}
+              {formatDateShort(firstVisibleHistoryPoint.date)}–
               {formatDateShort(lastVisibleHistoryPoint.date)}
             </dt>
             <dd
               className={`mt-0.5 text-base font-extrabold tabular-nums ${directionalTextClass(historyRangeChange ?? 0, paletteId)}`}
             >
-              {historyRangeChange !== null ? formatChange(historyRangeChange) : '—'}
+              {historyRangeChange !== null
+                ? formatChange(historyRangeChange)
+                : "—"}
             </dd>
           </div>
           <div>
@@ -1145,66 +1262,77 @@ function AssetPanel({
             </dd>
           </div>
         </dl>
-      ) : !historyLoading && points.length >= 2 && (
-        <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-              За {horizon.accusative} · {selectedIntervals}{' '}
-              {observationsWord(selectedIntervals)}
-            </dt>
-            <dd
-              className={`mt-0.5 text-base font-extrabold tabular-nums ${directionalTextClass(selectedChange ?? 0, paletteId)}`}
-            >
-              {selectedChange !== null ? formatChange(selectedChange) : '—'}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-              Минимум · {points.length} {daysWord(points.length)}
-            </dt>
-            <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
-              {formatValue(Math.min(...points))}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-              Максимум · {points.length} {daysWord(points.length)}
-            </dt>
-            <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
-              {formatValue(Math.max(...points))}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-              Последнее закрытие
-            </dt>
-            <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
-              {formatValue(last)}
-            </dd>
-          </div>
-        </dl>
+      ) : (
+        !historyLoading &&
+        points.length >= 2 && (
+          <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div>
+              <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+                За {horizon.accusative} · {selectedIntervals}{" "}
+                {observationsWord(selectedIntervals)}
+              </dt>
+              <dd
+                className={`mt-0.5 text-base font-extrabold tabular-nums ${directionalTextClass(selectedChange ?? 0, paletteId)}`}
+              >
+                {selectedChange !== null ? formatChange(selectedChange) : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+                Минимум · {points.length} {daysWord(points.length)}
+              </dt>
+              <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
+                {formatValue(Math.min(...points))}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+                Максимум · {points.length} {daysWord(points.length)}
+              </dt>
+              <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
+                {formatValue(Math.max(...points))}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+                Последнее закрытие
+              </dt>
+              <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
+                {formatValue(last)}
+              </dd>
+            </div>
+          </dl>
+        )
       )}
 
       {history && visibleHistoryPoints.length > 0 && (
         <details className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
           <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
-            Проверить данные · {visibleHistoryPoints.length}{' '}
+            Проверить данные · {visibleHistoryPoints.length}{" "}
             {observationsWord(visibleHistoryPoints.length)}
           </summary>
           <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
-            Это ровно те точки, из которых построена линия выше: ряд{' '}
-            <span className="font-bold text-text-primary">{history.providerSymbol}</span>{' '}
-            ({history.instrumentId}), источник — {history.provider}. Каждую строку можно
-            сверить с первоисточником по дате. Сегодняшний незакрытый день в список не
-            входит.
+            Это ровно те точки, из которых построена линия выше: ряд{" "}
+            <span className="font-bold text-text-primary">
+              {history.providerSymbol}
+            </span>{" "}
+            ({history.instrumentId}), источник — {history.provider}. Каждую
+            строку можно сверить с первоисточником по дате. Сегодняшний
+            незакрытый день в список не входит.
           </p>
           <div className="mt-2 max-h-56 overflow-auto">
             <table className="w-full text-left text-[11px] tabular-nums">
               <thead className="sticky top-0 bg-[#0A1424] text-text-secondary">
                 <tr>
-                  <th scope="col" className="py-1 pr-2 font-bold">Дата</th>
-                  <th scope="col" className="py-1 pr-2 font-bold">Закрытие</th>
-                  <th scope="col" className="py-1 font-bold">К предыдущему</th>
+                  <th scope="col" className="py-1 pr-2 font-bold">
+                    Дата
+                  </th>
+                  <th scope="col" className="py-1 pr-2 font-bold">
+                    Закрытие
+                  </th>
+                  <th scope="col" className="py-1 font-bold">
+                    К предыдущему
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1218,10 +1346,12 @@ function AssetPanel({
                     </td>
                     <td
                       className={`py-1 font-bold ${
-                        delta === null ? 'text-text-secondary' : directionalTextClass(delta, paletteId)
+                        delta === null
+                          ? "text-text-secondary"
+                          : directionalTextClass(delta, paletteId)
                       }`}
                     >
-                      {delta === null ? '—' : formatChange(delta)}
+                      {delta === null ? "—" : formatChange(delta)}
                     </td>
                   </tr>
                 ))}
@@ -1230,8 +1360,8 @@ function AssetPanel({
           </div>
           {visibleHistoryPoints.length > 30 && (
             <p className="mt-2 text-[11px] text-text-secondary">
-              Показаны последние 30 записей из {visibleHistoryPoints.length}: весь диапазон
-              целиком на графике, здесь — конец ряда.
+              Показаны последние 30 записей из {visibleHistoryPoints.length}:
+              весь диапазон целиком на графике, здесь — конец ряда.
             </p>
           )}
         </details>
@@ -1245,28 +1375,38 @@ function AssetPanel({
           <h5 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Диапазон 30 значений
           </h5>
-          {windowValues.length >= 2 && windowMin !== null && windowMax !== null && last !== undefined ? (
+          {windowValues.length >= 2 &&
+          windowMin !== null &&
+          windowMax !== null &&
+          last !== undefined ? (
             <>
               <p className="mt-2 text-sm font-bold text-text-primary">
-                от {formatWindowValue(windowMin)} до {formatWindowValue(windowMax)}
+                от {formatWindowValue(windowMin)} до{" "}
+                {formatWindowValue(windowMax)}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-text-secondary">
-                последнее значение {formatWindowValue(last)} — на {windowPositionPct}% выше минимума окна
+                последнее значение {formatWindowValue(last)} — на{" "}
+                {windowPositionPct}% выше минимума окна
               </p>
-              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+              <div
+                className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10"
+                aria-hidden="true"
+              >
                 <div
                   className="h-full rounded-full bg-cyan-400/70"
                   style={{ width: `${windowPositionPct}%` }}
                 />
               </div>
               <p className="mt-2 text-[11px] leading-relaxed text-text-secondary/80">
-                Это факт по сохранённым закрытиям: где цена стоит внутри своего окна. Ожиданий и
-                рекомендаций здесь нет — выдача прогнозов остановлена 31 октября 2026 года.
+                Это факт по сохранённым закрытиям: где цена стоит внутри своего
+                окна. Ожиданий и рекомендаций здесь нет — выдача прогнозов
+                остановлена 31 октября 2026 года.
               </p>
             </>
           ) : (
             <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-              Сохранённых значений пока меньше двух, поэтому диапазон не считается.
+              Сохранённых значений пока меньше двух, поэтому диапазон не
+              считается.
             </p>
           )}
         </section>
@@ -1280,9 +1420,15 @@ function AssetPanel({
           </h5>
           {meta ? (
             <div className="mt-2">
-              <p className="text-sm font-bold text-text-primary">{meta.provider}</p>
-              <p className="mt-0.5 text-sm text-text-secondary">{meta.series}</p>
-              <p className="mt-2 text-sm leading-relaxed text-text-secondary">{meta.note}</p>
+              <p className="text-sm font-bold text-text-primary">
+                {meta.provider}
+              </p>
+              <p className="mt-0.5 text-sm text-text-secondary">
+                {meta.series}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+                {meta.note}
+              </p>
               {meta.url && (
                 <a
                   href={meta.url}
@@ -1297,7 +1443,8 @@ function AssetPanel({
             </div>
           ) : (
             <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-              Ряд хранится в кэше Market Pulse и обновляется серверным писателем цен.
+              Ряд хранится в кэше Market Pulse и обновляется серверным писателем
+              цен.
             </p>
           )}
           <p className="mt-3 text-[11px] leading-relaxed text-text-secondary/80">
@@ -1311,7 +1458,10 @@ function AssetPanel({
 
 function SkeletonTiles() {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-label="Загрузка тепловой карты">
+    <div
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+      aria-label="Загрузка тепловой карты"
+    >
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
@@ -1330,7 +1480,7 @@ function SkeletonTiles() {
 
 function readInitialAssetId(): string | null {
   try {
-    return new URLSearchParams(window.location.search).get('asset');
+    return new URLSearchParams(window.location.search).get("asset");
   } catch {
     return null;
   }
@@ -1345,8 +1495,10 @@ export default function MarketHeatmap({
   loading: boolean;
   fallbackAssetIds?: string[];
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(readInitialAssetId);
-  const [horizonId, setHorizonId] = useState<HorizonId>('day');
+  const [selectedId, setSelectedId] = useState<string | null>(
+    readInitialAssetId,
+  );
+  const [horizonId, setHorizonId] = useState<HorizonId>("day");
   const [paletteId, setPaletteId] = useState<PaletteId>(readInitialPalette);
 
   // Палитра — функциональная настройка доступности. Хранится только
@@ -1360,16 +1512,18 @@ export default function MarketHeatmap({
   }, [paletteId]);
 
   const selectedAsset =
-    !loading && selectedId ? assets.find((asset) => asset.id === selectedId) ?? null : null;
+    !loading && selectedId
+      ? (assets.find((asset) => asset.id === selectedId) ?? null)
+      : null;
 
   // Синхронизируем выбор с URL (?asset=brent), чтобы панелью можно было
   // делиться ссылкой, не ломая якорную навигацию по разделам.
   useEffect(() => {
     try {
       const url = new URL(window.location.href);
-      if (selectedId) url.searchParams.set('asset', selectedId);
-      else url.searchParams.delete('asset');
-      window.history.replaceState(null, '', url);
+      if (selectedId) url.searchParams.set("asset", selectedId);
+      else url.searchParams.delete("asset");
+      window.history.replaceState(null, "", url);
     } catch {
       // URL-синхронизация не критична для работы панели.
     }
@@ -1379,13 +1533,13 @@ export default function MarketHeatmap({
   useEffect(() => {
     if (!selectedId) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setSelectedId(null);
         document.getElementById(`heat-tile-${selectedId}`)?.focus();
       }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [selectedId]);
 
   const handleSelect = (id: string) => {
@@ -1415,9 +1569,10 @@ export default function MarketHeatmap({
           </span>
         </div>
         <p className="mt-1 max-w-4xl text-sm leading-relaxed text-text-secondary">
-          Внешние ориентиры, не российские активы. Цвет — знак изменения, насыщенность — его сила
-          относительно обычной шкалы конкретного актива, белая линия — форма последних сохранённых
-          дневных значений. Нажмите на плитку: под картой откроются график, статистика периода и источник.
+          Внешние ориентиры, не российские активы. Цвет — знак изменения,
+          насыщенность — его сила относительно обычной шкалы конкретного актива,
+          белая линия — форма последних сохранённых дневных значений. Нажмите на
+          плитку: под картой откроются график, статистика периода и источник.
         </p>
       </div>
 
@@ -1437,8 +1592,8 @@ export default function MarketHeatmap({
               onClick={() => setHorizonId(option.id)}
               className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
                 horizonId === option.id
-                  ? 'bg-cyan-300 text-[#071120]'
-                  : 'text-text-secondary hover:bg-white/10 hover:text-white'
+                  ? "bg-cyan-300 text-[#071120]"
+                  : "text-text-secondary hover:bg-white/10 hover:text-white"
               }`}
             >
               {option.label}
@@ -1449,28 +1604,30 @@ export default function MarketHeatmap({
           id="heat-palette-toggle"
           type="button"
           disabled={loading}
-          aria-pressed={paletteId === 'colorblind'}
+          aria-pressed={paletteId === "colorblind"}
           title={
-            paletteId === 'colorblind'
-              ? 'Включена сине-оранжевая палитра: синий — рост, оранжевый — снижение'
-              : 'Включить сине-оранжевую палитру для дальтоников'
+            paletteId === "colorblind"
+              ? "Включена сине-оранжевая палитра: синий — рост, оранжевый — снижение"
+              : "Включить сине-оранжевую палитру для дальтоников"
           }
           onClick={() =>
-            setPaletteId((previous) => (previous === 'colorblind' ? 'standard' : 'colorblind'))
+            setPaletteId((previous) =>
+              previous === "colorblind" ? "standard" : "colorblind",
+            )
           }
           className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
-            paletteId === 'colorblind'
-              ? 'border-orange-300/50 bg-sky-400/15 text-sky-100'
-              : 'border-white/15 bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white'
+            paletteId === "colorblind"
+              ? "border-orange-300/50 bg-sky-400/15 text-sky-100"
+              : "border-white/15 bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white"
           }`}
         >
           <PaletteIcon className="h-3.5 w-3.5" aria-hidden="true" />
           Палитра для дальтоников
         </button>
         <p className="w-full text-[11px] leading-relaxed text-text-secondary sm:w-auto sm:flex-1">
-          Цвет и процент плиток — за выбранный горизонт по последним сохранённым наблюдениям
-          источника: день — 1, неделя — 5, месяц — до 29. Это наблюдения, а не обязательно
-          календарные дни.
+          Цвет и процент плиток — за выбранный горизонт по последним сохранённым
+          наблюдениям источника: день — 1, неделя — 5, месяц — до 29. Это
+          наблюдения, а не обязательно календарные дни.
         </p>
       </div>
 
@@ -1517,13 +1674,13 @@ export default function MarketHeatmap({
           <span>сильнее вверх</span>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-          {paletteId === 'colorblind'
-            ? 'В сине-оранжевой палитре синий означает рост, оранжевый — снижение; знак всегда продублирован процентом и стрелкой. '
-            : ''}
-          Площадь плиток одинакова: это не капитализация, не объём торгов и не важность
-          актива. Сравнивайте по напечатанному проценту — одинаковая насыщенность у разных
-          активов не значит одинаковое движение. У мини-линии нет осей, её наклон между
-          активами не сравнить.
+          {paletteId === "colorblind"
+            ? "В сине-оранжевой палитре синий означает рост, оранжевый — снижение; знак всегда продублирован процентом и стрелкой. "
+            : ""}
+          Площадь плиток одинакова: это не капитализация, не объём торгов и не
+          важность актива. Сравнивайте по напечатанному проценту — одинаковая
+          насыщенность у разных активов не значит одинаковое движение. У
+          мини-линии нет осей, её наклон между активами не сравнить.
         </p>
       </div>
     </div>
