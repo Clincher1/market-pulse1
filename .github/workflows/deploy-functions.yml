@@ -29,6 +29,9 @@ on:
 
 permissions:
   contents: read
+  # Нужен, чтобы упавший выкат сам оставлял журнал в issue: логи Actions
+  # лежат в чужом хранилище, и из закрытой сети их не прочитать.
+  issues: write
 
 concurrency:
   group: verify-and-deploy
@@ -105,11 +108,35 @@ jobs:
         with:
           version: latest
 
+      # Журнал пишем в файл: без этого текст ошибки живёт только в логах
+      # Actions, а они недоступны ни из закрытой сети, ни через коннектор.
       - name: Deploy all edge functions
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        run: |
+          set -o pipefail
+          supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" 2>&1 | tee deploy.log
 
       - name: File an issue if the deploy fails
         if: failure()
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
         run: .github/report-failure.sh "Выкат функций не прошёл"
+
+      # Отчёт с текстом ошибки — в GitHub issue, чтобы причину можно было
+      # прочитать не заходя в веб-интерфейс Actions.
+      - name: Put the deploy log into an issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "Выкат функций не прошёл. Хвост журнала:"
+            echo '```'
+            tail -n 80 deploy.log 2>/dev/null || echo 'журнал пуст: шаг упал до запуска supabase'
+            echo '```'
+          } > deploy-body.md
+          existing=$(gh issue list --state open --search 'Выкат функций не прошёл in:title' --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file deploy-body.md
+          else
+            gh issue create --title "Выкат функций не прошёл" --body-file deploy-body.md
+          fi
