@@ -103,17 +103,24 @@ jobs:
             exit 1
           fi
 
+      # Версия закреплена намеренно. 10.11.2026 выкат молча перестал работать:
+      # CLI приехал с `latest` как 3.1.0, а он в неинтерактивном режиме
+      # отказывается выкатывать больше одной функции без `--yes` — «Nothing
+      # was changed», код выхода 1. Восемь дней функции жили версией от 02.11,
+      # и сайт показывал красную проверку, которая на самом деле сходилась.
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.1.0
 
       # Журнал пишем в файл: без этого текст ошибки живёт только в логах
       # Actions, а они недоступны ни из закрытой сети, ни через коннектор.
       - name: Deploy all edge functions
         run: |
           set -o pipefail
-          supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" 2>&1 | tee deploy.log
+          # --yes: подтверждение в неинтерактивном режиме. Без него 3.1.0
+          # печатает «Confirmation required» и выходит с ошибкой, ничего не меняя.
+          supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --yes 2>&1 | tee deploy.log
 
       - name: File an issue if the deploy fails
         if: failure()
