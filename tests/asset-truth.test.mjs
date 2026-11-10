@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFile } from 'node:fs/promises';
 
 import {
   checkChangeAgainstSeries,
@@ -231,4 +232,52 @@ test('без дат в ряду проверка остаётся по двум 
   });
   assert.equal(legacy.basis, 'series');
   assert.equal(legacy.ok, true);
+});
+
+// --- Ложная тревога 10.11.2026 -------------------------------------------
+// Восемь часов подряд проверка красила верную плитку: на экране −1,43 %, а
+// «ожидаемое» −5,85 %. Причина была не в формуле, а в том, что вызывающий
+// код не передал дату последнего закрытия: без неё кавычку нельзя отличить
+// от закрытия, и сверка честно шла по двум закрытиям.
+
+const quoteRow = {
+  id: 'brent',
+  name: 'Brent (фьючерс)',
+  price: '$91.25',
+  change: -1.4259,
+  sparkline: [94.62, 98.29, 98.32, 92.57],
+  spark_dates: ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-09'],
+  as_of: '2026-11-10 19:15:00+00',
+};
+
+test('кавычка от последнего закрытия сходится, когда дата ряда передана', () => {
+  const verdict = checkChangeAgainstSeries(quoteRow);
+  assert.equal(verdict.basis, 'quote');
+  assert.equal(verdict.ok, true);
+  assert.equal(verdict.priceMismatch, null);
+  assert.ok(Math.abs(verdict.expected - -1.4259) < 0.01);
+});
+
+test('без даты ряда та же строка считается расхождением — поэтому поле обязательно', () => {
+  const withoutDates = { ...quoteRow };
+  delete withoutDates.spark_dates;
+  const verdict = checkChangeAgainstSeries(withoutDates);
+  assert.equal(verdict.basis, 'series');
+  assert.equal(verdict.ok, false);
+  // Это и есть ложная тревога: −5,85 % вместо напечатанных −1,43 %.
+  assert.ok(verdict.expected < -5);
+});
+
+test('проверка в selfcheck передаёт дату ряда — иначе сверка снова соврёт', async () => {
+  const source = await readFile(
+    new URL('../supabase/functions/selfcheck/index.ts', import.meta.url),
+    'utf8',
+  );
+  const call = source.slice(source.indexOf('checkChangeAgainstSeries({'));
+  const body = call.slice(0, call.indexOf('})'));
+  assert.match(body, /spark_dates:/, 'в вызове сверки нет spark_dates');
+  assert.match(body, /as_of:/, 'в вызове сверки нет as_of');
+  // Поле должно и запрашиваться, и передаваться: запрос без передачи уже
+  // случался и стоил восьми часов красной проверки на верных данных.
+  assert.match(source, /cached_assets\?select=id,name,price,change,sparkline,spark_dates,as_of/);
 });

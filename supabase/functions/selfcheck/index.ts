@@ -702,6 +702,13 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
           price: row.price === null || row.price === undefined ? null : String(row.price),
           change: typeof row.change === 'number' ? row.change : Number(row.change),
           sparkline: row.sparkline,
+          // spark_dates обязателен: без даты последнего закрытия сверка не
+          // может отличить кавычку от закрытия и валится в ветку «два
+          // последних закрытия». Так она и стояла красной восемь дней на
+          // верных плитках: цена 91,25 против закрытия 92,57 считалась
+          // изменением −5,85 %, хотя на плитке напечатано −1,43 % от
+          // закрытия. Поле уже выбиралось в запросе — просто не передавалось.
+          spark_dates: row.spark_dates,
           as_of: row.as_of === null || row.as_of === undefined ? null : String(row.as_of),
         }),
       }));
