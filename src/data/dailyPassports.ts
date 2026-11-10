@@ -16,6 +16,23 @@ import type { DailySnapshot } from './dailySnapshots';
  * нельзя.
  */
 
+/**
+ * Один мировой индикатор в том виде, в каком он попал в утренний снимок.
+ *
+ * `price` — строка источника, а не пересчитанное число: снимок хранит её как
+ * есть, и паспорт обязан показывать ровно её, иначе «неизменяемая запись»
+ * перестаёт быть неизменяемой.
+ */
+export interface PassportAsset {
+  id: string;
+  name: string;
+  /** Цена так, как её напечатал источник. Пусто — цена не сохранилась. */
+  price: string;
+  change: number | null;
+  /** Дата наблюдения от источника: в субботу это может быть пятница. */
+  asOf: string | null;
+}
+
 export interface PassportDay {
   date: string;
   capturedAt: string;
@@ -28,6 +45,12 @@ export interface PassportDay {
    * остаётся прежней, и без даты паспорт приписывал бы движению сегодняшний день.
    */
   topMover: { name: string; change: number; asOf: string | null } | null;
+  /**
+   * Все индикаторы снимка, в порядке источника. Нужны, чтобы паспорт мог
+   * показать утро целиком: пять цен на момент фиксации, а не только самое
+   * сильное движение.
+   */
+  assets: PassportAsset[];
   /** Официальный курс доллара на утро, если он попал в снимок. */
   usdRub: number | null;
 }
@@ -62,6 +85,20 @@ function normalizeDay(row: Record<string, unknown>): PassportDay {
     }
   }
 
+  const snapshotAssets: PassportAsset[] = [];
+  for (const asset of assets) {
+    const id = typeof asset.id === 'string' ? asset.id : '';
+    const name = typeof asset.name === 'string' ? asset.name : '';
+    if (!id || !name) continue;
+    snapshotAssets.push({
+      id,
+      name,
+      price: typeof asset.price === 'string' ? asset.price : '',
+      change: finiteNumber(asset.change),
+      asOf: typeof asset.as_of === 'string' && asset.as_of ? asset.as_of : null,
+    });
+  }
+
   const usdRubRow = markets.find((market) => market.id === 'usd-rub');
 
   return {
@@ -71,6 +108,7 @@ function normalizeDay(row: Record<string, unknown>): PassportDay {
     tensionLabel: typeof tension.label === 'string' ? tension.label : '',
     tensionNewsCount: finiteNumber(tension.news_count),
     topMover,
+    assets: snapshotAssets,
     usdRub: usdRubRow ? finiteNumber(usdRubRow.value) : null,
   };
 }
