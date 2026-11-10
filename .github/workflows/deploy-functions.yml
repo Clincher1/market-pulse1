@@ -127,11 +127,22 @@ jobs:
         if: failure()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           {
-            echo "Выкат функций не прошёл. Хвост журнала:"
+            echo "Выкат функций не прошёл."
+            # Значения не печатаем: только факт наличия. Секрет, которого нет,
+            # и секрет, который есть, дают разные починки.
+            echo
+            echo "Состояние окружения:"
+            echo "- SUPABASE_ACCESS_TOKEN: $([ -n \"$SUPABASE_ACCESS_TOKEN\" ] && echo есть || echo нет)"
+            echo "- SUPABASE_PROJECT_REF: $([ -n \"$SUPABASE_PROJECT_REF\" ] && echo есть || echo нет)"
+            echo "- supabase CLI: $(command -v supabase >/dev/null && supabase --version 2>&1 | head -1 || echo 'не установлен')"
+            echo "- deploy.log: $([ -f deploy.log ] && echo есть || echo 'нет — шаг выката не запускался')"
+            echo
             echo '```'
-            tail -n 80 deploy.log 2>/dev/null || echo 'журнал пуст: шаг упал до запуска supabase'
+            tail -n 80 deploy.log 2>/dev/null || echo 'журнала нет'
             echo '```'
           } > deploy-body.md
           existing=$(gh issue list --state open --search 'Выкат функций не прошёл in:title' --json number --jq '.[0].number // empty')
