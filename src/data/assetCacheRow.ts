@@ -11,6 +11,7 @@ import type { AssetData } from './marketTypes';
 export type AssetCacheRow = AssetData & {
   updated_at?: string | null;
   as_of?: string | null;
+  source_label?: string | null;
   spark_dates?: unknown;
 };
 
@@ -24,6 +25,7 @@ export function mapAssetCacheRow(row: AssetCacheRow): AssetData {
     sparkline: Array.isArray(row.sparkline) ? row.sparkline : [],
     updatedAt: row.updated_at ?? null,
     asOf: row.as_of ?? null,
+    sourceLabel: row.source_label ?? null,
     // Пустой массив не равен «дат нет»: если длины не совпадают со значениями,
     // даты бесполезны, и честнее вернуть null, а не половину календаря.
     sparkDates: dates && dates.length === (row.sparkline?.length ?? 0) ? dates : null,

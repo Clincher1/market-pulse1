@@ -72,6 +72,12 @@ export interface AssetData {
    * вчерашнего дня. Пока колонки `as_of` нет в базе, поля не будет.
    */
   asOf?: string | null;
+  /**
+   * Кто ответил за это число: «Coinbase», «Kraken», «ЕЦБ». Нужен потому, что
+   * источник слота выбирается вручную: без подписи цена одной биржи выглядела
+   * бы как цена другой. Пока колонки `source_label` нет в базе, поля не будет.
+   */
+  sourceLabel?: string | null;
 }
 
 export interface NewsItem {

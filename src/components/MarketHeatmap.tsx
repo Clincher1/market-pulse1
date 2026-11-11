@@ -1093,6 +1093,10 @@ function AssetPanel({
                 {observationLabel(asset.asOf) ||
                   `обновлено ${moscowClock(asset.updatedAt)} МСК`}
                 )
+                {/* Кто ответил за число. Источник слота выбирается вручную,
+                    поэтому площадка подписывается рядом с ценой: иначе цена
+                    одной биржи выглядела бы как цена другой. */}
+                {asset.sourceLabel ? ` · ${asset.sourceLabel}` : ''}
               </span>
             )}
             {" · "}

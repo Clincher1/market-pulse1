@@ -200,3 +200,18 @@ test('BTC, золото и USD/EUR умеют переключаться на о
   assert.match(source, /provider: "Binance"/);
   assert.match(source, /quote_asset: "USDT"/, 'пара BTCUSDT не подписана как USDT');
 });
+
+test('плитка подписывает источник: смена источника не должна менять число молча', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const writer = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  // Провайдер из метаданных ряда пишется в кэш отдельной колонкой.
+  assert.match(writer, /source_label: String\(result\.meta\.provider/);
+  assert.match(writer, /supports\("source_label"\)/);
+
+  const tile = await readFile(new URL('../src/components/MarketHeatmap.tsx', import.meta.url), 'utf8');
+  // И читается на плитке рядом с ценой и датой.
+  assert.match(tile, /asset\.sourceLabel/, 'подпись источника не выводится на плитку');
+
+  const mapper = await readFile(new URL('../src/data/assetCacheRow.ts', import.meta.url), 'utf8');
+  assert.match(mapper, /sourceLabel: row\.source_label/);
+});

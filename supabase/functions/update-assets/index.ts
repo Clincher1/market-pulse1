@@ -817,7 +817,7 @@ async function fetchGold(updatedAt: string, options: { historyDue: boolean; pric
 // появляются отдельно от кода. Пока колонки нет, писать её в upsert нельзя:
 // PostgREST отклонит всю строку, и кэш перестанет обновляться. Проверяем один
 // раз за запуск и запоминаем ответ.
-type StoredColumns = { asOf: boolean; sparkDates: boolean };
+type StoredColumns = { asOf: boolean; sparkDates: boolean; sourceLabel: boolean };
 let storedColumns: StoredColumns | null = null;
 
 async function supports(select: string): Promise<boolean> {
@@ -833,7 +833,11 @@ async function supportedColumns(): Promise<StoredColumns> {
   if (storedColumns) return storedColumns;
   const sparkDates = await supports("as_of,spark_dates");
   const asOf = sparkDates ? true : await supports("as_of");
-  storedColumns = { asOf, sparkDates };
+  // Подпись источника появляется в кэше отдельной колонкой. Без неё плитка не
+  // может сказать, чья цена показана, — а при выборе источника владельцем это
+  // уже не мелочь.
+  const sourceLabel = await supports("source_label");
+  storedColumns = { asOf, sparkDates, sourceLabel };
   return storedColumns;
 }
 
@@ -1117,7 +1121,7 @@ serveWithErrorReporting("update-assets", async (request) => {
 
     const order = ["usd-eur", "sp500", "brent", "gold", "btc"];
     results.sort((a, b) => order.indexOf(a.row.id) - order.indexOf(b.row.id));
-    const columns = publish ? await supportedColumns() : { asOf: false, sparkDates: false };
+    const columns = publish ? await supportedColumns() : { asOf: false, sparkDates: false, sourceLabel: false };
     if (publish) {
       const rows = results.map((result) => {
         const { as_of: asOf, spark_dates: sparkDates, ...rest } = result.row;
@@ -1125,6 +1129,8 @@ serveWithErrorReporting("update-assets", async (request) => {
           ...rest,
           ...(columns.asOf ? { as_of: asOf } : {}),
           ...(columns.sparkDates ? { spark_dates: sparkDates } : {}),
+          // Провайдер из метаданных ряда: именно он и есть «кто ответил».
+          ...(columns.sourceLabel ? { source_label: String(result.meta.provider ?? "") || null } : {}),
         };
       });
       await restJson("cached_assets?on_conflict=id", {
@@ -1146,6 +1152,7 @@ serveWithErrorReporting("update-assets", async (request) => {
       // в ответе функции и до плитки не доходит.
       as_of_stored: columns.asOf,
       spark_dates_stored: columns.sparkDates,
+      source_label_stored: columns.sourceLabel,
       assets_ok: results.length,
       assets_total: plans.length,
       // Почему часть рядов не обновлялась: пауза, квота или интервал.
