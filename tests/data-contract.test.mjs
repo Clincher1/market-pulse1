@@ -159,3 +159,18 @@ test('сторож: писатель не подписывает ряд слов
   // расходятся ровно в тот день, когда ряд меняет инструмент.
   assert.match(source, /ASSET_CONTRACTS|contractFor/, 'писатель не сверяется с контрактом');
 });
+
+test('BTC: текущая цена из тикера, история из свечей, и это видно в журнале', async () => {
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  // Плитка «сейчас» на суточной свече — это отставание до 24 часов, которое
+  // никакая проверка не отличит от свежих данных: начало свечи в полночь.
+  assert.match(source, /api\.Kraken\.com\/0\/public\/Ticker\?pair=XBTUSD/, 'тикер Kraken не запрашивается');
+  assert.match(source, /current_price_source/, 'источник текущей цены не пишется в журнал');
+  // Свечи обязаны остаться: без них у графика нет закрытий.
+  assert.match(source, /OHLC\?pair=XBTUSD&interval=1440/, 'история свечей пропала');
+});
+
+test('контракт: у BTC смысл даты — момент котировки, а не начало свечи', () => {
+  assert.equal(contractFor('btc')?.asOfKind, 'quote');
+  assert.equal(contractFor('btc')?.cadenceMinutes, 5);
+});

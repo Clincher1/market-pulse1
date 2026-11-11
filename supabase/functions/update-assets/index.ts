@@ -355,6 +355,31 @@ async function fetchUsdEur(updatedAt: string): Promise<AssetResult> {
   });
 }
 
+/**
+ * Последняя сделка по XBT/USD у Kraken. Публичный документированный интерфейс
+ * биржи: тот же хост, что и OHLC, который отвечает без отказов.
+ *
+ * Ошибка или неожиданная форма ответа — `null`, а не исключение: отсутствие
+ * тикера ухудшает подпись (цена станет закрытием свечи), но не должно
+ * останавливать публикацию ряда. Что именно попало в цену, видно в
+ * `current_price_source` журнала запуска.
+ */
+async function fetchKrakenLastTrade(): Promise<{ price: number } | null> {
+  try {
+    const payload = await fetchJson("https://api.Kraken.com/0/public/Ticker?pair=XBTUSD");
+    if (!isRecord(payload)) return null;
+    if (Array.isArray(payload.error) && payload.error.length) return null;
+    if (!isRecord(payload.result)) return null;
+    const pairKey = Object.keys(payload.result).find((key) => key !== "last");
+    const pair = pairKey ? payload.result[pairKey] : null;
+    if (!isRecord(pair) || !Array.isArray(pair.c)) return null;
+    const price = positiveNumber(pair.c[0]);
+    return price ? { price } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchBtc(updatedAt: string): Promise<AssetResult> {
   const url = "https://api.Kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440";
   const payload = await fetchJson(url);
@@ -377,16 +402,30 @@ async function fetchBtc(updatedAt: string): Promise<AssetResult> {
   // Последняя дневная свеча Kraken — текущие сутки: её «закрытие» это последняя
   // сделка, а не закрытие дня. В историю она не идёт, текущая цена остаётся.
   const formingBarDate = updatedAt.slice(0, 10);
+  // Плитка «сейчас» не может стоять на суточной свече: её начало — полночь,
+  // и в 06:50 UTC сайт показывал цену, наблюдённую семь часов назад, называя
+  // её текущей. Котировка берётся из тикера того же Kraken (последняя сделка),
+  // история остаётся на закрытиях свечей: у неё своя задача — график.
+  const tick = await fetchKrakenLastTrade();
   return makeAsset({
     id: "btc",
     name: EXPECTED_NAMES.btc,
-    instrument: "Bitcoin / USD spot (Kraken XBTUSD daily candles)",
+    instrument: "Bitcoin / USD spot (Kraken XBTUSD ticker; history — daily candles)",
     provider: "Kraken",
     points,
     formingBarDate,
+    currentPrice: tick?.price,
+    // Момент котировки — момент запроса тикера: у Kraken в ответе нет своего
+    // времени, и это единственное время, которое мы вправе утверждать.
+    // Без тикера подпись остаётся датой свечи, а не выдаёт старое за новое.
+    asOf: tick ? updatedAt : undefined,
     format: formatUsd0,
     updatedAt,
-    extraMeta: { unit: "USD/BTC", latest_daily_candle_may_be_partial: true },
+    extraMeta: {
+      unit: "USD/BTC",
+      latest_daily_candle_may_be_partial: true,
+      current_price_source: tick ? "kraken-ticker" : "kraken-daily-candle",
+    },
   });
 }
 

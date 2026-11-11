@@ -136,16 +136,20 @@ export const ASSET_CONTRACTS: AssetContract[] = [
   {
     id: 'btc',
     label: 'BTC',
-    instrument: 'Биткоин к доллару, спот Kraken XBT/USD, суточная свеча',
+    instrument: 'Биткоин к доллару, спот Kraken XBT/USD: цена — тикер (последняя сделка), история — суточные свечи',
     provider: 'Kraken',
     tier: 'first-party',
     endpoint: 'https://api.Kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440',
-    // Свеча начинается в 00:00 UTC: до конца суток «время наблюдения» —
-    // это её начало, а цена внутри ещё меняется.
-    asOfKind: 'candle-open',
-    cadenceMinutes: 60,
+    // Цена на плитке — последняя сделка из тикера Kraken, поэтому as_of это
+    // момент котировки. История при этом остаётся на дневных свечах.
+    // До 11.11.2026 здесь стояло `candle-open`: цена бралась из начала суточной
+    // свечи, и в 06:50 UTC сайт показывал семичасовое наблюдение как текущее.
+    asOfKind: 'quote',
+    cadenceMinutes: 5,
+    // Сутки, а не час: если тикер не ответил, цена и дата честно берутся из
+    // закрытия последней свечи, и это законные сутки, а не застрявший писатель.
     maxAsOfAgeMinutes: DAY,
-    rationale: 'суточная свеча: начало текущей не может быть старше суток, рынок круглосуточный',
+    rationale: 'круглосуточный рынок; при отказе тикера — закрытие суточной свечи, не старше суток',
     crossCheck: {
       provider: 'Coinbase (FRED, CBBTCUSD)',
       endpoint: 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=CBBTCUSD',
