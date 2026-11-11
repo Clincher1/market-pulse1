@@ -1,6 +1,7 @@
 // Self-check for the whole public contour.
 import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
 import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
+import { contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -42,11 +43,11 @@ const BLOCKED_SOURCES = new Set(['GDELT (Global)', 'GDELT']);
 const FRESH_NEWS_HOURS = 6;
 const FRESH_ASSETS_MINUTES = 45;
 const FRESH_FEED_HOURS = 24;
-// Дата наблюдения у мировых котировок отстаёт от публикации: дневное закрытие
-// приходит с задержкой в день-два, на выходных прибавляется ещё два дня.
-// Шесть суток — предел этого расписания, а не «запас на всякий случай»:
-// всё, что старше, уже не календарь источника, а застрявший писатель.
-const MAX_ASSET_ASOF_HOURS = 144;
+// Порог свежести у каждого ряда свой и живёт в _shared/data-contract.ts.
+// Единый порог на все пять рядов был ошибкой: он сравнивал одноминутную
+// кавычку Brent с курсом ЕЦБ, который публикуется раз в сутки, и при этом
+// смотрел только на самый свежий ряд из пяти — золото с отставшим на
+// одиннадцать часов наблюдением проходило проверку молча.
 // Сколько может пройти без новых точек у каждого ряда истории. Это НЕ «задержка
 // сайта», а расписание источников: Мосбиржа отдаёт день после закрытия, ЦБ —
 // курс на дату и RUONIA на следующий день, резервы — раз в неделю (отчётная
@@ -609,22 +610,75 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     // 5b. Кэш может быть свежим, а наблюдение — старым: закрытие дня приходит
     //     с задержкой, и «обновлено 5 минут назад» ничего не говорит о том,
     //     за какое число цена. Проверяем именно as_of, а не updated_at.
+    // 5b. Свежесть — по контракту каждого ряда, а не по самому свежему из пяти.
+    //
+    // Прежняя версия смотрела на `updated_at` (время записи в кэш) и на один
+    // порог в шесть суток для всех. Из-за этого: (а) золото, у которого момент
+    // котировки отставал на одиннадцать часов, проходило проверку молча, и
+    // (б) у всех рядов был общий порог, хотя у ЕЦБ расписание — раз в сутки,
+    // а у Brent — минуты. Теперь сравнивается `as_of` каждого ряда с его
+    // собственным допустимым возрастом, и в отчёте напечатан смысл даты:
+    // «дата закрытия» и «момент котировки» — разные вещи, и путать их нельзя.
     check('assets_asof', async () => {
       const rows = (await restJson('cached_assets?select=id,as_of')) as AnyRecord[];
       if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
-      const ages = rows.map((row) => ({
-        id: String(row.id ?? ''),
-        age: hoursAgo(String(row.as_of ?? '')),
-      }));
-      const stale = ages.filter((item) => item.age === null || item.age > MAX_ASSET_ASOF_HOURS);
-      const oldest = [...ages].sort((a, b) => (b.age ?? 0) - (a.age ?? 0))[0];
+      const now = new Date();
+      const verdicts = rows.map((row) => freshnessVerdict({ id: String(row.id ?? ''), as_of: row.as_of ? String(row.as_of) : null }, now));
+      const stale = verdicts.filter((item) => !item.ok);
       return {
         ok: stale.length === 0,
         detail: stale.length
-          ? `наблюдение старше ${Math.round(MAX_ASSET_ASOF_HOURS / 24)} суток: ${stale
-              .map((item) => `${item.id} (${item.age === null ? 'нет даты' : `${(item.age / 24).toFixed(1)} дн`})`)
-              .join(', ')}`
-          : `самое старое наблюдение — ${oldest?.id ?? '—'}, ${((oldest?.age ?? 0) / 24).toFixed(1)} дн`,
+          ? `наблюдение старше допустимого: ${stale.map((item) => item.note).join(', ')}`
+          : verdicts.map((item) => item.note).join('; '),
+      };
+    }),
+
+    // 5b-1. Цена, которая называет себя текущей, обязана быть текущей.
+    //
+    // Допуск свежести (5b) отвечает «ряд ещё жив»: у золота это трое суток на
+    // выходные. Здесь другой вопрос — «цена на плитке действительно текущая»:
+    // два-три часа на открытом рынке. Один порог на оба вопроса и был
+    // дефектом: золото с одиннадцатью часами отставания (11.11, 06:50 UTC)
+    // проходило проверку, потому что было младше трёх суток.
+    check('asset_quote_lag', async () => {
+      const rows = (await restJson('cached_assets?select=id,as_of')) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      const now = new Date();
+      const verdicts = rows.map((row) => quoteLagVerdict({ id: String(row.id ?? ''), as_of: row.as_of ? String(row.as_of) : null }, now));
+      const applicable = verdicts.filter((item) => item.applicable);
+      const lagging = applicable.filter((item) => !item.ok);
+      if (!applicable.length) return { ok: false, detail: 'ни один ряд не описан как «текущая цена»' };
+      return {
+        ok: lagging.length === 0,
+        detail: lagging.length
+          ? lagging.map((item) => item.note).join('; ')
+          : applicable.map((item) => item.note).join('; '),
+      };
+    }),
+
+    // 5b-2. Каждый ряд обязан быть описан контрактом, и подпись обязана
+    // совпадать с ним. Это ловит не «источник молчит», а «писатель и экран
+    // договорились между собой мимо контракта».
+    check('asset_contract', async () => {
+      const rows = (await restJson('cached_assets?select=id,name,price,as_of,sparkline,spark_dates')) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      const undescribed = rows.map((row) => String(row.id ?? '')).filter((id) => !contractFor(id));
+      const relabeled = rows
+        .filter((row) => contractFor(String(row.id ?? '')) && !labelMatchesContract(String(row.id ?? ''), String(row.name ?? '')))
+        .map((row) => `${String(row.id ?? '')}: в кэше «${String(row.name ?? '')}», по контракту «${contractFor(String(row.id ?? ''))?.label}»`);
+      const undated = rows
+        .filter((row) => {
+          const values = Array.isArray(row.sparkline) ? row.sparkline : [];
+          const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
+          return values.length !== dates.length || values.length === 0;
+        })
+        .map((row) => String(row.id ?? ''));
+      if (undescribed.length) return { ok: false, detail: `ряды без контракта: ${undescribed.join(', ')}` };
+      if (relabeled.length) return { ok: false, detail: `подпись расходится с контрактом — ${relabeled.join(' | ')}` };
+      if (undated.length) return { ok: false, detail: `у ряда нет дат на каждое значение: ${undated.join(', ')}` };
+      return {
+        ok: true,
+        detail: `все ${rows.length} рядов описаны контрактом, подписи совпадают, даты на месте`,
       };
     }),
 

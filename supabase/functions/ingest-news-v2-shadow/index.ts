@@ -1,14 +1,6 @@
 // Stage 2 shadow news ingestion (deterministic part only).
 import { serveWithErrorReporting } from "../_shared/observability.ts";
-import {
-  droppedRunKeys,
-  failureStreak,
-  isPaused,
-  keepRunColumns,
-  pauseMessage,
-  type FailureStreak,
-  type HealthHistoryRow,
-} from "../_shared/source-backoff.ts";
+import { droppedRunKeys, failureStreak, isPaused, keepRunColumns, pauseMessage, type FailureStreak, type HealthHistoryRow, lastAttempts, pacingMessage, pacingSkip } from "../_shared/source-backoff.ts";
 //
 // Reads enabled sources from news_sources_v2, fetches RSS/Atom directly,
 // parses XML, validates dates/URLs/categories/blacklist, and stores auditable
@@ -58,6 +50,12 @@ type Source = {
   trust: number;
   enabled: boolean;
   max_age_hours: number;
+  /**
+   * Минимальный интервал между попытками, минуты. `null` — без ограничения.
+   * Живёт в данных, чтобы частоту можно было снизить без выката: у посредника
+   * 503 означает «слишком часто», а не «лента сломалась».
+   */
+  poll_interval_minutes?: number | null;
   requires_market_terms: boolean;
   include_categories: unknown;
   exclude_categories: unknown;
@@ -370,7 +368,7 @@ async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => P
   return results;
 }
 
-function skippedHealth(source: Source, streak: FailureStreak): SourceHealth {
+function skippedHealth(source: Source, reason: string): SourceHealth {
   return {
     source_id: source.id,
     ok: false,
@@ -382,7 +380,7 @@ function skippedHealth(source: Source, streak: FailureStreak): SourceHealth {
     items_rejected: 0,
     latest_published_at: null,
     final_url: source.url,
-    error: pauseMessage(streak, SKIP_MINUTES * 60_000),
+    error: reason,
   };
 }
 
@@ -625,12 +623,25 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
       history = [];
     }
     const streaks = failureStreak(history);
+    const attempts = lastAttempts(history);
     const skipped = new Set<string>();
     const results = await mapPool(sources, 4, async (source) => {
       const streak = streaks.get(source.id);
       if (isPaused(streak, Date.now(), SKIP_AFTER_FAILURES, SKIP_MINUTES * 60_000)) {
         skipped.add(source.id);
-        return { health: skippedHealth(source, streak!), articles: [], rejectReasons: {} };
+        return { health: skippedHealth(source, pauseMessage(streak!, SKIP_MINUTES * 60_000)), articles: [], rejectReasons: {} };
+      }
+      // Пейсинг: источник, которому частые запросы мешают отвечать, спрашиваем
+      // реже. Пропуск записывается как «не пытались», а не как отказ: иначе
+      // он сам себя продлевает в счётчике отказов.
+      const last = attempts.get(source.id);
+      if (last && pacingSkip(last, source.poll_interval_minutes, Date.now())) {
+        skipped.add(source.id);
+        return {
+          health: skippedHealth(source, pacingMessage(Number(source.poll_interval_minutes), last)),
+          articles: [],
+          rejectReasons: {},
+        };
       }
       return await processSource(source, blacklist, now);
     });

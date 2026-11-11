@@ -2,6 +2,7 @@
 import { closedHistory, previousClosedValue } from "../_shared/asset-history.ts";
 import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { ASSET_CONTRACTS, contractFor } from "../_shared/data-contract.ts";
 //
 // Security/provenance notes:
 // - Twelve Data is read only from the TWELVE_KEY Edge Function secret.
@@ -53,15 +54,14 @@ type AssetResult = {
   meta: AnyRecord;
 };
 
-const EXPECTED_NAMES: Record<string, string> = {
-  "usd-eur": "USD/EUR",
-  sp500: "S&P 500",
-  // Фьючерс, а не спот: у Brent спот EIA и ближайший фьючерс расходятся на
-  // несколько долларов, поэтому подпись называет инструмент, а не только сорт.
-  brent: "Brent (фьючерс)",
-  gold: "Gold",
-  btc: "BTC",
-};
+// Подписи рядов больше не живут копией в писателе. Копия расходилась ровно в
+// тот день, когда ряд менял инструмент: 01.11.2026 Brent переехал с одного
+// контракта на другой, а слово «Brent» осталось прежним и примиряло два
+// разных числа. Теперь единственный источник подписи — контракт данных, и
+// публикация сверяет её с ним (см. assertContract в publishRow).
+const EXPECTED_NAMES: Record<string, string> = Object.fromEntries(
+  ASSET_CONTRACTS.map((contract) => [contract.id, contract.label]),
+);
 
 const LIMITS: Record<string, { min: number; max: number; maxAbsChangePct: number }> = {
   "usd-eur": { min: 0.2, max: 3, maxAbsChangePct: 10 },
@@ -232,6 +232,11 @@ function makeAsset(input: {
     throw new Error(`${input.id}: change ${change}% outside plausibility range`);
   }
 
+  // Построение строки — последний рубеж перед записью в кэш. Сверка подписи и
+  // смысла даты стоит здесь, а не в тестах: тест ловит расхождение в коде, а
+  // эта проверка — ещё и в данных, которые пришли из источника.
+  assertContract(input.id, input.name, asOf);
+
   return {
     row: {
       id: input.id,
@@ -350,6 +355,31 @@ async function fetchUsdEur(updatedAt: string): Promise<AssetResult> {
   });
 }
 
+/**
+ * Последняя сделка по XBT/USD у Kraken. Публичный документированный интерфейс
+ * биржи: тот же хост, что и OHLC, который отвечает без отказов.
+ *
+ * Ошибка или неожиданная форма ответа — `null`, а не исключение: отсутствие
+ * тикера ухудшает подпись (цена станет закрытием свечи), но не должно
+ * останавливать публикацию ряда. Что именно попало в цену, видно в
+ * `current_price_source` журнала запуска.
+ */
+async function fetchKrakenLastTrade(): Promise<{ price: number } | null> {
+  try {
+    const payload = await fetchJson("https://api.Kraken.com/0/public/Ticker?pair=XBTUSD");
+    if (!isRecord(payload)) return null;
+    if (Array.isArray(payload.error) && payload.error.length) return null;
+    if (!isRecord(payload.result)) return null;
+    const pairKey = Object.keys(payload.result).find((key) => key !== "last");
+    const pair = pairKey ? payload.result[pairKey] : null;
+    if (!isRecord(pair) || !Array.isArray(pair.c)) return null;
+    const price = positiveNumber(pair.c[0]);
+    return price ? { price } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchBtc(updatedAt: string): Promise<AssetResult> {
   const url = "https://api.Kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440";
   const payload = await fetchJson(url);
@@ -372,20 +402,78 @@ async function fetchBtc(updatedAt: string): Promise<AssetResult> {
   // Последняя дневная свеча Kraken — текущие сутки: её «закрытие» это последняя
   // сделка, а не закрытие дня. В историю она не идёт, текущая цена остаётся.
   const formingBarDate = updatedAt.slice(0, 10);
+  // Плитка «сейчас» не может стоять на суточной свече: её начало — полночь,
+  // и в 06:50 UTC сайт показывал цену, наблюдённую семь часов назад, называя
+  // её текущей. Котировка берётся из тикера того же Kraken (последняя сделка),
+  // история остаётся на закрытиях свечей: у неё своя задача — график.
+  const tick = await fetchKrakenLastTrade();
   return makeAsset({
     id: "btc",
     name: EXPECTED_NAMES.btc,
-    instrument: "Bitcoin / USD spot (Kraken XBTUSD daily candles)",
+    instrument: "Bitcoin / USD spot (Kraken XBTUSD ticker; history — daily candles)",
     provider: "Kraken",
     points,
     formingBarDate,
+    currentPrice: tick?.price,
+    // Момент котировки — момент запроса тикера: у Kraken в ответе нет своего
+    // времени, и это единственное время, которое мы вправе утверждать.
+    // Без тикера подпись остаётся датой свечи, а не выдаёт старое за новое.
+    asOf: tick ? updatedAt : undefined,
     format: formatUsd0,
     updatedAt,
-    extraMeta: { unit: "USD/BTC", latest_daily_candle_may_be_partial: true },
+    extraMeta: {
+      unit: "USD/BTC",
+      latest_daily_candle_may_be_partial: true,
+      current_price_source: tick ? "kraken-ticker" : "kraken-daily-candle",
+    },
+  });
+}
+
+/**
+ * Золото, спот XAU/USD, из публичного чарта Yahoo.
+ *
+ * Зачем: Twelve Data на бесплатном тарифе отдаёт по XAU/USD последнюю
+ * котировку сессии. Замер 11.11.2026 06:50 UTC: на плитке стояла цена с
+ * 10.11 20:00 — одиннадцать часов отставания при кроне писателя раз в пять
+ * минут. Днём это незаметно, утром — заметно, и подписать такое «на 23:00
+ * МСК» честно, но бесполезно.
+ *
+ * Yahoo отдаёт тот же инструмент (spot XAU/USD), что написан на плитке, —
+ * поэтому это замена источника, а не подмена инструмента. Если Yahoo не
+ * ответит или ответ не разберётся, ряд не пропадает: вызывающий код идёт в
+ * Twelve Data, и в журнале запуска видно, откуда взялась цена.
+ */
+async function fetchGoldFromYahoo(updatedAt: string): Promise<AssetResult> {
+  const series = await fetchYahooDaily("XAUUSD=X");
+  return makeAsset({
+    id: "gold",
+    name: EXPECTED_NAMES.gold,
+    instrument: "Gold spot / US Dollar (Yahoo XAUUSD=X)",
+    provider: "Yahoo Finance",
+    points: series.points,
+    asOf: series.asOf,
+    formingBarDate: series.formingBarDate,
+    format: formatUsd2,
+    updatedAt,
+    extraMeta: {
+      unit: "USD/oz",
+      exchange: series.exchange,
+      quote_time: series.quoteTime,
+      current_price_source: "yahoo-spot",
+    },
   });
 }
 
 async function fetchGold(updatedAt: string): Promise<AssetResult> {
+  const yahoo = await fetchGoldFromYahoo(updatedAt).catch((error) => {
+    console.error("gold: Yahoo XAUUSD=X недоступен, идём в Twelve Data", error);
+    return null;
+  });
+  if (yahoo) return yahoo;
+  return await fetchGoldFromTwelve(updatedAt);
+}
+
+async function fetchGoldFromTwelve(updatedAt: string): Promise<AssetResult> {
   const key = Deno.env.get("TWELVE_KEY");
   if (!key) throw new Error("Missing TWELVE_KEY secret");
   const headers = { Authorization: `apikey ${key}` };
@@ -469,6 +557,24 @@ async function supportedColumns(): Promise<StoredColumns> {
   const asOf = sparkDates ? true : await supports("as_of");
   storedColumns = { asOf, sparkDates };
   return storedColumns;
+}
+
+/**
+ * Ряд обязан выйти под тем именем и с тем смыслом даты, которые записаны в
+ * контракте. Это не формальность: подпись и `as_of` — то, что читает человек
+ * и по чему судит проверка. Расхождение здесь означает, что писатель и экран
+ * договорились между собой мимо контракта, и никакая проверка снаружи этого
+ * не заметит.
+ */
+function assertContract(id: string, name: string, asOf: string | null): void {
+  const contract = contractFor(id);
+  if (!contract) throw new Error(`ряда ${id} нет в контракте данных: подпись и смысл as_of неизвестны`);
+  if (contract.label !== name) {
+    throw new Error(`подпись ряда ${id} — «${name}», по контракту «${contract.label}»`);
+  }
+  if (contract.asOfKind !== 'candle-open' && !asOf) {
+    throw new Error(`ряд ${id} публикуется без as_of, а по контракту это ${contract.asOfKind}`);
+  }
 }
 
 async function isFreshNewCache(): Promise<boolean> {
