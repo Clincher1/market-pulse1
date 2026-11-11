@@ -121,6 +121,52 @@ export const PRICE_SOURCES: PriceSourceSpec[] = [
     fallback: 'нет бесплатной замены дневных закрытий XAU/USD; ряд честно помечается отставшим',
   },
   {
+    id: 'coinbase',
+    host: 'api.coinbase.com, api.exchange.coinbase.com',
+    tier: 'first-party',
+    assets: ['btc'],
+    endpoint: 'v2/prices/BTC-USD/spot, products/BTC-USD/candles',
+    // Официальный интерфейс биржи, как и Kraken. Лимит — 10 запросов в секунду,
+    // но нам и двух на запуск хватает: 300 в сутки — потолок с запасом.
+    dailyBudget: 300,
+    minIntervalMinutes: 5,
+    pauseAfterFailures: 3,
+    pauseMinutes: 30,
+    onFailure: 'BTC остаётся на источнике по умолчанию (Kraken); подпись называет площадку, чья цена показана',
+    fallback: 'Kraken XBT/USD — тот же спот, другая биржа',
+  },
+  {
+    id: 'binance',
+    host: 'api.binance.com',
+    tier: 'first-party',
+    assets: ['btc'],
+    endpoint: 'api/v3/ticker/price, api/v3/klines',
+    // Пара BTCUSDT, а не BTC-USD: это курс к стейблкоину, и подпись обязана
+    // это говорить. Квота та же — с запасом.
+    dailyBudget: 300,
+    minIntervalMinutes: 5,
+    pauseAfterFailures: 3,
+    pauseMinutes: 30,
+    onFailure: 'BTC остаётся на источнике по умолчанию (Kraken); разница USDT/USD подписывается',
+    fallback: 'Kraken XBT/USD или Coinbase BTC-USD',
+  },
+  {
+    id: 'frankfurter',
+    host: 'api.frankfurter.app',
+    tier: 'undocumented-api',
+    assets: ['usd-eur'],
+    endpoint: '{start}..{end}?from=EUR&to=USD',
+    // Frankfurter не считает свой курс, а раздаёт справочный курс ЕЦБ. Это
+    // зеркало: те же числа, другой адрес. Квота как у ЕЦБ — публикация раз в
+    // рабочий день, чаще спрашивать нечего.
+    dailyBudget: 24,
+    minIntervalMinutes: 120,
+    pauseAfterFailures: 3,
+    pauseMinutes: 180,
+    onFailure: 'USD/EUR остаётся с прежним курсом и его датой; проверка assets_asof покажет возраст',
+    fallback: 'ЕЦБ напрямую (eurofxref) — первоисточник',
+  },
+  {
     id: 'ecb',
     host: 'www.ecb.europa.eu',
     tier: 'first-party',

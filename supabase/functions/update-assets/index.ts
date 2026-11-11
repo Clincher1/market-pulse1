@@ -4,6 +4,12 @@ import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 import { ASSET_CONTRACTS, contractFor } from "../_shared/data-contract.ts";
 import {
+  effectiveSources,
+  slotById,
+  SLOTS,
+  type SlotPreference,
+} from "../_shared/slots.ts";
+import {
   PRICE_SOURCES,
   afterAttempt,
   gateDecision,
@@ -423,6 +429,142 @@ async function fetchBrent(updatedAt: string): Promise<AssetResult> {
   });
 }
 
+/**
+ * BTC с выбранной владельцем биржи.
+ *
+ * Три источника — три площадки, и это не одно и то же число: спот BTC/USD на
+ * Kraken, на Coinbase и пара BTC/USDT на Binance расходятся на десятки
+ * долларов. Поэтому подпись и провайдер меняются вместе с источником, иначе
+ * сайт молча выдавал бы цену одной биржи за цену другой.
+ *
+ * Значение по умолчанию — Kraken: официальный интерфейс и уже проверенный
+ * разбор. Остальные два включаются только выбором владельца.
+ */
+async function fetchBtcBySource(sourceId: string, updatedAt: string): Promise<AssetResult> {
+  if (sourceId === "kraken") return fetchBtc(updatedAt);
+  if (sourceId === "coinbase") return fetchBtcCoinbase(updatedAt);
+  if (sourceId === "binance") return fetchBtcBinance(updatedAt);
+  throw new Error(`BTC: источник ${sourceId} не описан`);
+}
+
+async function fetchBtcCoinbase(updatedAt: string): Promise<AssetResult> {
+  const candles = await fetchJson("https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400");
+  if (!Array.isArray(candles)) throw new Error("Coinbase candles: не массив");
+  // Coinbase отдаёт [время, low, high, open, close, volume] и самые свежие
+  // первыми. Закрытие — пятый элемент.
+  const points = sortedPoints(candles.map((raw) => {
+    const candle = Array.isArray(raw) ? raw : [];
+    const seconds = finiteNumber(candle[0]);
+    return {
+      date: seconds ? new Date(seconds * 1000).toISOString().slice(0, 10) : "",
+      value: positiveNumber(candle[4]) ?? Number.NaN,
+    };
+  }));
+  if (points.length < 8) throw new Error(`Coinbase candles: всего ${points.length} закрытий`);
+  const spot = await fetchJson("https://api.coinbase.com/v2/prices/BTC-USD/spot");
+  const amount = isRecord(spot) && isRecord(spot.data) ? positiveNumber(spot.data.amount) : null;
+  return makeAsset({
+    id: "btc",
+    name: EXPECTED_NAMES.btc,
+    instrument: "Bitcoin / USD spot (Coinbase BTC-USD; history — daily candles)",
+    provider: "Coinbase",
+    points,
+    // Дневная свеча текущих суток ещё не закрыта: её «закрытие» — последняя
+    // сделка, и в историю она не идёт.
+    formingBarDate: updatedAt.slice(0, 10),
+    currentPrice: amount ?? undefined,
+    asOf: amount ? updatedAt : undefined,
+    format: formatUsd0,
+    updatedAt,
+    extraMeta: {
+      unit: "USD/BTC",
+      exchange: "coinbase",
+      latest_daily_candle_may_be_partial: true,
+      current_price_source: amount ? "coinbase-spot" : "coinbase-daily-candle",
+    },
+  });
+}
+
+async function fetchBtcBinance(updatedAt: string): Promise<AssetResult> {
+  const klines = await fetchJson("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=30");
+  if (!Array.isArray(klines)) throw new Error("Binance klines: не массив");
+  // [openTime, open, high, low, close, volume, closeTime, ...]; открытие — 0,
+  // закрытие — 4.
+  const points = sortedPoints(klines.map((raw) => {
+    const row = Array.isArray(raw) ? raw : [];
+    const milliseconds = finiteNumber(row[0]);
+    return {
+      date: milliseconds ? new Date(milliseconds).toISOString().slice(0, 10) : "",
+      value: positiveNumber(row[4]) ?? Number.NaN,
+    };
+  }));
+  if (points.length < 8) throw new Error(`Binance klines: всего ${points.length} закрытий`);
+  const ticker = await fetchJson("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
+  const price = isRecord(ticker) ? positiveNumber(ticker.price) : null;
+  return makeAsset({
+    id: "btc",
+    name: EXPECTED_NAMES.btc,
+    instrument: "Bitcoin / USDT spot (Binance BTCUSDT; USDT — не доллар, разница подписана)",
+    provider: "Binance",
+    points,
+    formingBarDate: updatedAt.slice(0, 10),
+    currentPrice: price ?? undefined,
+    asOf: price ? updatedAt : undefined,
+    format: formatUsd0,
+    updatedAt,
+    extraMeta: {
+      unit: "USDT/BTC",
+      exchange: "binance",
+      quote_asset: "USDT",
+      latest_daily_candle_may_be_partial: true,
+      current_price_source: price ? "binance-ticker" : "binance-daily-candle",
+    },
+  });
+}
+
+/**
+ * USD/EUR от Frankfurter — зеркала того же справочного курса ЕЦБ.
+ *
+ * Числа совпадают с ЕЦБ до последнего знака, отличается только адрес. Это и
+ * есть замена: когда сайт ЕЦБ не отвечает, курс берётся здесь, а подпись
+ * называет, откуда он пришёл.
+ */
+async function fetchUsdEurFrankfurter(updatedAt: string): Promise<AssetResult> {
+  const till = new Date();
+  const from = new Date(till.getTime() - 90 * 24 * 60 * 60 * 1000);
+  const iso = (date: Date) => date.toISOString().slice(0, 10);
+  const payload = await fetchJson(`https://api.frankfurter.app/${iso(from)}..${iso(till)}?from=EUR&to=USD`);
+  if (!isRecord(payload) || !isRecord(payload.rates)) throw new Error("Frankfurter: нет rates");
+  const eurUsd: Point[] = Object.entries(payload.rates)
+    .map(([date, rates]) => ({
+      date,
+      value: isRecord(rates) ? positiveNumber(rates.USD) ?? Number.NaN : Number.NaN,
+    }))
+    .filter((point) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value) && point.value > 0);
+  if (eurUsd.length < 8) throw new Error(`Frankfurter: всего ${eurUsd.length} курсов`);
+  const sorted = sortedPoints(eurUsd);
+  return makeAsset({
+    id: "usd-eur",
+    name: EXPECTED_NAMES["usd-eur"],
+    instrument: "USD/EUR derived as inverse of ECB EUR/USD reference rate (via Frankfurter)",
+    provider: "Frankfurter (курс ЕЦБ)",
+    points: sorted.map((point) => ({ date: point.date, value: 1 / point.value })),
+    format: formatFx,
+    updatedAt,
+    extraMeta: {
+      unit: "EUR per 1 USD",
+      mirror_of: "ecb",
+      ecb_eurusd_latest: sorted.at(-1)?.value ?? null,
+    },
+  });
+}
+
+async function fetchUsdEurBySource(sourceId: string, updatedAt: string): Promise<AssetResult> {
+  if (sourceId === "ecb") return fetchUsdEur(updatedAt);
+  if (sourceId === "frankfurter") return fetchUsdEurFrankfurter(updatedAt);
+  throw new Error(`USD/EUR: источник ${sourceId} не описан`);
+}
+
 async function fetchUsdEur(updatedAt: string): Promise<AssetResult> {
   const url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml";
   const text = await fetchText(url);
@@ -611,13 +753,17 @@ async function storedGoldHistory(): Promise<Point[]> {
  * по его собственному расписанию, поэтому Twelve Data не дёргают каждые
  * пятнадцать минут ради ряда, который меняется раз в сутки.
  */
-async function fetchGold(updatedAt: string, options: { historyDue: boolean }): Promise<AssetResult> {
-  const live = await fetchGoldSpotQuote();
-  const outcomes: Record<string, "ok" | "fail"> = { "gold-api": live ? "ok" : "fail" };
+async function fetchGold(updatedAt: string, options: { historyDue: boolean; priceSource: string }): Promise<AssetResult> {
+  // Источник цены выбирает владелец. По умолчанию — живая котировка
+  // gold-api.com; Twelve Data отдаёт закрытие сессии, и это честная, но менее
+  // свежая цена: если её выбрали, подпись прямо говорит, что цена не текущая.
+  const live = options.priceSource === "gold-api" ? await fetchGoldSpotQuote() : null;
+  const outcomes: Record<string, "ok" | "fail"> = {};
+  if (options.priceSource === "gold-api") outcomes["gold-api"] = live ? "ok" : "fail";
 
   let points: Point[];
   let historySource: string;
-  if (options.historyDue) {
+  if (options.historyDue || options.priceSource === "twelve") {
     // История — не обязательный источник. Если Twelve Data отказал, цена
     // всё равно публикуется: график берёт уже опубликованные закрытия, а
     // провал честно записывается за источником истории.
@@ -651,7 +797,7 @@ async function fetchGold(updatedAt: string, options: { historyDue: boolean }): P
     instrument: live
       ? "Gold spot / US Dollar (gold-api.com XAU; история — закрытия Twelve Data)"
       : "Gold spot / US Dollar (Twelve Data XAU/USD)",
-    provider: live ? "gold-api.com + Twelve Data" : "Twelve Data",
+    provider: live ? "gold-api.com + Twelve Data" : "Twelve Data (закрытие сессии)",
     points,
     formingBarDate: liveDay,
     currentPrice: price,
@@ -740,6 +886,62 @@ async function writeSourceStates(states: SourceState[]): Promise<void> {
   }
 }
 
+/**
+ * Выбор владельца: какие источники слот спрашивает первыми.
+ *
+ * Читается каждый запуск, поэтому смена источника не требует выката — этого и
+ * хотел владелец. Ошибка чтения не валит публикацию: с пустым ответом
+ * действует порядок по умолчанию, то есть поведение до выбора.
+ */
+async function readSlotPreferences(): Promise<SlotPreference[]> {
+  try {
+    const rows = (await restJson(
+      "source_preferences?select=slot_id,source_id,priority,enabled",
+    )) as AnyRecord[];
+    return rows.map((row) => ({
+      slot_id: String(row.slot_id ?? ""),
+      source_id: String(row.source_id ?? ""),
+      priority: Number(row.priority ?? 1),
+      enabled: row.enabled !== false,
+    }));
+  } catch (error) {
+    console.warn("слоты: предпочтения не прочитаны, действует порядок по умолчанию", error);
+    return [];
+  }
+}
+
+/**
+ * Копия реестра слотов в базе.
+ *
+ * Зачем копия, если реестр есть в коде: страница состояния читает базу
+ * анонимным ключом и не может импортировать код функции. Расхождение копии с
+ * кодом ловит проверка slots_registry — то есть отставшая синхронизация
+ * становится видимой, а не тихой.
+ */
+async function syncSlotRegistry(): Promise<void> {
+  try {
+    const rows = SLOTS.map((slot) => ({
+      slot_id: slot.id,
+      number: slot.number,
+      section: slot.section,
+      title: slot.title,
+      kind: slot.kind,
+      columns: slot.columns,
+      can_choose: slot.canChoose,
+      sources: slot.sources,
+      note: slot.note,
+      updated_at: new Date().toISOString(),
+    }));
+    await restJson("data_slot_registry?on_conflict=slot_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(rows),
+    });
+  } catch (error) {
+    console.error("слоты: реестр не синхронизирован с базой", error);
+  }
+}
+
 async function isFreshNewCache(): Promise<boolean> {
   const rows = await restJson("cached_assets?select=id,name,updated_at") as Array<{ id: string; name: string; updated_at: string }>;
   const expected = Object.entries(EXPECTED_NAMES).map(([id, name]) => rows.find((row) => row.id === id && row.name === name));
@@ -807,30 +1009,71 @@ serveWithErrorReporting("update-assets", async (request) => {
       nextStates.set(sourceId, afterAttempt(spec, base, gateNow, { ok, status, error: error ?? null, retryAfterSeconds: retryAfterSeconds ?? null }));
     };
 
-    const tasks: Array<{ id: string; sources: string[]; load: () => Promise<AssetResult> }> = [
-      { id: "usd-eur", sources: ["ecb"], load: () => fetchUsdEur(updatedAt) },
-      { id: "sp500", sources: ["yahoo"], load: () => fetchSp500(updatedAt) },
-      { id: "brent", sources: ["yahoo"], load: () => fetchBrent(updatedAt) },
+    // --- Слоты и выбор владельца -----------------------------------------
+    //
+    // Каждый ряд на сайте — это слот из реестра со своим номером. Источник для
+    // слота берётся из `source_preferences`: выбор владельца идёт первым,
+    // остальные остаются запасными, выключенный убирается совсем. Если ни один
+    // источник слота сейчас нельзя спрашивать (пауза, квота, расписание) —
+    // слот честно выпадает, и причина называется в ответе, а не замалчивается.
+    const preferences = await readSlotPreferences();
+    // Копия реестра в базе обновляется здесь же: страница состояния показывает
+    // номера и выбор без выката, а проверка slots_registry сверяет копию с
+    // кодом. Пишем до публикации, чтобы отчёт был про актуальный реестр.
+    await syncSlotRegistry();
+
+    const plans: Array<{ slotId: string; load: (sourceId: string) => Promise<AssetResult> }> = [
+      { slotId: "price.usd-eur", load: (sourceId) => fetchUsdEurBySource(sourceId, updatedAt) },
+      { slotId: "price.sp500", load: () => fetchSp500(updatedAt) },
+      { slotId: "price.brent", load: () => fetchBrent(updatedAt) },
       {
-        id: "gold",
-        sources: ["gold-api"],
+        slotId: "price.gold",
         // История золота нужна раз в сутки, поэтому Twelve Data спрашивают,
         // только когда шлюз разрешил, а в промежутках берут уже опубликованные
-        // закрытия. Источник истории при этом не «обязательный»: его пауза не
+        // закрытия. Источник истории не «обязательный»: его пауза не
         // останавливает живую цену.
-        load: () => fetchGold(updatedAt, { historyDue: decisions.get("twelve")?.allowed ?? false }),
+        load: (sourceId) =>
+          fetchGold(updatedAt, {
+            historyDue: decisions.get("twelve")?.allowed ?? false,
+            priceSource: sourceId,
+          }),
       },
-      { id: "btc", sources: ["kraken"], load: () => fetchBtc(updatedAt) },
+      { slotId: "price.btc", load: (sourceId) => fetchBtcBySource(sourceId, updatedAt) },
     ];
-    const due = tasks.filter((task) => task.sources.every((sourceId) => decisions.get(sourceId)?.allowed));
-    const skippedByGate = tasks
-      .filter((task) => !due.includes(task))
-      .map((task) => ({
-        id: task.id,
-        reasons: task.sources
-          .filter((sourceId) => !decisions.get(sourceId)?.allowed)
-          .map((sourceId) => decisions.get(sourceId)?.note ?? `${sourceId}: нет решения`),
-      }));
+
+    const slotReport: AnyRecord[] = [];
+    const due: Array<{ slotId: string; assetId: string; sourceId: string; load: () => Promise<AssetResult> }> = [];
+    const skippedByGate: AnyRecord[] = [];
+
+    for (const plan of plans) {
+      const slot = slotById(plan.slotId);
+      if (!slot) {
+        skippedByGate.push({ slot_id: plan.slotId, reasons: ["слот не описан в реестре"] });
+        continue;
+      }
+      // Порядок с учётом выбора владельца. Источники, которых нет в реестре
+      // квот, не спрашиваются вовсе: у них нет ни квоты, ни паузы.
+      const order = effectiveSources(slot, preferences).filter((source) => sourceSpec(source.id));
+      const usable = order.find((source) => decisions.get(source.id)?.allowed);
+      const assetId = slot.sources.length ? plan.slotId.replace(/^price\./, "") : plan.slotId;
+      if (!usable) {
+        const reasons = order.length
+          ? order.map((source) => decisions.get(source.id)?.note ?? `${source.id}: нет решения`)
+          : ["все источники слота выключены владельцем"];
+        skippedByGate.push({ slot_id: plan.slotId, number: slot.number, reasons });
+        slotReport.push({ number: slot.number, slot_id: plan.slotId, source: null, why: "не спрашивали: " + reasons.join("; ") });
+        continue;
+      }
+      slotReport.push({
+        number: slot.number,
+        slot_id: plan.slotId,
+        source: usable.id,
+        why: preferences.some((row) => row.slot_id === slot.id && row.source_id === usable.id && row.enabled)
+          ? "выбран владельцем"
+          : "по умолчанию",
+      });
+      due.push({ slotId: plan.slotId, assetId, sourceId: usable.id, load: () => plan.load(usable.id) });
+    }
 
     const settled = await Promise.allSettled(due.map((task) => task.load()));
     const results: AssetResult[] = [];
@@ -847,14 +1090,14 @@ serveWithErrorReporting("update-assets", async (request) => {
             recordAttempt(sourceId, outcome === "ok", outcome === "ok" ? 200 : null, outcome === "ok" ? null : "источник не ответил");
           }
         } else {
-          for (const sourceId of task.sources) recordAttempt(sourceId, true, 200);
+          recordAttempt(task.sourceId, true, 200);
         }
       } else {
         const reason = result.reason instanceof Error ? result.reason : new Error(String(result.reason));
-        errors.push({ id: task.id, error: reason.message.slice(0, 700) });
+        errors.push({ id: task.assetId, slot_id: task.slotId, source: task.sourceId, error: reason.message.slice(0, 700) });
         const status = statusFromError(reason);
         const retryAfterSeconds = retryAfterFromError(reason);
-        for (const sourceId of task.sources) recordAttempt(sourceId, false, status, reason.message, retryAfterSeconds);
+        recordAttempt(task.sourceId, false, status, reason.message, retryAfterSeconds);
       }
     });
     await writeSourceStates([...nextStates.values()]);
@@ -867,7 +1110,7 @@ serveWithErrorReporting("update-assets", async (request) => {
         published: false,
         published_ids: [] as string[],
         assets_ok: 0,
-        assets_total: tasks.length,
+        assets_total: plans.length,
         errors,
       }, { status: 502 });
     }
@@ -904,10 +1147,14 @@ serveWithErrorReporting("update-assets", async (request) => {
       as_of_stored: columns.asOf,
       spark_dates_stored: columns.sparkDates,
       assets_ok: results.length,
-      assets_total: tasks.length,
+      assets_total: plans.length,
       // Почему часть рядов не обновлялась: пауза, квота или интервал.
       // Пусто — значит спрашивали все пять.
       skipped_by_gate: skippedByGate,
+      // Какой источник получил каждый слот в этом запуске и почему именно он.
+      // Это то, что владелец видит на странице состояния: не «в коде написано»,
+      // а «в последнем запуске спросили вот это».
+      slots: slotReport,
       sources: PRICE_SOURCES.map((source) => ({
         id: source.id,
         decision: decisions.get(source.id)?.reason ?? "unknown-source",

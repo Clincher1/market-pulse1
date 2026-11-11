@@ -151,3 +151,52 @@ test('согласованность реестра с базой: расхож�
   assert.equal(badChoice.ok, false);
   assert.match(badChoice.detail, /недопустимый выбор/);
 });
+
+test('каждый источник слотов описан квотой: иначе у него нет ни квоты, ни паузы', async () => {
+  // Это главное правило «нас не блокируют»: к источнику нельзя прийти, не
+  // имея записанной квоты и паузы. Если в реестр слотов добавили источник, а в
+  // реестр квот — нет, тест падает здесь, а не в проде через неделю.
+  const { PRICE_SOURCES } = await import('../supabase/functions/_shared/price-sources.ts');
+  const budgeted = new Set(PRICE_SOURCES.map((source) => source.id));
+  // Слоты-котировки обслуживает писатель цен, и у каждого его источника
+  // обязана быть записанная квота. У ЦБ и Мосбиржи (слоты-индикаторы) квота
+  // живёт в другом месте — в очереди по хосту serverless-функций, которая
+  // ограничивает одновременность, а не суточный расход; это записано в
+  // docs/DATA-CONTRACT.md §6.
+  const priceSources = SLOTS.filter((slot) => slot.kind === 'price').flatMap((slot) =>
+    slot.sources.map((source) => source.id),
+  );
+  const missing = [...new Set(priceSources)].filter((id) => !budgeted.has(id));
+  assert.deepEqual(missing, [], `источники без квоты: ${missing.join(', ')}`);
+  // И наоборот: квота без слота означает, что мы считаем расход источника,
+  // которого никто не спрашивает, — счётчик будет вечно нулевым и незаметно
+  // сломается.
+  const slots = new Set(priceSources);
+  const unused = [...budgeted].filter((id) => !slots.has(id));
+  assert.deepEqual(unused, [], `квота без слота: ${unused.join(', ')}`);
+});
+
+test('сторож: писатель цен берёт источник слота из выбора владельца, а не из кода', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /readSlotPreferences/, 'выбор владельца не читается');
+  assert.match(source, /effectiveSources\(slot, preferences\)/, 'порядок источников не применяется');
+  assert.match(source, /source_preferences\?select=/, 'таблица выбора не запрашивается');
+  // Копия реестра в базе должна обновляться: на ней держится страница состояния
+  // и проверка slots_registry.
+  assert.match(source, /syncSlotRegistry/, 'реестр не синхронизируется с базой');
+  // Отчёт о выбранном источнике — то, что видит владелец.
+  assert.match(source, /slots: slotReport/);
+});
+
+test('BTC, золото и USD/EUR умеют переключаться на описанный источник', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  for (const marker of ['fetchBtcCoinbase', 'fetchBtcBinance', 'fetchUsdEurFrankfurter', 'priceSource']) {
+    assert.ok(source.includes(marker), `нет пути выбора: ${marker}`);
+  }
+  // Подпись обязана меняться вместе с источником: цена Coinbase — не цена Kraken.
+  assert.match(source, /provider: "Coinbase"/);
+  assert.match(source, /provider: "Binance"/);
+  assert.match(source, /quote_asset: "USDT"/, 'пара BTCUSDT не подписана как USDT');
+});
