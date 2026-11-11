@@ -335,3 +335,16 @@ test('сторож: писатель спрашивает шлюз до запр
   // Падение записи состояния не должно валить публикацию цен.
   assert.match(source, /состояние шлюза не записано/);
 });
+
+test('золото: не спрашивали Twelve — это не его отказ', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  // Дефект, пойманный в проде 11.11 18:40 UTC: при historyDue = false Twelve
+  // Data записывался как «отказавший», хотя его не спрашивали. Серия отказов
+  // набиралась на нашем собственном расписании и через три запуска давала
+  // паузу источнику, который работал.
+  assert.doesNotMatch(source, /outcomes\["twelve"\] = historySource === "twelve" \? "ok" : "fail"/);
+  // И отказ истории не имеет права убивать живую цену: график берёт
+  // опубликованные закрытия, цена остаётся из gold-api.
+  assert.match(source, /история из Twelve Data не пришла, беру опубликованные закрытия/);
+});
