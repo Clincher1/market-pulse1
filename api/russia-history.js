@@ -11,7 +11,7 @@
 import { fetchReservesRecords } from './_shared/cbrReserves.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
 
-import { withRetry } from './_shared/fetchRetry.js';
+import { RUN_DEADLINE_MS, hostQueue, withRetry, withinDeadline } from './_shared/fetchRetry.js';
 
 const TIMEOUT_MS = 9000;
 const USER_AGENT = 'MarketPulse/1.0 (+https://market-pulse1-eta.vercel.app/)';
@@ -54,7 +54,15 @@ async function timedFetch(url, init, timeoutMs) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      // Retry-After несём в ошибку: повтор раньше, чем просил источник, — это
+      // ровно то поведение, из-за которого ставят блокировку по адресу.
+      const header = response.headers.get('retry-after');
+      const seconds = header ? Number(header) : Number.NaN;
+      const error = new Error(`HTTP ${response.status}${header ? ` retry-after=${header}` : ''}`);
+      if (Number.isFinite(seconds) && seconds > 0) error.retryAfterMs = seconds * 1000;
+      throw error;
+    }
     return response;
   } finally {
     clearTimeout(timer);
@@ -301,6 +309,13 @@ async function fetchKeyRateHistory(fromISO, tillISO) {
   return { points, total: points.length };
 }
 
+/**
+ * Очередь по хосту на весь модуль: в одном снимке три ряда Мосбиржи и два
+ * ЦБ, и все они уходят разом. Один запрос в полёте на адрес — это чтение
+ * чужого сайта, а не залп по нему.
+ */
+const runOnHost = hostQueue({ limit: 1 });
+
 const SERIES = [
   {
     id: 'imoex',
@@ -392,6 +407,7 @@ export default async function handler(req, res) {
   const tillISO = isoDate(till);
 
   const errors = [];
+  const deadline = Date.now() + RUN_DEADLINE_MS;
   const results = await Promise.all(
     SERIES.map(async (series) => {
       try {

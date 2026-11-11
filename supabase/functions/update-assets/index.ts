@@ -3,6 +3,18 @@ import { closedHistory, previousClosedValue } from "../_shared/asset-history.ts"
 import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 import { ASSET_CONTRACTS, contractFor } from "../_shared/data-contract.ts";
+import {
+  PRICE_SOURCES,
+  afterAttempt,
+  gateDecision,
+  backoffMs,
+  MAX_ATTEMPTS,
+  retryAfterFromError,
+  shouldRetry,
+  sourceSpec,
+  statusFromError,
+  type SourceState,
+} from "../_shared/price-sources.ts";
 //
 // Security/provenance notes:
 // - Twelve Data is read only from the TWELVE_KEY Edge Function secret.
@@ -104,12 +116,91 @@ async function fetchText(url: string, headers: Record<string, string> = {}): Pro
     },
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${text.slice(0, 300)}`);
+  if (!response.ok) {
+    // Retry-After — единственное, что источник говорит нам человеческим
+    // языком: «подожди столько». Терять его нельзя, иначе мы вернёмся через
+    // свои 15 минут и получим тот же отказ.
+    const retryAfter = response.headers.get("retry-after");
+    throw new Error(`HTTP ${response.status}: ${text.slice(0, 300)}${retryAfter ? ` retry-after=${retryAfter}` : ""}`);
+  }
   return text;
 }
 
+/**
+ * Чарт Yahoo с двумя хостами.
+ *
+ * query1 и query2 — разные узлы одного сервиса. Раньше при отказе первого
+ * второго не было вовсе: ряд просто не обновлялся до следующего запуска.
+ * Теперь запрос уходит на второй хост, а исход пишется в журнал запуска.
+ * Повтор — не больше одного раза: три попытки подряд к сервису, который уже
+ * сказал «нет», выглядят как атака и приводят к блокировке по IP.
+ */
+async function fetchYahooChart(url: string): Promise<{ payload: unknown; host: string; retried: boolean }> {
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  let lastError: Error | null = null;
+  for (let index = 0; index < hosts.length; index += 1) {
+    const host = hosts[index];
+    const target = url.replace(/https:\/\/query1\.finance\.yahoo\.com/, `https://${host}`);
+    try {
+      return { payload: await fetchJson(target), host, retried: index > 0 };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      // Пауза между хостами разная для каждого запуска: одновременные запросы
+      // из одного изолята не должны идти в ногу.
+      if (index < hosts.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 400 + Math.floor(Math.random() * 600)));
+      }
+    }
+  }
+  throw lastError ?? new Error("Yahoo chart: no host answered");
+}
+
+/**
+ * Сколько запуск готов ждать повтора.
+ *
+ * Не «сколько угодно»: запуск живёт в чужих лимитах по времени. Если
+ * источник просит подождать дольше, чем этот запас, повторять сейчас нельзя —
+ * это и есть поведение, за которое банят. В таком случае ошибка уходит в шлюз
+ * вместе с Retry-After, и пауза ставится на всё сказанное время.
+ */
+const RETRY_WAIT_BUDGET_MS = 6000;
+
+function abortableSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Запрос с единственным осмысленным повтором.
+ *
+ * Раньше здесь была одна попытка: 429 или 503 от источника означали, что ряд
+ * не обновится все следующие пятнадцать минут — при том, что сервис через
+ * полсекунды отвечал нормально. Повтор только на временных ошибках (429, 5xx,
+ * обрыв, таймаут), не больше двух попыток, со случайным разбросом, чтобы
+ * одновременные запросы не повторялись синхронным залпом.
+ */
+async function requestWithRetry(url: string, headers: Record<string, string> = {}): Promise<string> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await fetchText(url, headers);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const status = statusFromError(lastError);
+      if (attempt >= MAX_ATTEMPTS || !shouldRetry(status, lastError.message)) throw lastError;
+      // Источник мог назвать свою паузу — она главнее нашего бэкоффа.
+      const waitMs = Math.max(backoffMs(attempt), (retryAfterFromError(lastError) ?? 0) * 1000);
+      if (waitMs > RETRY_WAIT_BUDGET_MS) throw lastError;
+      console.warn(
+        `повтор ${attempt + 1}/${MAX_ATTEMPTS} через ${waitMs} мс: ${url} — ${lastError.message.slice(0, 160)}`,
+      );
+      await abortableSleep(waitMs);
+    }
+  }
+  throw lastError ?? new Error("запрос не выполнен");
+}
+
 async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
-  return JSON.parse(await fetchText(url, headers)) as unknown;
+  return JSON.parse(await requestWithRetry(url, headers)) as unknown;
 }
 
 function isRecord(value: unknown): value is AnyRecord {
@@ -276,7 +367,9 @@ async function fetchYahooDaily(symbol: string): Promise<{
   quoteTime: string | null;
 }> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3mo&interval=1d`;
-  const series = parseYahooDaily(await fetchJson(url));
+  const chart = await fetchYahooChart(url);
+  const series = parseYahooDaily(chart.payload);
+  if (chart.retried) console.warn(`Yahoo: ${symbol} отдан резервным хостом ${chart.host}`);
   const now = new Date();
   const forming = isFormingBar(series, now);
   return {
@@ -462,33 +555,25 @@ async function fetchGoldSpotQuote(): Promise<{ price: number; at: string } | nul
   }
 }
 
-async function fetchGold(updatedAt: string): Promise<AssetResult> {
-  // Живая котировка и история — от разных поставщиков, но это ОДИН инструмент:
-  // спот XAU/USD. История нужна на закрытиях, поэтому её отдаёт Twelve Data,
-  // а цена на плитке — из live-котировки.
-  const live = await fetchGoldSpotQuote();
-  return await fetchGoldFromTwelve(updatedAt, live);
-}
-
-async function fetchGoldFromTwelve(
-  updatedAt: string,
-  live: { price: number; at: string } | null = null,
-): Promise<AssetResult> {
+/**
+ * Дневные закрытия XAU/USD из Twelve Data.
+ *
+ * Только `time_series`: кавычку у этого провайдера мы больше не спрашиваем.
+ * На бесплатном тарифе quote отдаёт последнюю котировку сессии (11.11 в
+ * 06:50 UTC это была цена с 20:00 предыдущего дня), а живая цена теперь
+ * приходит из gold-api.com. Два запроса на запуск превращались в 192 запроса
+ * в сутки при лимите 800 — теперь один, и не чаще раза в час.
+ */
+async function fetchGoldSeries(): Promise<{ points: Point[]; lastTwelveDate: string | null }> {
   const key = Deno.env.get("TWELVE_KEY");
   if (!key) throw new Error("Missing TWELVE_KEY secret");
-  const headers = { Authorization: `apikey ${key}` };
-  const quoteUrl = "https://api.twelvedata.com/quote?symbol=XAU%2FUSD";
-  const seriesUrl = "https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=1day&outputsize=30&order=asc&timezone=UTC";
-  const [quotePayload, seriesPayload] = await Promise.all([
-    fetchJson(quoteUrl, headers),
-    fetchJson(seriesUrl, headers),
-  ]);
-  if (!isRecord(quotePayload)) throw new Error("Twelve Data quote returned a non-object response");
-  if (!isRecord(seriesPayload)) throw new Error("Twelve Data time_series returned a non-object response");
-  if (quotePayload.status === "error") throw new Error(`Twelve Data quote: ${String(quotePayload.message ?? "error").slice(0, 300)}`);
-  if (seriesPayload.status === "error") throw new Error(`Twelve Data time_series: ${String(seriesPayload.message ?? "error").slice(0, 300)}`);
-
-  const values = Array.isArray(seriesPayload.values) ? seriesPayload.values : [];
+  const payload = await fetchJson(
+    "https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=1day&outputsize=30&order=asc&timezone=UTC",
+    { Authorization: `apikey ${key}` },
+  );
+  if (!isRecord(payload)) throw new Error("Twelve Data time_series returned a non-object response");
+  if (payload.status === "error") throw new Error(`Twelve Data time_series: ${String(payload.message ?? "error").slice(0, 300)}`);
+  const values = Array.isArray(payload.values) ? payload.values : [];
   const points = sortedPoints(values.map((raw) => {
     const row = isRecord(raw) ? raw : {};
     return {
@@ -496,26 +581,57 @@ async function fetchGoldFromTwelve(
       value: positiveNumber(row.close) ?? Number.NaN,
     };
   }));
-  const twelveClose = positiveNumber(quotePayload.close);
-  const previousClose = positiveNumber(quotePayload.previous_close);
-  // Если живая котировка есть, она и есть текущая цена: всё остальное —
-  // закрытия и проценты — считается от неё, чтобы плитка и ряд не расходились.
-  const quoteClose = live?.price ?? twelveClose;
-  const quoteChange = live && previousClose ? ((live.price - previousClose) / previousClose) * 100 : finiteNumber(quotePayload.percent_change);
-  const timestampSeconds = finiteNumber(quotePayload.timestamp);
-  const quoteTimestamp = timestampSeconds ? new Date(timestampSeconds * 1000) : null;
-  const quoteDate = quoteTimestamp ? quoteTimestamp.toISOString().slice(0, 10) : String(quotePayload.datetime ?? "").slice(0, 10);
-  if (!quoteClose || !previousClose || !quoteDate) throw new Error("Twelve Data gold quote lacked close/previous_close/date");
+  if (points.length < 8) throw new Error(`Twelve Data XAU/USD: only ${points.length} daily closes`);
+  return { points, lastTwelveDate: points.at(-1)?.date ?? null };
+}
 
-  const lastDaily = points.at(-1);
-  if (lastDaily && Math.abs(((quoteClose - lastDaily.value) / lastDaily.value) * 100) > 5) {
-    throw new Error("Twelve Data gold quote differs from daily series by more than 5%");
+/**
+ * История, уже опубликованная на сайте, для запусков между запросами к
+ * Twelve Data. Это не заглушка и не «вчерашнее число под сегодняшним»:
+ * точки — те же закрытия с теми же датами, что видит человек в графике.
+ * Берётся только когда источник истории ещё не «пора спрашивать» по шлюзу.
+ */
+async function storedGoldHistory(): Promise<Point[]> {
+  const rows = (await restJson("cached_assets?select=id,sparkline,spark_dates&id=eq.gold")) as AnyRecord[];
+  const row = rows[0];
+  const values = Array.isArray(row?.sparkline) ? row!.sparkline as unknown[] : [];
+  const dates = Array.isArray(row?.spark_dates) ? row!.spark_dates as unknown[] : [];
+  const points = values
+    .map((value, index) => ({ date: String(dates[index] ?? "").slice(0, 10), value: Number(value) }))
+    .filter((point) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value) && point.value > 0);
+  if (points.length < 8) throw new Error(`золото: в кэше ${points.length} dated points, нужна история`);
+  return points;
+}
+
+/**
+ * Золото: живая котировка от gold-api.com, закрытия — от Twelve Data.
+ *
+ * Два источника у одного ряда — не роскошь, а разделение обязанностей:
+ * на «сейчас» нужна котировка, на график — закрытия. Шлюз спрашивает каждого
+ * по его собственному расписанию, поэтому Twelve Data не дёргают каждые
+ * пятнадцать минут ради ряда, который меняется раз в сутки.
+ */
+async function fetchGold(updatedAt: string, options: { historyDue: boolean }): Promise<AssetResult> {
+  const live = await fetchGoldSpotQuote();
+  const outcomes: Record<string, "ok" | "fail"> = { "gold-api": live ? "ok" : "fail" };
+
+  let points: Point[];
+  let historySource: string;
+  if (options.historyDue) {
+    points = (await fetchGoldSeries()).points;
+    historySource = "twelve";
+  } else {
+    points = await storedGoldHistory();
+    historySource = "cache";
   }
-  if (lastDaily?.date === quoteDate) {
-    lastDaily.value = quoteClose;
-  } else if (!lastDaily || lastDaily.date < quoteDate) {
-    points.push({ date: quoteDate, value: quoteClose });
-  }
+  if (live) outcomes["twelve"] = historySource === "twelve" ? "ok" : "fail";
+  else if (historySource === "twelve") outcomes["twelve"] = "ok";
+
+  // Дневной бар текущих суток с живой ценой — незакрытый бар: в историю его
+  // не пускаем, иначе график покажет сегодняшнюю цену как закрытие дня.
+  const liveDay = live ? live.at.slice(0, 10) : null;
+  const price = live ? live.price : points.at(-1)!.value;
+  const asOf = live ? live.at : points.at(-1)!.date;
 
   return makeAsset({
     id: "gold",
@@ -525,21 +641,16 @@ async function fetchGoldFromTwelve(
       : "Gold spot / US Dollar (Twelve Data XAU/USD)",
     provider: live ? "gold-api.com + Twelve Data" : "Twelve Data",
     points,
-    // Дневной бар текущих суток с живой ценой — незакрытый бар: в историю его
-    // не пускаем, иначе график покажет сегодняшнюю цену как закрытие дня.
-    formingBarDate: live && quoteDate ? quoteDate : null,
-    currentPrice: quoteClose,
-    previousPrice: previousClose,
-    changePct: quoteChange,
-    asOf: live ? live.at : quoteTimestamp?.toISOString() ?? quoteDate,
+    formingBarDate: liveDay,
+    currentPrice: price,
+    asOf,
     format: formatUsd1,
     updatedAt,
     extraMeta: {
       unit: "USD/troy ounce",
-      current_price_source: live ? "gold-api" : "twelve-quote",
-      quote_datetime: quotePayload.datetime ?? null,
-      quote_timestamp: quoteTimestamp?.toISOString() ?? null,
-      is_market_open: typeof quotePayload.is_market_open === "boolean" ? quotePayload.is_market_open : null,
+      current_price_source: live ? "gold-api" : "twelve-close",
+      history_source: historySource,
+      source_outcomes: outcomes,
     },
   });
 }
@@ -583,6 +694,37 @@ function assertContract(id: string, name: string, asOf: string | null): void {
   }
   if (contract.asOfKind !== 'candle-open' && !asOf) {
     throw new Error(`ряд ${id} публикуется без as_of, а по контракту это ${contract.asOfKind}`);
+  }
+}
+
+/**
+ * Состояние шлюза из базы. Таблица появляется миграцией отдельно от кода:
+ * пока её нет, шлюз работает как «всё можно», а не падает — иначе выкат
+ * функции раньше миграции остановил бы публикацию цен.
+ */
+async function readSourceStates(): Promise<Map<string, SourceState>> {
+  try {
+    const rows = (await restJson(
+      "asset_source_state?select=source_id,last_attempt_at,last_ok_at,last_status,consecutive_failures,paused_until,requests_today,day,last_error",
+    )) as SourceState[];
+    return new Map(rows.map((row) => [String(row.source_id), row]));
+  } catch (error) {
+    console.error("asset_source_state недоступна, шлюз работает без памяти", error);
+    return new Map();
+  }
+}
+
+/** Запись состояния. Отказ записи не должен валить публикацию: цены важнее учёта. */
+async function writeSourceStates(states: SourceState[]): Promise<void> {
+  if (!states.length) return;
+  try {
+    await restJson("asset_source_state?on_conflict=source_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(states.map((state) => ({ ...state, updated_at: new Date().toISOString() }))),
+    });
+  } catch (error) {
+    console.error("asset_source_state: состояние шлюза не записано", error);
   }
 }
 
@@ -632,25 +774,78 @@ serveWithErrorReporting("update-assets", async (request) => {
       });
     }
 
-    const tasks: Array<{ id: string; load: () => Promise<AssetResult> }> = [
-      { id: "usd-eur", load: () => fetchUsdEur(updatedAt) },
-      { id: "sp500", load: () => fetchSp500(updatedAt) },
-      { id: "brent", load: () => fetchBrent(updatedAt) },
-      { id: "gold", load: () => fetchGold(updatedAt) },
-      { id: "btc", load: () => fetchBtc(updatedAt) },
+    // --- Шлюз к источникам ------------------------------------------------
+    //
+    // Каждый источник получает решение ДО запроса: пауза после отказов,
+    // исчерпанная квота на сутки и минимальный интервал. Раньше проверялся
+    // только таймаут, и источник, трижды ответивший 429, спрашивался снова
+    // через 15 минут. «Не пытались» здесь — не отказ источника, а наше
+    // расписание, и в отчёте запуска оно названо своей причиной.
+    const gateNow = new Date();
+    const states = await readSourceStates();
+    const decisions = new Map<string, ReturnType<typeof gateDecision>>();
+    for (const source of PRICE_SOURCES) {
+      decisions.set(source.id, gateDecision(source, states.get(source.id) ?? null, gateNow));
+    }
+    const nextStates = new Map<string, SourceState>();
+    const recordAttempt = (sourceId: string, ok: boolean, status: number | null, error?: string | null, retryAfterSeconds?: number | null) => {
+      const spec = sourceSpec(sourceId);
+      if (!spec) return;
+      const base = nextStates.get(sourceId) ?? states.get(sourceId) ?? null;
+      nextStates.set(sourceId, afterAttempt(spec, base, gateNow, { ok, status, error: error ?? null, retryAfterSeconds: retryAfterSeconds ?? null }));
+    };
+
+    const tasks: Array<{ id: string; sources: string[]; load: () => Promise<AssetResult> }> = [
+      { id: "usd-eur", sources: ["ecb"], load: () => fetchUsdEur(updatedAt) },
+      { id: "sp500", sources: ["yahoo"], load: () => fetchSp500(updatedAt) },
+      { id: "brent", sources: ["yahoo"], load: () => fetchBrent(updatedAt) },
+      {
+        id: "gold",
+        sources: ["gold-api"],
+        // История золота нужна раз в сутки, поэтому Twelve Data спрашивают,
+        // только когда шлюз разрешил, а в промежутках берут уже опубликованные
+        // закрытия. Источник истории при этом не «обязательный»: его пауза не
+        // останавливает живую цену.
+        load: () => fetchGold(updatedAt, { historyDue: decisions.get("twelve")?.allowed ?? false }),
+      },
+      { id: "btc", sources: ["kraken"], load: () => fetchBtc(updatedAt) },
     ];
-    const settled = await Promise.allSettled(tasks.map((task) => task.load()));
+    const due = tasks.filter((task) => task.sources.every((sourceId) => decisions.get(sourceId)?.allowed));
+    const skippedByGate = tasks
+      .filter((task) => !due.includes(task))
+      .map((task) => ({
+        id: task.id,
+        reasons: task.sources
+          .filter((sourceId) => !decisions.get(sourceId)?.allowed)
+          .map((sourceId) => decisions.get(sourceId)?.note ?? `${sourceId}: нет решения`),
+      }));
+
+    const settled = await Promise.allSettled(due.map((task) => task.load()));
     const results: AssetResult[] = [];
     const errors: AnyRecord[] = [];
     settled.forEach((result, index) => {
-      if (result.status === "fulfilled") results.push(result.value);
-      else {
-        errors.push({
-          id: tasks[index].id,
-          error: result.reason instanceof Error ? result.reason.message.slice(0, 700) : String(result.reason).slice(0, 700),
-        });
+      const task = due[index];
+      if (result.status === "fulfilled") {
+        results.push(result.value);
+        // Ряд может сообщить, какие источники реально ответили (у золота их
+        // два, и падение запасного не должно продлевать паузу основного).
+        const outcomes = result.value.meta.source_outcomes as Record<string, string> | undefined;
+        if (outcomes) {
+          for (const [sourceId, outcome] of Object.entries(outcomes)) {
+            recordAttempt(sourceId, outcome === "ok", outcome === "ok" ? 200 : null, outcome === "ok" ? null : "источник не ответил");
+          }
+        } else {
+          for (const sourceId of task.sources) recordAttempt(sourceId, true, 200);
+        }
+      } else {
+        const reason = result.reason instanceof Error ? result.reason : new Error(String(result.reason));
+        errors.push({ id: task.id, error: reason.message.slice(0, 700) });
+        const status = statusFromError(reason);
+        const retryAfterSeconds = retryAfterFromError(reason);
+        for (const sourceId of task.sources) recordAttempt(sourceId, false, status, reason.message, retryAfterSeconds);
       }
     });
+    await writeSourceStates([...nextStates.values()]);
 
     // Все источники упали — публиковать нечего, и ответ должен быть ошибкой.
     if (!results.length) {
@@ -698,6 +893,18 @@ serveWithErrorReporting("update-assets", async (request) => {
       spark_dates_stored: columns.sparkDates,
       assets_ok: results.length,
       assets_total: tasks.length,
+      // Почему часть рядов не обновлялась: пауза, квота или интервал.
+      // Пусто — значит спрашивали все пять.
+      skipped_by_gate: skippedByGate,
+      sources: PRICE_SOURCES.map((source) => ({
+        id: source.id,
+        decision: decisions.get(source.id)?.reason ?? "unknown-source",
+        note: decisions.get(source.id)?.note ?? null,
+        requests_today: (nextStates.get(source.id) ?? states.get(source.id))?.requests_today ?? 0,
+        budget: source.dailyBudget,
+        failures: (nextStates.get(source.id) ?? states.get(source.id))?.consecutive_failures ?? 0,
+        paused_until: (nextStates.get(source.id) ?? states.get(source.id))?.paused_until ?? null,
+      })),
       assets: results.map((result) => result.meta),
       rows: results.map((result) => result.row),
       errors,

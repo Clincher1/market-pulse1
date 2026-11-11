@@ -222,7 +222,7 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     instrument: 'Золото, спот XAU/USD, доллары за тройскую унцию (котировка — gold-api.com, история — Twelve Data)',
     provider: 'gold-api.com (котировка), Twelve Data (закрытия)',
     tier: 'undocumented-api',
-    endpoint: 'https://api.gold-api.com/price/XAU',
+    endpoint: 'https://api.gold-api.com/price/XAU (котировка) + api.twelvedata.com/time_series (закрытия)',
     asOfKind: 'quote',
     cadenceMinutes: 5,
     // Золото торгуется почти круглосуточно, но с паузой 21:00–22:00 UTC и

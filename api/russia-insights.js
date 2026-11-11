@@ -7,7 +7,7 @@ import {
   pickLatestInflation,
 } from './_shared/cbrInflation.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
-import { withRetry } from './_shared/fetchRetry.js';
+import { RUN_DEADLINE_MS, hostQueue, withRetry, withinDeadline } from './_shared/fetchRetry.js';
 
 const TIMEOUT_MS = 6500;
 // SOAP-сервис ЦБ отвечает медленнее обычного XML, и 6,5 секунды ему мало:
@@ -77,12 +77,32 @@ function decodeBuffer(buffer, contentType = '') {
   }
 }
 
+/**
+ * Очереди по хосту.
+ *
+ * В одном снимке шесть запросов к cbr.ru и пять к iss.moex.com — раньше они
+ * уходили одновременно. Со стороны источника это не «шесть индикаторов», а
+ * шесть соединений за долю секунды от одного адреса, то есть картина бота.
+ * Для ЦБ оставлено два одновременных запроса (он официальный и не банит за
+ * это), для RSS — строго один на издание.
+ */
+const runOnMarketHost = hostQueue({ limit: 2 });
+const runOnFeedHost = hostQueue({ limit: 1 });
+
 async function timedFetch(url, init, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      // Retry-After несём в ошибку: повтор раньше, чем просил источник, — это
+      // ровно то поведение, из-за которого ставят блокировку по адресу.
+      const header = response.headers.get('retry-after');
+      const seconds = header ? Number(header) : Number.NaN;
+      const error = new Error(`HTTP ${response.status}${header ? ` retry-after=${header}` : ''}`);
+      if (Number.isFinite(seconds) && seconds > 0) error.retryAfterMs = seconds * 1000;
+      throw error;
+    }
     return response;
   } finally {
     clearTimeout(timer);
@@ -831,17 +851,19 @@ export default async function handler(req, res) {
   }
 
   const errors = [];
+  // Задачи-функции, а не готовые промисы: иначе все запросы стартуют до того,
+  // как очередь по хосту успеет их придержать.
   const marketTasks = [
-    ...CBR_CURRENCIES.map((currency) => fetchCbrIndicator(currency)),
-    fetchMoexIndex('IMOEX', 'IMOEX', 'Индекс МосБиржи'),
-    fetchMoexIndex('RGBI', 'RGBI', 'Индекс гособлигаций'),
-    fetchMoexCny(),
-    fetchCbrKeyRate(),
-    fetchRuonia(),
-    fetchReserves(),
-    fetchMoexOfz10y(),
-    fetchMoexGold(),
-    fetchInflation(),
+    ...CBR_CURRENCIES.map((currency) => ({ host: 'www.cbr.ru', run: () => fetchCbrIndicator(currency) })),
+    { host: 'iss.moex.com', run: () => fetchMoexIndex('IMOEX', 'IMOEX', 'Индекс МосБиржи') },
+    { host: 'iss.moex.com', run: () => fetchMoexIndex('RGBI', 'RGBI', 'Индекс гособлигаций') },
+    { host: 'iss.moex.com', run: () => fetchMoexCny() },
+    { host: 'www.cbr.ru', run: () => fetchCbrKeyRate() },
+    { host: 'www.cbr.ru', run: () => fetchRuonia() },
+    { host: 'www.cbr.ru', run: () => fetchReserves() },
+    { host: 'iss.moex.com', run: () => fetchMoexOfz10y() },
+    { host: 'iss.moex.com', run: () => fetchMoexGold() },
+    { host: 'www.cbr.ru', run: () => fetchInflation() },
   ];
   const marketLabels = [
     ...CBR_CURRENCIES.map((currency) => currency.name),
@@ -857,9 +879,16 @@ export default async function handler(req, res) {
   ];
   const rssLabels = RSS_SOURCES.map((source) => source.name);
 
+  // Срок на запуск: очередь бережёт источник, но лежащий источник не должен
+  // превращать страницу в 504. Не успевший индикатор честно выпадает.
+  const deadline = Date.now() + RUN_DEADLINE_MS;
   const [marketResults, rssResults] = await Promise.all([
-    Promise.allSettled(marketTasks),
-    Promise.allSettled(RSS_SOURCES.map((source) => fetchRss(source))),
+    Promise.allSettled(
+      marketTasks.map((task) => withinDeadline(runOnMarketHost(task.host, task.run), deadline, task.host)),
+    ),
+    Promise.allSettled(
+      RSS_SOURCES.map((source) => withinDeadline(runOnFeedHost(source.url, () => fetchRss(source)), deadline, source.name)),
+    ),
   ]);
 
   const markets = [];
