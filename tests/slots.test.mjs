@@ -215,3 +215,16 @@ test('плитка подписывает источник: смена исто�
   const mapper = await readFile(new URL('../src/data/assetCacheRow.ts', import.meta.url), 'utf8');
   assert.match(mapper, /sourceLabel: row\.source_label/);
 });
+
+test('запасной источник включается на отказ, а не на «ещё не пора»', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  // Дефект, пойманный в проде 11.11 в 22:05: Kraken не успел выйти из
+  // пятиминутного интервала, и писатель молча взял Coinbase. Числа при этом
+  // прыгали между биржами через запуск, а график складывался из разных
+  // площадок. Пауза и квота — другое дело: там замена и есть страховка.
+  assert.match(source, /primaryDecision\?\.reason === 'paused' \|\| primaryDecision\?\.reason === 'budget'/);
+  assert.match(source, /Запасной путь в таком случае брать нельзя/);
+  // И порядок берётся из выбора владельца: первый — основной, остальные запас.
+  assert.match(source, /const primary = order\[0\];/);
+});
