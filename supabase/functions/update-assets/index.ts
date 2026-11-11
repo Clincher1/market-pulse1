@@ -1058,7 +1058,18 @@ serveWithErrorReporting("update-assets", async (request) => {
       // Порядок с учётом выбора владельца. Источники, которых нет в реестре
       // квот, не спрашиваются вовсе: у них нет ни квоты, ни паузы.
       const order = effectiveSources(slot, preferences).filter((source) => sourceSpec(source.id));
-      const usable = order.find((source) => decisions.get(source.id)?.allowed);
+      // «Не пора по интервалу» — это наше расписание, а не отказ источника.
+      // Запасной путь в таком случае брать нельзя: иначе BTC прыгал бы между
+      // биржами через запуск, и график складывался бы из разных площадок.
+      // Запасной включается только когда основной действительно недоступен:
+      // пауза после отказов или исчерпанная квота.
+      const primary = order[0];
+      const primaryDecision = primary ? decisions.get(primary.id) : null;
+      const usable = primaryDecision?.allowed
+        ? primary
+        : primaryDecision?.reason === 'paused' || primaryDecision?.reason === 'budget'
+          ? order.find((source) => source !== primary && decisions.get(source.id)?.allowed)
+          : undefined;
       const assetId = slot.sources.length ? plan.slotId.replace(/^price\./, "") : plan.slotId;
       if (!usable) {
         const reasons = order.length
