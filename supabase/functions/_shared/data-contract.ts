@@ -287,8 +287,11 @@ export function freshnessVerdict(
   }
   const age = asOfAgeMinutes(row.as_of, now);
   const ok = age !== null && age <= contract.maxAsOfAgeMinutes;
-  const hours = age === null ? null : Math.round((age / 60) * 10) / 10;
-  const allowedHours = Math.round((contract.maxAsOfAgeMinutes / 60) * 10) / 10;
+  // Десятичная запятая: «0,3 ч». Точка в русской подписи читается как
+  // небрежность, а текст проверки человек видит в статусе сайта.
+  const ru = (value: number) => String(value).replace('.', ',');
+  const hours = age === null ? null : ru(Math.round((age / 60) * 10) / 10);
+  const allowedHours = ru(Math.round((contract.maxAsOfAgeMinutes / 60) * 10) / 10);
   return {
     id: contract.id,
     described: true,
@@ -386,7 +389,7 @@ export function quoteLagVerdict(
   const ok = age !== null && age <= contract.quoteLagMinutes;
   // Один знак после запятой: «10,8 ч», а не «11 ч» — округление до целого
   // скрывает как раз ту разницу, ради которой проверка существует.
-  const hours = age === null ? null : Math.round(age / 6) / 10;
+  const hours = age === null ? null : String(Math.round(age / 6) / 10).replace('.', ',');
   return {
     id: contract.id,
     applicable: true,
@@ -397,6 +400,6 @@ export function quoteLagVerdict(
     note:
       age === null
         ? `${contract.id}: рынок открыт, а даты наблюдения нет`
-        : `${contract.id}: рынок открыт, цена отстала на ${String(hours).replace('.', ',')} ч, допустимо ${contract.quoteLagMinutes} мин`,
+        : `${contract.id}: рынок открыт, цена отстала на ${hours} ч, допустимо ${contract.quoteLagMinutes} мин`,
   };
 }
