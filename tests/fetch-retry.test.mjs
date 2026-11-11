@@ -159,3 +159,34 @@ test('запуск не висит дольше срока, но частный 
   const quick = withinDeadline(Promise.resolve('ok'), Date.now() + 1000, 'ЦБ');
   assert.equal(await quick, 'ok');
 });
+
+test('таймаут ленты не повторяется, а 503 — повторяется', async () => {
+  // Повтор таймаута удваивал ожидание страницы и не спасал данные: лента,
+  // не ответившая за 4 секунды, не ответит и за восемь. Проверка 11.11
+  // поймала это числом — 8329 мс на снимок.
+  let timeoutCalls = 0;
+  await assert.rejects(
+    () =>
+      withRetry(
+        async () => {
+          timeoutCalls += 1;
+          throw abortError();
+        },
+        { retryTimeouts: false },
+      ),
+    /aborted/,
+  );
+  assert.equal(timeoutCalls, 1);
+
+  let busyCalls = 0;
+  const value = await withRetry(
+    async () => {
+      busyCalls += 1;
+      if (busyCalls === 1) throw new Error('HTTP 503');
+      return 'ok';
+    },
+    { retryTimeouts: false, delayMs: 1 },
+  );
+  assert.equal(value, 'ok');
+  assert.equal(busyCalls, 2);
+});

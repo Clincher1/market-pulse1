@@ -16,6 +16,12 @@
  * второй такой же ответ ничего не изменит, а время потратит.
  */
 
+export function isTimeoutError(error) {
+  if (!error) return false;
+  if (error.name === 'AbortError' || error.name === 'TimeoutError') return true;
+  return /aborted|timeout|timed out/i.test(String(error.message ?? ''));
+}
+
 export function isTransientError(error) {
   if (!error) return false;
   if (error.name === 'AbortError' || error.name === 'TimeoutError') return true;
@@ -106,7 +112,10 @@ export function hostQueue({ limit = 1 } = {}) {
   };
 }
 
-export async function withRetry(run, { attempts = 2, delayMs = DEFAULT_DELAY_MS, random = Math.random } = {}) {
+export async function withRetry(
+  run,
+  { attempts = 2, delayMs = DEFAULT_DELAY_MS, random = Math.random, retryTimeouts = true } = {},
+) {
   let lastError;
   for (let attempt = 1; attempt <= Math.max(1, attempts); attempt += 1) {
     try {
@@ -114,6 +123,11 @@ export async function withRetry(run, { attempts = 2, delayMs = DEFAULT_DELAY_MS,
     } catch (error) {
       lastError = error;
       if (attempt >= attempts || !isTransientError(error)) throw error;
+      // Лента, которая не ответила за свой бюджет, почти никогда не отвечает
+      // и со второй попытки — зато повтор удваивает ожидание страницы. Для
+      // ленты таймаут не повторяем: она вернётся на следующем запросе, а
+      // снимок держит CDN пять минут.
+      if (!retryTimeouts && isTimeoutError(error)) throw error;
       const waitMs = Math.max(retryDelayMs(attempt, error, random), Math.round(delayMs * Math.max(1, attempt)));
       // Источник просит паузу длиннее бюджета запуска — не повторяем вовсе.
       if (retryAfterMs(error) > MAX_WAIT_MS) throw error;
