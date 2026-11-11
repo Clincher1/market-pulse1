@@ -861,6 +861,7 @@ export default async function handler(req, res) {
     return;
   }
 
+  const startedAt = Date.now();
   const errors = [];
   // Задачи-функции, а не готовые промисы: иначе все запросы стартуют до того,
   // как очередь по хосту успеет их придержать.
@@ -944,6 +945,11 @@ export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.status(200).json({
     generatedAt: new Date().toISOString(),
+    // Сколько занял снимок. Строка нужна не для красоты: спорить о «без
+    // задержек» можно только числом, а не ощущением. Холодный ответ идёт
+    // мимо кэша CDN, поэтому первое, что стоит смотреть при жалобе на
+    // медленную страницу, — это значение здесь.
+    elapsed_ms: Date.now() - startedAt,
     markets,
     headlines,
     errors,
