@@ -319,3 +319,17 @@ test('сторож: у проверки надёжности лент есть �
   assert.match(source, /share < 0\.6/);
   assert.match(source, /item\.tries < 20/);
 });
+
+// --- Шлюз в писателе цен (11.11.2026) --------------------------------------
+
+test('сторож: писатель спрашивает шлюз до запроса и запоминает отказы', async () => {
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /gateDecision\(/, 'писатель не спрашивает шлюз');
+  assert.match(source, /afterAttempt\(/, 'отказы не записываются в состояние');
+  assert.match(source, /asset_source_state/, 'состояние шлюза не хранится между запусками');
+  // Пропуск по шлюзу обязан называть причину, иначе «не обновилось» снова
+  // будет читаться как «источник сломался».
+  assert.match(source, /skipped_by_gate/);
+  // Падение записи состояния не должно валить публикацию цен.
+  assert.match(source, /состояние шлюза не записано/);
+});

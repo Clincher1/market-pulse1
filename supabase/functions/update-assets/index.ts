@@ -3,6 +3,14 @@ import { closedHistory, previousClosedValue } from "../_shared/asset-history.ts"
 import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 import { ASSET_CONTRACTS, contractFor } from "../_shared/data-contract.ts";
+import {
+  PRICE_SOURCES,
+  afterAttempt,
+  gateDecision,
+  sourceSpec,
+  statusFromError,
+  type SourceState,
+} from "../_shared/price-sources.ts";
 //
 // Security/provenance notes:
 // - Twelve Data is read only from the TWELVE_KEY Edge Function secret.
@@ -586,6 +594,37 @@ function assertContract(id: string, name: string, asOf: string | null): void {
   }
 }
 
+/**
+ * Состояние шлюза из базы. Таблица появляется миграцией отдельно от кода:
+ * пока её нет, шлюз работает как «всё можно», а не падает — иначе выкат
+ * функции раньше миграции остановил бы публикацию цен.
+ */
+async function readSourceStates(): Promise<Map<string, SourceState>> {
+  try {
+    const rows = (await restJson(
+      "asset_source_state?select=source_id,last_attempt_at,last_ok_at,last_status,consecutive_failures,paused_until,requests_today,day,last_error",
+    )) as SourceState[];
+    return new Map(rows.map((row) => [String(row.source_id), row]));
+  } catch (error) {
+    console.error("asset_source_state недоступна, шлюз работает без памяти", error);
+    return new Map();
+  }
+}
+
+/** Запись состояния. Отказ записи не должен валить публикацию: цены важнее учёта. */
+async function writeSourceStates(states: SourceState[]): Promise<void> {
+  if (!states.length) return;
+  try {
+    await restJson("asset_source_state?on_conflict=source_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(states.map((state) => ({ ...state, updated_at: new Date().toISOString() }))),
+    });
+  } catch (error) {
+    console.error("asset_source_state: состояние шлюза не записано", error);
+  }
+}
+
 async function isFreshNewCache(): Promise<boolean> {
   const rows = await restJson("cached_assets?select=id,name,updated_at") as Array<{ id: string; name: string; updated_at: string }>;
   const expected = Object.entries(EXPECTED_NAMES).map(([id, name]) => rows.find((row) => row.id === id && row.name === name));
@@ -632,25 +671,61 @@ serveWithErrorReporting("update-assets", async (request) => {
       });
     }
 
-    const tasks: Array<{ id: string; load: () => Promise<AssetResult> }> = [
-      { id: "usd-eur", load: () => fetchUsdEur(updatedAt) },
-      { id: "sp500", load: () => fetchSp500(updatedAt) },
-      { id: "brent", load: () => fetchBrent(updatedAt) },
-      { id: "gold", load: () => fetchGold(updatedAt) },
-      { id: "btc", load: () => fetchBtc(updatedAt) },
+    // --- Шлюз к источникам ------------------------------------------------
+    //
+    // Каждый источник получает решение ДО запроса: пауза после отказов,
+    // исчерпанная квота на сутки и минимальный интервал. Раньше проверялся
+    // только таймаут, и источник, трижды ответивший 429, спрашивался снова
+    // через 15 минут. «Не пытались» здесь — не отказ источника, а наше
+    // расписание, и в отчёте запуска оно названо своей причиной.
+    const gateNow = new Date();
+    const states = await readSourceStates();
+    const decisions = new Map<string, ReturnType<typeof gateDecision>>();
+    for (const source of PRICE_SOURCES) {
+      decisions.set(source.id, gateDecision(source, states.get(source.id) ?? null, gateNow));
+    }
+    const nextStates = new Map<string, SourceState>();
+    const recordAttempt = (sourceId: string, ok: boolean, status: number | null, error?: string | null, retryAfterSeconds?: number | null) => {
+      const spec = sourceSpec(sourceId);
+      if (!spec) return;
+      const base = nextStates.get(sourceId) ?? states.get(sourceId) ?? null;
+      nextStates.set(sourceId, afterAttempt(spec, base, gateNow, { ok, status, error: error ?? null, retryAfterSeconds: retryAfterSeconds ?? null }));
+    };
+
+    const tasks: Array<{ id: string; sources: string[]; load: () => Promise<AssetResult> }> = [
+      { id: "usd-eur", sources: ["ecb"], load: () => fetchUsdEur(updatedAt) },
+      { id: "sp500", sources: ["yahoo"], load: () => fetchSp500(updatedAt) },
+      { id: "brent", sources: ["yahoo"], load: () => fetchBrent(updatedAt) },
+      { id: "gold", sources: ["gold-api", "twelve"], load: () => fetchGold(updatedAt) },
+      { id: "btc", sources: ["kraken"], load: () => fetchBtc(updatedAt) },
     ];
-    const settled = await Promise.allSettled(tasks.map((task) => task.load()));
+    const due = tasks.filter((task) => task.sources.every((sourceId) => decisions.get(sourceId)?.allowed));
+    const skippedByGate = tasks
+      .filter((task) => !due.includes(task))
+      .map((task) => ({
+        id: task.id,
+        reasons: task.sources
+          .filter((sourceId) => !decisions.get(sourceId)?.allowed)
+          .map((sourceId) => decisions.get(sourceId)?.note ?? `${sourceId}: нет решения`),
+      }));
+
+    const settled = await Promise.allSettled(due.map((task) => task.load()));
     const results: AssetResult[] = [];
     const errors: AnyRecord[] = [];
     settled.forEach((result, index) => {
-      if (result.status === "fulfilled") results.push(result.value);
-      else {
-        errors.push({
-          id: tasks[index].id,
-          error: result.reason instanceof Error ? result.reason.message.slice(0, 700) : String(result.reason).slice(0, 700),
-        });
+      const task = due[index];
+      if (result.status === "fulfilled") {
+        results.push(result.value);
+        // Запрос уходит каждому источнику ряда, поэтому и засчитывается каждый.
+        for (const sourceId of task.sources) recordAttempt(sourceId, true, 200);
+      } else {
+        const reason = result.reason instanceof Error ? result.reason : new Error(String(result.reason));
+        errors.push({ id: task.id, error: reason.message.slice(0, 700) });
+        const status = statusFromError(reason);
+        for (const sourceId of task.sources) recordAttempt(sourceId, false, status, reason.message);
       }
     });
+    await writeSourceStates([...nextStates.values()]);
 
     // Все источники упали — публиковать нечего, и ответ должен быть ошибкой.
     if (!results.length) {
@@ -698,6 +773,18 @@ serveWithErrorReporting("update-assets", async (request) => {
       spark_dates_stored: columns.sparkDates,
       assets_ok: results.length,
       assets_total: tasks.length,
+      // Почему часть рядов не обновлялась: пауза, квота или интервал.
+      // Пусто — значит спрашивали все пять.
+      skipped_by_gate: skippedByGate,
+      sources: PRICE_SOURCES.map((source) => ({
+        id: source.id,
+        decision: decisions.get(source.id)?.reason ?? "unknown-source",
+        note: decisions.get(source.id)?.note ?? null,
+        requests_today: (nextStates.get(source.id) ?? states.get(source.id))?.requests_today ?? 0,
+        budget: source.dailyBudget,
+        failures: (nextStates.get(source.id) ?? states.get(source.id))?.consecutive_failures ?? 0,
+        paused_until: (nextStates.get(source.id) ?? states.get(source.id))?.paused_until ?? null,
+      })),
       assets: results.map((result) => result.meta),
       rows: results.map((result) => result.row),
       errors,
