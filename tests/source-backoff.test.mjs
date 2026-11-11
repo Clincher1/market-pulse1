@@ -13,7 +13,11 @@ import {
   keepRunColumns,
   droppedRunKeys,
   RUN_COLUMNS,
+  lastAttempts,
+  pacingMessage,
+  pacingSkip,
 } from '../supabase/functions/_shared/source-backoff.ts';
+import { readFile } from 'node:fs/promises';
 
 const MIN_FAILURES = 3;
 const PAUSE_MS = 60 * 60 * 1000;
@@ -203,4 +207,50 @@ test('старые строки без поля paused читаются как �
     { source_id: 'bbc', ok: false, http_status: 503, created_at: '2026-11-01T01:05:00Z' },
   ];
   assert.equal(failureStreak(legacy).get('bbc').streak, 3);
+});
+
+// --- Пейсинг источников (11.11.2026) ---------------------------------------
+//
+// Пауза после отказов отвечает на «мне только что отказали». Пейсинг — это
+// расписание до первого запроса: у посредника 503 приходит не потому, что
+// лента сломалась, а потому что его не предназначили для машинной выборки.
+
+test('пейсинг: без интервала источник спрашивают как раньше', () => {
+  const now = Date.parse('2026-11-11T07:30:00Z');
+  assert.equal(pacingSkip('2026-11-11T07:25:00Z', null, now), false);
+  assert.equal(pacingSkip('2026-11-11T07:25:00Z', 0, now), false);
+  assert.equal(pacingSkip('2026-11-11T07:25:00Z', undefined, now), false);
+});
+
+test('пейсинг: внутри интервала — пропуск, после — попытка', () => {
+  const now = Date.parse('2026-11-11T07:30:00Z');
+  assert.equal(pacingSkip('2026-11-11T07:05:00Z', 60, now), true);
+  assert.equal(pacingSkip('2026-11-11T06:30:00Z', 60, now), false);
+  // Первой попытки ещё не было — источник обязан быть спрошен.
+  assert.equal(pacingSkip(null, 60, now), false);
+  // Испорченная дата — не повод молчать.
+  assert.equal(pacingSkip('не дата', 60, now), false);
+});
+
+test('пейсинг: пропуски по паузе не считаются попытками', () => {
+  const attempts = lastAttempts([
+    { source_id: 'reuters-google-business', ok: true, http_status: 200, created_at: '2026-11-11T05:05:00Z' },
+    { source_id: 'reuters-google-business', ok: false, http_status: null, created_at: '2026-11-11T07:05:00Z', paused: true },
+  ]);
+  assert.equal(attempts.get('reuters-google-business'), '2026-11-11T05:05:00Z');
+});
+
+test('пейсинг: причина пропуска написана словами и с временем', () => {
+  assert.equal(
+    pacingMessage(60, '2026-11-11T05:05:00Z'),
+    'пейсинг: раз в 60 мин, прошлая попытка в 05:05 UTC',
+  );
+});
+
+test('сторож: запись пропуска по пейсингу помечена paused, а не ok = false без пометки', async () => {
+  const source = await readFile(new URL('../supabase/functions/ingest-news-v2-shadow/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /pacingSkip\(/, 'пейсинг не применяется в конвейере');
+  assert.match(source, /pacingMessage\(/, 'причина пропуска не пишется словами');
+  // Источник читает интервал из данных, а не из константы.
+  assert.match(source, /poll_interval_minutes/, 'интервал не приходит из news_sources_v2');
 });

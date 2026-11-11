@@ -128,3 +128,53 @@ export function keepRunColumns(payload: Record<string, unknown>): Record<string,
 export function droppedRunKeys(payload: Record<string, unknown>): string[] {
   return Object.keys(payload).filter((key) => !(RUN_COLUMNS as readonly string[]).includes(key));
 }
+
+/**
+ * Пейсинг: не спрашивать источник чаще, чем он позволяет.
+ *
+ * Отличается от паузы после отказов. Пауза — реакция на «мне только что
+ * отказали». Пейсинг — расписание, заданное заранее: у посредника вроде
+ * Google News RSS отказ 503 приходит не потому, что лента сломалась, а потому
+ * что его не предназначили для машинной выборки. За 04–11.11.2026 из 201
+ * попытки 138 получили 503 — и это при паузе после каждого четвёртого отказа.
+ *
+ * Интервал приходит из данных (`news_sources_v2.poll_interval_minutes`), а не
+ * из кода: частоту надо менять без выката, а объяснение — рядом с источником.
+ *
+ * @param lastAttemptIso момент последней настоящей попытки; пропуски по паузе
+ *                       и пейсингу попыткой не считаются
+ * @param intervalMinutes null или 0 — пейсинга нет, спрашиваем как раньше
+ */
+export function pacingSkip(
+  lastAttemptIso: string | null | undefined,
+  intervalMinutes: number | null | undefined,
+  now: number,
+): boolean {
+  const interval = Number(intervalMinutes ?? 0);
+  if (!Number.isFinite(interval) || interval <= 0) return false;
+  if (!lastAttemptIso) return false;
+  const last = Date.parse(String(lastAttemptIso));
+  if (!Number.isFinite(last)) return false;
+  return now - last < interval * 60_000;
+}
+
+/** Момент последней настоящей попытки по каждому источнику. */
+export function lastAttempts(rows: HealthHistoryRow[]): Map<string, string> {
+  const result = new Map<string, string>();
+  for (const row of rows) {
+    if (row.paused === true) continue;
+    const current = result.get(row.source_id);
+    if (!current || Date.parse(row.created_at) > Date.parse(current)) {
+      result.set(row.source_id, row.created_at);
+    }
+  }
+  return result;
+}
+
+/** «пейсинг: раз в 60 мин, прошлая попытка в 07:05 UTC» — причина пропуска словами. */
+export function pacingMessage(intervalMinutes: number, lastAttemptIso: string): string {
+  const last = new Date(lastAttemptIso);
+  const hh = String(last.getUTCHours()).padStart(2, "0");
+  const mm = String(last.getUTCMinutes()).padStart(2, "0");
+  return `пейсинг: раз в ${Math.round(intervalMinutes)} мин, прошлая попытка в ${hh}:${mm} UTC`;
+}
