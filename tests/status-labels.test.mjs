@@ -50,6 +50,7 @@ test('расписание подписано у проверок, которы�
     'assets_fresh',
     'assets_asof',
     'source_politeness',
+    'slots_registry',
     'snapshot_taken',
     'feeds_fresh',
     'ru_history_api',
