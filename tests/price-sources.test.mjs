@@ -13,6 +13,7 @@ import {
   afterAttempt,
   emptyState,
   gateDecision,
+  retryAfterFromError,
   sourceSpec,
   statusFromError,
   utcDay,
@@ -157,4 +158,24 @@ test('неописанный источник не пропускается мо
   const decision = gateDecision(null, null, now);
   assert.equal(decision.allowed, false);
   assert.equal(decision.reason, 'unknown-source');
+});
+
+test('Retry-After читается из текста ошибки, а не теряется', () => {
+  // Источник сказал «подожди 3600 секунд». Если это потерять, мы вернёмся
+  // через свои 15 минут и получим тот же отказ — именно так и выглядит
+  // «нас заблокировали».
+  assert.equal(retryAfterFromError(new Error('HTTP 429: slow down retry-after=3600')), 3600);
+  assert.equal(retryAfterFromError(new Error('HTTP 503: busy retry-after=120')), 120);
+  assert.equal(retryAfterFromError(new Error('HTTP 500: oops')), null);
+  assert.equal(retryAfterFromError('нет сети'), null);
+});
+
+test('сторож: у Yahoo есть второй хост, и повтор не бесконечный', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /query2\.finance\.yahoo\.com/, 'резервного хоста нет');
+  // Ровно два хоста в списке: третий повтор к сервису, который уже сказал
+  // «нет», — это не настойчивость, а повод получить блокировку по IP.
+  assert.match(source, /const hosts = \["query1\.finance\.yahoo\.com", "query2\.finance\.yahoo\.com"\]/);
+  assert.match(source, /retry-after=/);
 });

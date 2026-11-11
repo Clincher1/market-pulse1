@@ -284,3 +284,15 @@ export function statusFromError(error: unknown): number | null {
   const match = /HTTP\s+(\d{3})/.exec(text);
   return match ? Number(match[1]) : null;
 }
+
+/**
+ * `Retry-After` из текста ошибки: писатель дописывает его в сообщение, когда
+ * источник сам сказал, сколько ждать. Возвращает секунды или `null`.
+ */
+export function retryAfterFromError(error: unknown): number | null {
+  const text = error instanceof Error ? error.message : String(error);
+  const match = /retry-after=(\d+)/i.exec(text);
+  if (!match) return null;
+  const seconds = Number(match[1]);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+}

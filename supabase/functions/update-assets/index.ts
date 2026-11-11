@@ -7,6 +7,7 @@ import {
   PRICE_SOURCES,
   afterAttempt,
   gateDecision,
+  retryAfterFromError,
   sourceSpec,
   statusFromError,
   type SourceState,
@@ -112,8 +113,43 @@ async function fetchText(url: string, headers: Record<string, string> = {}): Pro
     },
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${text.slice(0, 300)}`);
+  if (!response.ok) {
+    // Retry-After — единственное, что источник говорит нам человеческим
+    // языком: «подожди столько». Терять его нельзя, иначе мы вернёмся через
+    // свои 15 минут и получим тот же отказ.
+    const retryAfter = response.headers.get("retry-after");
+    throw new Error(`HTTP ${response.status}: ${text.slice(0, 300)}${retryAfter ? ` retry-after=${retryAfter}` : ""}`);
+  }
   return text;
+}
+
+/**
+ * Чарт Yahoo с двумя хостами.
+ *
+ * query1 и query2 — разные узлы одного сервиса. Раньше при отказе первого
+ * второго не было вовсе: ряд просто не обновлялся до следующего запуска.
+ * Теперь запрос уходит на второй хост, а исход пишется в журнал запуска.
+ * Повтор — не больше одного раза: три попытки подряд к сервису, который уже
+ * сказал «нет», выглядят как атака и приводят к блокировке по IP.
+ */
+async function fetchYahooChart(url: string): Promise<{ payload: unknown; host: string; retried: boolean }> {
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  let lastError: Error | null = null;
+  for (let index = 0; index < hosts.length; index += 1) {
+    const host = hosts[index];
+    const target = url.replace(/https:\/\/query1\.finance\.yahoo\.com/, `https://${host}`);
+    try {
+      return { payload: await fetchJson(target), host, retried: index > 0 };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      // Пауза между хостами разная для каждого запуска: одновременные запросы
+      // из одного изолята не должны идти в ногу.
+      if (index < hosts.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 400 + Math.floor(Math.random() * 600)));
+      }
+    }
+  }
+  throw lastError ?? new Error("Yahoo chart: no host answered");
 }
 
 async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
@@ -284,7 +320,9 @@ async function fetchYahooDaily(symbol: string): Promise<{
   quoteTime: string | null;
 }> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3mo&interval=1d`;
-  const series = parseYahooDaily(await fetchJson(url));
+  const chart = await fetchYahooChart(url);
+  const series = parseYahooDaily(chart.payload);
+  if (chart.retried) console.warn(`Yahoo: ${symbol} отдан резервным хостом ${chart.host}`);
   const now = new Date();
   const forming = isFormingBar(series, now);
   return {
@@ -722,7 +760,8 @@ serveWithErrorReporting("update-assets", async (request) => {
         const reason = result.reason instanceof Error ? result.reason : new Error(String(result.reason));
         errors.push({ id: task.id, error: reason.message.slice(0, 700) });
         const status = statusFromError(reason);
-        for (const sourceId of task.sources) recordAttempt(sourceId, false, status, reason.message);
+        const retryAfterSeconds = retryAfterFromError(reason);
+        for (const sourceId of task.sources) recordAttempt(sourceId, false, status, reason.message, retryAfterSeconds);
       }
     });
     await writeSourceStates([...nextStates.values()]);
