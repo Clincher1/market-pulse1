@@ -90,3 +90,72 @@ test('успех с первой попытки не ждёт и не повто
   assert.equal(calls, 1);
   assert.ok(Date.now() - started < 100, 'без ошибки паузы быть не должно');
 });
+
+test('Retry-After источника важнее нашего бэкоффа', async () => {
+  const { retryDelayMs, retryAfterMs, MAX_WAIT_MS } = await import('../api/_shared/fetchRetry.js');
+  const error = Object.assign(new Error('HTTP 429 retry-after=2'), { retryAfterMs: 2000 });
+  assert.equal(retryAfterMs(error), 2000);
+  // Пауза не короче сказанной источником, даже если наш бэкофф меньше.
+  assert.ok(retryDelayMs(1, error, () => 0) >= 2000);
+  assert.equal(MAX_WAIT_MS, 5000);
+});
+
+test('пауза перед повтором раскидывается случайно, но не короче базовой', async () => {
+  const { retryDelayMs } = await import('../api/_shared/fetchRetry.js');
+  const fast = retryDelayMs(1, new Error('HTTP 503'), () => 0);
+  const slow = retryDelayMs(1, new Error('HTTP 503'), () => 1);
+  assert.ok(fast >= 180, `слишком короткая пауза: ${fast}`);
+  assert.notEqual(fast, slow, 'нет разброса — повторы пойдут синхронным залпом');
+});
+
+test('источник, попросивший паузу дольше бюджета запуска, не повторяется', async () => {
+  let calls = 0;
+  const error = new Error('HTTP 429 retry-after=120');
+  error.retryAfterMs = 120000;
+  await assert.rejects(
+    () =>
+      withRetry(async () => {
+        calls += 1;
+        throw error;
+      }),
+    /retry-after/,
+  );
+  assert.equal(calls, 1, 'повтор раньше просьбы источника — это и есть блокировка');
+});
+
+test('очередь по хосту не пускает второй запрос к тому же адресу', async () => {
+  const { hostQueue } = await import('../api/_shared/fetchRetry.js');
+  const runOnHost = hostQueue({ limit: 1 });
+  // Считаем отдельно по каждому адресу: у разных изданий запросы идут
+  // параллельно, это нормально. Залп недопустим внутри одного адреса.
+  const active = new Map();
+  const peak = new Map();
+  const job = (url) =>
+    runOnHost(url, async () => {
+      const host = new URL(url).host;
+      active.set(host, (active.get(host) || 0) + 1);
+      peak.set(host, Math.max(peak.get(host) || 0, active.get(host)));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      active.set(host, active.get(host) - 1);
+      return url;
+    });
+  const results = await Promise.all([
+    job('https://www.kommersant.ru/rss/section-economics.xml'),
+    job('https://www.kommersant.ru/rss/section-business.xml'),
+    job('https://www.vedomosti.ru/rss/rubric/economics'),
+  ]);
+  assert.equal(results.length, 3);
+  assert.equal(peak.get('www.kommersant.ru'), 1, `к Коммерсанту ушло ${peak.get('www.kommersant.ru')} запроса одновременно`);
+  assert.equal(peak.get('www.vedomosti.ru'), 1);
+  // Слот освобождается после отказа: упавшая задача не блокирует очередь.
+  const after = await runOnHost('https://www.kommersant.ru/x', async () => 'ok');
+  assert.equal(after, 'ok');
+});
+
+test('запуск не висит дольше срока, но частный отказ не рушит снимок', async () => {
+  const { withinDeadline } = await import('../api/_shared/fetchRetry.js');
+  const stuck = new Promise((resolve) => setTimeout(() => resolve('поздно'), 200));
+  await assert.rejects(() => withinDeadline(stuck, Date.now() + 30, 'Мосбиржа'), /срок запуска/);
+  const quick = withinDeadline(Promise.resolve('ok'), Date.now() + 1000, 'ЦБ');
+  assert.equal(await quick, 'ok');
+});
