@@ -104,6 +104,19 @@ export interface AssetContract {
    * `null` — сверки нет, и это тоже записано, а не забыто.
    */
   crossCheck: { provider: string; endpoint: string; tolerancePct: number } | null;
+  /**
+   * Ряд `asset_instruments_v2`, который видит человек: именно его рисует
+   * панель истории, и с ним должна совпадать цена на плитке.
+   *
+   * Поле нужно потому, что первичный ряд в реестре и ряд на экране — разные
+   * вещи, и они разошлись молча. 11.11.2026 у золота первичным числился
+   * `gold_fred_nasdaq_index` — уровень индекса Nasdaq (2381–3054 пункта),
+   * пока плитка показывала спот 4048 долларов за унцию. Оценки событий и
+   * прогнозы считали золото по индексу, то есть в 1,6 раза меньше.
+   */
+  historyInstrumentId: string;
+  /** Единица ряда, который видит человек: ловит подмену инструмента того же рода. */
+  displayUnit: string;
 }
 
 const DAY = 24 * 60;
@@ -121,6 +134,8 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // Три дня: пятничное закрытие в воскресенье ещё законно, а в понедельник
     // вечером — уже нет. Спот EIA сюда не подставляется: это другой инструмент.
     maxAsOfAgeMinutes: 3 * DAY,
+    historyInstrumentId: 'brent_yahoo_bzf',
+    displayUnit: 'usd_per_barrel',
     rationale: 'фьючерс без официального бесплатного интерфейса; выходные и праздники NYMEX дают до трёх суток',
     // Час паузы CME (21:00–22:00 UTC) укладывается в три часа с запасом на
     // редкий день, когда Yahoo отдаёт котировку реже обычного.
@@ -138,6 +153,8 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     asOfKind: 'close-date',
     cadenceMinutes: 5,
     maxAsOfAgeMinutes: 3 * DAY,
+    historyInstrumentId: 'sp500_yahoo_gspc',
+    displayUnit: 'index_points',
     rationale: 'индекс лицензирован S&P; бесплатный документированный интерфейс отсутствует, выходные — до трёх суток',
     // Плитка показывает закрытие, а не «сейчас»: задержку цены тут проверять
     // не к чему — иначе проверка красная каждую ночь по построению.
@@ -163,6 +180,8 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // ЕЦБ публикует курс один раз в рабочий день около 16:00 CET. Пятничный
     // курс живёт до понедельника: это не задержка, а календарь источника.
     maxAsOfAgeMinutes: 3 * DAY,
+    historyInstrumentId: 'eurusd_ecb_daily',
+    displayUnit: 'usd_per_eur',
     rationale: 'официальный курс ЕЦБ на дату; выходные и праздники TARGET дают до трёх суток',
     quoteLagMinutes: null,
     trading: null,
@@ -184,6 +203,8 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // Сутки, а не час: если тикер не ответил, цена и дата честно берутся из
     // закрытия последней свечи, и это законные сутки, а не застрявший писатель.
     maxAsOfAgeMinutes: DAY,
+    historyInstrumentId: 'btc_kraken_xbtusd_daily',
+    displayUnit: 'usd_per_btc',
     rationale: 'круглосуточный рынок; при отказе тикера — закрытие суточной свечи, не старше суток',
     // Два часа: тикер обновляется на каждой сделке, а откат на свечу честно
     // виден как отставание, а не прячется под подписью «сейчас».
@@ -211,6 +232,8 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // XAU/USD отдавал последнюю котировку сессии, и в 06:50 UTC плитка
     // показывала цену одиннадцатичасовой давности. Допуск трое суток — это
     // выходные и пауза, а не разрешение отставать: каденция пять минут.
+    historyInstrumentId: 'gold_twelve_xauusd_daily',
+    displayUnit: 'usd_per_troy_ounce',
     rationale: 'тот же инструмент, что на плитке (спот XAU/USD); выходные и часовая пауза дают до трёх суток; при отказе live-котировки цена честно уходит на закрытие Twelve Data',
     quoteLagMinutes: 180,
     trading: { closeDay: 5, closeHourUtc: 21, openDay: 0, openHourUtc: 22 },

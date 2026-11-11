@@ -1,7 +1,7 @@
 // Self-check for the whole public contour.
 import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
 import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
-import { contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
+import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -797,6 +797,50 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         detail: `сходится у ${checked} из ${verdicts.length} рядов${
           skipped.length ? `; цена из кавычки, сверка не применима: ${skipped.join(', ')}` : ''
         }`,
+      };
+    }),
+
+    // 5c. Тот самый ряд, который видит человек, и есть первичный.
+    //
+    // До 11.11.2026 это расходилось молча: у золота первичным был уровень
+    // индекса Nasdaq (2381-3054 пункта), а плитка показывала спот 4048
+    // долларов за унцию. Сайт ошибки не видел, потому что панель истории
+    // ходит по явному списку, а не по is_primary. Зато по is_primary считают
+    // оценки событий и прогнозы — то есть числа под тем же словом «gold»
+    // были другими.
+    check('asset_series_identity', async () => {
+      const rows = (await restJson(
+        'asset_instruments_v2?select=id,asset_key,unit,is_primary,enabled',
+      )) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'реестра инструментов нет' };
+      const problems: string[] = [];
+      const okParts: string[] = [];
+      for (const contract of ASSET_CONTRACTS) {
+        // Ключ реестра и ключ плитки пишутся по-разному: ряд «usd-eur» на
+        // экране — это «eurusd» в реестре (так валюта называется у источника).
+        // Без этой перестановки проверка искала бы «usdeur» и молчала бы.
+        const key = contract.id === 'usd-eur' ? 'eurusd' : contract.id.toLowerCase();
+        const rowsOfKey = rows.filter((row) => String(row.asset_key ?? '').toLowerCase() === key);
+        const enabled = rowsOfKey.filter((row) => row.enabled === true);
+        const primaries = enabled.filter((row) => row.is_primary === true);
+        if (primaries.length !== 1) {
+          problems.push(`${contract.id}: включённых первичных рядов ${primaries.length}, нужен ровно один`);
+          continue;
+        }
+        const primary = primaries[0];
+        if (String(primary.id) !== contract.historyInstrumentId) {
+          problems.push(`${contract.id}: первичный ряд «${String(primary.id)}», а человек видит «${contract.historyInstrumentId}»`);
+          continue;
+        }
+        if (String(primary.unit ?? '') !== contract.displayUnit) {
+          problems.push(`${contract.id}: единица «${String(primary.unit ?? '')}», а на плитке «${contract.displayUnit}»`);
+          continue;
+        }
+        okParts.push(`${contract.id}=${String(primary.id)}`);
+      }
+      return {
+        ok: problems.length === 0,
+        detail: problems.length ? problems.join('; ') : `первичный ряд совпадает с плиткой: ${okParts.join(', ')}`,
       };
     }),
 
