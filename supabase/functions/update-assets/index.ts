@@ -508,33 +508,25 @@ async function fetchGoldSpotQuote(): Promise<{ price: number; at: string } | nul
   }
 }
 
-async function fetchGold(updatedAt: string): Promise<AssetResult> {
-  // Живая котировка и история — от разных поставщиков, но это ОДИН инструмент:
-  // спот XAU/USD. История нужна на закрытиях, поэтому её отдаёт Twelve Data,
-  // а цена на плитке — из live-котировки.
-  const live = await fetchGoldSpotQuote();
-  return await fetchGoldFromTwelve(updatedAt, live);
-}
-
-async function fetchGoldFromTwelve(
-  updatedAt: string,
-  live: { price: number; at: string } | null = null,
-): Promise<AssetResult> {
+/**
+ * Дневные закрытия XAU/USD из Twelve Data.
+ *
+ * Только `time_series`: кавычку у этого провайдера мы больше не спрашиваем.
+ * На бесплатном тарифе quote отдаёт последнюю котировку сессии (11.11 в
+ * 06:50 UTC это была цена с 20:00 предыдущего дня), а живая цена теперь
+ * приходит из gold-api.com. Два запроса на запуск превращались в 192 запроса
+ * в сутки при лимите 800 — теперь один, и не чаще раза в час.
+ */
+async function fetchGoldSeries(): Promise<{ points: Point[]; lastTwelveDate: string | null }> {
   const key = Deno.env.get("TWELVE_KEY");
   if (!key) throw new Error("Missing TWELVE_KEY secret");
-  const headers = { Authorization: `apikey ${key}` };
-  const quoteUrl = "https://api.twelvedata.com/quote?symbol=XAU%2FUSD";
-  const seriesUrl = "https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=1day&outputsize=30&order=asc&timezone=UTC";
-  const [quotePayload, seriesPayload] = await Promise.all([
-    fetchJson(quoteUrl, headers),
-    fetchJson(seriesUrl, headers),
-  ]);
-  if (!isRecord(quotePayload)) throw new Error("Twelve Data quote returned a non-object response");
-  if (!isRecord(seriesPayload)) throw new Error("Twelve Data time_series returned a non-object response");
-  if (quotePayload.status === "error") throw new Error(`Twelve Data quote: ${String(quotePayload.message ?? "error").slice(0, 300)}`);
-  if (seriesPayload.status === "error") throw new Error(`Twelve Data time_series: ${String(seriesPayload.message ?? "error").slice(0, 300)}`);
-
-  const values = Array.isArray(seriesPayload.values) ? seriesPayload.values : [];
+  const payload = await fetchJson(
+    "https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=1day&outputsize=30&order=asc&timezone=UTC",
+    { Authorization: `apikey ${key}` },
+  );
+  if (!isRecord(payload)) throw new Error("Twelve Data time_series returned a non-object response");
+  if (payload.status === "error") throw new Error(`Twelve Data time_series: ${String(payload.message ?? "error").slice(0, 300)}`);
+  const values = Array.isArray(payload.values) ? payload.values : [];
   const points = sortedPoints(values.map((raw) => {
     const row = isRecord(raw) ? raw : {};
     return {
@@ -542,26 +534,57 @@ async function fetchGoldFromTwelve(
       value: positiveNumber(row.close) ?? Number.NaN,
     };
   }));
-  const twelveClose = positiveNumber(quotePayload.close);
-  const previousClose = positiveNumber(quotePayload.previous_close);
-  // Если живая котировка есть, она и есть текущая цена: всё остальное —
-  // закрытия и проценты — считается от неё, чтобы плитка и ряд не расходились.
-  const quoteClose = live?.price ?? twelveClose;
-  const quoteChange = live && previousClose ? ((live.price - previousClose) / previousClose) * 100 : finiteNumber(quotePayload.percent_change);
-  const timestampSeconds = finiteNumber(quotePayload.timestamp);
-  const quoteTimestamp = timestampSeconds ? new Date(timestampSeconds * 1000) : null;
-  const quoteDate = quoteTimestamp ? quoteTimestamp.toISOString().slice(0, 10) : String(quotePayload.datetime ?? "").slice(0, 10);
-  if (!quoteClose || !previousClose || !quoteDate) throw new Error("Twelve Data gold quote lacked close/previous_close/date");
+  if (points.length < 8) throw new Error(`Twelve Data XAU/USD: only ${points.length} daily closes`);
+  return { points, lastTwelveDate: points.at(-1)?.date ?? null };
+}
 
-  const lastDaily = points.at(-1);
-  if (lastDaily && Math.abs(((quoteClose - lastDaily.value) / lastDaily.value) * 100) > 5) {
-    throw new Error("Twelve Data gold quote differs from daily series by more than 5%");
+/**
+ * История, уже опубликованная на сайте, для запусков между запросами к
+ * Twelve Data. Это не заглушка и не «вчерашнее число под сегодняшним»:
+ * точки — те же закрытия с теми же датами, что видит человек в графике.
+ * Берётся только когда источник истории ещё не «пора спрашивать» по шлюзу.
+ */
+async function storedGoldHistory(): Promise<Point[]> {
+  const rows = (await restJson("cached_assets?select=id,sparkline,spark_dates&id=eq.gold")) as AnyRecord[];
+  const row = rows[0];
+  const values = Array.isArray(row?.sparkline) ? row!.sparkline as unknown[] : [];
+  const dates = Array.isArray(row?.spark_dates) ? row!.spark_dates as unknown[] : [];
+  const points = values
+    .map((value, index) => ({ date: String(dates[index] ?? "").slice(0, 10), value: Number(value) }))
+    .filter((point) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value) && point.value > 0);
+  if (points.length < 8) throw new Error(`золото: в кэше ${points.length} dated points, нужна история`);
+  return points;
+}
+
+/**
+ * Золото: живая котировка от gold-api.com, закрытия — от Twelve Data.
+ *
+ * Два источника у одного ряда — не роскошь, а разделение обязанностей:
+ * на «сейчас» нужна котировка, на график — закрытия. Шлюз спрашивает каждого
+ * по его собственному расписанию, поэтому Twelve Data не дёргают каждые
+ * пятнадцать минут ради ряда, который меняется раз в сутки.
+ */
+async function fetchGold(updatedAt: string, options: { historyDue: boolean }): Promise<AssetResult> {
+  const live = await fetchGoldSpotQuote();
+  const outcomes: Record<string, "ok" | "fail"> = { "gold-api": live ? "ok" : "fail" };
+
+  let points: Point[];
+  let historySource: string;
+  if (options.historyDue) {
+    points = (await fetchGoldSeries()).points;
+    historySource = "twelve";
+  } else {
+    points = await storedGoldHistory();
+    historySource = "cache";
   }
-  if (lastDaily?.date === quoteDate) {
-    lastDaily.value = quoteClose;
-  } else if (!lastDaily || lastDaily.date < quoteDate) {
-    points.push({ date: quoteDate, value: quoteClose });
-  }
+  if (live) outcomes["twelve"] = historySource === "twelve" ? "ok" : "fail";
+  else if (historySource === "twelve") outcomes["twelve"] = "ok";
+
+  // Дневной бар текущих суток с живой ценой — незакрытый бар: в историю его
+  // не пускаем, иначе график покажет сегодняшнюю цену как закрытие дня.
+  const liveDay = live ? live.at.slice(0, 10) : null;
+  const price = live ? live.price : points.at(-1)!.value;
+  const asOf = live ? live.at : points.at(-1)!.date;
 
   return makeAsset({
     id: "gold",
@@ -571,21 +594,16 @@ async function fetchGoldFromTwelve(
       : "Gold spot / US Dollar (Twelve Data XAU/USD)",
     provider: live ? "gold-api.com + Twelve Data" : "Twelve Data",
     points,
-    // Дневной бар текущих суток с живой ценой — незакрытый бар: в историю его
-    // не пускаем, иначе график покажет сегодняшнюю цену как закрытие дня.
-    formingBarDate: live && quoteDate ? quoteDate : null,
-    currentPrice: quoteClose,
-    previousPrice: previousClose,
-    changePct: quoteChange,
-    asOf: live ? live.at : quoteTimestamp?.toISOString() ?? quoteDate,
+    formingBarDate: liveDay,
+    currentPrice: price,
+    asOf,
     format: formatUsd1,
     updatedAt,
     extraMeta: {
       unit: "USD/troy ounce",
-      current_price_source: live ? "gold-api" : "twelve-quote",
-      quote_datetime: quotePayload.datetime ?? null,
-      quote_timestamp: quoteTimestamp?.toISOString() ?? null,
-      is_market_open: typeof quotePayload.is_market_open === "boolean" ? quotePayload.is_market_open : null,
+      current_price_source: live ? "gold-api" : "twelve-close",
+      history_source: historySource,
+      source_outcomes: outcomes,
     },
   });
 }
@@ -734,7 +752,15 @@ serveWithErrorReporting("update-assets", async (request) => {
       { id: "usd-eur", sources: ["ecb"], load: () => fetchUsdEur(updatedAt) },
       { id: "sp500", sources: ["yahoo"], load: () => fetchSp500(updatedAt) },
       { id: "brent", sources: ["yahoo"], load: () => fetchBrent(updatedAt) },
-      { id: "gold", sources: ["gold-api", "twelve"], load: () => fetchGold(updatedAt) },
+      {
+        id: "gold",
+        sources: ["gold-api"],
+        // История золота нужна раз в сутки, поэтому Twelve Data спрашивают,
+        // только когда шлюз разрешил, а в промежутках берут уже опубликованные
+        // закрытия. Источник истории при этом не «обязательный»: его пауза не
+        // останавливает живую цену.
+        load: () => fetchGold(updatedAt, { historyDue: decisions.get("twelve")?.allowed ?? false }),
+      },
       { id: "btc", sources: ["kraken"], load: () => fetchBtc(updatedAt) },
     ];
     const due = tasks.filter((task) => task.sources.every((sourceId) => decisions.get(sourceId)?.allowed));
@@ -754,8 +780,16 @@ serveWithErrorReporting("update-assets", async (request) => {
       const task = due[index];
       if (result.status === "fulfilled") {
         results.push(result.value);
-        // Запрос уходит каждому источнику ряда, поэтому и засчитывается каждый.
-        for (const sourceId of task.sources) recordAttempt(sourceId, true, 200);
+        // Ряд может сообщить, какие источники реально ответили (у золота их
+        // два, и падение запасного не должно продлевать паузу основного).
+        const outcomes = result.value.meta.source_outcomes as Record<string, string> | undefined;
+        if (outcomes) {
+          for (const [sourceId, outcome] of Object.entries(outcomes)) {
+            recordAttempt(sourceId, outcome === "ok", outcome === "ok" ? 200 : null, outcome === "ok" ? null : "источник не ответил");
+          }
+        } else {
+          for (const sourceId of task.sources) recordAttempt(sourceId, true, 200);
+        }
       } else {
         const reason = result.reason instanceof Error ? result.reason : new Error(String(result.reason));
         errors.push({ id: task.id, error: reason.message.slice(0, 700) });
