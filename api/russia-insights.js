@@ -116,7 +116,7 @@ async function timedFetch(url, init, timeoutMs) {
   }
 }
 
-async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS) {
+async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS, retryTimeouts = true) {
   // Один повтор на таймаут или сетевой сбой: источник на секунду задумался —
   // это не повод терять индикатор на весь час.
   return withRetry(async () => {
@@ -131,10 +131,10 @@ async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS) {
       timeoutMs,
     );
     return parseResponse(response);
-  });
+  }, { retryTimeouts });
 }
 
-async function fetchText(url, timeoutMs = TIMEOUT_MS) {
+async function fetchText(url, timeoutMs = TIMEOUT_MS, retryTimeouts = true) {
   return fetchWithTimeout(
     url,
     async (response) => {
@@ -142,6 +142,7 @@ async function fetchText(url, timeoutMs = TIMEOUT_MS) {
       return decodeBuffer(buffer, response.headers.get('content-type') || '');
     },
     timeoutMs,
+    retryTimeouts,
   );
 }
 
@@ -842,7 +843,9 @@ function parseRss(xml, source) {
 }
 
 async function fetchRss(source) {
-  return parseRss(await fetchText(source.url, FEED_TIMEOUT_MS), source);
+  // Таймаут ленты не повторяем: она либо отвечает за 4 секунды, либо не
+  // отвечает вовсе. Повтор удваивал ожидание страницы и не спасал данные.
+  return parseRss(await fetchText(source.url, FEED_TIMEOUT_MS, false), source);
 }
 
 function settledValues(results, labels, errors) {
