@@ -306,3 +306,16 @@ test('сторож: selfcheck сверяет первичный ряд реес�
   // Ключ реестра «eurusd» и ключ плитки «usd-eur» — не одно и то же слово.
   assert.match(source, /contract\.id === 'usd-eur' \? 'eurusd'/);
 });
+
+// --- Надёжность лент (11.11.2026) ------------------------------------------
+
+test('сторож: у проверки надёжности лент есть окно и порог, а не «как получится»', async () => {
+  const source = await readFile(new URL('../supabase/functions/selfcheck/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /check\('feed_reliability'/);
+  // Пропуски по паузе и пейсингу — это наши пропуски, а не отказы источника.
+  assert.match(source, /paused=eq\.false/);
+  // Порог и минимальная выборка записаны явно: без них одна удачная попытка
+  // после месяца молчания давала бы «100 % успеха».
+  assert.match(source, /share < 0\.6/);
+  assert.match(source, /item\.tries < 20/);
+});

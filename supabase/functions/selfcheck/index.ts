@@ -932,6 +932,54 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     // 9. The site promises no trackers and no third-party resources. Once this
     //     check exists, a font CDN, an analytics snippet or any other outside
     //     host reappearing in the markup shows up here within the hour.
+    // Лента, которая отвечает отказом чаще, чем отвечает, — это не «шум в
+    // журнале»: пока она включена, проверка feeds_fresh краснеет на каждом её
+    // провале, а материал всё равно не приходит. 11.11.2026 так выглядел
+    // reuters-google-business: 63 успеха из 201 попытки за 7 дней (31 %),
+    // 138 ответов 503. Решение по нему принято отдельной миграцией, а эта
+    // проверка нуждается, чтобы следующая такая лента не жила месяцами.
+    //
+    // Считаются только настоящие попытки: строки «пауза» и «пейсинг» — это
+    // наши пропуски, а не отказы источника.
+    check('feed_reliability', async () => {
+      const sources = (await restJson('news_sources_v2?select=id,name&enabled=eq.true')) as AnyRecord[];
+      if (!sources.length) return { ok: false, detail: 'реестр лент пуст' };
+      const since = new Date(Date.now() - 7 * 24 * 3_600_000).toISOString();
+      const rows = (await restJson(
+        `news_source_health_v2?select=source_id,ok,paused&paused=eq.false&created_at=gte.${encodeURIComponent(since)}&limit=20000`,
+      )) as AnyRecord[];
+      const tally = new Map<string, { tries: number; ok: number }>();
+      for (const row of rows) {
+        const id = String(row.source_id ?? '');
+        if (!id) continue;
+        const item = tally.get(id) ?? { tries: 0, ok: 0 };
+        item.tries += 1;
+        if (row.ok === true) item.ok += 1;
+        tally.set(id, item);
+      }
+      const weak: string[] = [];
+      const parts: string[] = [];
+      for (const source of sources) {
+        const id = String(source.id ?? '');
+        const item = tally.get(id);
+        if (!item || item.tries < 20) {
+          parts.push(`${id}: попыток ${item?.tries ?? 0}, судить рано`);
+          continue;
+        }
+        const share = item.ok / item.tries;
+        parts.push(`${id}: ${item.ok}/${item.tries}`);
+        if (share < 0.6) {
+          weak.push(`${String(source.name ?? id)} (${Math.round(share * 100)} % успеха: ${item.ok} из ${item.tries})`);
+        }
+      }
+      return {
+        ok: weak.length === 0,
+        detail: weak.length
+          ? `ленты, которые чаще отказывают, чем отвечают: ${weak.join(', ')}`
+          : `все ${sources.length} включённых лент отвечают чаще, чем отказывают (${parts.slice(0, 4).join(', ')}…)`,
+      };
+    }),
+
     check('no_third_party', async () => {
       const html = await (await fetch(SITE, { signal: AbortSignal.timeout(20000) })).text();
       const hosts = [...new Set(
