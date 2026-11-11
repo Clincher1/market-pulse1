@@ -2,6 +2,7 @@
 import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
 import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
 import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
+import { politenessVerdict } from "../_shared/price-sources.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -631,6 +632,35 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
           ? `наблюдение старше допустимого: ${stale.map((item) => item.note).join(', ')}`
           : verdicts.map((item) => item.note).join('; '),
       };
+    }),
+
+    // 5b-0. Вежливость к источникам: мы не приходим чаще, чем они разрешают.
+    //
+    // Проверка читает ту же таблицу, по которой принимает решение шлюз, а не
+    // обещания в комментариях. Поэтому «нас никто не блокировал» перестаёт
+    // быть утверждением и становится числом: 24 запроса к ЕЦБ из 24 в сутки
+    // хорошо, 192 — уже нет. Пауза после отказов — работающий механизм, её
+    // проверка называет словами, а не считает поломкой.
+    check('source_politeness', async () => {
+      const rows = (await restJson(
+        'asset_source_state?select=source_id,requests_today,paused_until,consecutive_failures,last_status,last_ok_at,last_error',
+      )) as AnyRecord[];
+      const verdict = politenessVerdict(
+        rows.map((row) => ({
+          source_id: String(row.source_id ?? ''),
+          requests_today: row.requests_today === null || row.requests_today === undefined ? null : Number(row.requests_today),
+          paused_until: row.paused_until ? String(row.paused_until) : null,
+          consecutive_failures: row.consecutive_failures === null || row.consecutive_failures === undefined ? null : Number(row.consecutive_failures),
+          last_status: row.last_status === null || row.last_status === undefined ? null : Number(row.last_status),
+          last_ok_at: row.last_ok_at ? String(row.last_ok_at) : null,
+          last_error: row.last_error ? String(row.last_error) : null,
+        })),
+        new Date(),
+      );
+      // Пустая таблица — это не «всё хорошо»: значит писатель ещё ни разу не
+      // спросил шлюз, и учёта расхода нет вовсе.
+      if (!rows.length) return { ok: false, detail: 'asset_source_state пуста: расход по источникам не учитывается' };
+      return verdict;
     }),
 
     // 5b-1. Цена, которая называет себя текущей, обязана быть текущей.

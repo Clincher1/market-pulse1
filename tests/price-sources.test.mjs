@@ -15,6 +15,7 @@ import {
   gateDecision,
   MAX_ATTEMPTS,
   backoffMs,
+  politenessVerdict,
   retryAfterFromError,
   shouldRetry,
   sourceSpec,
@@ -214,4 +215,61 @@ test('сторож: писатель повторяет запрос, а не с
   assert.match(source, /requestWithRetry/, 'нет запроса с повтором');
   assert.match(source, /shouldRetry\(status, lastError\.message\)/);
   assert.match(source, /if \(waitMs > RETRY_WAIT_BUDGET_MS\) throw lastError;/);
+});
+
+const NOW = new Date('2026-11-11T12:00:00Z');
+const state = (id, extra = {}) => ({
+  source_id: id,
+  requests_today: 10,
+  paused_until: null,
+  consecutive_failures: 0,
+  last_status: 200,
+  last_ok_at: '2026-11-11T11:45:00Z',
+  ...extra,
+});
+
+test('расход в пределах квот называется числом, а не обещанием', () => {
+  const verdict = politenessVerdict(
+    [state('yahoo', { requests_today: 96 }), state('twelve', { requests_today: 12 }), state('ecb', { requests_today: 6 })],
+    NOW,
+  );
+  assert.equal(verdict.ok, true);
+  assert.match(verdict.detail, /yahoo 96\/300/);
+  assert.match(verdict.detail, /twelve 12\/100/);
+});
+
+test('перерасход квоты — отказ: это и есть путь в бан', () => {
+  const verdict = politenessVerdict([state('twelve', { requests_today: 192 })], NOW);
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.detail, /перерасход квоты: twelve: 192 из 100/);
+});
+
+test('источник вне реестра — отказ: у него нет ни квоты, ни паузы', () => {
+  const verdict = politenessVerdict([state('yahoo'), state('frankfurter')], NOW);
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.detail, /вне реестра: frankfurter/);
+});
+
+test('пауза после отказов — не поломка, её называют словами', () => {
+  const verdict = politenessVerdict(
+    [state('kraken', { consecutive_failures: 3, last_status: 429, paused_until: '2026-11-11T12:20:00Z' })],
+    NOW,
+  );
+  assert.equal(verdict.ok, true);
+  assert.match(verdict.detail, /kraken: пауза ещё 20 мин \(429\)/);
+});
+
+test('серия отказов без паузы — отказ: значит паузу не поставили', () => {
+  const verdict = politenessVerdict([state('gold-api', { consecutive_failures: 5, paused_until: null })], NOW);
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.detail, /отказы без паузы: gold-api: 5/);
+});
+
+test('истёкшая пауза не считается паузой', () => {
+  const verdict = politenessVerdict(
+    [state('ecb', { consecutive_failures: 0, paused_until: '2026-11-11T09:00:00Z' })],
+    NOW,
+  );
+  assert.equal(verdict.ok, true);
+  assert.doesNotMatch(verdict.detail, /пауза/);
 });

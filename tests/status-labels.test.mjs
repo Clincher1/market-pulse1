@@ -49,6 +49,7 @@ test('расписание подписано у проверок, которы�
     'news_fresh',
     'assets_fresh',
     'assets_asof',
+    'source_politeness',
     'snapshot_taken',
     'feeds_fresh',
     'ru_history_api',

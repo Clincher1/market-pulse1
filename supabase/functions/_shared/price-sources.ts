@@ -330,3 +330,79 @@ export const BASE_BACKOFF_MS = 500;
 export const MAX_BACKOFF_MS = 4000;
 /** Больше двух попыток не делаем: третья — это уже настойчивость. */
 export const MAX_ATTEMPTS = 2;
+
+/** Строка `asset_source_state` так, как её видит проверка. */
+export interface PolitenessRow {
+  source_id: string;
+  requests_today: number | null;
+  paused_until: string | null;
+  consecutive_failures: number | null;
+  last_status: number | null;
+  last_ok_at: string | null;
+  last_error?: string | null;
+}
+
+/**
+ * Вежливость к источникам как проверка, а не как обещание.
+ *
+ * Вопрос проверки: «мы не приходим к источнику чаще, чем он разрешает».
+ * Ответ берётся не из кода, а из того же счётчика, по которому принимает
+ * решение шлюз, поэтому проверка не может разойтись с поведением.
+ *
+ * Молчащий источник — не приговор: пауза после трёх отказов это работающий
+ * механизм, и в отчёте она называется словами. Приговор — это перерасход
+ * квоты (мы сами лезем в бан) и «источник не описан в реестре» (значит у него
+ * нет ни квоты, ни паузы вовсе).
+ */
+export function politenessVerdict(
+  rows: PolitenessRow[],
+  now: Date,
+  sources: PriceSourceSpec[] = PRICE_SOURCES,
+): { ok: boolean; detail: string } {
+  const byId = new Map(rows.map((row) => [row.source_id, row]));
+  const overQuota: string[] = [];
+  const paused: string[] = [];
+  const failing: string[] = [];
+  const unknown: string[] = [];
+
+  for (const row of rows) {
+    if (!sourceSpecOf(row.source_id, sources)) unknown.push(row.source_id);
+  }
+
+  for (const source of sources) {
+    const row = byId.get(source.id);
+    if (!row) continue;
+    const used = Math.max(0, Math.trunc(Number(row.requests_today ?? 0)));
+    if (used > source.dailyBudget) overQuota.push(`${source.id}: ${used} из ${source.dailyBudget} за сутки`);
+
+    const pausedUntil = row.paused_until ? Date.parse(row.paused_until) : Number.NaN;
+    if (Number.isFinite(pausedUntil) && pausedUntil > now.getTime()) {
+      const minutes = Math.ceil((pausedUntil - now.getTime()) / 60000);
+      paused.push(`${source.id}: пауза ещё ${minutes} мин (${row.last_status ?? 'без кода'})`);
+    } else if ((row.consecutive_failures ?? 0) >= source.pauseAfterFailures) {
+      // Серия отказов уже переросла порог, а паузы нет — значит паузу не
+      // поставили. Это дефект шлюза, а не свойство источника.
+      failing.push(`${source.id}: ${row.consecutive_failures} отказов подряд без паузы`);
+    }
+  }
+
+  const parts: string[] = [];
+  if (overQuota.length) parts.push(`перерасход квоты: ${overQuota.join(', ')}`);
+  if (unknown.length) parts.push(`источник вне реестра: ${unknown.join(', ')}`);
+  if (failing.length) parts.push(`отказы без паузы: ${failing.join(', ')}`);
+  if (paused.length) parts.push(`на паузе (это норма): ${paused.join(', ')}`);
+
+  const described = sources
+    .filter((source) => byId.has(source.id))
+    .map((source) => `${source.id} ${Math.max(0, Math.trunc(Number(byId.get(source.id)?.requests_today ?? 0)))}/${source.dailyBudget}`)
+    .join(', ');
+
+  return {
+    ok: overQuota.length === 0 && unknown.length === 0 && failing.length === 0,
+    detail: parts.length ? parts.join('; ') : `расход в пределах квот: ${described || 'ни одного запроса за сутки'}`,
+  };
+}
+
+function sourceSpecOf(id: string, sources: PriceSourceSpec[]): PriceSourceSpec | null {
+  return sources.find((source) => source.id === id) ?? null;
+}
