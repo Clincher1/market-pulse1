@@ -430,50 +430,50 @@ async function fetchBtc(updatedAt: string): Promise<AssetResult> {
 }
 
 /**
- * Золото, спот XAU/USD, из публичного чарта Yahoo.
+ * Живая котировка золота (спот XAU/USD) из gold-api.com.
  *
  * Зачем: Twelve Data на бесплатном тарифе отдаёт по XAU/USD последнюю
  * котировку сессии. Замер 11.11.2026 06:50 UTC: на плитке стояла цена с
  * 10.11 20:00 — одиннадцать часов отставания при кроне писателя раз в пять
- * минут. Днём это незаметно, утром — заметно, и подписать такое «на 23:00
- * МСК» честно, но бесполезно.
+ * минут. Подписать такое «на 23:00 МСК» честно, но бесполезно.
  *
- * Yahoo отдаёт тот же инструмент (spot XAU/USD), что написан на плитке, —
- * поэтому это замена источника, а не подмена инструмента. Если Yahoo не
- * ответит или ответ не разберётся, ряд не пропадает: вызывающий код идёт в
- * Twelve Data, и в журнале запуска видно, откуда взялась цена.
+ * Чем проверено, а не «кажется рабочим». Запрос сделан из самой платформы
+ * (pg_net) 11.11.2026 в 07:24 UTC:
+ *   `https://api.gold-api.com/price/XAU` → 200,
+ *   {"symbol":"XAU","price":4064.0,"updatedAt":"2026-11-11T07:23:59Z"} —
+ *   тот же инструмент, что написан на плитке (спот, доллар за унцию).
+ * Там же проверен и отброшен вариант с Yahoo: `XAUUSD=X` → 404
+ * «No data found, symbol may be delisted», то есть спота в чарте Yahoo нет.
+ *
+ * Ошибка или неожиданная форма ответа — `null`: ряд не пропадает, цена
+ * остаётся из Twelve Data, и в журнале запуска видно, откуда она взялась.
  */
-async function fetchGoldFromYahoo(updatedAt: string): Promise<AssetResult> {
-  const series = await fetchYahooDaily("XAUUSD=X");
-  return makeAsset({
-    id: "gold",
-    name: EXPECTED_NAMES.gold,
-    instrument: "Gold spot / US Dollar (Yahoo XAUUSD=X)",
-    provider: "Yahoo Finance",
-    points: series.points,
-    asOf: series.asOf,
-    formingBarDate: series.formingBarDate,
-    format: formatUsd2,
-    updatedAt,
-    extraMeta: {
-      unit: "USD/oz",
-      exchange: series.exchange,
-      quote_time: series.quoteTime,
-      current_price_source: "yahoo-spot",
-    },
-  });
+async function fetchGoldSpotQuote(): Promise<{ price: number; at: string } | null> {
+  try {
+    const payload = await fetchJson("https://api.gold-api.com/price/XAU");
+    if (!isRecord(payload)) return null;
+    const price = positiveNumber(payload.price);
+    const at = typeof payload.updatedAt === "string" ? payload.updatedAt : null;
+    if (!price || !at || !Number.isFinite(Date.parse(at))) return null;
+    return { price, at: new Date(at).toISOString() };
+  } catch (error) {
+    console.error("gold: gold-api.com недоступен, котировка остаётся из Twelve Data", error);
+    return null;
+  }
 }
 
 async function fetchGold(updatedAt: string): Promise<AssetResult> {
-  const yahoo = await fetchGoldFromYahoo(updatedAt).catch((error) => {
-    console.error("gold: Yahoo XAUUSD=X недоступен, идём в Twelve Data", error);
-    return null;
-  });
-  if (yahoo) return yahoo;
-  return await fetchGoldFromTwelve(updatedAt);
+  // Живая котировка и история — от разных поставщиков, но это ОДИН инструмент:
+  // спот XAU/USD. История нужна на закрытиях, поэтому её отдаёт Twelve Data,
+  // а цена на плитке — из live-котировки.
+  const live = await fetchGoldSpotQuote();
+  return await fetchGoldFromTwelve(updatedAt, live);
 }
 
-async function fetchGoldFromTwelve(updatedAt: string): Promise<AssetResult> {
+async function fetchGoldFromTwelve(
+  updatedAt: string,
+  live: { price: number; at: string } | null = null,
+): Promise<AssetResult> {
   const key = Deno.env.get("TWELVE_KEY");
   if (!key) throw new Error("Missing TWELVE_KEY secret");
   const headers = { Authorization: `apikey ${key}` };
@@ -496,9 +496,12 @@ async function fetchGoldFromTwelve(updatedAt: string): Promise<AssetResult> {
       value: positiveNumber(row.close) ?? Number.NaN,
     };
   }));
-  const quoteClose = positiveNumber(quotePayload.close);
+  const twelveClose = positiveNumber(quotePayload.close);
   const previousClose = positiveNumber(quotePayload.previous_close);
-  const quoteChange = finiteNumber(quotePayload.percent_change);
+  // Если живая котировка есть, она и есть текущая цена: всё остальное —
+  // закрытия и проценты — считается от неё, чтобы плитка и ряд не расходились.
+  const quoteClose = live?.price ?? twelveClose;
+  const quoteChange = live && previousClose ? ((live.price - previousClose) / previousClose) * 100 : finiteNumber(quotePayload.percent_change);
   const timestampSeconds = finiteNumber(quotePayload.timestamp);
   const quoteTimestamp = timestampSeconds ? new Date(timestampSeconds * 1000) : null;
   const quoteDate = quoteTimestamp ? quoteTimestamp.toISOString().slice(0, 10) : String(quotePayload.datetime ?? "").slice(0, 10);
@@ -517,17 +520,23 @@ async function fetchGoldFromTwelve(updatedAt: string): Promise<AssetResult> {
   return makeAsset({
     id: "gold",
     name: EXPECTED_NAMES.gold,
-    instrument: "Gold spot / US Dollar (Twelve Data XAU/USD)",
-    provider: "Twelve Data",
+    instrument: live
+      ? "Gold spot / US Dollar (gold-api.com XAU; история — закрытия Twelve Data)"
+      : "Gold spot / US Dollar (Twelve Data XAU/USD)",
+    provider: live ? "gold-api.com + Twelve Data" : "Twelve Data",
     points,
+    // Дневной бар текущих суток с живой ценой — незакрытый бар: в историю его
+    // не пускаем, иначе график покажет сегодняшнюю цену как закрытие дня.
+    formingBarDate: live && quoteDate ? quoteDate : null,
     currentPrice: quoteClose,
     previousPrice: previousClose,
     changePct: quoteChange,
-    asOf: quoteTimestamp?.toISOString() ?? quoteDate,
+    asOf: live ? live.at : quoteTimestamp?.toISOString() ?? quoteDate,
     format: formatUsd1,
     updatedAt,
     extraMeta: {
       unit: "USD/troy ounce",
+      current_price_source: live ? "gold-api" : "twelve-quote",
       quote_datetime: quotePayload.datetime ?? null,
       quote_timestamp: quoteTimestamp?.toISOString() ?? null,
       is_market_open: typeof quotePayload.is_market_open === "boolean" ? quotePayload.is_market_open : null,
