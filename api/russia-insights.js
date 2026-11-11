@@ -7,9 +7,14 @@ import {
   pickLatestInflation,
 } from './_shared/cbrInflation.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
-import { RUN_DEADLINE_MS, hostQueue, withRetry, withinDeadline } from './_shared/fetchRetry.js';
+import { FEED_DEADLINE_MS, RUN_DEADLINE_MS, hostQueue, withRetry, withinDeadline } from './_shared/fetchRetry.js';
 
 const TIMEOUT_MS = 6500;
+// У RSS-ленты бюджет меньше: это XML на несколько сотен килобайт, а не SOAP.
+// Замер 11.11: одна лента (Frank Media, 300 КБ) не укладывалась и держала
+// весь снимок до общего срока. 4 секунды на ленту — снимок отвечает, а
+// медленная лента честно выпадает и возвращается на следующем запросе.
+const FEED_TIMEOUT_MS = 4000;
 // SOAP-сервис ЦБ отвечает медленнее обычного XML, и 6,5 секунды ему мало:
 // именно на нём первом срабатывал таймаут в ночных прогонах самопроверки.
 const SOAP_TIMEOUT_MS = 10000;
@@ -111,7 +116,7 @@ async function timedFetch(url, init, timeoutMs) {
   }
 }
 
-async function fetchWithTimeout(url, parseResponse) {
+async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS) {
   // Один повтор на таймаут или сетевой сбой: источник на секунду задумался —
   // это не повод терять индикатор на весь час.
   return withRetry(async () => {
@@ -123,17 +128,21 @@ async function fetchWithTimeout(url, parseResponse) {
           accept: 'application/json, application/xml, text/xml;q=0.9, */*;q=0.5',
         },
       },
-      TIMEOUT_MS,
+      timeoutMs,
     );
     return parseResponse(response);
   });
 }
 
-async function fetchText(url) {
-  return fetchWithTimeout(url, async (response) => {
-    const buffer = await response.arrayBuffer();
-    return decodeBuffer(buffer, response.headers.get('content-type') || '');
-  });
+async function fetchText(url, timeoutMs = TIMEOUT_MS) {
+  return fetchWithTimeout(
+    url,
+    async (response) => {
+      const buffer = await response.arrayBuffer();
+      return decodeBuffer(buffer, response.headers.get('content-type') || '');
+    },
+    timeoutMs,
+  );
 }
 
 async function fetchJson(url) {
@@ -833,7 +842,7 @@ function parseRss(xml, source) {
 }
 
 async function fetchRss(source) {
-  return parseRss(await fetchText(source.url), source);
+  return parseRss(await fetchText(source.url, FEED_TIMEOUT_MS), source);
 }
 
 function settledValues(results, labels, errors) {
@@ -881,15 +890,19 @@ export default async function handler(req, res) {
   ];
   const rssLabels = RSS_SOURCES.map((source) => source.name);
 
-  // Срок на запуск: очередь бережёт источник, но лежащий источник не должен
-  // превращать страницу в 504. Не успевший индикатор честно выпадает.
+  // Сроки на запуск: очередь бережёт источник, но лежащий источник не должен
+  // превращать страницу в 504. У лент срок короче — их много, они мелкие и
+  // обновляются каждую минуту; рыночным индикаторам нужен запас.
+  const feedDeadline = Date.now() + FEED_DEADLINE_MS;
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const [marketResults, rssResults] = await Promise.all([
     Promise.allSettled(
-      marketTasks.map((task) => withinDeadline(runOnMarketHost(task.host, task.run), deadline, task.host)),
+      marketTasks.map((task) => withinDeadline(runOnMarketHost(task.host, task.run), deadline)),
     ),
     Promise.allSettled(
-      RSS_SOURCES.map((source) => withinDeadline(runOnFeedHost(source.url, () => fetchRss(source)), deadline, source.name)),
+      RSS_SOURCES.map((source) =>
+        withinDeadline(runOnFeedHost(source.url, () => fetchRss(source)), feedDeadline, source.name),
+      ),
     ),
   ]);
 

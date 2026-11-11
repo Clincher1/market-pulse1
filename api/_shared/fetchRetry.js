@@ -131,12 +131,14 @@ export async function withRetry(run, { attempts = 2, delayMs = DEFAULT_DELAY_MS,
  * отвечает не «плитки нет», а ошибкой целиком. Срок возвращает честный
  * частный отказ: этой плитки в снимке не будет, остальные будут.
  */
-export function withinDeadline(promise, deadline, label = 'источник') {
+export function withinDeadline(promise, deadline) {
   const left = deadline - Date.now();
-  if (left <= 0) return Promise.reject(new Error(`${label}: срок запуска истёк`));
+  // Имя источника в сообщение не входит: вызывающая сторона и так печатает
+  // «Frank Media: …», и без этого получалось «Frank Media: Frank Media: …».
+  if (left <= 0) return Promise.reject(new Error('срок запуска истёк'));
   let timer;
   const guard = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`${label}: не уложился в срок запуска`)), left);
+    timer = setTimeout(() => reject(new Error('не уложился в срок запуска')), left);
   });
   // race подписывается на оба промиса, поэтому позднее падение задачи не
   // остаётся необработанным.
@@ -149,3 +151,10 @@ export function withinDeadline(promise, deadline, label = 'источник') {
  * слишком поздно и считается таймаутом.
  */
 export const RUN_DEADLINE_MS = 18000;
+
+/**
+ * Срок для лент. Их шестнадцать, каждая мелкая и обновляется каждую минуту,
+ * поэтому одна зависшая лента не имеет права задерживать снимок: она
+ * выпадает и возвращается на следующем запросе.
+ */
+export const FEED_DEADLINE_MS = 8000;
