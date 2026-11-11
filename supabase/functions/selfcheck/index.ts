@@ -1,7 +1,7 @@
 // Self-check for the whole public contour.
 import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
 import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
-import { contractFor, freshnessVerdict, labelMatchesContract } from "../_shared/data-contract.ts";
+import { contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -630,6 +630,29 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         detail: stale.length
           ? `наблюдение старше допустимого: ${stale.map((item) => item.note).join(', ')}`
           : verdicts.map((item) => item.note).join('; '),
+      };
+    }),
+
+    // 5b-1. Цена, которая называет себя текущей, обязана быть текущей.
+    //
+    // Допуск свежести (5b) отвечает «ряд ещё жив»: у золота это трое суток на
+    // выходные. Здесь другой вопрос — «цена на плитке действительно текущая»:
+    // два-три часа на открытом рынке. Один порог на оба вопроса и был
+    // дефектом: золото с одиннадцатью часами отставания (11.11, 06:50 UTC)
+    // проходило проверку, потому что было младше трёх суток.
+    check('asset_quote_lag', async () => {
+      const rows = (await restJson('cached_assets?select=id,as_of')) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      const now = new Date();
+      const verdicts = rows.map((row) => quoteLagVerdict({ id: String(row.id ?? ''), as_of: row.as_of ? String(row.as_of) : null }, now));
+      const applicable = verdicts.filter((item) => item.applicable);
+      const lagging = applicable.filter((item) => !item.ok);
+      if (!applicable.length) return { ok: false, detail: 'ни один ряд не описан как «текущая цена»' };
+      return {
+        ok: lagging.length === 0,
+        detail: lagging.length
+          ? lagging.map((item) => item.note).join('; ')
+          : applicable.map((item) => item.note).join('; '),
       };
     }),
 

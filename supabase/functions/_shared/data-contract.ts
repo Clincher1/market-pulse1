@@ -53,6 +53,20 @@ export type AsOfKind = 'quote' | 'close-date' | 'candle-open' | 'official-rate';
  */
 export type SourceTier = 'first-party' | 'undocumented-api' | 'commercial-api';
 
+/**
+ * Когда рынок ряда открыт. Нужен, чтобы отличать «источник отстал» от
+ * «биржа закрыта»: без календаря любая проверка задержки красная каждые
+ * выходные и потому бесполезна.
+ *
+ * `weekday-window` — непрерывная сессия с воскресенья по пятницу:
+ * окно [openDay openHourUtc, closeDay closeHourUtc) внутри недели, дни от
+ * воскресенья (0). Ежедневный час паузы им не описывается — он укладывается
+ * в допуск `quoteLagMinutes`.
+ */
+export type TradingCalendar =
+  | 'always'
+  | { closeDay: number; closeHourUtc: number; openDay: number; openHourUtc: number };
+
 export interface AssetContract {
   /** Ключ ряда в `cached_assets.id`. */
   id: string;
@@ -74,6 +88,17 @@ export interface AssetContract {
   maxAsOfAgeMinutes: number;
   /** Почему порог именно такой. Печатается в отчёте проверки. */
   rationale: string;
+  /**
+   * Допустимое отставание самой цены, минуты, пока рынок открыт. `null` —
+   * цена не претендует на «сейчас» (закрытие дня, курс на дату), и проверка
+   * задержки к такому ряду не применяется.
+   *
+   * Это отдельное число, а не `cadenceMinutes × k`: допуск задержки — решение
+   * о качестве, и он должен быть записан явно, а не выведен из расписания.
+   */
+  quoteLagMinutes: number | null;
+  /** Календарь рынка: отличает «источник отстал» от «биржа закрыта». */
+  trading: TradingCalendar | null;
   /**
    * Независимый источник для сверки «не врёт ли основной».
    * `null` — сверки нет, и это тоже записано, а не забыто.
@@ -97,6 +122,10 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // вечером — уже нет. Спот EIA сюда не подставляется: это другой инструмент.
     maxAsOfAgeMinutes: 3 * DAY,
     rationale: 'фьючерс без официального бесплатного интерфейса; выходные и праздники NYMEX дают до трёх суток',
+    // Час паузы CME (21:00–22:00 UTC) укладывается в три часа с запасом на
+    // редкий день, когда Yahoo отдаёт котировку реже обычного.
+    quoteLagMinutes: 180,
+    trading: { closeDay: 5, closeHourUtc: 21, openDay: 0, openHourUtc: 22 },
     crossCheck: null,
   },
   {
@@ -110,6 +139,10 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     cadenceMinutes: 5,
     maxAsOfAgeMinutes: 3 * DAY,
     rationale: 'индекс лицензирован S&P; бесплатный документированный интерфейс отсутствует, выходные — до трёх суток',
+    // Плитка показывает закрытие, а не «сейчас»: задержку цены тут проверять
+    // не к чему — иначе проверка красная каждую ночь по построению.
+    quoteLagMinutes: null,
+    trading: null,
     crossCheck: {
       provider: 'FRED (Federal Reserve Bank of St. Louis), SP500',
       endpoint: 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500',
@@ -131,6 +164,8 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // курс живёт до понедельника: это не задержка, а календарь источника.
     maxAsOfAgeMinutes: 3 * DAY,
     rationale: 'официальный курс ЕЦБ на дату; выходные и праздники TARGET дают до трёх суток',
+    quoteLagMinutes: null,
+    trading: null,
     crossCheck: null,
   },
   {
@@ -150,6 +185,10 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // закрытия последней свечи, и это законные сутки, а не застрявший писатель.
     maxAsOfAgeMinutes: DAY,
     rationale: 'круглосуточный рынок; при отказе тикера — закрытие суточной свечи, не старше суток',
+    // Два часа: тикер обновляется на каждой сделке, а откат на свечу честно
+    // виден как отставание, а не прячется под подписью «сейчас».
+    quoteLagMinutes: 120,
+    trading: 'always',
     crossCheck: {
       provider: 'Coinbase (FRED, CBBTCUSD)',
       endpoint: 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=CBBTCUSD',
@@ -160,15 +199,21 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     id: 'gold',
     label: 'Gold',
     instrument: 'Золото, спот XAU/USD, доллары за тройскую унцию',
-    provider: 'Twelve Data',
-    tier: 'commercial-api',
-    endpoint: 'https://api.twelvedata.com/quote?symbol=XAU%2FUSD',
+    provider: 'Yahoo Finance (спот), отказ — Twelve Data',
+    tier: 'undocumented-api',
+    endpoint: 'https://query1.finance.yahoo.com/v8/finance/chart/XAUUSD=X?range=3mo&interval=1d',
     asOfKind: 'quote',
     cadenceMinutes: 5,
-    // Золото торгуется почти круглосуточно, но с паузой 22:00–23:00 UTC и
+    // Золото торгуется почти круглосуточно, но с паузой 21:00–22:00 UTC и
     // остановкой на выходные: пятничная кавычка в воскресенье ещё законна.
-    maxAsOfAgeMinutes: 2 * DAY,
-    rationale: 'спот с паузой на выходные; лимит бесплатного тарифа Twelve Data — 8 запросов в минуту и 800 в сутки',
+    maxAsOfAgeMinutes: 3 * DAY,
+    // До 11.11.2026 ряд жил на Twelve Data: на бесплатном тарифе quote по
+    // XAU/USD отдавал последнюю котировку сессии, и в 06:50 UTC плитка
+    // показывала цену одиннадцатичасовой давности. Допуск трое суток — это
+    // выходные и пауза, а не разрешение отставать: каденция пять минут.
+    rationale: 'тот же инструмент, что на плитке (спот XAU/USD); выходные и часовая пауза дают до трёх суток; при отказе Yahoo — Twelve Data',
+    quoteLagMinutes: 180,
+    trading: { closeDay: 5, closeHourUtc: 21, openDay: 0, openHourUtc: 22 },
     crossCheck: null,
   },
 ];
@@ -268,4 +313,90 @@ export function labelMatchesContract(id: string, label: string): boolean {
   const contract = contractFor(id);
   if (!contract) return false;
   return contract.label === String(label ?? '').trim();
+}
+
+/** Открыт ли рынок ряда в этот момент. Для рядов без календаря — `false`. */
+export function isTradingOpen(contract: AssetContract, at: Date): boolean {
+  if (contract.trading === 'always') return true;
+  if (!contract.trading) return false;
+  const week = contract.trading;
+  const day = at.getUTCDay();
+  const minutes = day * 1440 + at.getUTCHours() * 60 + at.getUTCMinutes();
+  const open = week.openDay * 1440 + week.openHourUtc * 60;
+  const close = week.closeDay * 1440 + week.closeHourUtc * 60;
+  // Окно непрерывной сессии внутри недели: [воскресенье 22:00, пятница 21:00).
+  return minutes >= open && minutes < close;
+}
+
+export interface LagVerdict {
+  id: string;
+  /** Проверка применима: ряд претендует на «текущую» цену и рынок ему знаком. */
+  applicable: boolean;
+  /** Рынок открыт — значит, отставание уже дефект, а не календарь. */
+  open: boolean;
+  ok: boolean;
+  ageMinutes: number | null;
+  allowedMinutes: number | null;
+  note: string;
+}
+
+/**
+ * Не отстала ли цена, которая называет себя текущей.
+ *
+ * Это отдельная проверка от `freshnessVerdict`, и вот почему. Допуск свежести
+ * (`maxAsOfAgeMinutes`) отвечает на вопрос «ряд ещё жив»: у золота это трое
+ * суток на выходные. А здесь вопрос другой — «цена, подписанная как текущая,
+ * действительно текущая»: два часа на открытом рынке. Один порог на оба
+ * вопроса давал ровно тот дефект, ради которого этот файл написан: золото с
+ * одиннадцатью часами отставания проходило проверку, потому что было младше
+ * трёх суток.
+ */
+export function quoteLagVerdict(
+  row: { id: string; as_of?: string | null },
+  now: Date,
+): LagVerdict {
+  const contract = contractFor(row.id);
+  if (!contract) {
+    return { id: String(row.id ?? ''), applicable: false, open: false, ok: false, ageMinutes: null, allowedMinutes: null, note: `${row.id ?? '—'}: ряд не описан контрактом` };
+  }
+  if (contract.quoteLagMinutes === null || contract.trading === null) {
+    return {
+      id: contract.id,
+      applicable: false,
+      open: false,
+      ok: true,
+      ageMinutes: null,
+      allowedMinutes: null,
+      note: `${contract.id}: цена не претендует на текущую (${asOfMeaning(contract.asOfKind)})`,
+    };
+  }
+  const open = isTradingOpen(contract, now);
+  const age = asOfAgeMinutes(row.as_of, now);
+  if (!open) {
+    return {
+      id: contract.id,
+      applicable: true,
+      open: false,
+      ok: true,
+      ageMinutes: age,
+      allowedMinutes: contract.quoteLagMinutes,
+      note: `${contract.id}: рынок закрыт, отставание ${age === null ? '—' : `${String(Math.round(age / 6) / 10).replace('.', ',')} ч`} допустимо`,
+    };
+  }
+  const ok = age !== null && age <= contract.quoteLagMinutes;
+  // Один знак после запятой: «10,8 ч», а не «11 ч» — округление до целого
+  // скрывает как раз ту разницу, ради которой проверка существует.
+  const hours = age === null ? null : Math.round(age / 6) / 10;
+  return {
+    id: contract.id,
+    applicable: true,
+    open: true,
+    ok,
+    ageMinutes: age,
+    allowedMinutes: contract.quoteLagMinutes,
+    note:
+      age === null
+        ? `${contract.id}: рынок открыт, а даты наблюдения нет`
+        : `${contract.id}: рынок открыт, цена отстала на ${String(hours).replace('.', ',')} ч, допустимо ${contract.quoteLagMinutes} мин`,
+  };
 }

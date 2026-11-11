@@ -429,7 +429,51 @@ async function fetchBtc(updatedAt: string): Promise<AssetResult> {
   });
 }
 
+/**
+ * Золото, спот XAU/USD, из публичного чарта Yahoo.
+ *
+ * Зачем: Twelve Data на бесплатном тарифе отдаёт по XAU/USD последнюю
+ * котировку сессии. Замер 11.11.2026 06:50 UTC: на плитке стояла цена с
+ * 10.11 20:00 — одиннадцать часов отставания при кроне писателя раз в пять
+ * минут. Днём это незаметно, утром — заметно, и подписать такое «на 23:00
+ * МСК» честно, но бесполезно.
+ *
+ * Yahoo отдаёт тот же инструмент (spot XAU/USD), что написан на плитке, —
+ * поэтому это замена источника, а не подмена инструмента. Если Yahoo не
+ * ответит или ответ не разберётся, ряд не пропадает: вызывающий код идёт в
+ * Twelve Data, и в журнале запуска видно, откуда взялась цена.
+ */
+async function fetchGoldFromYahoo(updatedAt: string): Promise<AssetResult> {
+  const series = await fetchYahooDaily("XAUUSD=X");
+  return makeAsset({
+    id: "gold",
+    name: EXPECTED_NAMES.gold,
+    instrument: "Gold spot / US Dollar (Yahoo XAUUSD=X)",
+    provider: "Yahoo Finance",
+    points: series.points,
+    asOf: series.asOf,
+    formingBarDate: series.formingBarDate,
+    format: formatUsd2,
+    updatedAt,
+    extraMeta: {
+      unit: "USD/oz",
+      exchange: series.exchange,
+      quote_time: series.quoteTime,
+      current_price_source: "yahoo-spot",
+    },
+  });
+}
+
 async function fetchGold(updatedAt: string): Promise<AssetResult> {
+  const yahoo = await fetchGoldFromYahoo(updatedAt).catch((error) => {
+    console.error("gold: Yahoo XAUUSD=X недоступен, идём в Twelve Data", error);
+    return null;
+  });
+  if (yahoo) return yahoo;
+  return await fetchGoldFromTwelve(updatedAt);
+}
+
+async function fetchGoldFromTwelve(updatedAt: string): Promise<AssetResult> {
   const key = Deno.env.get("TWELVE_KEY");
   if (!key) throw new Error("Missing TWELVE_KEY secret");
   const headers = { Authorization: `apikey ${key}` };

@@ -14,7 +14,9 @@ import {
   asOfMeaning,
   contractFor,
   freshnessVerdict,
+  isTradingOpen,
   labelMatchesContract,
+  quoteLagVerdict,
 } from '../supabase/functions/_shared/data-contract.ts';
 
 const DAY = 24 * 60;
@@ -173,4 +175,74 @@ test('BTC: текущая цена из тикера, история из све
 test('контракт: у BTC смысл даты — момент котировки, а не начало свечи', () => {
   assert.equal(contractFor('btc')?.asOfKind, 'quote');
   assert.equal(contractFor('btc')?.cadenceMinutes, 5);
+});
+
+// --- Задержка текущей цены (11.11.2026) ------------------------------------
+//
+// Отдельная проверка от свежести: «ряд жив» и «цена текущая» — разные вопросы,
+// и общий порог на них скрывал одиннадцатичасовое отставание золота.
+
+test('рынок: календарь отличает выходные от отказа источника', () => {
+  const brent = contractFor('brent');
+  // Пятница 20:00 UTC — торги идут.
+  assert.equal(isTradingOpen(brent, new Date('2026-11-06T20:00:00Z')), true);
+  // Пятница 21:30 UTC — закрыто на выходные.
+  assert.equal(isTradingOpen(brent, new Date('2026-11-06T21:30:00Z')), false);
+  // Суббота — закрыто.
+  assert.equal(isTradingOpen(brent, new Date('2026-11-07T12:00:00Z')), false);
+  // Воскресенье 23:00 UTC — снова торги.
+  assert.equal(isTradingOpen(brent, new Date('2026-11-08T23:00:00Z')), true);
+  // Понедельник — торги.
+  assert.equal(isTradingOpen(brent, new Date('2026-11-09T09:00:00Z')), true);
+  // У индекса и курса ЕЦБ календаря нет: цена не претендует на «сейчас».
+  assert.equal(isTradingOpen(contractFor('sp500'), new Date('2026-11-09T09:00:00Z')), false);
+});
+
+test('задержка: на открытом рынке одиннадцать часов — дефект', () => {
+  const now = new Date('2026-11-11T06:50:00Z'); // среда, торги идут
+  const gold = quoteLagVerdict({ id: 'gold', as_of: '2026-11-10T20:00:00Z' }, now);
+  assert.equal(gold.applicable, true);
+  assert.equal(gold.open, true);
+  assert.equal(gold.ok, false);
+  assert.match(gold.note, /отстала на 10,8 ч/);
+});
+
+test('задержка: в выходные то же отставание — не дефект', () => {
+  const sunday = new Date('2026-11-08T12:00:00Z');
+  const brent = quoteLagVerdict({ id: 'brent', as_of: '2026-11-06T20:00:00Z' }, sunday);
+  assert.equal(brent.ok, true);
+  assert.equal(brent.open, false);
+  assert.match(brent.note, /рынок закрыт/);
+});
+
+test('задержка: свежая котировка проходит, ряд без «сейчас» не проверяется', () => {
+  const now = new Date('2026-11-11T06:50:00Z');
+  assert.equal(quoteLagVerdict({ id: 'gold', as_of: '2026-11-11T06:40:00Z' }, now).ok, true);
+  const sp500 = quoteLagVerdict({ id: 'sp500', as_of: '2026-11-10T00:00:00Z' }, now);
+  assert.equal(sp500.applicable, false);
+  assert.match(sp500.note, /не претендует на текущую/);
+  const fx = quoteLagVerdict({ id: 'usd-eur', as_of: '2026-11-10T00:00:00Z' }, now);
+  assert.equal(fx.applicable, false);
+});
+
+test('задержка: ряд без даты на открытом рынке — красный, а не пропущенный', () => {
+  const now = new Date('2026-11-11T06:50:00Z');
+  const verdict = quoteLagVerdict({ id: 'btc', as_of: null }, now);
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.note, /даты наблюдения нет/);
+});
+
+test('сторож: selfcheck применяет обе проверки — свежесть ряда и задержку цены', async () => {
+  const source = await readFile(new URL('../supabase/functions/selfcheck/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /check\('asset_quote_lag'/);
+  assert.match(source, /quoteLagVerdict\(/);
+});
+
+test('золото: спот сначала из Yahoo, Twelve Data — запасной путь', async () => {
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  // Одиннадцать часов отставания на бесплатном тарифе Twelve — это не
+  // расписание, а отсутствие текущей котировки.
+  assert.match(source, /fetchYahooDaily\("XAUUSD=X"\)/, 'спот XAU/USD не берётся из Yahoo');
+  assert.match(source, /fetchGoldFromTwelve/, 'запасной путь Twelve Data удалён');
+  assert.match(source, /current_price_source: "yahoo-spot"/, 'источник цены золота не пишется в журнал');
 });
