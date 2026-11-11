@@ -13,7 +13,10 @@ import {
   afterAttempt,
   emptyState,
   gateDecision,
+  MAX_ATTEMPTS,
+  backoffMs,
   retryAfterFromError,
+  shouldRetry,
   sourceSpec,
   statusFromError,
   utcDay,
@@ -178,4 +181,37 @@ test('сторож: у Yahoo есть второй хост, и повтор н�
   // «нет», — это не настойчивость, а повод получить блокировку по IP.
   assert.match(source, /const hosts = \["query1\.finance\.yahoo\.com", "query2\.finance\.yahoo\.com"\]/);
   assert.match(source, /retry-after=/);
+});
+
+test('повтор только там, где виноват временный сбой', () => {
+  assert.equal(shouldRetry(429, 'HTTP 429: limit'), true);
+  assert.equal(shouldRetry(503, 'HTTP 503: busy'), true);
+  assert.equal(shouldRetry(500, 'HTTP 500: oops'), true);
+  // 404 и ошибка разбора не лечатся повтором: второй такой же ответ тратит
+  // чужую квоту и наше время.
+  assert.equal(shouldRetry(404, 'HTTP 404: not found'), false);
+  assert.equal(shouldRetry(400, 'HTTP 400: bad request'), false);
+  // Кода нет — до ответа не дошло; это таймаут или обрыв.
+  assert.equal(shouldRetry(null, 'The operation was aborted'), true);
+  assert.equal(shouldRetry(null, 'fetch failed'), true);
+});
+
+test('бэкофф растёт, имеет потолок и всегда с разбросом', () => {
+  const mid = () => 0.5;
+  assert.equal(backoffMs(1, mid), 500);
+  assert.equal(backoffMs(2, mid), 1000);
+  assert.ok(backoffMs(9, mid) <= 4000, 'потолок не соблюдён');
+  // Разброс: у «быстрого» и «медленного» случайного числа ответ разный,
+  // иначе одновременные запросы повторяются синхронным залпом.
+  assert.notEqual(backoffMs(2, () => 0), backoffMs(2, () => 1));
+  // Больше двух попыток не бывает.
+  assert.equal(MAX_ATTEMPTS, 2);
+});
+
+test('сторож: писатель повторяет запрос, а не сдаётся после первого 429', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /requestWithRetry/, 'нет запроса с повтором');
+  assert.match(source, /shouldRetry\(status, lastError\.message\)/);
+  assert.match(source, /if \(waitMs > RETRY_WAIT_BUDGET_MS\) throw lastError;/);
 });

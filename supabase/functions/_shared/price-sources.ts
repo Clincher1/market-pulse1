@@ -296,3 +296,37 @@ export function retryAfterFromError(error: unknown): number | null {
   const seconds = Number(match[1]);
   return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
 }
+
+/**
+ * Повторять ли запрос после такой ошибки.
+ *
+ * Повторяем только то, где источник сам виноват во временном: перегрузка
+ * (429), сбой на его стороне (5xx), обрыв сети и таймаут. Ответ 404 или
+ * ошибка разбора не повторяются: второй такой же ответ ничего не изменит,
+ * а время и чужую квоту потратит.
+ */
+export function shouldRetry(status: number | null, message: string): boolean {
+  if (status === 429) return true;
+  if (status !== null && status >= 500) return true;
+  // Кода нет — значит до ответа дело не дошло: таймаут, обрыв, DNS.
+  if (status === null) return true;
+  return /fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|aborted|timeout/i.test(message);
+}
+
+/**
+ * Сколько ждать перед повтором: экспонента, потолок и случайный разброс.
+ *
+ * Разброс обязателен. Без него четыре ряда, получившие 503 в одну и ту же
+ * секунду, повторяют запрос тоже в одну и ту же секунду — со стороны
+ * источника это выглядит как залп, и защита от ботов включается именно на
+ * нём. Разброс делает повторы непохожими друг на друга.
+ */
+export function backoffMs(attempt: number, random: () => number = Math.random): number {
+  const base = Math.min(BASE_BACKOFF_MS * 2 ** Math.max(0, attempt - 1), MAX_BACKOFF_MS);
+  return Math.round(base * (0.7 + random() * 0.6));
+}
+
+export const BASE_BACKOFF_MS = 500;
+export const MAX_BACKOFF_MS = 4000;
+/** Больше двух попыток не делаем: третья — это уже настойчивость. */
+export const MAX_ATTEMPTS = 2;

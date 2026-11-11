@@ -7,7 +7,10 @@ import {
   PRICE_SOURCES,
   afterAttempt,
   gateDecision,
+  backoffMs,
+  MAX_ATTEMPTS,
   retryAfterFromError,
+  shouldRetry,
   sourceSpec,
   statusFromError,
   type SourceState,
@@ -152,8 +155,52 @@ async function fetchYahooChart(url: string): Promise<{ payload: unknown; host: s
   throw lastError ?? new Error("Yahoo chart: no host answered");
 }
 
+/**
+ * Сколько запуск готов ждать повтора.
+ *
+ * Не «сколько угодно»: запуск живёт в чужих лимитах по времени. Если
+ * источник просит подождать дольше, чем этот запас, повторять сейчас нельзя —
+ * это и есть поведение, за которое банят. В таком случае ошибка уходит в шлюз
+ * вместе с Retry-After, и пауза ставится на всё сказанное время.
+ */
+const RETRY_WAIT_BUDGET_MS = 6000;
+
+function abortableSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Запрос с единственным осмысленным повтором.
+ *
+ * Раньше здесь была одна попытка: 429 или 503 от источника означали, что ряд
+ * не обновится все следующие пятнадцать минут — при том, что сервис через
+ * полсекунды отвечал нормально. Повтор только на временных ошибках (429, 5xx,
+ * обрыв, таймаут), не больше двух попыток, со случайным разбросом, чтобы
+ * одновременные запросы не повторялись синхронным залпом.
+ */
+async function requestWithRetry(url: string, headers: Record<string, string> = {}): Promise<string> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await fetchText(url, headers);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const status = statusFromError(lastError);
+      if (attempt >= MAX_ATTEMPTS || !shouldRetry(status, lastError.message)) throw lastError;
+      // Источник мог назвать свою паузу — она главнее нашего бэкоффа.
+      const waitMs = Math.max(backoffMs(attempt), (retryAfterFromError(lastError) ?? 0) * 1000);
+      if (waitMs > RETRY_WAIT_BUDGET_MS) throw lastError;
+      console.warn(
+        `повтор ${attempt + 1}/${MAX_ATTEMPTS} через ${waitMs} мс: ${url} — ${lastError.message.slice(0, 160)}`,
+      );
+      await abortableSleep(waitMs);
+    }
+  }
+  throw lastError ?? new Error("запрос не выполнен");
+}
+
 async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
-  return JSON.parse(await fetchText(url, headers)) as unknown;
+  return JSON.parse(await requestWithRetry(url, headers)) as unknown;
 }
 
 function isRecord(value: unknown): value is AnyRecord {
