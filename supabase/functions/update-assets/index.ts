@@ -2,6 +2,7 @@
 import { closedHistory, previousClosedValue } from "../_shared/asset-history.ts";
 import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { ASSET_CONTRACTS, contractFor } from "../_shared/data-contract.ts";
 //
 // Security/provenance notes:
 // - Twelve Data is read only from the TWELVE_KEY Edge Function secret.
@@ -53,15 +54,14 @@ type AssetResult = {
   meta: AnyRecord;
 };
 
-const EXPECTED_NAMES: Record<string, string> = {
-  "usd-eur": "USD/EUR",
-  sp500: "S&P 500",
-  // Фьючерс, а не спот: у Brent спот EIA и ближайший фьючерс расходятся на
-  // несколько долларов, поэтому подпись называет инструмент, а не только сорт.
-  brent: "Brent (фьючерс)",
-  gold: "Gold",
-  btc: "BTC",
-};
+// Подписи рядов больше не живут копией в писателе. Копия расходилась ровно в
+// тот день, когда ряд менял инструмент: 01.11.2026 Brent переехал с одного
+// контракта на другой, а слово «Brent» осталось прежним и примиряло два
+// разных числа. Теперь единственный источник подписи — контракт данных, и
+// публикация сверяет её с ним (см. assertContract в publishRow).
+const EXPECTED_NAMES: Record<string, string> = Object.fromEntries(
+  ASSET_CONTRACTS.map((contract) => [contract.id, contract.label]),
+);
 
 const LIMITS: Record<string, { min: number; max: number; maxAbsChangePct: number }> = {
   "usd-eur": { min: 0.2, max: 3, maxAbsChangePct: 10 },
@@ -231,6 +231,11 @@ function makeAsset(input: {
   if (limits && Math.abs(change) > limits.maxAbsChangePct) {
     throw new Error(`${input.id}: change ${change}% outside plausibility range`);
   }
+
+  // Построение строки — последний рубеж перед записью в кэш. Сверка подписи и
+  // смысла даты стоит здесь, а не в тестах: тест ловит расхождение в коде, а
+  // эта проверка — ещё и в данных, которые пришли из источника.
+  assertContract(input.id, input.name, asOf);
 
   return {
     row: {
@@ -469,6 +474,24 @@ async function supportedColumns(): Promise<StoredColumns> {
   const asOf = sparkDates ? true : await supports("as_of");
   storedColumns = { asOf, sparkDates };
   return storedColumns;
+}
+
+/**
+ * Ряд обязан выйти под тем именем и с тем смыслом даты, которые записаны в
+ * контракте. Это не формальность: подпись и `as_of` — то, что читает человек
+ * и по чему судит проверка. Расхождение здесь означает, что писатель и экран
+ * договорились между собой мимо контракта, и никакая проверка снаружи этого
+ * не заметит.
+ */
+function assertContract(id: string, name: string, asOf: string | null): void {
+  const contract = contractFor(id);
+  if (!contract) throw new Error(`ряда ${id} нет в контракте данных: подпись и смысл as_of неизвестны`);
+  if (contract.label !== name) {
+    throw new Error(`подпись ряда ${id} — «${name}», по контракту «${contract.label}»`);
+  }
+  if (contract.asOfKind !== 'candle-open' && !asOf) {
+    throw new Error(`ряд ${id} публикуется без as_of, а по контракту это ${contract.asOfKind}`);
+  }
 }
 
 async function isFreshNewCache(): Promise<boolean> {
