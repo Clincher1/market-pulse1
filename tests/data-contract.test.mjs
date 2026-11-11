@@ -238,11 +238,14 @@ test('сторож: selfcheck применяет обе проверки — с�
   assert.match(source, /quoteLagVerdict\(/);
 });
 
-test('золото: спот сначала из Yahoo, Twelve Data — запасной путь', async () => {
+test('золото: живая котировка gold-api, Twelve Data — история и запасной путь', async () => {
   const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
   // Одиннадцать часов отставания на бесплатном тарифе Twelve — это не
-  // расписание, а отсутствие текущей котировки.
-  assert.match(source, /fetchYahooDaily\("XAUUSD=X"\)/, 'спот XAU/USD не берётся из Yahoo');
+  // расписание, а отсутствие текущей котировки. Живая котировка проверена из
+  // платформы 11.11.2026 07:24 UTC: 200 и updatedAt «сейчас».
+  assert.match(source, /api\.gold-api\.com\/price\/XAU/, 'живая котировка золота не запрашивается');
   assert.match(source, /fetchGoldFromTwelve/, 'запасной путь Twelve Data удалён');
-  assert.match(source, /current_price_source: "yahoo-spot"/, 'источник цены золота не пишется в журнал');
+  assert.match(source, /current_price_source: live \? "gold-api" : "twelve-quote"/, 'источник цены золота не пишется в журнал');
+  // Yahoo спота не отдаёт: проверено тем же запросом, XAUUSD=X вернул 404.
+  assert.equal(/fetchYahooDaily\("XAUUSD=X"\)/.test(source), false, 'вернулся несуществующий символ Yahoo');
 });
