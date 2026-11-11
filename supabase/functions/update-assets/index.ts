@@ -618,14 +618,26 @@ async function fetchGold(updatedAt: string, options: { historyDue: boolean }): P
   let points: Point[];
   let historySource: string;
   if (options.historyDue) {
-    points = (await fetchGoldSeries()).points;
-    historySource = "twelve";
+    // История — не обязательный источник. Если Twelve Data отказал, цена
+    // всё равно публикуется: график берёт уже опубликованные закрытия, а
+    // провал честно записывается за источником истории.
+    try {
+      points = (await fetchGoldSeries()).points;
+      historySource = "twelve";
+      outcomes["twelve"] = "ok";
+    } catch (error) {
+      console.warn("золото: история из Twelve Data не пришла, беру опубликованные закрытия", error);
+      points = await storedGoldHistory();
+      historySource = "cache";
+      outcomes["twelve"] = "fail";
+    }
   } else {
     points = await storedGoldHistory();
     historySource = "cache";
+    // Twelve Data в этом запуске не спрашивали вовсе: это наше расписание, а
+    // не отказ источника. Записывать ему «fail» нельзя — серия отказов
+    // набиралась бы на ровном месте и через три запуска давала паузу.
   }
-  if (live) outcomes["twelve"] = historySource === "twelve" ? "ok" : "fail";
-  else if (historySource === "twelve") outcomes["twelve"] = "ok";
 
   // Дневной бар текущих суток с живой ценой — незакрытый бар: в историю его
   // не пускаем, иначе график покажет сегодняшнюю цену как закрытие дня.
