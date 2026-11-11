@@ -1,7 +1,7 @@
 // Self-check for the whole public contour.
 import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
 import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
-import { contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
+import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -800,6 +800,50 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
+    // 5c. Тот самый ряд, который видит человек, и есть первичный.
+    //
+    // До 11.11.2026 это расходилось молча: у золота первичным был уровень
+    // индекса Nasdaq (2381-3054 пункта), а плитка показывала спот 4048
+    // долларов за унцию. Сайт ошибки не видел, потому что панель истории
+    // ходит по явному списку, а не по is_primary. Зато по is_primary считают
+    // оценки событий и прогнозы — то есть числа под тем же словом «gold»
+    // были другими.
+    check('asset_series_identity', async () => {
+      const rows = (await restJson(
+        'asset_instruments_v2?select=id,asset_key,unit,is_primary,enabled',
+      )) as AnyRecord[];
+      if (!rows.length) return { ok: false, detail: 'реестра инструментов нет' };
+      const problems: string[] = [];
+      const okParts: string[] = [];
+      for (const contract of ASSET_CONTRACTS) {
+        // Ключ реестра и ключ плитки пишутся по-разному: ряд «usd-eur» на
+        // экране — это «eurusd» в реестре (так валюта называется у источника).
+        // Без этой перестановки проверка искала бы «usdeur» и молчала бы.
+        const key = contract.id === 'usd-eur' ? 'eurusd' : contract.id.toLowerCase();
+        const rowsOfKey = rows.filter((row) => String(row.asset_key ?? '').toLowerCase() === key);
+        const enabled = rowsOfKey.filter((row) => row.enabled === true);
+        const primaries = enabled.filter((row) => row.is_primary === true);
+        if (primaries.length !== 1) {
+          problems.push(`${contract.id}: включённых первичных рядов ${primaries.length}, нужен ровно один`);
+          continue;
+        }
+        const primary = primaries[0];
+        if (String(primary.id) !== contract.historyInstrumentId) {
+          problems.push(`${contract.id}: первичный ряд «${String(primary.id)}», а человек видит «${contract.historyInstrumentId}»`);
+          continue;
+        }
+        if (String(primary.unit ?? '') !== contract.displayUnit) {
+          problems.push(`${contract.id}: единица «${String(primary.unit ?? '')}», а на плитке «${contract.displayUnit}»`);
+          continue;
+        }
+        okParts.push(`${contract.id}=${String(primary.id)}`);
+      }
+      return {
+        ok: problems.length === 0,
+        detail: problems.length ? problems.join('; ') : `первичный ряд совпадает с плиткой: ${okParts.join(', ')}`,
+      };
+    }),
+
     // 5d. Подпись ряда не должна противоречить типу инструмента в реестре.
     //     01.11.2026 Brent переехал со спота EIA на фьючерс NYMEX, а имя в
     //     кэше осталось «Brent»: одно слово для двух инструментов, которые
@@ -888,6 +932,54 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     // 9. The site promises no trackers and no third-party resources. Once this
     //     check exists, a font CDN, an analytics snippet or any other outside
     //     host reappearing in the markup shows up here within the hour.
+    // Лента, которая отвечает отказом чаще, чем отвечает, — это не «шум в
+    // журнале»: пока она включена, проверка feeds_fresh краснеет на каждом её
+    // провале, а материал всё равно не приходит. 11.11.2026 так выглядел
+    // reuters-google-business: 63 успеха из 201 попытки за 7 дней (31 %),
+    // 138 ответов 503. Решение по нему принято отдельной миграцией, а эта
+    // проверка нуждается, чтобы следующая такая лента не жила месяцами.
+    //
+    // Считаются только настоящие попытки: строки «пауза» и «пейсинг» — это
+    // наши пропуски, а не отказы источника.
+    check('feed_reliability', async () => {
+      const sources = (await restJson('news_sources_v2?select=id,name&enabled=eq.true')) as AnyRecord[];
+      if (!sources.length) return { ok: false, detail: 'реестр лент пуст' };
+      const since = new Date(Date.now() - 7 * 24 * 3_600_000).toISOString();
+      const rows = (await restJson(
+        `news_source_health_v2?select=source_id,ok,paused&paused=eq.false&created_at=gte.${encodeURIComponent(since)}&limit=20000`,
+      )) as AnyRecord[];
+      const tally = new Map<string, { tries: number; ok: number }>();
+      for (const row of rows) {
+        const id = String(row.source_id ?? '');
+        if (!id) continue;
+        const item = tally.get(id) ?? { tries: 0, ok: 0 };
+        item.tries += 1;
+        if (row.ok === true) item.ok += 1;
+        tally.set(id, item);
+      }
+      const weak: string[] = [];
+      const parts: string[] = [];
+      for (const source of sources) {
+        const id = String(source.id ?? '');
+        const item = tally.get(id);
+        if (!item || item.tries < 20) {
+          parts.push(`${id}: попыток ${item?.tries ?? 0}, судить рано`);
+          continue;
+        }
+        const share = item.ok / item.tries;
+        parts.push(`${id}: ${item.ok}/${item.tries}`);
+        if (share < 0.6) {
+          weak.push(`${String(source.name ?? id)} (${Math.round(share * 100)} % успеха: ${item.ok} из ${item.tries})`);
+        }
+      }
+      return {
+        ok: weak.length === 0,
+        detail: weak.length
+          ? `ленты, которые чаще отказывают, чем отвечают: ${weak.join(', ')}`
+          : `все ${sources.length} включённых лент отвечают чаще, чем отказывают (${parts.slice(0, 4).join(', ')}…)`,
+      };
+    }),
+
     check('no_third_party', async () => {
       const html = await (await fetch(SITE, { signal: AbortSignal.timeout(20000) })).text();
       const hosts = [...new Set(

@@ -258,3 +258,64 @@ test('подписи: часы печатаются с десятичной за
   assert.match(verdict.note, /0,3 ч/);
   assert.equal(/0\.3 ч/.test(verdict.note), false);
 });
+
+// --- Один ряд на инструмент (11.11.2026) -----------------------------------
+//
+// Первичный ряд в реестре и ряд на экране — разные вещи, и они разошлись
+// молча: у золота первичным был уровень индекса Nasdaq (2381–3054 пункта),
+// пока плитка показывала спот 4048 долларов за унцию. По is_primary считают
+// оценки событий и прогнозы, поэтому под одним словом «gold» жили две разные
+// величины.
+
+test('контракт: у каждого ряда назван ряд, который видит человек', () => {
+  const expected = {
+    brent: ['brent_yahoo_bzf', 'usd_per_barrel'],
+    sp500: ['sp500_yahoo_gspc', 'index_points'],
+    'usd-eur': ['eurusd_ecb_daily', 'usd_per_eur'],
+    btc: ['btc_kraken_xbtusd_daily', 'usd_per_btc'],
+    gold: ['gold_twelve_xauusd_daily', 'usd_per_troy_ounce'],
+  };
+  for (const [id, [instrument, unit]] of Object.entries(expected)) {
+    const contract = contractFor(id);
+    assert.equal(contract?.historyInstrumentId, instrument, `${id}: ряд на экране`);
+    assert.equal(contract?.displayUnit, unit, `${id}: единица на экране`);
+  }
+});
+
+test('контракт: золото не может показывать уровень индекса как цену', () => {
+  // Уровень индекса Nasdaq — 2381–3054 «пунктов», спот — 4048 долларов за
+  // унцию. Одно слово «gold» на две величины: это не округление, а подмена.
+  assert.equal(contractFor('gold')?.displayUnit, 'usd_per_troy_ounce');
+  assert.notEqual(contractFor('gold')?.historyInstrumentId, 'gold_fred_nasdaq_index');
+});
+
+test('сторож: панель истории и контракт называют один и тот же ряд', async () => {
+  const source = await readFile(new URL('../src/data/assetPriceHistory.ts', import.meta.url), 'utf8');
+  for (const contract of ASSET_CONTRACTS) {
+    assert.ok(
+      source.includes(`'${contract.historyInstrumentId}'`),
+      `${contract.id}: панель истории не знает ряд ${contract.historyInstrumentId}`,
+    );
+  }
+});
+
+test('сторож: selfcheck сверяет первичный ряд реестра с плиткой', async () => {
+  const source = await readFile(new URL('../supabase/functions/selfcheck/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /check\('asset_series_identity'/);
+  assert.match(source, /historyInstrumentId/);
+  // Ключ реестра «eurusd» и ключ плитки «usd-eur» — не одно и то же слово.
+  assert.match(source, /contract\.id === 'usd-eur' \? 'eurusd'/);
+});
+
+// --- Надёжность лент (11.11.2026) ------------------------------------------
+
+test('сторож: у проверки надёжности лент есть окно и порог, а не «как получится»', async () => {
+  const source = await readFile(new URL('../supabase/functions/selfcheck/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /check\('feed_reliability'/);
+  // Пропуски по паузе и пейсингу — это наши пропуски, а не отказы источника.
+  assert.match(source, /paused=eq\.false/);
+  // Порог и минимальная выборка записаны явно: без них одна удачная попытка
+  // после месяца молчания давала бы «100 % успеха».
+  assert.match(source, /share < 0\.6/);
+  assert.match(source, /item\.tries < 20/);
+});
