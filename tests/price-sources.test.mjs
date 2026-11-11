@@ -245,9 +245,12 @@ test('перерасход квоты — отказ: это и есть пут�
 });
 
 test('источник вне реестра — отказ: у него нет ни квоты, ни паузы', () => {
-  const verdict = politenessVerdict([state('yahoo'), state('frankfurter')], NOW);
+  // frankfurter и coinbase теперь в реестре: у них есть квота и пауза.
+  // А выдуманный источник по-прежнему ловится, иначе список квот перестал бы
+  // быть полным незаметно.
+  const verdict = politenessVerdict([state('yahoo'), state('some-scraper')], NOW);
   assert.equal(verdict.ok, false);
-  assert.match(verdict.detail, /вне реестра: frankfurter/);
+  assert.match(verdict.detail, /вне реестра: some-scraper/);
 });
 
 test('пауза после отказов — не поломка, её называют словами', () => {

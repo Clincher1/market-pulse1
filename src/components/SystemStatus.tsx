@@ -24,6 +24,7 @@ import {
   type HealthRun,
 } from '@/data/systemStatus';
 import { checkWindowLabel, summariseCheckStats, type CheckStatRow } from '@/lib/checkStats';
+import SourcesMonitor from '@/components/SourcesMonitor';
 
 function feedAgeLabel(hours: number | null): string {
   if (hours === null) return 'нет данных';
@@ -352,6 +353,9 @@ export default function SystemStatus() {
                 </div>
               ))}
           </div>
+
+          {/* Слоты и источники: откуда взято каждое число */}
+          <SourcesMonitor />
 
           {/* Ленты */}
           {feeds.length > 0 && (

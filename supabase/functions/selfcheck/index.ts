@@ -3,6 +3,7 @@ import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts"
 import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
 import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
 import { politenessVerdict } from "../_shared/price-sources.ts";
+import { registryVerdict } from "../_shared/slots.ts";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -661,6 +662,38 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       // спросил шлюз, и учёта расхода нет вовсе.
       if (!rows.length) return { ok: false, detail: 'asset_source_state пуста: расход по источникам не учитывается' };
       return verdict;
+    }),
+
+    // 5b-0b. Слоты: копия реестра в базе совпадает с кодом, выбор владельца
+    // допустим.
+    //
+    // Проверка ловит не «источник молчит», а расхождение: писатель цен
+    // синхронизирует реестр в базу при каждом запуске, поэтому отставшая копия
+    // означает, что синхронизация перестала работать, а страница состояния
+    // показывает не то, что делается на самом деле. Второе — недопустимый
+    // выбор: например, попытка назначить Brent источник, который отдаёт другой
+    // контракт.
+    check('slots_registry', async () => {
+      const [registryRows, preferenceRows] = await Promise.all([
+        restJson('data_slot_registry?select=slot_id,number,can_choose') as Promise<AnyRecord[]>,
+        restJson('source_preferences?select=slot_id,source_id,priority,enabled') as Promise<AnyRecord[]>,
+      ]);
+      if (!registryRows.length) {
+        return { ok: false, detail: 'реестр слотов в базе пуст: синхронизация из кода не выполняется' };
+      }
+      return registryVerdict(
+        registryRows.map((row) => ({
+          slot_id: String(row.slot_id ?? ''),
+          number: Number(row.number ?? 0),
+          can_choose: row.can_choose === true,
+        })),
+        preferenceRows.map((row) => ({
+          slot_id: String(row.slot_id ?? ''),
+          source_id: String(row.source_id ?? ''),
+          priority: Number(row.priority ?? 1),
+          enabled: row.enabled !== false,
+        })),
+      );
     }),
 
     // 5b-1. Цена, которая называет себя текущей, обязана быть текущей.
