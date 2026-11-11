@@ -249,3 +249,12 @@ test('золото: живая котировка gold-api, Twelve Data — ис
   // Yahoo спота не отдаёт: проверено тем же запросом, XAUUSD=X вернул 404.
   assert.equal(/fetchYahooDaily\("XAUUSD=X"\)/.test(source), false, 'вернулся несуществующий символ Yahoo');
 });
+
+test('подписи: часы печатаются с десятичной запятой', () => {
+  const now = new Date('2026-11-11T07:00:00Z');
+  // «0,3 ч» — по-русски; «0.3 ч» читается как небрежность, а этот текст
+  // человек видит в статусе сайта.
+  const verdict = freshnessVerdict({ id: 'brent', as_of: '2026-11-11T06:42:00Z' }, now);
+  assert.match(verdict.note, /0,3 ч/);
+  assert.equal(/0\.3 ч/.test(verdict.note), false);
+});
