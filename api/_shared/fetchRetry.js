@@ -143,5 +143,9 @@ export function withinDeadline(promise, deadline, label = 'источник') {
   return Promise.race([promise, guard]).finally(() => clearTimeout(timer));
 }
 
-/** Срок последней задачи: платформа даёт 30 секунд, оставляем запас на ответ. */
-export const RUN_DEADLINE_MS = 22000;
+/**
+ * Срок последней задачи: платформа даёт 30 секунд, проверка `ru_insights`
+ * ждёт 25. Отвечаем раньше обоих — иначе честный частичный снимок приходит
+ * слишком поздно и считается таймаутом.
+ */
+export const RUN_DEADLINE_MS = 18000;
