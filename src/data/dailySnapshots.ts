@@ -1,12 +1,5 @@
 import { supabase } from '@/lib/supabase';
 
-export interface SnapshotTension {
-  value: number | null;
-  label: string;
-  newsCount: number | null;
-  updatedAt: string | null;
-}
-
 export interface SnapshotAsset {
   id: string;
   name: string;
@@ -29,24 +22,12 @@ export interface SnapshotRussiaMarket {
   provider: string;
 }
 
-export interface SnapshotForecast {
-  id: string;
-  asset: string;
-  direction: 'up' | 'down' | 'none';
-  probability: number | null;
-  timeWindow: string;
-  confidence: string;
-  updatedAt: string | null;
-}
-
 export interface DailySnapshot {
   date: string;
   capturedAt: string;
-  tension: SnapshotTension | null;
   assets: SnapshotAsset[];
   russiaGeneratedAt: string | null;
   russiaMarkets: SnapshotRussiaMarket[];
-  forecasts: SnapshotForecast[];
 }
 
 export interface DailySnapshotResult {
@@ -67,16 +48,6 @@ function finiteNumber(value: unknown): number | null {
 
 function stringOrNull(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null;
-}
-
-function normalizeTension(value: unknown): SnapshotTension | null {
-  if (!isRecord(value)) return null;
-  return {
-    value: finiteNumber(value.value),
-    label: typeof value.label === 'string' ? value.label : '',
-    newsCount: finiteNumber(value.news_count),
-    updatedAt: stringOrNull(value.updated_at),
-  };
 }
 
 function normalizeAssets(value: unknown): SnapshotAsset[] {
@@ -114,20 +85,6 @@ function normalizeRussia(value: unknown): {
   };
 }
 
-function normalizeForecasts(value: unknown): SnapshotForecast[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter(isRecord).map((row): SnapshotForecast => ({
-    id: String(row.id ?? ''),
-    asset: String(row.asset ?? ''),
-    direction:
-      row.direction === 'up' || row.direction === 'down' ? row.direction : 'none',
-    probability: finiteNumber(row.probability),
-    timeWindow: String(row.time_window ?? ''),
-    confidence: String(row.confidence ?? ''),
-    updatedAt: stringOrNull(row.updated_at),
-  })).filter((row) => row.id || row.asset);
-}
-
 export function moscowDateKey(date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Moscow',
@@ -146,7 +103,7 @@ export async function fetchTodaySnapshot(): Promise<DailySnapshotResult> {
   try {
     const { data, error } = await supabase
       .from('daily_snapshots')
-      .select('date, captured_at, tension, assets, russia, forecasts')
+      .select('date, captured_at, assets, russia')
       .eq('date', moscowDateKey())
       .limit(1);
 
@@ -159,11 +116,9 @@ export async function fetchTodaySnapshot(): Promise<DailySnapshotResult> {
       snapshot: {
         date: String(row.date),
         capturedAt: String(row.captured_at),
-        tension: normalizeTension(row.tension),
         assets: normalizeAssets(row.assets),
         russiaGeneratedAt: russia.generatedAt,
         russiaMarkets: russia.markets,
-        forecasts: normalizeForecasts(row.forecasts),
       },
       error: false,
     };

@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { NewsItem } from '@/data/marketTypes';
+import type { NewsHeadline } from '@/data/marketTypes';
 import { fetchRawNews } from '@/data/liveNews';
 import { startPolling } from '@/lib/polling';
 
 export function useLiveNews(): {
-  news: NewsItem[];
+  news: NewsHeadline[];
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
   isRefreshing: boolean;
   lastUpdatedAt: Date | null;
 } {
-  const [news, setNews] = useState<NewsItem[]>([]);
+  const [news, setNews] = useState<NewsHeadline[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);

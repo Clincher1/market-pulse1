@@ -5,50 +5,6 @@
 // заготовки с прочерком на случай, когда живое значение ещё не пришло —
 // выдуманная котировка на экране выглядит как настоящая, поэтому её тут нет.
 
-/**
- * Распределение дневной истории шкалы напряжённости относительно
- * текущего значения. Считается в Postgres по tension_history и лежит
- * в cached_tension.history_stats. belowDays — дни со значением ниже
- * текущего, aboveDays — выше текущего.
- */
-export interface TensionHistoryStats {
-  days: number;
-  belowDays: number;
-  aboveDays: number;
-  equalDays: number;
-  median: number | null;
-  min: number | null;
-  max: number | null;
-  firstDate?: string;
-  lastDate?: string;
-}
-
-export interface TensionData {
-  current: number;
-  label: string;
-  /**
-   * История шкалы. `date` — ISO-дата записи, если бэкенд её отдал; без неё
-   * точки нельзя расставить по календарю, и график не имеет права выглядеть
-   * как ровный ряд дней.
-   */
-  history: { day: string; value: number; date?: string }[];
-  newsCount: number;
-  updatedAt?: string;
-  historyStats?: TensionHistoryStats | null;
-  /**
-   * Время самого свежего материала в выборке индекса. Отличается от updatedAt:
-   * пересчёт идёт каждые 15 минут даже тогда, когда новых новостей нет, и окно
-   * просто держит старые материалы. По этому полю видно, идёт ли поток на самом
-   * деле. Отсутствует — значит карточка ничего о свежести не утверждает.
-   */
-  sampleNewest?: string;
-  /**
-   * Сколько материалов за последние 24 часа дал каждый источник. Показывает,
-   * насколько широк взгляд шкалы: если одна лента молчит, это видно сразу.
-   */
-  sourceMix?: { name: string; count: number }[] | null;
-}
-
 export interface AssetData {
   id: string;
   name: string;
@@ -80,6 +36,20 @@ export interface AssetData {
   sourceLabel?: string | null;
 }
 
+/** Только исходные поля публикации, которые показываются в новостной ленте. */
+export interface NewsHeadline {
+  id: number;
+  source: string;
+  time?: string | null;
+  title: string;
+  url?: string;
+  published_at?: string | null;
+}
+
+/**
+ * Старая форма строки `cached_news`, оставлена для чтения legacy-утилит.
+ * Модельные поля в публичную новостную ленту не запрашиваются и не выводятся.
+ */
 export interface NewsItem {
   id: number;
   source: string;
@@ -93,7 +63,7 @@ export interface NewsItem {
   topic: string;
   url?: string;
   published_at?: string;
-  /** Filled by the frontend duplicate grouper; 1 means no collapsed copies. */
+  /** Filled by the legacy duplicate grouper; not used by public news feeds. */
   duplicateCount?: number;
   duplicateSources?: string[];
 }

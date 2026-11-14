@@ -1,86 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  ArrowDownRight,
-  ArrowRight,
-  ArrowUpRight,
-  BrainCircuit,
-  CheckCircle2,
-  Clock3,
-  AlertTriangle,
-  Database,
-  ExternalLink,
-  Filter,
-  GitBranch,
-  History,
-  Hourglass,
-  Layers3,
-  MinusCircle,
-  RotateCcw,
-  Scale,
-  Target,
-  XCircle,
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { AlertTriangle, Database, ExternalLink, RotateCcw, Target } from 'lucide-react';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';
 import { SectionThemeBadge } from './sectionThemes';
-import ExpandHint from './ExpandHint';
-import { formatPercent, formatSharePercent } from '@/lib/percent';
+import { formatPercent } from '@/lib/percent';
 import { horizonLabel, horizonOutlook } from '@/lib/forecastHorizon';
 import { startPolling } from '@/lib/polling';
 import {
   fetchMarketMemory,
   type MarketMemoryData,
-  type MemoryAnalogue,
-  type MemoryEvent,
-  type MemoryEventOutcome,
   type MemoryForecast,
 } from '@/data/liveMarketMemory';
 
-type MemoryTab = 'events' | 'analogues' | 'forecasts';
+const EMPTY_FORECASTS: MemoryForecast[] = [];
 
-const ASSET_META: Record<string, { label: string; note: string }> = {
-  sp500: { label: 'S&P 500', note: 'Yahoo Finance ^GSPC, дневной индекс' },
-  Brent: { label: 'Brent', note: 'Yahoo Finance BZ=F, фьючерс Brent' },
-  gold: { label: 'Gold index', note: 'Nasdaq gold index: доходность, не USD/oz' },
-  btc: { label: 'BTC', note: 'FRED/Coinbase, дневной ряд' },
-  eurusd: { label: 'EUR/USD', note: 'USD за EUR; обратная величина к плитке USD/EUR' },
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-  monetary_policy: 'Ставки и центробанки',
-  inflation: 'Инфляция',
-  growth: 'Экономический рост',
-  labor: 'Рынок труда',
-  energy_supply: 'Предложение энергии',
-  energy_demand: 'Спрос на энергию',
-  geopolitics: 'Геополитика',
-  trade_tariffs: 'Торговля и тарифы',
-  fiscal: 'Бюджет и госфинансы',
-  credit_liquidity: 'Кредит и ликвидность',
-  corporate_earnings: 'Компании и прибыль',
-  crypto_specific: 'Крипторынок',
-  fx: 'Валютный канал',
-  commodities: 'Сырьевые товары',
-  regulation: 'Регулирование',
-  other: 'Иной канал',
-  none: 'Без рыночного канала',
+const ASSET_META: Record<string, { label: string; source: string }> = {
+  sp500: { label: 'S&P 500', source: 'Yahoo Finance ^GSPC, дневной индекс' },
+  Brent: { label: 'Brent', source: 'Yahoo Finance BZ=F, фьючерс Brent' },
+  gold: { label: 'Gold index', source: 'Nasdaq gold index: доходность, не USD/oz' },
+  btc: { label: 'BTC', source: 'FRED/Coinbase, дневной ряд' },
+  eurusd: { label: 'EUR/USD', source: 'USD за EUR; обратная величина к плитке USD/EUR' },
 };
 
 function assetLabel(assetKey: string): string {
   return ASSET_META[assetKey]?.label ?? assetKey;
 }
 
-function channelLabel(channel: string): string {
-  return CHANNEL_LABELS[channel] ?? channel;
-}
-
 function formatDateTime(value?: string): string {
   if (!value) return '—';
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return value;
-  // Москва и подпись пояса: иначе на серверной сборке время уезжает на несколько
-  // часов, а рядом с ним не написано, чей это пояс.
   return `${new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit',
     month: 'short',
@@ -102,425 +52,90 @@ function formatDate(value?: string): string {
   }).format(date);
 }
 
-function formatPct(value?: number, digits = 2): string {
-  return formatPercent(value, digits);
-}
-
-function formatShare(value?: number): string {
-  if (value === undefined || !Number.isFinite(value)) return '—';
-  return formatSharePercent(value);
-}
-
-function directionMeta(direction: string) {
-  if (direction === 'up') {
-    return { label: 'вверх', className: 'text-positive', Icon: ArrowUpRight };
-  }
-  if (direction === 'down') {
-    return { label: 'вниз', className: 'text-negative', Icon: ArrowDownRight };
-  }
-  return { label: 'без направления', className: 'text-text-secondary', Icon: MinusCircle };
-}
-
-function sampleBadge(sampleSize: number): { label: string; className: string } {
-  if (sampleSize >= 30) {
-    return { label: 'рабочая выборка', className: 'border-positive/30 bg-positive/10 text-positive' };
-  }
-  if (sampleSize >= 8) {
-    return { label: 'ранняя выборка', className: 'border-warning/30 bg-warning/10 text-warning' };
-  }
-  return { label: 'малая выборка', className: 'border-white/15 bg-white/5 text-text-secondary' };
+function formatPct(value?: number): string {
+  return formatPercent(value);
 }
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-bg-primary/55 p-4">
-      <div className="break-words text-[11px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:text-[11px] sm:tracking-[0.13em]">{label}</div>
+      <div className="break-words text-[11px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:tracking-[0.13em]">
+        {label}
+      </div>
       <div className="mt-1.5 text-2xl font-extrabold tabular-nums text-text-primary">{value}</div>
       <div className="mt-1 text-xs leading-relaxed text-text-secondary">{hint}</div>
     </div>
   );
 }
 
-function OutcomeChip({ outcome }: { outcome: MemoryEventOutcome }) {
-  const evaluated = outcome.status === 'evaluated';
-  const hit = outcome.directionHit === true;
-  const miss = outcome.directionHit === false;
-  const Icon = !evaluated ? Hourglass : hit ? CheckCircle2 : miss ? XCircle : MinusCircle;
-  const color = !evaluated
-    ? 'border-white/12 bg-white/5 text-text-secondary'
-    : hit
-      ? 'border-positive/30 bg-positive/10 text-positive'
-      : miss
-        ? 'border-negative/30 bg-negative/10 text-red-300'
-        : 'border-white/12 bg-white/5 text-text-secondary';
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${color}`}>
-      <Icon className="h-3.5 w-3.5" />
-      {assetLabel(outcome.assetKey)} · {outcome.horizonTradingDays} дн ·{' '}
-      {evaluated ? formatPct(outcome.returnPct) : 'ждёт цену'}
-    </span>
-  );
-}
-
-function EventCard({
-  event,
-  outcomes,
-  selected,
-  onSelect,
-}: {
-  event: MemoryEvent;
-  outcomes: MemoryEventOutcome[];
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const topImpacts = event.impacts.slice(0, 3);
-
-  return (
-    <article
-      className={`rounded-xl2 border bg-bg-card p-5 shadow-lg transition-all duration-300 lg:p-6 ${
-        selected ? 'border-fuchsia-300/60 ring-2 ring-fuchsia-400/20' : 'border-border-subtle hover:border-fuchsia-300/35'
-      }`}
-    >
-      <button
-        type="button"
-        onClick={onSelect}
-        aria-expanded={selected}
-        className="block w-full text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-300 rounded-lg"
-      >
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-extrabold text-blue-200">
-            {channelLabel(event.transmissionChannel)}
-          </span>
-          {event.promptVersion !== 'event_classification_v3' && (
-            <span className="rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-[11px] font-extrabold text-warning">
-              Архив до v3
-            </span>
-          )}
-          <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
-            <Clock3 className="h-3.5 w-3.5" /> {formatDateTime(event.latestPublishedAt)}
-          </span>
-          <span className="text-xs font-semibold text-text-secondary">
-            {event.sourceCount} ист. · {event.articleCount} публ.
-          </span>
-        </div>
-
-        <h3 className="text-base font-extrabold leading-snug text-text-primary lg:text-lg">{event.title}</h3>
-        {event.summaryRu && (
-          <p className="mt-2 text-sm leading-relaxed text-text-secondary">{event.summaryRu}</p>
-        )}
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {topImpacts.length > 0 ? topImpacts.map((impact) => {
-            const meta = directionMeta(impact.direction);
-            const Icon = meta.Icon;
-            return (
-              <span
-                key={`${impact.asset}-${impact.direction}`}
-                className={`inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-extrabold ${meta.className}`}
-              >
-                {assetLabel(impact.asset)} <Icon className="h-3.5 w-3.5" /> {meta.label}
-                <span className="text-text-secondary">· {Math.round(impact.strength * 100)}%</span>
-              </span>
-            );
-          }) : (
-            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-text-secondary">
-              Направленных asset-сигналов не сохранено
-            </span>
-          )}
-        </div>
-
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Важность</div>
-            <div className="text-sm font-extrabold text-text-primary">{event.importance}/10</div>
-          </div>
-          <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Релевантность</div>
-            <div className="text-sm font-extrabold text-text-primary">{formatShare(event.relevance)}</div>
-          </div>
-          <div className="rounded-lg bg-bg-primary/55 px-2 py-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Уверенность</div>
-            <div className="text-sm font-extrabold text-text-primary">{formatShare(event.confidence)}</div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/8 pt-3">
-          <span className="text-xs leading-relaxed text-text-secondary">
-            {selected
-              ? 'Паспорт события открыт ниже'
-              : 'Внутри: цепочка влияния и фактические исходы'}
-          </span>
-          <ExpandHint
-            expanded={selected}
-            closedLabel="Развернуть паспорт"
-            openLabel="Свернуть паспорт"
-            testId="memory-event-expand-hint"
-            className="border-fuchsia-300/35 bg-fuchsia-400/10 text-fuchsia-100"
-          />
-        </div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {selected && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="overflow-hidden"
-          >
-            <div className="mt-5 space-y-4 border-t border-white/10 pt-5">
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.13em] text-accent">
-                  <GitBranch className="h-4 w-4" /> Цепочка передачи
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                  <span className="rounded-full bg-white/8 px-2.5 py-1.5 text-text-primary">Событие</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-text-secondary" />
-                  <span className="rounded-full bg-accent/15 px-2.5 py-1.5 text-blue-100">
-                    {channelLabel(event.transmissionChannel)}
-                  </span>
-                  {topImpacts.map((impact) => (
-                    <span key={`chain-${impact.asset}`} className="inline-flex items-center gap-2">
-                      <ArrowRight className="h-3.5 w-3.5 text-text-secondary" />
-                      <span className="rounded-full bg-white/8 px-2.5 py-1.5 text-text-primary">
-                        {assetLabel(impact.asset)}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {event.rationaleRu && (
-                <p className="text-sm leading-relaxed text-text-secondary">
-                  <strong className="text-text-primary">Почему так классифицировано:</strong> {event.rationaleRu}
-                </p>
-              )}
-
-              {event.entities.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {event.entities.map((entity) => (
-                    <span key={entity} className="rounded-full border border-white/10 px-2 py-1 text-[11px] font-semibold text-slate-300">
-                      {entity}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div>
-                <div className="mb-2 text-xs font-extrabold uppercase tracking-[0.13em] text-text-secondary">
-                  Что произошло с ценами потом
-                </div>
-                {outcomes.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {outcomes.slice(0, 15).map((outcome) => (
-                      <OutcomeChip
-                        key={`${outcome.assetKey}-${outcome.horizonTradingDays}-${outcome.expectedDirection}`}
-                        outcome={outcome}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs leading-relaxed text-text-secondary">
-                    Исходы ещё не созданы или ждут дневных цен после события.
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-text-secondary">
-                <span>
-                  Классификация: {event.promptVersion ?? '—'} · модель: {event.model ?? '—'}
-                </span>
-                {event.representativeUrl && (
-                  <a
-                    href={event.representativeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-6 items-center gap-1 font-extrabold text-accent hover:text-blue-300"
-                  >
-                    Первоисточник{event.representativeSource ? `: ${event.representativeSource}` : ''}
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </article>
-  );
-}
-
-function AnalogueCard({ analogue }: { analogue: MemoryAnalogue }) {
-  const badge = sampleBadge(analogue.sampleSize);
-  const meta = directionMeta(analogue.expectedDirection);
-  const Icon = meta.Icon;
-  const median = analogue.medianReturnPct;
-
-  return (
-    <article className="rounded-xl2 border border-border-subtle bg-bg-card p-5 shadow-lg">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-extrabold text-blue-200">
-          {channelLabel(analogue.transmissionChannel)}
-        </span>
-        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${badge.className}`}>
-          N={analogue.sampleSize} · {badge.label}
-        </span>
-      </div>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-extrabold text-text-primary">{assetLabel(analogue.assetKey)}</h3>
-          <p className="mt-0.5 text-xs text-text-secondary">{ASSET_META[analogue.assetKey]?.note}</p>
-        </div>
-        <span className={`inline-flex items-center gap-1 text-sm font-extrabold ${meta.className}`}>
-          <Icon className="h-4 w-4" /> {meta.label}
-        </span>
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
-          <div className="text-sm font-extrabold text-text-primary">{analogue.horizonTradingDays} дн</div>
-        </div>
-        <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Попадания</div>
-          <div className="text-sm font-extrabold text-text-primary">
-            {analogue.hits}/{analogue.sampleSize}
-          </div>
-        </div>
-        <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Медиана</div>
-          <div className={`text-sm font-extrabold ${median !== undefined && median < 0 ? 'text-negative' : 'text-positive'}`}>
-            {formatPct(median)}
-          </div>
-        </div>
-      </div>
-
-      <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-        Аномальная медиана против обычного дневного фона: {formatPct(analogue.medianAbnormalReturnPct)}.
-        {analogue.sampleSize < 8 ? ' Это только начало накопления, а не торговый вывод.' : ''}
-      </p>
-    </article>
-  );
-}
-
 function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
-  const meta = directionMeta(forecast.direction);
-  const Icon = meta.Icon;
   const evaluated = forecast.outcomeStatus === 'evaluated';
-  // Не «ждёт горизонт и цены»: у записей от 23–31 октября горизонт в 1–3
-  // торговых дня давно наступил, цены на сайте есть, а исхода нет — оценку
-  // остановили вместе с выдачей. Пишем то, что есть, и называем дату.
   const outlook = horizonOutlook(forecast);
-  const outcomeLabel = evaluated
-    ? forecast.direction === 'none'
-      ? 'воздержание проверено'
-      : forecast.directionHit
-        ? 'направление совпало'
-        : 'направление не совпало'
-    : horizonLabel(outlook, (iso) => formatDate(iso));
+  const directionLabel =
+    forecast.direction === 'up' ? 'вверх' : forecast.direction === 'down' ? 'вниз' : 'воздержание';
+  const comparisonLabel =
+    !evaluated || forecast.direction === 'none'
+      ? null
+      : forecast.directionHit === true
+        ? 'Знак изменения цены совпал с записанным направлением'
+        : forecast.directionHit === false
+          ? 'Знак изменения цены не совпал с записанным направлением'
+          : 'Направление не сопоставлено';
 
   return (
     <article className="rounded-xl2 border border-border-subtle bg-bg-card p-5 shadow-lg">
-      <div className="mb-3 flex items-start justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-extrabold text-text-primary">{assetLabel(forecast.assetKey)}</h3>
-          <p className="mt-0.5 text-[11px] leading-snug text-text-secondary">{ASSET_META[forecast.assetKey]?.note}</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-text-secondary">
+            Ценовой ряд: {ASSET_META[forecast.assetKey]?.source ?? forecast.assetKey}
+          </p>
         </div>
-        <span className={`inline-flex shrink-0 items-center gap-1 text-xs font-extrabold uppercase ${meta.className}`}>
-          <Icon className="h-4 w-4" /> {meta.label}
+        <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-extrabold text-text-secondary">
+          Записанное направление: {directionLabel}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-center">
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Выдан</div>
-          <div className="text-xs font-extrabold text-text-primary">{formatDate(forecast.issueDate)}</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Дата записи</div>
+          <div className="text-xs font-extrabold text-text-primary">{formatDateTime(forecast.issuedAt)}</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
           <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Горизонт</div>
-          <div className="text-xs font-extrabold text-text-primary">{forecast.horizonTradingDays} торг. дн</div>
+          <div className="text-xs font-extrabold text-text-primary">{forecast.horizonTradingDays} торговых дней</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Вес вверх</div>
-          <div className="text-xs font-extrabold text-text-primary">{formatShare(forecast.scoreUp)}</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Версия расчёта</div>
+          <div className="text-xs font-extrabold text-text-primary">{forecast.aggregationVersion}</div>
         </div>
         <div className="rounded-lg bg-bg-primary/55 px-2 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Событий</div>
-          <div className="text-xs font-extrabold text-text-primary">{forecast.evidenceCount}</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Статус исхода</div>
+          <div className="text-xs font-extrabold text-text-primary">
+            {evaluated ? 'рассчитан' : horizonLabel(outlook, (iso) => formatDate(iso))}
+          </div>
         </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs">
-        <span className="font-semibold text-text-secondary">{outcomeLabel}</span>
-        {/* «Не оценён» не красим ни зелёным, ни красным: это не результат,
-            а отсутствие результата. Цвет здесь читался бы как вывод. */}
-        <span
-          className={`font-extrabold tabular-nums ${
-            !evaluated
-              ? 'text-text-secondary'
-              : forecast.returnPct !== undefined && forecast.returnPct < 0
-                ? 'text-negative'
-                : 'text-positive'
-          }`}
-        >
-          {evaluated ? formatPct(forecast.returnPct) : 'не оценён'}
+        <span className="font-semibold text-text-secondary">Изменение ценового ряда за горизонт</span>
+        <span className="font-extrabold tabular-nums text-text-primary">
+          {evaluated ? formatPct(forecast.returnPct) : 'не рассчитано'}
         </span>
       </div>
-      <div className="mt-1 text-[11px] text-text-secondary">
-        {forecast.aggregationVersion} · {forecast.promptVersion ?? 'prompt —'}
-        {forecast.aggregationVersion !== 'aggregation_v2' ? ' · архивная версия, в сводку v2 не входит' : ''}
-      </div>
+      {forecast.outcomeObservationDate && (
+        <p className="mt-1 text-[11px] text-text-secondary">
+          Дата значения исхода: {formatDate(forecast.outcomeObservationDate)}
+        </p>
+      )}
+      {comparisonLabel && (
+        <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">{comparisonLabel}.</p>
+      )}
+      <p className="mt-2 border-t border-white/8 pt-2 text-[11px] leading-relaxed text-text-secondary">
+        Это сохранённая запись прогноза и результат по выбранному ценовому ряду; причинная связь с новостями не устанавливается.
+        {forecast.promptVersion ? ` Версия классификатора: ${forecast.promptVersion}.` : ''}
+      </p>
     </article>
-  );
-}
-
-type EventFilterOption = {
-  value: string;
-  label: string;
-  count: number;
-};
-
-function EventFilterRow({
-  title,
-  value,
-  options,
-  onChange,
-}: {
-  title: string;
-  value: string;
-  options: EventFilterOption[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.13em] text-text-secondary">
-        <Filter className="h-3.5 w-3.5" />
-        {title}
-      </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {options.map((option) => {
-          const active = option.value === value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onChange(option.value)}
-              aria-pressed={active}
-              className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
-                active
-                  ? 'bg-accent-strong text-white shadow-lg shadow-accent/25'
-                  : 'border border-white/12 bg-white/[0.05] text-slate-200 hover:border-accent/50 hover:bg-accent/10'
-              }`}
-            >
-              <span>{option.label}</span>
-              <span className={active ? 'text-white' : 'text-slate-400'}>{option.count}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -529,10 +144,6 @@ export default function MarketMemory() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<MemoryTab>('events');
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [eventChannel, setEventChannel] = useState('all');
-  const [eventAsset, setEventAsset] = useState('all');
   const mountedRef = useRef(true);
   const hasDataRef = useRef(false);
 
@@ -544,12 +155,9 @@ export default function MarketMemory() {
       hasDataRef.current = true;
       setData(next);
       setError(null);
-      setSelectedEventId((current) => current && next.events.some((event) => event.eventId === current)
-        ? current
-        : next.events[0]?.eventId ?? null);
     } catch (e) {
       if (mountedRef.current) {
-        setError(e instanceof Error ? e.message : 'Не удалось загрузить память рынка');
+        setError(e instanceof Error ? e.message : 'Не удалось загрузить архив прогнозов');
       }
     } finally {
       if (mountedRef.current) {
@@ -569,108 +177,11 @@ export default function MarketMemory() {
     };
   }, [load]);
 
-  const outcomesByEvent = useMemo(() => {
-    const map = new Map<string, MemoryEventOutcome[]>();
-    for (const outcome of data?.outcomes ?? []) {
-      const list = map.get(outcome.eventId) ?? [];
-      list.push(outcome);
-      map.set(outcome.eventId, list);
-    }
-    return map;
-  }, [data?.outcomes]);
-
-  const eventChannelOptions = useMemo<EventFilterOption[]>(() => {
-    const counts = new Map<string, number>();
-    for (const event of data?.events ?? []) {
-      counts.set(event.transmissionChannel, (counts.get(event.transmissionChannel) ?? 0) + 1);
-    }
-    const options = [...counts.entries()]
-      .map(([value, count]) => ({ value, label: channelLabel(value), count }))
-      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ru'));
-    return [{ value: 'all', label: 'Все каналы', count: data?.events.length ?? 0 }, ...options];
-  }, [data?.events]);
-
-  const eventAssetOptions = useMemo<EventFilterOption[]>(() => {
-    const counts = new Map<string, number>();
-    for (const event of data?.events ?? []) {
-      const uniqueAssets = new Set(event.impacts.map((impact) => impact.asset).filter(Boolean));
-      for (const asset of uniqueAssets) {
-        counts.set(asset, (counts.get(asset) ?? 0) + 1);
-      }
-    }
-    const options = [...counts.entries()]
-      .map(([value, count]) => ({ value, label: assetLabel(value), count }))
-      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ru'));
-    return [{ value: 'all', label: 'Все активы', count: data?.events.length ?? 0 }, ...options];
-  }, [data?.events]);
-
-  const filteredEvents = useMemo(() => {
-    return (data?.events ?? []).filter((event) => {
-      const channelMatch = eventChannel === 'all' || event.transmissionChannel === eventChannel;
-      const assetMatch =
-        eventAsset === 'all' || event.impacts.some((impact) => impact.asset === eventAsset);
-      return channelMatch && assetMatch;
-    });
-  }, [data?.events, eventAsset, eventChannel]);
-
-  const hasEventFilters = eventChannel !== 'all' || eventAsset !== 'all';
-  const resetEventFilters = useCallback(() => {
-    setEventChannel('all');
-    setEventAsset('all');
-  }, []);
-
-  useEffect(() => {
-    if (!eventChannelOptions.some((option) => option.value === eventChannel)) {
-      setEventChannel('all');
-    }
-    if (!eventAssetOptions.some((option) => option.value === eventAsset)) {
-      setEventAsset('all');
-    }
-  }, [eventAsset, eventAssetOptions, eventChannel, eventChannelOptions]);
-
-  // Если выбранная карточка скрыта фильтрами, раскрываем первое видимое
-  // событие. Так пользователь сразу видит паспорт и цепочку передачи,
-  // а не только список свёрнутых заголовков.
-  useEffect(() => {
-    if (!hasEventFilters || filteredEvents.length === 0) return;
-    if (!selectedEventId || !filteredEvents.some((event) => event.eventId === selectedEventId)) {
-      setSelectedEventId(filteredEvents[0].eventId);
-    }
-  }, [filteredEvents, hasEventFilters, selectedEventId]);
-
-  const reliableAnalogues = useMemo(
-    () => (data?.analogues ?? []).filter((analogue) => analogue.promptVersion === 'event_classification_v3'),
-    [data?.analogues],
+  const forecasts = data?.forecasts ?? EMPTY_FORECASTS;
+  const overdue = useMemo(
+    () => forecasts.filter((forecast) => horizonOutlook(forecast).state === 'overdue').length,
+    [forecasts],
   );
-  const archivedAnalogueGroups = (data?.analogues.length ?? 0) - reliableAnalogues.length;
-
-  const ledgerSummary = useMemo(() => {
-    const forecasts = (data?.forecasts ?? []).filter(
-      (forecast) => forecast.aggregationVersion === 'aggregation_v2',
-    );
-    const evaluatedDirectional = forecasts.filter(
-      (forecast) => forecast.outcomeStatus === 'evaluated' && forecast.direction !== 'none',
-    );
-    // Сколько записей уже не дождутся исхода: срок горизонта прошёл, а оценку
-    // остановили вместе с выдачей. Число считаем по тем строкам, что загружены,
-    // и называем это в подписи — «в загруженной части архива».
-    const overdue = forecasts.filter((forecast) => horizonOutlook(forecast).state === 'overdue').length;
-    const waiting = forecasts.filter((forecast) => horizonOutlook(forecast).state === 'waiting').length;
-    return {
-      evaluatedDirectional: evaluatedDirectional.length,
-      hits: evaluatedDirectional.filter((forecast) => forecast.directionHit).length,
-      abstentions: forecasts.filter((forecast) => forecast.direction === 'none').length,
-      overdue,
-      waiting,
-      loaded: forecasts.length,
-    };
-  }, [data?.forecasts]);
-
-  const tabs: Array<{ id: MemoryTab; label: string; icon: typeof History }> = [
-    { id: 'events', label: 'События', icon: History },
-    { id: 'analogues', label: 'Исторические аналоги', icon: Layers3 },
-    { id: 'forecasts', label: 'Архив прогнозов', icon: Target },
-  ];
 
   return (
     <motion.section
@@ -684,46 +195,47 @@ export default function MarketMemory() {
       <SectionThemeBadge themeId="memory" className="mb-4" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-400/15 text-fuchsia-200">
-          <BrainCircuit className="h-5 w-5" />
+          <Target className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-extrabold tracking-tight lg:text-2xl">Память рынка</h2>
-            <span className="rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-[11px] font-extrabold text-warning">
-              Исследовательский контур V2
+            <h2 className="text-xl font-extrabold tracking-tight lg:text-2xl">Архив прогнозных записей</h2>
+            <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-extrabold text-text-secondary">
+              Новые прогнозы не выпускаются
             </span>
           </div>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
-            Сайт запоминал событие, его классификацию и замороженный снимок прогноза, а потом
-            сверял это с реальными дневными ценами. Выдача новых прогнозов остановлена
-            31 октября 2026 года: здесь остаётся архив уже сделанных записей вместе с промахами,
-            чтобы счёт нельзя было переписать задним числом.
+            Сохранённые направления прогнозов и рассчитанные изменения выбранных ценовых рядов
+            за заданный торговый горизонт. Это исторические модельные записи, а не текущие
+            сигналы: движение цены после даты прогноза не доказывает связь с заголовками или
+            событиями. Новые прогнозы не выпускаются; исходные записи в базе остаются без
+            изменений.
           </p>
         </div>
-        <GuideLink href="#guide-memory" label="Как работает память" mobileLabel="Справка" />
+        <GuideLink href="#guide-memory" label="Как читать архив" mobileLabel="Справка" />
       </div>
 
       <div className="overflow-hidden rounded-xl2 border border-fuchsia-300/25 bg-linear-to-br from-fuchsia-400/10 via-bg-card to-bg-card shadow-xl shadow-fuchsia-950/20">
         <div className="border-b border-white/10 p-5 lg:p-6">
           {loading && !data ? (
-            <div aria-busy="true" aria-label="Загрузка памяти рынка">
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-                {Array.from({ length: 6 }).map((_, index) => (
+            <div aria-busy="true" aria-label="Загрузка архива прогнозов">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="min-h-28 rounded-xl border border-white/10 bg-bg-primary/55 p-4">
-                    <div className="h-3 w-20 animate-pulse rounded-sm bg-white/10" />
+                    <div className="h-3 w-28 animate-pulse rounded-sm bg-white/10" />
                     <div className="mt-4 h-8 w-16 animate-pulse rounded-sm bg-white/12" />
                     <div className="mt-3 h-3 animate-pulse rounded-sm bg-white/[0.07]" />
                   </div>
                 ))}
               </div>
               <p className="mt-4 text-center text-sm text-text-secondary">
-                Загружаем архив: события, сделанные прогнозы и фактические исходы…
+                Загружаем сохранённые записи и результаты по ценовым рядам…
               </p>
             </div>
           ) : error && !data ? (
             <ErrorNotice
-              title="Память рынка временно недоступна"
-              message="Не удалось прочитать публичные представления исследовательского контура. Остальные разделы не затронуты; повторная проверка также выполнится автоматически через пять минут."
+              title="Архив прогнозов временно недоступен"
+              message="Не удалось прочитать публичные архивные данные. Повторная проверка также выполнится автоматически через пять минут."
               onRetry={() => void load()}
               actionLabel={isRefreshing ? 'Проверяем…' : 'Повторить загрузку'}
             />
@@ -731,9 +243,9 @@ export default function MarketMemory() {
             <>
               {error && data && (
                 <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
                   <span className="min-w-0 flex-1">
-                    Не удалось обновить память рынка. Ниже последний успешно загруженный снимок, а не свежие данные.
+                    Не удалось обновить архив. Ниже последний успешно загруженный снимок.
                   </span>
                   <button
                     type="button"
@@ -741,190 +253,76 @@ export default function MarketMemory() {
                     disabled={isRefreshing}
                     className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
                   >
-                    <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
                     {isRefreshing ? 'Проверяем…' : 'Повторить'}
                   </button>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-                <StatCard label="Статей" value={String(data?.stats?.articlesTotal ?? 0)} hint="сырой новостной архив" />
-                <StatCard label="Событий" value={String(data?.stats?.eventsTotal ?? 0)} hint="кластеры заголовков" />
-                <StatCard label="Классификаций" value={String(data?.stats?.classifiedEvents ?? 0)} hint="событий с каналом влияния" />
-                <StatCard label="Реакций проверено" value={String(data?.stats?.evaluatedEventOutcomes ?? 0)} hint="событие × актив × горизонт" />
-                <StatCard label="Снимков в архиве" value={String(data?.stats?.forecastSnapshots ?? 0)} hint={`${data?.stats?.evaluatedForecasts ?? 0} уже оценено`} />
-                <StatCard label="Ценовых точек" value={String(data?.stats?.priceSnapshots ?? 0)} hint="дневные ряды V2" />
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <StatCard
+                  label="Архивные прогнозные записи"
+                  value={String(data?.stats?.forecastSnapshots ?? forecasts.length)}
+                  hint="сохранённые ранее записи"
+                />
+                <StatCard
+                  label="Исход рассчитан"
+                  value={String(data?.stats?.evaluatedForecasts ?? forecasts.filter((forecast) => forecast.outcomeStatus === 'evaluated').length)}
+                  hint="изменение выбранного ценового ряда за горизонт"
+                />
+                <StatCard
+                  label="Исход не рассчитан"
+                  value={String(data?.stats?.pendingForecasts ?? forecasts.filter((forecast) => forecast.outcomeStatus !== 'evaluated').length)}
+                  hint="запись сохранена без результата"
+                />
               </div>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-text-secondary">
-                <span className="inline-flex items-center gap-1.5"><Database className="h-3.5 w-3.5" /> Статьи: {formatDateTime(data?.stats?.latestArticleFetchAt)}</span>
-                <span>Классификация: {formatDateTime(data?.stats?.latestClassificationAt)}</span>
-                <span>Цены: {formatDateTime(data?.stats?.latestPriceFetchAt)}</span>
-                <span>Прогнозы: {formatDateTime(data?.stats?.latestForecastIssuedAt)}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Database className="h-3.5 w-3.5" aria-hidden="true" />
+                  Последняя прогнозная запись: {formatDateTime(data?.stats?.latestForecastIssuedAt)}
+                </span>
+                <span>Последнее обновление цен: {formatDateTime(data?.stats?.latestPriceFetchAt)}</span>
               </div>
               <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-white/10 bg-bg-primary/55 p-4 text-xs leading-relaxed text-text-secondary">
-                <Scale className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                <Target className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-200" aria-hidden="true" />
                 <span>
-                  <strong className="text-text-primary">Честное ограничение:</strong> выборка пока маленькая. Поэтому раздел показывает размер N и статус проверки,
-                  а не выдаёт раннюю статистику за доказанную точность. Score вверх — доля взвешенных направленных доказательств, не калиброванная вероятность.
+                  <strong className="text-text-primary">Ограничение:</strong> архив содержит
+                  записанные модельные ожидания. Результат показывает изменение цены за горизонт,
+                  но не устанавливает, что новость вызвала это движение.
                 </span>
               </div>
             </>
           )}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto border-b border-white/10 p-3 scrollbar-hide">
-          {tabs.map((item) => {
-            const Icon = item.icon;
-            const active = tab === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setTab(item.id)}
-                aria-pressed={active}
-                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-300 ${
-                  active
-                    ? 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/25'
-                    : 'border border-white/12 bg-white/5 text-slate-200 hover:border-fuchsia-300/50 hover:bg-fuchsia-400/10'
-                }`}
-              >
-                <Icon className="h-4 w-4" /> {item.label}
-              </button>
-            );
-          })}
-        </div>
-
         <div className="p-5 lg:p-6">
-          {tab === 'events' && (
-            data?.events.length ? (
-              <>
-                <div className="mb-5 space-y-4 rounded-xl2 border border-white/10 bg-bg-primary/45 p-4 sm:p-5">
-                  <EventFilterRow
-                    title="Канал передачи"
-                    value={eventChannel}
-                    options={eventChannelOptions}
-                    onChange={setEventChannel}
-                  />
-                  <EventFilterRow
-                    title="Актив в цепочке влияния"
-                    value={eventAsset}
-                    options={eventAssetOptions}
-                    onChange={setEventAsset}
-                  />
-                  <div className="flex flex-wrap items-center gap-3 border-t border-white/8 pt-4">
-                    <p className="text-xs leading-relaxed text-text-secondary" aria-live="polite">
-                      Показано {filteredEvents.length} из {data.events.length} последних классифицированных событий.
-                      Фильтр не пересчитывает исходы и аналогии — он только выбирает паспорта событий.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={resetEventFilters}
-                      disabled={!hasEventFilters}
-                      className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-slate-100 transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      Сбросить
-                    </button>
-                  </div>
-                </div>
-
-                {filteredEvents.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                    {filteredEvents.map((event) => (
-                      <EventCard
-                        key={event.eventId}
-                        event={event}
-                        outcomes={outcomesByEvent.get(event.eventId) ?? []}
-                        selected={selectedEventId === event.eventId}
-                        onSelect={() => setSelectedEventId((current) => current === event.eventId ? null : event.eventId)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-white/15 bg-bg-primary/45 px-5 py-10 text-center">
-                    <h3 className="text-base font-extrabold text-text-primary">
-                      Событий с таким каналом и активом пока нет
-                    </h3>
-                    <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">
-                      В последних {data.events.length} карточках нет события, которое одновременно
-                      идёт по выбранному каналу и содержит выбранный актив в сохранённой
-                      цепочке влияния. Сбросьте один из фильтров, чтобы расширить выборку.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={resetEventFilters}
-                      className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent-strong px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-accent-strong-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      Показать все события
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <EmptyState text="Классифицированных событий пока нет. Память уже собирает статьи и кластеры; карточки появятся после классификаций." />
-            )
-          )}
-
-          {tab === 'analogues' && (
-            reliableAnalogues.length ? (
-              <>
-                <p className="mb-4 max-w-4xl text-sm leading-relaxed text-text-secondary">
-                  Аналоги группируются по каналу передачи, активу, ожидаемому направлению и горизонту. В надёжную выборку входят только классификации v3.
-                  Медиана считается по уже наступившим дневным исходам; аномальная медиана дополнительно вычитает обычный дневной фон актива.
-                  Это история реакций, а не доказательство причинности.
+          {forecasts.length > 0 ? (
+            <>
+              {overdue > 0 && (
+                <p className="mb-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-100">
+                  Торговый горизонт завершился у {overdue} из {forecasts.length} загруженных записей,
+                  но результат не рассчитан. Эти записи остаются в архиве без изменения исходных полей.
                 </p>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {reliableAnalogues.map((analogue) => (
-                    <AnalogueCard
-                      key={`${analogue.transmissionChannel}-${analogue.assetKey}-${analogue.expectedDirection}-${analogue.horizonTradingDays}`}
-                      analogue={analogue}
-                    />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <EmptyState text={archivedAnalogueGroups > 0
-                ? 'Надёжных аналогов v3 пока нет. Архивные исходы v1/v2 сохранены для аудита, но намеренно не используются для статистических выводов: ручная проверка нашла в них слишком широкие spillover-воздействия. Аналоги появятся после классификаций v3 и наступления горизонтов 1, 3 и 10 торговых дней.'
-                : 'Оценённых исторических аналогов пока недостаточно. Они появятся, когда у классифицированных событий наступят горизонты 1, 3 и 10 торговых дней.'} />
-            )
+              )}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {forecasts.map((forecast) => (
+                  <ForecastLedgerCard key={forecast.forecastId} forecast={forecast} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="rounded-xl border border-dashed border-white/15 bg-bg-primary/45 px-5 py-10 text-center text-sm leading-relaxed text-text-secondary">
+              В загруженной части архива нет прогнозных записей. Новые прогнозы не выпускаются;
+              исходные архивные строки не удаляются.
+            </div>
           )}
-
-          {tab === 'forecasts' && (
-            data?.forecasts.length ? (
-              <>
-                <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                  <StatCard label="Оценено направленных v2" value={String(ledgerSummary.evaluatedDirectional)} hint="только aggregation_v2 с наступившим горизонтом" />
-                  <StatCard label="Совпадений направления v2" value={String(ledgerSummary.hits)} hint={ledgerSummary.evaluatedDirectional >= 30 ? 'можно начинать смотреть hit-rate' : 'точность пока не публикуем как вывод'} />
-                  <StatCard label="Воздержаний v2" value={String(ledgerSummary.abstentions)} hint="«нет сигнала» — полноценный результат" />
-                </div>
-                {ledgerSummary.overdue > 0 && (
-                  <p className="mb-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-100">
-                    Срок горизонта уже прошёл у {ledgerSummary.overdue} из {ledgerSummary.loaded} записей
-                    в загруженной части архива, и исход по ним не будет посчитан: оценку остановили
-                    вместе с выдачей 31.10.2026. Записи не удаляются и не переписываются — это архив
-                    того, что сайт обещал, вместе с тем, чем это кончилось.
-                  </p>
-                )}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {data.forecasts.map((forecast) => (
-                    <ForecastLedgerCard key={forecast.forecastId} forecast={forecast} />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <EmptyState text="Архивных снимков нет: новых прогнозов сайт не выпускает с 31 октября 2026 года, а старых записей этот контур не нашёл." />
-            )
-          )}
+          <p className="mt-4 flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary">
+            <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            Сопоставление относится только к ценовому ряду и указанному горизонту. Оно не
+            подтверждает, что похожие заголовки описывают одно событие или что публикация стала
+            причиной изменения цены.
+          </p>
         </div>
       </div>
     </motion.section>
-  );
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="rounded-xl border border-dashed border-white/15 bg-bg-primary/45 px-5 py-10 text-center text-sm leading-relaxed text-text-secondary">
-      {text}
-    </div>
   );
 }

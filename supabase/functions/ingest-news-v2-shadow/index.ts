@@ -1,5 +1,6 @@
 // Stage 2 shadow news ingestion (deterministic part only).
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { cleanEtag, cleanLastModified, conditionalFeedHeaders, sameFeedValidators, validatorsAfterResponse, type FeedValidators } from "../_shared/feed-validators.ts";
 import { droppedRunKeys, failureStreak, isPaused, keepRunColumns, pauseMessage, type FailureStreak, type HealthHistoryRow, lastAttempts, pacingMessage, pacingSkip } from "../_shared/source-backoff.ts";
 //
 // Reads enabled sources from news_sources_v2, fetches RSS/Atom directly,
@@ -56,12 +57,17 @@ type Source = {
    * 503 означает «слишком часто», а не «лента сломалась».
    */
   poll_interval_minutes?: number | null;
+  /** Most recent successfully parsed feed validators; null means unconditional fetch. */
+  feed_etag?: string | null;
+  feed_last_modified?: string | null;
   requires_market_terms: boolean;
   include_categories: unknown;
   exclude_categories: unknown;
   include_url_patterns: unknown;
   exclude_url_patterns: unknown;
 };
+
+type ValidatorUpdate = FeedValidators & { sourceId: string };
 
 type XmlNode = {
   tag: string;
@@ -401,6 +407,11 @@ async function processSource(source: Source, blacklist: string[], now: Date) {
   };
   const articles: Record<string, unknown>[] = [];
   const rejectReasons: Record<string, number> = {};
+  const previousValidators: FeedValidators = {
+    etag: cleanEtag(source.feed_etag),
+    lastModified: cleanLastModified(source.feed_last_modified),
+  };
+  let validatorUpdate: ValidatorUpdate | null = null;
 
   try {
     const controller = new AbortController();
@@ -412,15 +423,27 @@ async function processSource(source: Source, blacklist: string[], now: Date) {
         headers: {
           "User-Agent": USER_AGENT,
           Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+          ...conditionalFeedHeaders(previousValidators),
         },
         redirect: "follow",
         signal: controller.signal,
       });
       health.http_status = response.status;
-      health.final_url = response.url;
-      text = await response.text();
+      health.final_url = response.url || source.url;
+      // A 304 has no representation body to parse. Treat it as a successful
+      // unchanged feed and keep the last parsed articles in the archive.
+      if (response.status !== 304) text = await response.text();
     } finally {
       clearTimeout(timer);
+    }
+
+    if (response.status === 304) {
+      health.ok = true;
+      const nextValidators = validatorsAfterResponse(response.status, response.headers, previousValidators);
+      if (nextValidators && !sameFeedValidators(previousValidators, nextValidators)) {
+        validatorUpdate = { sourceId: source.id, ...nextValidators };
+      }
+      return { health, articles, rejectReasons, validatorUpdate };
     }
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -538,13 +561,17 @@ async function processSource(source: Source, blacklist: string[], now: Date) {
       });
     }
     health.latest_published_at = latest?.toISOString() ?? null;
+    const nextValidators = validatorsAfterResponse(response.status, response.headers, previousValidators);
+    if (health.ok && nextValidators && !sameFeedValidators(previousValidators, nextValidators)) {
+      validatorUpdate = { sourceId: source.id, ...nextValidators };
+    }
   } catch (error) {
     health.error = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
   } finally {
     health.duration_ms = Date.now() - started;
   }
 
-  return { health, articles, rejectReasons };
+  return { health, articles, rejectReasons, validatorUpdate };
 }
 
 // A run row that never gets its closing PATCH stays "running" forever, and the
@@ -629,7 +656,7 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
       const streak = streaks.get(source.id);
       if (isPaused(streak, Date.now(), SKIP_AFTER_FAILURES, SKIP_MINUTES * 60_000)) {
         skipped.add(source.id);
-        return { health: skippedHealth(source, pauseMessage(streak!, SKIP_MINUTES * 60_000)), articles: [], rejectReasons: {} };
+        return { health: skippedHealth(source, pauseMessage(streak!, SKIP_MINUTES * 60_000)), articles: [], rejectReasons: {}, validatorUpdate: null };
       }
       // Пейсинг: источник, которому частые запросы мешают отвечать, спрашиваем
       // реже. Пропуск записывается как «не пытались», а не как отказ: иначе
@@ -641,10 +668,37 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
           health: skippedHealth(source, pacingMessage(Number(source.poll_interval_minutes), last)),
           articles: [],
           rejectReasons: {},
+          validatorUpdate: null,
         };
       }
       return await processSource(source, blacklist, now);
     });
+
+    const validatorUpdates = results.flatMap((result) => result.validatorUpdate ? [result.validatorUpdate] : []);
+    let validatorWriteFailures = 0;
+    if (validatorUpdates.length) {
+      const writes = await mapPool(validatorUpdates, 4, async (update) => {
+        try {
+          await restJson(`news_sources_v2?id=eq.${encodeURIComponent(update.sourceId)}&enabled=eq.true`, {
+            method: "PATCH",
+            headers: { Prefer: "return=minimal" },
+            body: JSON.stringify({
+              feed_etag: update.etag,
+              feed_last_modified: update.lastModified,
+            }),
+          });
+          return true;
+        } catch {
+          // A failed validator write only causes the next run to fetch normally.
+          // Do not turn a successfully ingested feed into a failed run.
+          return false;
+        }
+      });
+      validatorWriteFailures = writes.filter((ok) => !ok).length;
+      if (validatorWriteFailures) {
+        console.warn(`news feed validators: ${validatorWriteFailures} state write(s) failed`);
+      }
+    }
 
     const healthRows = results.map((result) => ({ ...result.health, run_id: runId }));
     let pausedColumnMissing = false;
@@ -725,6 +779,8 @@ serveWithErrorReporting("ingest-news-v2-shadow", async (request) => {
         stats: {
           gate_version: GATE_VERSION,
           sources_skipped: skipped.size,
+          validator_updates: validatorUpdates.length,
+          validator_write_failures: validatorWriteFailures,
           paused_column_missing: pausedColumnMissing,
           skipped_sources: [...skipped],
           reject_reasons: rejectReasons,

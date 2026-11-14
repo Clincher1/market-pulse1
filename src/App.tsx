@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import DailyPassport from './components/DailyPassport';
-import TensionScale from '@/components/TensionScale';
 import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
@@ -173,7 +172,7 @@ function App() {
             fallback={
               <SectionFallback
                 title="Состояние системы"
-                message="Читаем отчёт самопроверки: индекс, ленты, котировки, историю…"
+                message="Читаем отчёт самопроверки: источники, котировки, даты и историю…"
                 minHeightClass="min-h-[60vh]"
                 className="rounded-[28px]"
               />
@@ -208,13 +207,13 @@ function App() {
                 Что сейчас происходит на рынках — и откуда это известно
               </h1>
               <p className="mt-3 max-w-4xl text-base leading-relaxed text-text-secondary lg:text-lg">
-                Дашборд фиксирует факты: российские курсы и Мосбиржу, мировой фон, напряжённость
-                новостного фона и главные события дня. У каждого числа видно, когда оно получено,
+                Дашборд показывает российские курсы и Мосбиржу, мировые котировки и заголовки
+                публикаций со ссылками на источники. У каждого числа видно, когда оно получено,
                 а у котировок — ещё и откуда: источник подписан на плитке или в раскрытой панели.
                 Сайт не предсказывает цены и не даёт рекомендаций: здесь нет вероятностей и
                 «сигналов» на будущее. Раздел «Что меняется» описывает только то, что уже произошло
-                в рядах — серии дней, края окна, узкие диапазоны. Выдача прогнозов остановлена
-                31 октября 2026 года; старые записи остаются в архиве памяти рынка вместе с промахами.
+                в рядах — серии дней, края окна, узкие диапазоны. Новые прогнозы не выпускаются;
+                старые записи и рассчитанные исходы остаются в архиве памяти рынка.
               </p>
             </section>
 
@@ -258,14 +257,11 @@ function App() {
                   Глобальная экономика
                 </h2>
                 <p className="mt-2 max-w-4xl text-sm leading-relaxed text-slate-300 sm:text-base">
-                  Внешний фон после российского блока: шкала новостного напряжения, затем
-                  котировки и графики. Рубль и Мосбиржа — выше, в синем разделе.
+                  Мировые котировки и графики с датами наблюдений. Рубль и Мосбиржа — выше,
+                  в синем разделе.
                 </p>
               </div>
 
-              <SectionBoundary title="Шкала напряжённости">
-                <TensionScale />
-              </SectionBoundary>
               <SectionBoundary title="Мировые рынки">
                 <KeyAssets />
               </SectionBoundary>
@@ -310,7 +306,7 @@ function App() {
                 <SectionFallback
                   id="market-memory"
                   title="Память рынка"
-                  message="Исследовательский раздел подключится при прокрутке: события, каналы влияния, аналогии и журнал проверки."
+                  message="Исследовательский раздел подключится при прокрутке: архив прежних прогнозных записей и рассчитанные исходы ценовых рядов."
                   minHeightClass="min-h-[760px]"
                   className="mb-10 lg:mb-12"
                 />
@@ -321,7 +317,7 @@ function App() {
                   <SectionFallback
                     id="market-memory"
                     title="Память рынка"
-                    message="Поднимаем архив событий, зафиксированные ожидания и их исходы…"
+                    message="Загружаем архив прежних прогнозных записей и рассчитанные исходы по ценовым рядам…"
                     minHeightClass="min-h-[760px]"
                     className="mb-10 lg:mb-12"
                   />

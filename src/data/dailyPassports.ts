@@ -36,9 +36,6 @@ export interface PassportAsset {
 export interface PassportDay {
   date: string;
   capturedAt: string;
-  tensionValue: number | null;
-  tensionLabel: string;
-  tensionNewsCount: number | null;
   /**
    * Самое сильное дневное движение среди пяти мировых индикаторов.
    * `asOf` — дата наблюдения от источника: в субботу цена закрытия пятницы
@@ -70,7 +67,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function normalizeDay(row: Record<string, unknown>): PassportDay {
-  const tension = isRecord(row.tension) ? row.tension : {};
   const assets = Array.isArray(row.assets) ? row.assets.filter(isRecord) : [];
   const russia = isRecord(row.russia) ? row.russia : {};
   const markets = Array.isArray(russia.markets) ? russia.markets.filter(isRecord) : [];
@@ -104,9 +100,6 @@ function normalizeDay(row: Record<string, unknown>): PassportDay {
   return {
     date: String(row.date ?? ''),
     capturedAt: String(row.captured_at ?? ''),
-    tensionValue: finiteNumber(tension.value),
-    tensionLabel: typeof tension.label === 'string' ? tension.label : '',
-    tensionNewsCount: finiteNumber(tension.news_count),
     topMover,
     assets: snapshotAssets,
     usdRub: usdRubRow ? finiteNumber(usdRubRow.value) : null,
@@ -118,7 +111,7 @@ export async function fetchDailyPassports(limit = 14): Promise<PassportResult> {
   try {
     const { data, error } = await supabase
       .from('daily_snapshots')
-      .select('date, captured_at, tension, assets, russia')
+      .select('date, captured_at, assets, russia')
       .order('date', { ascending: false })
       .limit(limit);
 

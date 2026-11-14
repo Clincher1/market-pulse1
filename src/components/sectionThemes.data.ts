@@ -82,7 +82,7 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     label: 'Глобальная экономика',
     navLabel: 'Мир',
     href: '#global-economy',
-    description: 'Шкала напряжённости, S&P 500, нефть, золото и BTC',
+    description: 'S&P 500, нефть, золото и BTC с датами наблюдений',
     icon: Globe,
     badgeClass: 'border-cyan-300/30 bg-cyan-400/10 text-cyan-200',
     cardClass:
@@ -130,7 +130,7 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     label: 'Память рынка',
     navLabel: 'Память',
     href: '#market-memory',
-    description: 'События, аналогии и проверка прогнозов на ценах',
+    description: 'Архив старых прогнозных записей и их оценённых исходов',
     icon: BrainCircuit,
     badgeClass: 'border-fuchsia-300/30 bg-fuchsia-400/10 text-fuchsia-200',
     cardClass:

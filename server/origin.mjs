@@ -291,6 +291,8 @@ export function createOriginServer({ rootDir, supabaseUrl, apiDir, log = () => {
       }
 
       if (apiModules[pathname]) {
+        // Even a module-load failure is an API response and must not be cached.
+        res.setHeader('Cache-Control', 'no-store');
         const handler = await loadApi(pathname);
         if (!handler) {
           res.statusCode = 404;

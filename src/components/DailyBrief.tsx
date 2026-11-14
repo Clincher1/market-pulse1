@@ -1,16 +1,11 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Camera, Eye, History, Zap } from 'lucide-react';
+import { ArrowRight, Camera, ExternalLink, History, Zap } from 'lucide-react';
 import { formatPercent } from '@/lib/percent';
 import { observationLabel } from '@/lib/asOf';
 import { formatPriceText } from '@/lib/price';
-import type { NewsItem, TensionData } from '@/data/marketTypes';
-import { fetchLiveTension } from '@/data/liveTension';
-import {
-  fetchTodaySnapshot,
-  type DailySnapshot,
-} from '@/data/dailySnapshots';
+import type { DailySnapshot } from '@/data/dailySnapshots';
+import { fetchTodaySnapshot } from '@/data/dailySnapshots';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
-import { useLiveNews } from '@/hooks/useLiveNews';
 import {
   fetchRussiaInsights,
   type RussiaInsights,
@@ -19,52 +14,20 @@ import {
 import { SectionThemeBadge } from './sectionThemes';
 import { startPolling } from '@/lib/polling';
 import { instrumentChanged, sameObservationDay } from '@/lib/snapshotIdentity';
+import { safeHttpUrl } from '@/lib/safeUrl';
 
 /**
- * «Бриф за 60 секунд» (этап 3 дорожной карты).
- *
- * Собирается ДЕТЕРМИНИРОВАННО из тех же публичных блоков, которые
- * посетитель видит ниже: шкала напряжённости, лента событий, тепловая
- * карта и российский контур. Никакого свободного текста LLM: каждое
- * число в брифе можно проверить в блоке, куда ведёт ссылка пункта.
- * Пороги последствий повторяют логику каналов «России и бизнеса»
- * (Brent ≥1%, среднее валютной корзины >0.15%, RGBI ≥0.1%).
+ * Сводка содержит только значения из публичных рыночных рядов и прозрачные
+ * сравнения с сохранённым дневным снимком. Заголовки новостей, модельные
+ * оценки и выводы о влиянии на рынок здесь не используются.
  */
 
 interface BriefItem {
   id: string;
   href: string;
   body: ReactNode;
-}
-
-interface ChangeItem extends BriefItem {
-  score: number;
-}
-
-const TENSION_CHANGE_THRESHOLD = 5;
-const GLOBAL_CHANGE_THRESHOLDS: Record<string, number> = {
-  'usd-eur': 0.25,
-  sp500: 0.4,
-  gold: 0.5,
-  brent: 0.8,
-  btc: 1.5,
-};
-const RUSSIA_CHANGE_THRESHOLDS: Record<string, number> = {
-  'usd-rub': 0.3,
-  'eur-rub': 0.3,
-  'cny-rub-moex': 0.3,
-  'cny-rub-cbr': 0.3,
-  imoex: 0.5,
-  rgbi: 0.1,
-};
-
-function plural(n: number, forms: [string, string, string]): string {
-  const abs = Math.abs(n);
-  const m10 = abs % 10;
-  const m100 = abs % 100;
-  if (m10 === 1 && m100 !== 11) return forms[0];
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return forms[1];
-  return forms[2];
+  sourceUrl?: string;
+  sourceLabel?: string;
 }
 
 function formatPct(value: number | null | undefined): string {
@@ -108,80 +71,58 @@ function formatStamp(values: Array<string | undefined>): string | null {
   );
 }
 
-function moscowHour(value?: string | null): number | null {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const hour = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    hourCycle: 'h23',
-    timeZone: 'Europe/Moscow',
-  }).format(date);
-  const parsed = Number(hour);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function currentSparklineLast(sparkline?: number[]): number | null {
   if (!Array.isArray(sparkline)) return null;
   const values = sparkline.filter((value) => Number.isFinite(value));
   return values.length ? values[values.length - 1] : null;
 }
 
-
-function eventTimestamp(item: NewsItem): number {
-  const parsed = item.published_at ? new Date(item.published_at).getTime() : Number.NaN;
-  return Number.isFinite(parsed) ? parsed : 0;
+function formatSeriesValue(value: number, sample: string): string {
+  const match = sample.match(/^([^\d\-−]*)(\d[\d,]*(?:\.(\d+))?)/);
+  const prefix = match?.[1] ?? '';
+  const decimals = Math.min(match?.[3]?.length ?? 2, 8);
+  return formatPriceText(`${prefix}${value.toFixed(decimals)}`);
 }
 
-function truncateTitle(title: string): string {
-  const clean = title.replace(/\s+/g, ' ').trim();
-  return clean.length > 150 ? `${clean.slice(0, 147).trimEnd()}…` : clean;
-}
 
 function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode }) {
+  const sourceUrl = item.sourceUrl ? safeHttpUrl(item.sourceUrl) : null;
   return (
-    <li>
+    <li className="flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-white/[0.04]">
+      {marker}
       <a
         href={item.href}
-        className="group flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+        className="group flex min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
       >
-        {marker}
         <span className="min-w-0 flex-1">{item.body}</span>
         <ArrowRight
           className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-violet-300"
           aria-hidden="true"
         />
       </a>
+      {sourceUrl && (
+        <a
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-violet-200 hover:text-violet-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
+        >
+          {item.sourceLabel ?? 'Источник'}
+          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+        </a>
+      )}
     </li>
   );
 }
 
 export default function DailyBrief() {
   const { assets, loading: assetsLoading, hasLiveData, fallbackAssetIds } = useLiveAssets();
-  const { news, loading: newsLoading } = useLiveNews();
-  const [tension, setTension] = useState<TensionData | null>(null);
-  const [tensionLoaded, setTensionLoaded] = useState(false);
   const [insights, setInsights] = useState<RussiaInsights | null>(null);
   const [insightsLoaded, setInsightsLoaded] = useState(false);
   const [snapshot, setSnapshot] = useState<DailySnapshot | null>(null);
   const [snapshotLoaded, setSnapshotLoaded] = useState(false);
   const [snapshotError, setSnapshotError] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      const data = await fetchLiveTension();
-      if (!mounted) return;
-      if (data) setTension(data);
-      setTensionLoaded(true);
-    }
-    void load();
-    const stopPolling = startPolling(() => void load());
-    return () => {
-      mounted = false;
-      stopPolling();
-    };
-  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -233,93 +174,28 @@ export default function DailyBrief() {
 
   const brief = useMemo(() => {
     const facts: BriefItem[] = [];
-    const consequences: BriefItem[] = [];
-
-    // --- Факт 1: шкала напряжённости ---
-    let tensionDelta: number | null = null;
-    if (tension) {
-      const current = Math.round(Math.min(100, Math.max(0, tension.current)));
-      const previous = tension.history[tension.history.length - 2]?.value;
-      tensionDelta =
-        typeof previous === 'number' && Number.isFinite(previous)
-          ? current - Math.round(previous)
-          : null;
-      const deltaText =
-        tensionDelta === null
-          ? ''
-          : tensionDelta === 0
-            ? ', без изменения к предыдущему дню'
-            : `, ${tensionDelta > 0 ? '+' : '−'}${Math.abs(tensionDelta)} ${plural(Math.abs(tensionDelta), ['пункт', 'пункта', 'пунктов'])} к предыдущему дню`;
-      facts.push({
-        id: 'tension',
-        href: '#tension',
-        body: (
-          <>
-            Шкала напряжённости —{' '}
-            <strong className="tabular-nums text-text-primary">{current}/100</strong>
-            {tension.label ? ` («${tension.label}»)` : ''}
-            {deltaText}; на основе{' '}
-            <strong className="tabular-nums text-text-primary">
-              {(tension.newsCount ?? 0).toLocaleString('ru-RU')}
-            </strong>{' '}
-            {plural(tension.newsCount ?? 0, ['новости', 'новостей', 'новостей'])} за сутки.
-          </>
-        ),
-      });
-    }
-
-    // --- Факт 2: самая заметная публикация ленты (если проходит порог) ---
-    const topEvent =
-      [...news]
-        .filter((item) => item.title && item.importance >= 7)
-        .sort(
-          (a, b) =>
-            b.importance - a.importance ||
-            (b.confidence ?? 0) - (a.confidence ?? 0) ||
-            eventTimestamp(b) - eventTimestamp(a),
-        )[0] ?? null;
-    if (topEvent) {
-      facts.push({
-        id: 'top-event',
-        href: '#news',
-        body: (
-          <>
-            Главная публикация ленты по нашей шкале важности (
-            <strong className="tabular-nums text-text-primary">
-              {Math.round(topEvent.importance)}/10
-            </strong>
-            ): «{truncateTitle(topEvent.title)}»
-            {topEvent.source ? ` — ${topEvent.source}` : ''}. Это заголовок первоисточника,
-            а не вывод о движении цен.
-          </>
-        ),
-      });
-    }
-
-    // --- Факт 3: сильнейшее движение внешнего фона ---
     const strongestGlobal =
       [...liveAssets].sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0] ?? null;
-    if (strongestGlobal && facts.length < 3) {
+
+    if (strongestGlobal) {
+      const observedAt = observationLabel(strongestGlobal.asOf);
       facts.push({
         id: 'global-move',
-        href: '#global-markets',
+        href: '#global-economy',
         body: (
           <>
-            Сильнейшее дневное движение внешнего фона —{' '}
+            Наибольшее по модулю дневное изменение среди загруженных мировых рядов:{' '}
             <strong className="text-text-primary">
               {strongestGlobal.name} {formatPct(strongestGlobal.change)}
-            </strong>{' '}
-            (последнее значение {formatPriceText(strongestGlobal.price)}
-            {observationLabel(strongestGlobal.asOf)
-              ? `, цена ${observationLabel(strongestGlobal.asOf)}`
-              : ''}
-            ).
+            </strong>
+            {` · последнее значение ${formatPriceText(strongestGlobal.price)}`}
+            {strongestGlobal.sourceLabel ? ` · источник ${strongestGlobal.sourceLabel}` : ''}
+            {observedAt ? ` · дата наблюдения ${observedAt}` : ' · дата наблюдения не указана'}.
           </>
         ),
       });
     }
 
-    // --- Запасной факт 3: российский контур ---
     const indicatorById = new Map(
       (insights?.markets ?? []).map((indicator) => [indicator.id, indicator]),
     );
@@ -340,379 +216,167 @@ export default function DailyBrief() {
       [...russiaCandidates].sort(
         (a, b) => Math.abs(b.changePct ?? 0) - Math.abs(a.changePct ?? 0),
       )[0] ?? null;
-    if (strongestRussia && facts.length < 3) {
+
+    if (strongestRussia) {
+      const observedAt = formatDateOnly(strongestRussia.asOf) ?? strongestRussia.asOf;
       facts.push({
         id: 'russia-move',
         href: '#russia-business',
         body: (
           <>
-            В российском контуре заметнее всего изменился{' '}
-            <strong className="text-text-primary">{strongestRussia.name}</strong>:{' '}
-            {formatIndicatorValue(strongestRussia)} {strongestRussia.unit} (
-            <strong className="tabular-nums text-text-primary">
-              {formatPct(strongestRussia.changePct)}
-            </strong>
-            ).
-          </>
-        ),
-      });
-    }
-
-    // --- Последствия: те же пороги, что у каналов «России и бизнеса» ---
-    //
-    // Раньше здесь стояло «давит на экспортную выручку» и «поддерживает
-    // экспортную выручку». Это причинное утверждение, которого страница не
-    // доказывает: у неё есть только два числа. Теперь рядом с движением Brent
-    // стоят измеренные движения рубля и IMOEX за то же время, и сказано, что
-    // это соседство, а не связь.
-    const russiaReaction = ['usd-rub', 'imoex']
-      .map((id) => indicatorById.get(id))
-      .filter(
-        (indicator): indicator is RussiaMarketIndicator =>
-          Boolean(indicator) && typeof indicator?.changePct === 'number',
-      )
-      .map((indicator) => `${indicator.name} ${formatPct(indicator.changePct)}`)
-      .join(', ');
-
-    const Brent = liveAssets.find((asset) => asset.id === 'brent') ?? null;
-    if (Brent && Math.abs(Brent.change) >= 1) {
-      consequences.push({
-        id: 'cons-Brent',
-        href: '#russia-business',
-        body: (
-          <>
-            Сырьевой канал: Brent{' '}
-            <strong className="tabular-nums text-text-primary">{formatPct(Brent.change)}</strong>{' '}
-            за наблюдение.{' '}
-            {russiaReaction
-              ? `Российский контур на это время: ${russiaReaction}. Это два факта рядом, а не доказанная причинная связь.`
-              : 'Российские курсы и IMOEX сейчас недоступны, поэтому сопоставить движение не с чем.'}
-          </>
-        ),
-      });
-    }
-
-    // Один и тот же юань приходит дважды: официальный курс ЦБ и сделка на
-    // Мосбирже. В сумму должны идти три пары, а не четыре: иначе среднее по
-    // «3 парам» тихо считалось бы по четырём значениям, и юань весил вдвое
-    // больше доллара. Для валютного канала берётся биржевая пара, как в блоке
-    // «Каналы влияния»; курс ЦБ подхватывается, только если сделок нет.
-    const fxById = new Map(russiaCandidates.map((indicator) => [indicator.id, indicator]));
-    const fxIndicators = [
-      fxById.get('usd-rub'),
-      fxById.get('eur-rub'),
-      fxById.get('cny-rub-moex') ?? fxById.get('cny-rub-cbr'),
-    ].filter((indicator): indicator is NonNullable<typeof indicator> => Boolean(indicator));
-    const fxChanges = fxIndicators
-      .map((indicator) => indicator.changePct)
-      .filter((value): value is number => typeof value === 'number');
-    const fxAverage =
-      fxChanges.length >= 2
-        ? fxChanges.reduce((sum, value) => sum + value, 0) / fxChanges.length
-        : null;
-    const fxList = fxIndicators
-      .filter((indicator) => typeof indicator.changePct === 'number')
-      .map((indicator) => `${indicator.name} ${formatPct(indicator.changePct)}`)
-      .join(', ');
-    if (
-      fxAverage !== null &&
-      fxList &&
-      Math.abs(fxAverage) > 0.15 &&
-      consequences.length < 2
-    ) {
-      consequences.push({
-        id: 'cons-fx',
-        href: '#russia-business',
-        body: (
-          <>
-            Валютный канал: {fxList}. Среднее{' '}
-            <strong className="tabular-nums text-text-primary">{formatPct(fxAverage)}</strong> —
-            простое арифметическое по {fxChanges.length}{' '}
-            {plural(fxChanges.length, ['паре', 'парам', 'парам'])}, без весов по объёму торгов.
-          </>
-        ),
-      });
-    }
-
-    const rgbi = indicatorById.get('rgbi');
-    if (
-      rgbi &&
-      typeof rgbi.changePct === 'number' &&
-      Math.abs(rgbi.changePct) >= 0.1 &&
-      consequences.length < 2
-    ) {
-      consequences.push({
-        id: 'cons-rgbi',
-        href: '#russia-business',
-        body:
-          rgbi.changePct >= 0 ? (
-            <>
-              Стоимость денег: RGBI{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(rgbi.changePct)}</strong>{' '}
-              — цены гособлигаций растут, доходности при прочих равных снижаются. Это рыночный
-              фон, а не обещание дешёвых кредитов.
-            </>
-          ) : (
-            <>
-              Стоимость денег: RGBI{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(rgbi.changePct)}</strong>{' '}
-              — цены гособлигаций снижаются, доходности при прочих равных растут.
-            </>
-          ),
-      });
-    }
-
-    if (consequences.length === 0 && (Brent || fxChanges.length >= 2 || rgbi)) {
-      consequences.push({
-        id: 'cons-calm',
-        href: '#russia-business',
-        body: (
-          <>
-            Существенных движений по ключевым каналам сейчас нет: Brent, валютная корзина и
-            RGBI остаются в пределах наших порогов дневного шума.
-          </>
-        ),
-      });
-    }
-
-    // --- Смотреть сегодня: ровно один ориентир, по приоритету данных ---
-    let watch: BriefItem | null = null;
-    const cnyMoex = indicatorById.get('cny-rub-moex');
-    if (cnyMoex && cnyMoex.changePct === null) {
-      const previousDate = formatDateOnly(cnyMoex.previousDate);
-      watch = {
-        id: 'watch-cny',
-        href: '#russia-business',
-        body: (
-          <>
-            Первые сделки CNYRUB_TOM на Мосбирже: биржевого изменения пока нет, сайт показывает
-            предыдущее закрытие{previousDate ? ` от ${previousDate}` : ''}.
-          </>
-        ),
-      };
-    } else if (tensionDelta !== null && Math.abs(tensionDelta) >= 10) {
-      watch = {
-        id: 'watch-tension',
-        href: '#tension',
-        body: (
-          <>
-            Продолжится ли движение шкалы к следующему обновлению: сегодня уже{' '}
-            <strong className="tabular-nums text-text-primary">
-              {tensionDelta > 0 ? '+' : '−'}
-              {Math.abs(tensionDelta)} {plural(Math.abs(tensionDelta), ['пункт', 'пункта', 'пунктов'])}
+            Наибольшее по модулю изменение среди выбранных российских рядов:{' '}
+            <strong className="text-text-primary">
+              {strongestRussia.name} {formatPct(strongestRussia.changePct)}
             </strong>{' '}
-            к предыдущему дню.
+            · значение {formatIndicatorValue(strongestRussia)} {strongestRussia.unit}
+            {observedAt ? ` · дата наблюдения ${observedAt}` : ''}
+            {strongestRussia.provider ? ` · источник ${strongestRussia.provider}` : ''}.
           </>
         ),
-      };
-    } else if (Brent && Math.abs(Brent.change) >= 2.5) {
-      watch = {
-        id: 'watch-Brent',
-        href: '#russia-business',
-        body: (
-          <>
-            Подтвердят ли CNY/RUB и IMOEX внешний импульс Brent (
-            <strong className="tabular-nums text-text-primary">{formatPct(Brent.change)}</strong>
-            ), или российский контур его проигнорирует.
-          </>
-        ),
-      };
-    } else if (topEvent && topEvent.importance >= 8) {
-      watch = {
-        id: 'watch-event',
-        href: '#news',
-        body: (
-          <>
-            Реакцию цен на главную тему ленты: пока это новость с важностью{' '}
-            <strong className="tabular-nums text-text-primary">
-              {Math.round(topEvent.importance)}/10
-            </strong>
-            , а не подтверждённое движение рынка.
-          </>
-        ),
-      };
-    } else if (russiaCandidates.length > 0) {
-      watch = {
-        id: 'watch-russia',
-        href: '#russia-business',
-        body: (
-          <>
-            USD/RUB и IMOEX: появятся ли в российском контуре движения сильнее обычного дневного
-            шума.
-          </>
-        ),
-      };
+        sourceUrl: strongestRussia.sourceUrl,
+        sourceLabel: strongestRussia.provider || 'Источник',
+      });
     }
 
-    return { facts: facts.slice(0, 3), consequences: consequences.slice(0, 2), watch };
-  }, [tension, news, liveAssets, insights]);
+    return facts;
+  }, [insights, liveAssets]);
 
   const changeView = useMemo(() => {
     const empty = {
-      items: [] as ChangeItem[],
+      items: [] as BriefItem[],
       comparable: 0,
-      totalSignificant: 0,
+      changed: 0,
       renamed: [] as string[],
     };
     if (!snapshot) return empty;
 
-    const items: ChangeItem[] = [];
+    const candidates: Array<{ magnitude: number; item: BriefItem }> = [];
     let comparable = 0;
-    let totalSignificant = 0;
-    // Ряды, у которых с момента снимка сменился инструмент (01.11.2026 Brent
-    // переехал со спота EIA на фьючерс NYMEX). Разница между двумя разными
-    // инструментами — не движение рынка, поэтому такое сравнение не считается.
     const renamed: string[] = [];
-
-    // Шкала: изменения меньше пяти пунктов считаем дневным шумом.
-    if (tension && snapshot.tension?.value !== null && snapshot.tension?.value !== undefined) {
-      comparable += 1;
-      const base = Math.round(snapshot.tension.value);
-      const current = Math.round(Math.min(100, Math.max(0, tension.current)));
-      const delta = current - base;
-      if (Math.abs(delta) >= TENSION_CHANGE_THRESHOLD) {
-        totalSignificant += 1;
-        items.push({
-          id: 'change-tension',
-          href: '#tension',
-          score: 95 + Math.min(10, (Math.abs(delta) / TENSION_CHANGE_THRESHOLD) * 2),
-          body: (
-            <>
-              Шкала напряжённости:{' '}
-              <strong className="tabular-nums text-text-primary">
-                {base}/100 → {current}/100
-              </strong>{' '}
-              ({delta > 0 ? '+' : '−'}
-              {Math.abs(delta)}{' '}
-              {plural(Math.abs(delta), ['пункт', 'пункта', 'пунктов'])}).
-            </>
-          ),
-        });
-      }
-    }
-
-    // Внешний фон: сравниваем последнюю точку той же серии sparkline,
-    // а не дневной процент провайдера с другим базисом.
     const snapshotAssets = new Map(snapshot.assets.map((asset) => [asset.id, asset]));
-    const globalCandidates: Array<{ ratio: number; item: ChangeItem }> = [];
+
     liveAssets.forEach((asset) => {
-      const snap = snapshotAssets.get(asset.id);
-      if (instrumentChanged(snap, asset)) {
+      const baseline = snapshotAssets.get(asset.id);
+      if (instrumentChanged(baseline, asset)) {
         renamed.push(asset.name);
         return;
       }
-      const base = snap?.last;
-      const current = currentSparklineLast(asset.sparkline);
-      if (typeof base !== 'number' || base <= 0 || current === null || current <= 0) return;
-      comparable += 1;
-      const deltaPct = (current / base - 1) * 100;
-      const threshold = GLOBAL_CHANGE_THRESHOLDS[asset.id] ?? 0.5;
-      if (Math.abs(deltaPct) < threshold) return;
-      const ratio = Math.abs(deltaPct) / threshold;
-      globalCandidates.push({
-        ratio,
-        item: {
-          id: `change-global-${asset.id}`,
-          href: '#global-markets',
-          score: 70 + Math.min(20, ratio * 4),
-          body: (
-            <>
-              Внешний фон — <strong className="text-text-primary">{asset.name}</strong>:{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(deltaPct)}</strong>{' '}
-              к снимку; последнее значение {formatPriceText(asset.price)}
-              {observationLabel(asset.asOf) ? ` (${observationLabel(asset.asOf)})` : ''}
-              {/* Если в снимке лежало другое наблюдение, пишем его цену и дату:
-                  иначе вчерашнее закрытие читается как движение за утро. */}
-              {sameObservationDay(snap?.asOf, asset.asOf) || !snap?.price
-                ? ''
-                : `; в снимке ${formatPriceText(snap.price)}${
-                    observationLabel(snap.asOf) ? ` (${observationLabel(snap.asOf)})` : ''
-                  }`}
-              .
-            </>
-          ),
-        },
-      });
-    });
-    totalSignificant += globalCandidates.length;
-    items.push(
-      ...globalCandidates
-        .sort((a, b) => b.ratio - a.ratio)
-        .slice(0, 3)
-        .map((candidate) => candidate.item),
-    );
 
-    // Российский контур остаётся отдельным: сравнение только внутри
-    // того же индикатора и того же провайдера, без смешивания контуров.
-    const snapshotRussia = new Map(
-      snapshot.russiaMarkets.map((indicator) => [indicator.id, indicator]),
-    );
-    const russiaCandidates: Array<{ ratio: number; item: ChangeItem }> = [];
-    (insights?.markets ?? []).forEach((indicator) => {
-      const threshold = RUSSIA_CHANGE_THRESHOLDS[indicator.id];
-      const base = snapshotRussia.get(indicator.id)?.value;
+      const base = baseline?.last;
+      const current = currentSparklineLast(asset.sparkline);
       if (
-        threshold === undefined ||
         typeof base !== 'number' ||
+        !Number.isFinite(base) ||
         base <= 0 ||
-        !Number.isFinite(indicator.value) ||
-        indicator.value <= 0
+        current === null ||
+        current <= 0
       ) {
         return;
       }
+
       comparable += 1;
-      const deltaPct = (indicator.value / base - 1) * 100;
-      if (Math.abs(deltaPct) < threshold) return;
-      const ratio = Math.abs(deltaPct) / threshold;
-      russiaCandidates.push({
-        ratio,
+      const deltaPct = (current / base - 1) * 100;
+      if (Math.round(deltaPct * 100) === 0) return;
+
+      const currentDate = observationLabel(asset.asOf);
+      const baselineDate = observationLabel(baseline?.asOf);
+      const dateText = sameObservationDay(baseline?.asOf, asset.asOf)
+        ? currentDate
+          ? ` · дата наблюдения ${currentDate}`
+          : ''
+        : ` · дата в снимке ${baselineDate ?? 'не указана'}, сейчас ${currentDate ?? 'не указана'}`;
+      candidates.push({
+        magnitude: Math.abs(deltaPct),
         item: {
-          id: `change-russia-${indicator.id}`,
-          href: '#russia-business',
-          score: 75 + Math.min(20, ratio * 4),
+          id: `change-global-${asset.id}`,
+          href: '#global-economy',
           body: (
             <>
-              Российский контур —{' '}
-              <strong className="text-text-primary">{indicator.name}</strong>:{' '}
-              <strong className="tabular-nums text-text-primary">{formatPct(deltaPct)}</strong>{' '}
-              к снимку; сейчас {formatIndicatorValue(indicator)} {indicator.unit}.
+              {asset.name}: {formatSeriesValue(current, asset.price)} против{' '}
+              {formatSeriesValue(base, baseline?.price ?? asset.price)} в снимке;{' '}
+              <strong className="tabular-nums text-text-primary">{formatPct(deltaPct)}</strong>
+              {' '}= (последняя точка ряда / точка снимка − 1) × 100
+              {asset.sourceLabel ? ` · источник ${asset.sourceLabel}` : ''}{dateText}.
             </>
           ),
         },
       });
     });
-    totalSignificant += russiaCandidates.length;
-    items.push(
-      ...russiaCandidates
-        .sort((a, b) => b.ratio - a.ratio)
-        .slice(0, 3)
-        .map((candidate) => candidate.item),
+
+    const snapshotRussia = new Map(
+      snapshot.russiaMarkets.map((indicator) => [indicator.id, indicator]),
     );
+    (insights?.markets ?? []).forEach((indicator) => {
+      const baseline = snapshotRussia.get(indicator.id);
+      if (!baseline) return;
+      if (
+        baseline.provider &&
+        indicator.provider &&
+        baseline.provider !== indicator.provider
+      ) {
+        renamed.push(`${indicator.name} (сменился источник)`);
+        return;
+      }
+      const base = baseline.value;
+      const current = indicator.value;
+      if (
+        typeof base !== 'number' ||
+        !Number.isFinite(base) ||
+        base <= 0 ||
+        !Number.isFinite(current) ||
+        current <= 0
+      ) {
+        return;
+      }
 
+      comparable += 1;
+      const deltaPct = (current / base - 1) * 100;
+      if (Math.round(deltaPct * 100) === 0) return;
+      const baselineDate = formatDateOnly(baseline.asOf) ?? baseline.asOf;
+      const currentDate = formatDateOnly(indicator.asOf) ?? indicator.asOf;
+      candidates.push({
+        magnitude: Math.abs(deltaPct),
+        item: {
+          id: `change-russia-${indicator.id}`,
+          href: '#russia-business',
+          body: (
+            <>
+              {indicator.name}: {formatIndicatorValue(indicator)} {indicator.unit} против{' '}
+              {new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 8 }).format(base)}{' '}
+              {indicator.unit} в снимке; <strong className="tabular-nums text-text-primary">
+                {formatPct(deltaPct)}
+              </strong>{' '}
+              = (текущее значение / значение в снимке − 1) × 100
+              {indicator.provider ? ` · источник ${indicator.provider}` : ''}
+              {baselineDate || currentDate
+                ? ` · даты наблюдений: ${baselineDate ?? 'не указана'} → ${currentDate ?? 'не указана'}`
+                : ' · даты наблюдений не указаны'}.
+            </>
+          ),
+          sourceUrl: indicator.sourceUrl,
+          sourceLabel: indicator.provider || 'Источник',
+        },
+      });
+    });
+
+    const ordered = candidates.sort((a, b) => b.magnitude - a.magnitude);
     return {
-      items: items.sort((a, b) => b.score - a.score).slice(0, 6),
+      items: ordered.slice(0, 6).map((candidate) => candidate.item),
       comparable,
-      totalSignificant,
-      renamed,
+      changed: ordered.length,
+      renamed: [...new Set(renamed)],
     };
-  }, [insights, liveAssets, snapshot, tension]);
+  }, [insights, liveAssets, snapshot]);
 
-  // Показываем бриф только цельным снимком: полусобранный вариант мог бы
-  // на секунду заявить «данных недостаточно» просто потому, что активы
-  // или российский контур ещё в пути.
-  const loading =
-    assetsLoading ||
-    !tensionLoaded ||
-    !insightsLoaded ||
-    newsLoading ||
-    !snapshotLoaded;
-  const stamp = formatStamp([tension?.updatedAt, insights?.generatedAt]);
+  // Показываем сводку после загрузки рыночных рядов, российского контура и
+  // сегодняшнего сохранённого снимка — иначе можно сравнить неполные выборки.
+  const loading = assetsLoading || !insightsLoaded || !snapshotLoaded;
+  const stamp = formatStamp([
+    insights?.generatedAt,
+    ...liveAssets.map((asset) => asset.updatedAt ?? undefined),
+  ]);
   const baselineStamp = snapshot ? formatStamp([snapshot.capturedAt]) : null;
-  const baselineHour = snapshot ? moscowHour(snapshot.capturedAt) : null;
-  const changesHeading =
-    !snapshot || (baselineHour !== null && baselineHour < 11)
-      ? 'Что изменилось с утра'
-      : 'Что изменилось со снимка дня';
+  const changesHeading = 'Сравнение с сохранённым снимком';
 
   const changesSection = (
     <div data-testid="brief-changes" className="mt-5 border-t border-white/10 pt-4">
@@ -728,18 +392,15 @@ export default function DailyBrief() {
 
       {snapshotError ? (
         <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
-          Не удалось загрузить снимок дня, поэтому сравнение временно не показываем: без
-          зафиксированной точки отсчёта дельты были бы выдумкой.
+          Не удалось загрузить снимок дня, поэтому сравнение не показываем.
         </p>
       ) : !snapshot ? (
         <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
-          Снимок на сегодня ещё не записан. Автоматическая запись запланирована на 07:00 МСК;
-          до появления строки сравнение не показываем и вчерашнюю базу не подставляем.
+          Снимок на сегодня ещё не записан; без сохранённой точки отсчёта сравнение не выполняется.
         </p>
       ) : changeView.comparable === 0 ? (
         <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
-          Снимок сохранён, но сопоставимых актуальных значений пока недостаточно, чтобы честно
-          посчитать изменения.
+          Нет сопоставимых актуальных значений для сравнения.
         </p>
       ) : changeView.items.length > 0 ? (
         <ul data-testid="brief-changes-list" className="mt-1.5 space-y-0.5">
@@ -758,26 +419,23 @@ export default function DailyBrief() {
         </ul>
       ) : (
         <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
-          Значимых изменений со снимка нет: шкала и сопоставимые цены остаются в пределах
-          порогов шума.
+          В сопоставимых рядах изменение не отличается от нуля на точности вывода 0,01 %.
         </p>
       )}
 
       {snapshot && changeView.renamed.length > 0 && (
         <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
-          {changeView.renamed.join(", ")}: ряд сменил инструмент с момента снимка, поэтому
-          изменение к нему не считается — сравнение двух разных рядов выдало бы движение
-          рынка там, где изменился только источник.
+          Для {changeView.renamed.join(', ')} сравнение не выполняется: с момента снимка сменился
+          инструмент или источник.
         </p>
       )}
 
       {snapshot && changeView.comparable > 0 && (
         <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
-          Пороги шума: шкала — 5 пунктов; цены — 0,1–1,5{' '}% в зависимости от инструмента.
-          Сравниваются только опубликованные значения: ни вероятностей, ни «сигналов» на
-          будущее в брифе нет.
-          {changeView.totalSignificant > changeView.items.length
-            ? ` Показано ${changeView.items.length} самых заметных из ${changeView.totalSignificant} изменений выше порогов.`
+          Формула: (текущее значение / значение в снимке − 1) × 100. Изменения округляются до
+          0,01 % и сортируются по абсолютной величине; показано не более шести рядов.
+          {changeView.changed > changeView.items.length
+            ? ` Выведено ${changeView.items.length} из ${changeView.changed} рядов с ненулевой дельтой.`
             : ''}
         </p>
       )}
@@ -818,90 +476,40 @@ export default function DailyBrief() {
               <div className="h-4 w-4/5 animate-pulse rounded-sm bg-white/[0.05]" />
             </div>
             <p className="mt-4 text-xs text-text-secondary">
-              Собираем итоги из шкалы, цен и российского контура…
+              Загружаем рыночные значения и сохранённую точку сравнения…
             </p>
           </div>
-        ) : brief.facts.length === 0 ? (
+        ) : brief.length === 0 ? (
           <>
             <p className="text-sm leading-relaxed text-text-secondary">
-              Бриф временно недоступен: не хватает свежих данных сразу из нескольких блоков.
-              Ниже каждый раздел честно покажет своё состояние — выдуманный итог мы не подставляем.
+              Актуальные рыночные значения для сводки сейчас недоступны. Неполные данные не
+              заменяем оценками.
             </p>
             {changesSection}
           </>
         ) : (
           <>
-            <div className="grid gap-5 lg:grid-cols-2">
-              <div>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-text-secondary">
-                  Факты
-                </h3>
-                <ol data-testid="brief-facts" className="mt-1.5 space-y-0.5">
-                  {brief.facts.map((item, index) => (
-                    <BriefLinkItem
-                      key={item.id}
-                      item={item}
-                      marker={
-                        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-extrabold text-white">
-                          {index + 1}
-                        </span>
-                      }
-                    />
-                  ))}
-                </ol>
-              </div>
-
-              <div>
-                <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-text-secondary">
-                  Что это значит для России
-                </h3>
-                {brief.consequences.length > 0 ? (
-                  <ul data-testid="brief-consequences" className="mt-1.5 space-y-0.5">
-                    {brief.consequences.map((item) => (
-                      <BriefLinkItem
-                        key={item.id}
-                        item={item}
-                        marker={
-                          <span
-                            className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-300"
-                            aria-hidden="true"
-                          />
-                        }
-                      />
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-2 px-2 text-sm leading-relaxed text-text-secondary">
-                    Данных российского контура пока недостаточно для вывода о последствиях.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {changesSection}
-
-            {brief.watch && (
-              <a
-                data-testid="brief-watch"
-                href={brief.watch.href}
-                className="group mt-4 flex items-start gap-2.5 rounded-xl border border-violet-300/20 bg-violet-400/[0.07] px-3.5 py-3 text-sm leading-relaxed text-slate-200 transition-colors hover:border-violet-300/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
-              >
-                <Eye className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" aria-hidden="true" />
-                <span className="min-w-0 flex-1">
-                  <strong className="font-extrabold text-violet-100">Смотреть сегодня:</strong>{' '}
-                  {brief.watch.body}
-                </span>
-                <ArrowRight
-                  className="mt-1 h-3.5 w-3.5 shrink-0 text-violet-300/70 transition-colors group-hover:text-violet-200"
-                  aria-hidden="true"
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-text-secondary">
+              Рыночные значения
+            </h3>
+            <ol data-testid="brief-facts" className="mt-1.5 space-y-0.5">
+              {brief.map((item, index) => (
+                <BriefLinkItem
+                  key={item.id}
+                  item={item}
+                  marker={
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-extrabold text-white">
+                      {index + 1}
+                    </span>
+                  }
                 />
-              </a>
-            )}
-
+              ))}
+            </ol>
+            {changesSection}
             <p className="mt-3.5 text-[11px] leading-relaxed text-text-secondary/80">
-              Бриф собирается автоматически только из блоков ниже, а снимок дня лишь фиксирует
-              те же публичные значения как точку отсчёта. Каждое изменение можно проверить по
-              ссылке пункта; торговых рекомендаций здесь нет.
+              Сводка показывает загруженные значения и арифметические сравнения с сохранённым
+              снимком. Совпадение по времени не объясняет причину изменения; рекомендации не
+              выдаются.
             </p>
           </>
         )}

@@ -25,6 +25,7 @@ import {
 } from '@/data/systemStatus';
 import { checkWindowLabel, summariseCheckStats, type CheckStatRow } from '@/lib/checkStats';
 import SourcesMonitor from '@/components/SourcesMonitor';
+import { HIDDEN_PUBLIC_CHECKS } from '@/lib/checkLabels';
 
 function feedAgeLabel(hours: number | null): string {
   if (hours === null) return 'нет данных';
@@ -106,15 +107,26 @@ export default function SystemStatus() {
     setRunning(false);
   };
 
-  const checks = row?.checks ?? {};
+  const checks = Object.fromEntries(
+    Object.entries(row?.checks ?? {}).filter(([name]) => !HIDDEN_PUBLIC_CHECKS.has(name)),
+  );
+  // Старые внутренние проверки остаются в site_health для аудита, но не входят
+  // в публичные показатели и список инцидентов дашборда.
+  const visibleHistory = history.map((run) => {
+    const visibleChecks = Object.fromEntries(
+      Object.entries(run.checks ?? {}).filter(([name]) => !HIDDEN_PUBLIC_CHECKS.has(name)),
+    );
+    const values = Object.values(visibleChecks);
+    return { ...run, checks: visibleChecks, ok: values.length > 0 && values.every((check) => check.ok) };
+  });
   // Окно за 7 дней: свежий прогон отвечает «что сейчас», окно — «насколько это
-  // редко». Один красный час из ста четырёх не означает, что данные не идут.
+  // часто». Один красный час из ста четырёх не означает, что данные не идут.
   const statsByName = new Map(checkStats.map((item) => [item.check_name, item]));
   const weekStats = summariseCheckStats(checkStats, Object.keys(checks));
   const failing = Object.entries(checks).filter(([, value]) => !value.ok);
-  const allOk = Boolean(row?.ok);
+  const allOk = Object.keys(checks).length > 0 && failing.length === 0;
   // Свежие сбои сверху: последнее, что сломалось, важнее того, что было вчера.
-  const incidents = groupIncidents(history).slice().reverse();
+  const incidents = groupIncidents(visibleHistory).slice().reverse();
 
   return (
     <section id="status" className="mx-auto max-w-5xl scroll-mt-24 px-1 pt-2">
@@ -127,12 +139,11 @@ export default function SystemStatus() {
           Сайт проверяет сам себя — вот отчёт
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary sm:text-base">
-          Раз в час система заново пересчитывает индекс напряжённости, проверяет
-          свежесть новостей, время записи котировок и дату их наблюдения, историю
-          за три месяца, «Память рынка» и PNG-карточку, опрашивает каждую
-          включённую ленту и смотрит, отвечает ли сайт. Результат каждой проверки
-          остаётся в базе — это не «всё хорошо на словах», а запись, которую можно
-          прочитать.
+          Раз в час система проверяет свежесть публикаций и котировок, даты наблюдений,
+          доступность истории и архива, сборку PNG-карточки, подключённые ленты и ответ
+          сайта. На этой странице показаны проверки текущих публичных данных; старые
+          внутренние проверки не участвуют в этой сводке. Результаты сохраняются в базе
+          для аудита.
         </p>
       </div>
 
@@ -183,7 +194,7 @@ export default function SystemStatus() {
                       allOk ? 'text-emerald-200' : 'text-rose-200'
                     }`}
                   >
-                    {allOk ? 'Все проверки пройдены' : `Проблемных проверок: ${failing.length}`}
+                    {allOk ? 'Все публичные проверки пройдены' : `Публичных проблемных проверок: ${failing.length}`}
                   </span>
                 </div>
                 <div className="mt-2 text-sm text-text-secondary">

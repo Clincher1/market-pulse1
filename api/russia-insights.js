@@ -1,3 +1,4 @@
+import { setBrowserNoStore, setVercelCdnCache } from './_shared/responseCache.js';
 import { fetchReservesRecords } from './_shared/cbrReserves.js';
 import {
   monthDative,
@@ -858,6 +859,8 @@ function settledValues(results, labels, errors) {
 }
 
 export default async function handler(req, res) {
+  // Browsers must not retain API data. The shared edge TTL below is separate.
+  setBrowserNoStore(res);
   if (req.method && !['GET', 'HEAD'].includes(req.method)) {
     res.setHeader('Allow', 'GET, HEAD');
     res.status(405).json({ error: 'Method not allowed' });
@@ -924,26 +927,22 @@ export default async function handler(req, res) {
     errors,
   );
 
-  const seen = new Set();
+  // Не склеиваем похожие заголовки: у каждой публикации сохраняются её
+  // собственные источник, время и ссылка. Похожие формулировки не доказывают,
+  // что это одно событие.
   const headlines = headlinesRaw
     .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-    .filter((item) => {
-      const key = item.title.toLowerCase().replace(/[^a-zа-яё0-9]+/gi, ' ').trim().slice(0, 110);
-      if (seen.has(key) || seen.has(item.url)) return false;
-      seen.add(key);
-      seen.add(item.url);
-      return true;
-    })
     .slice(0, 18);
 
   // Неполный снимок не кэшируем надолго: если один источник не ответил,
   // плитка исчезает честно, но восстанавливаться должна за минуту-две, а не
   // висеть без значения четверть часа уже после того, как источник ожил.
-  res.setHeader(
-    'Cache-Control',
+  // Preserve the existing Vercel edge refresh cadence without browser caching.
+  setVercelCdnCache(
+    res,
     errors.length > 0
-      ? 'public, s-maxage=60, stale-while-revalidate=120'
-      : 'public, s-maxage=300, stale-while-revalidate=900',
+      ? 's-maxage=60, stale-while-revalidate=120'
+      : 's-maxage=300, stale-while-revalidate=900',
   );
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.status(200).json({

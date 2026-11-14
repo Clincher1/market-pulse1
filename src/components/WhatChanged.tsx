@@ -232,9 +232,7 @@ export default function WhatChanged() {
         </div>
       ) : (
         <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
-          За последние дни ни один ряд не дал серии из трёх дней подряд, не вышел на край окна и не
-          сжался в узкий диапазон. Это тоже факт: рынок движется в своих обычных пределах, и
-          выдумывать «сигнал» из этого не нужно.
+          Ни одно из правил показа не сработало.
         </p>
       )}
 

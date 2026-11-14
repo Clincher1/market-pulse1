@@ -103,7 +103,6 @@ const USED_PAIRS = [
   // Смысловые цвета как текст.
   ['positive', 'bg-card', AA_TEXT, 'рост цены'],
   ['negative', 'bg-card', AA_TEXT, 'падение цены'],
-  ['warning', 'bg-card', AA_TEXT, 'предупреждение'],
   ['accent', 'bg-card', AA_TEXT, 'акцентная подпись, ссылка'],
   ['accent', 'bg-primary', AA_TEXT, 'акцентная подпись на фоне страницы'],
   // Залитые поверхности с белым текстом (кнопки, активные вкладки).
@@ -150,7 +149,6 @@ test('токены, на которые опирается интерфейс, �
     'accent-strong-hover',
     'positive',
     'negative',
-    'warning',
     'text-primary',
     'text-secondary',
   ]) {
