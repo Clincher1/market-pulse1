@@ -9,6 +9,7 @@
  */
 
 import { fetchReservesRecords } from './_shared/cbrReserves.js';
+import { setBrowserNoStore, setVercelCdnCache } from './_shared/responseCache.js';
 import { fetchRuoniaRecords } from './_shared/cbrRuonia.js';
 
 import { RUN_DEADLINE_MS, hostQueue, withRetry, withinDeadline } from './_shared/fetchRetry.js';
@@ -395,6 +396,8 @@ const SERIES = [
 ];
 
 export default async function handler(req, res) {
+  // Browsers must not retain API data. The shared edge TTL below is separate.
+  setBrowserNoStore(res);
   if (req.method && !['GET', 'HEAD'].includes(req.method)) {
     res.setHeader('Allow', 'GET, HEAD');
     res.status(405).json({ error: 'Method not allowed' });
@@ -441,7 +444,7 @@ export default async function handler(req, res) {
     }),
   );
 
-  res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=900');
+  setVercelCdnCache(res, 's-maxage=1800, stale-while-revalidate=900');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.status(200).json({
     generatedAt: new Date().toISOString(),

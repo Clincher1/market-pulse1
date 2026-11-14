@@ -9,13 +9,6 @@ import {
   type PassportDay,
 } from '@/data/dailyPassports';
 import { observationLabel } from '@/lib/asOf';
-import {
-  clampTension,
-  gaugeAriaLabel,
-  gaugeTicks,
-  tensionState,
-  type TensionState,
-} from '@/lib/tensionGauge';
 import { ErrorNotice } from './SectionFallback';
 
 /**
@@ -26,12 +19,10 @@ import { ErrorNotice } from './SectionFallback';
  * вставка дня), поэтому через неделю видно ровно то, что сайт показывал тогда,
  * а не то, что ему удобно показать сейчас.
  *
- * Ничего не досчитывается задним числом: если в снимке нет курса или
- * напряжённости, на их месте прочерк, а не оценка.
+ * Числа из архива не досчитываются задним числом: если значение не попало
+ * в снимок, на его месте прочерк, а не оценка.
  *
- * Раскладка — «бенто»: одна широкая карточка напряжённости с тик-шкалой, две
- * компактные с процентом и курсом, под ними пять утренних цен. Размер карточек
- * ничего не кодирует: он задан раз и навсегда, а не по величине числа.
+ * Паспорт показывает сохранённые рыночные значения и даты наблюдений.
  */
 
 function changeWord(change: number): string {
@@ -74,56 +65,6 @@ function indicatorsWord(count: number): string {
   if (mod10 === 1 && mod100 !== 11) return 'индикатор';
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'индикатора';
   return 'индикаторов';
-}
-
-/** Цвет делений: те же три состояния, что и у подписи шкалы напряжённости. */
-const TICK_TONE: Record<TensionState, string> = {
-  calm: 'bg-sky-400',
-  watch: 'bg-amber-400',
-  hot: 'bg-rose-400',
-};
-
-/**
- * Фон широкой карточки — тот же цвет, что у делений. Это не украшение:
- * один и тот же уровень не должен быть голубым в одном месте и жёлтым в
- * другом. Прозрачности подобраны так, чтобы карточка оставалась тёмной и
- * белый текст на ней держал контраст.
- */
-const CARD_BG: Record<TensionState, string> = {
-  calm: 'bg-[linear-gradient(158deg,rgba(56,189,248,0.18),rgba(17,24,39,0.55)_58%,rgba(10,14,26,0.92))]',
-  watch: 'bg-[linear-gradient(158deg,rgba(251,191,36,0.18),rgba(17,24,39,0.55)_58%,rgba(10,14,26,0.92))]',
-  hot: 'bg-[linear-gradient(158deg,rgba(251,113,133,0.2),rgba(17,24,39,0.55)_58%,rgba(10,14,26,0.92))]',
-};
-
-/**
- * Тик-шкала 0–100: сорок делений, заполненных по сохранённому уровню.
- *
- * Сами деления скрыты от скринридера: то же число напечатано рядом крупно и
- * повторено словами в aria-label. Иначе шкала читалась бы как сорок
- * безымянных элементов.
- */
-function TensionTicks({ value }: { value: number | null }) {
-  const ticks = gaugeTicks(value);
-  const tone = TICK_TONE[tensionState(value)];
-  return (
-    <div
-      role="img"
-      aria-label={gaugeAriaLabel(value)}
-      className="mt-4 flex items-end gap-[3px]"
-    >
-      {ticks.map((filled, index) => (
-        <span
-          key={index}
-          aria-hidden="true"
-          // Каждое шестое деление выше остальных — это засечки, а не другое
-          // значение: высота здесь только для глаза, длина ряда у всех одна.
-          className={`w-[3px] rounded-full transition-colors ${
-            index % 6 === 0 ? 'h-5' : 'h-3.5'
-          } ${filled ? tone : 'bg-white/15'}`}
-        />
-      ))}
-    </div>
-  );
 }
 
 /** Пять утренних цен: то, что было в снимке, без пересчёта и досчёта. */
@@ -206,9 +147,8 @@ export default function DailyPassport() {
       >
         <div className="h-4 w-40 animate-pulse rounded-sm bg-white/10" />
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-          <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06] sm:col-span-2 lg:col-span-5" />
-          <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06] lg:col-span-4" />
-          <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06] sm:col-span-2 lg:col-span-3" />
+          <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06] lg:col-span-6" />
+          <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06] lg:col-span-6" />
         </div>
         <div className="mt-2 grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
           {[0, 1, 2, 3, 4].map((i) => (
@@ -253,9 +193,6 @@ export default function DailyPassport() {
     );
   }
 
-  const tensionLevel = today.tensionValue === null ? null : clampTension(today.tensionValue);
-  const hasTensionNewsCount = today.tensionNewsCount !== null;
-
   return (
     <section
       id="daily-passport"
@@ -277,39 +214,8 @@ export default function DailyPassport() {
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-        {/* Широкая карточка: уровень и его положение на шкале. */}
-        <article
-          className={`relative overflow-hidden rounded-3xl border border-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] motion-safe:animate-fade-in sm:col-span-2 lg:col-span-5 lg:p-5 ${
-            CARD_BG[tensionState(tensionLevel)]
-          }`}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
-            <span>Напряжённость на утро</span>
-            <span className="rounded-full border border-white/15 bg-black/35 px-2 py-0.5 font-mono text-[10px] font-semibold tracking-normal text-text-secondary">
-              шкала 0–100
-            </span>
-          </div>
-          <div className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-1">
-            <span className="text-6xl leading-[0.9] font-normal tracking-[-0.045em] tabular-nums text-text-primary">
-              {tensionLevel === null ? '—' : tensionLevel}
-            </span>
-            {today.tensionLabel && (
-              <span className="pb-1.5 text-sm font-bold text-text-secondary">
-                {today.tensionLabel}
-              </span>
-            )}
-          </div>
-          <TensionTicks value={tensionLevel} />
-          <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
-            {hasTensionNewsCount
-              ? `по ${today.tensionNewsCount} новостям в выборке`
-              : 'число новостей в снимке не сохранено'}
-            {tensionLevel === null && ' · уровень в снимке не сохранён, шкала пустая'}
-          </p>
-        </article>
-
         {/* Самое сильное движение дня. */}
-        <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] motion-safe:animate-fade-in lg:col-span-4 lg:p-5">
+        <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] motion-safe:animate-fade-in lg:col-span-6 lg:p-5">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Сильнейшее движение
           </div>
@@ -332,7 +238,7 @@ export default function DailyPassport() {
         </article>
 
         {/* Официальный курс — снимок утра, не текущий курс. */}
-        <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] motion-safe:animate-fade-in sm:col-span-2 lg:col-span-3 lg:p-5">
+        <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] motion-safe:animate-fade-in sm:col-span-2 lg:col-span-6 lg:p-5">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Курс USD/RUB на утро
           </div>
@@ -381,12 +287,11 @@ export default function DailyPassport() {
             Архив · {archive.length} {movingWord(archive.length)} до сегодня
           </summary>
           <div className="mt-2 overflow-x-auto">
-            <table className="w-full min-w-[420px] text-left text-xs tabular-nums">
+            <table className="w-full min-w-[320px] text-left text-xs tabular-nums">
               <thead className="text-text-secondary">
                 <tr>
                   <th scope="col" className="py-1 pr-3 font-bold">Дата</th>
                   <th scope="col" className="py-1 pr-3 font-bold">Фиксация</th>
-                  <th scope="col" className="py-1 pr-3 font-bold">Напряжённость</th>
                   <th scope="col" className="py-1 font-bold">Сильнейшее движение</th>
                 </tr>
               </thead>
@@ -397,9 +302,6 @@ export default function DailyPassport() {
                       {passportDateShort(day.date)}
                     </td>
                     <td className="py-1 pr-3">{moscowTime(day.capturedAt)} МСК</td>
-                    <td className="py-1 pr-3">
-                      {day.tensionValue === null ? '—' : day.tensionValue}
-                    </td>
                     <td className="py-1">
                       {day.topMover
                         ? `${day.topMover.name} ${changeWord(day.topMover.change)}${archivePriceAsOf(day.topMover.asOf)}`

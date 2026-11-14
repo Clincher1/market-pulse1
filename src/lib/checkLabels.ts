@@ -16,8 +16,8 @@
  */
 export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence?: string }> = {
   tension_matches: {
-    title: 'Индекс напряжённости совпадает с пересчётом',
-    hint: 'Проверка берёт сырые новости и считает индекс заново, без участия основного кода',
+    title: 'Архивная проверка новостных данных',
+    hint: 'Внутренняя историческая проверка; не публикуется как характеристика рынка или новостного фона',
   },
   news_fresh: {
     title: 'Новости идут',
@@ -25,8 +25,8 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
     cadence: 'ленты читаются несколько раз в час',
   },
   sample_size: {
-    title: 'Выборки хватает',
-    hint: 'За сутки не меньше 20 материалов, которые попадают в индекс',
+    title: 'Архивный размер новостной выборки',
+    hint: 'Внутренняя проверка старого расчёта; не оценка качества или тональности публикаций',
   },
   assets_fresh: {
     title: 'Котировки свежие',
@@ -136,3 +136,12 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
     cadence: 'по запросу; ничего не кэшируется надолго',
   },
 };
+
+/**
+ * Внутренние исторические проверки остаются в `site_health` для аудита,
+ * но их результаты больше не относятся к публичным проверкам продукта.
+ */
+export const HIDDEN_PUBLIC_CHECKS = new Set(['tension_matches', 'sample_size']);
+export const PUBLIC_CHECK_NAMES = Object.keys(CHECK_LABELS).filter(
+  (name) => !HIDDEN_PUBLIC_CHECKS.has(name),
+);

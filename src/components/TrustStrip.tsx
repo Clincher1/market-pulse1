@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Cookie, Fingerprint, ListChecks, Timer } from 'lucide-react';
-import { CHECK_LABELS } from '@/lib/checkLabels';
+import { PUBLIC_CHECK_NAMES } from '@/lib/checkLabels';
 import { summariseCheckStats, type CheckStatRow } from '@/lib/checkStats';
 import { fetchCheckStats } from '@/data/systemStatus';
 
@@ -17,7 +17,7 @@ import { fetchCheckStats } from '@/data/systemStatus';
  * Числа не подставляются, если не загрузились: в плашке появляется «—» и
  * подпись, что статистика недоступна. Пустое место честнее выдуманных 99 %.
  */
-const ACTIVE_CHECKS = Object.keys(CHECK_LABELS);
+const ACTIVE_CHECKS = PUBLIC_CHECK_NAMES;
 const NBSP = '\u00A0';
 
 /** 1443 → «1 443»: разряды через узкий неразрывный пробел, как в цене. */

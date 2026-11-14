@@ -9,7 +9,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import { moscowClock, observationLabel } from "@/lib/asOf";
+import { moscowClock, observationLabel, observationLagLabel } from "@/lib/asOf";
 import { formatCapPercent, formatPercent } from "@/lib/percent";
 import { formatPriceText } from "@/lib/price";
 import { AssetData } from "@/data/marketTypes";
@@ -246,33 +246,6 @@ function calendarDaysWord(n: number): string {
   return "календарных дней";
 }
 
-function todayInMoscow(): string {
-  try {
-    // en-CA renders an ISO-like YYYY-MM-DD date in modern browsers.
-    const formatted = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Europe/Moscow",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
-    if (/^\d{4}-\d{2}-\d{2}$/.test(formatted)) return formatted;
-  } catch {
-    // Fall through to the UTC date below.
-  }
-  return new Date().toISOString().slice(0, 10);
-}
-
-function lagPhrase(lastObservationDate: string): string {
-  const lagDays = Math.max(
-    0,
-    Math.round(
-      (dateMs(todayInMoscow()) - dateMs(lastObservationDate)) / DAY_MS,
-    ),
-  );
-  if (lagDays === 0) return "сегодня по календарю источника";
-  return `отстаёт от сегодняшней даты на ${lagDays} ${calendarDaysWord(lagDays)}`;
-}
-
 interface AssetSourceMeta {
   provider: string;
   series: string;
@@ -398,6 +371,9 @@ function HeatTile({
       : TrendingDown;
   const observed = observationLabel(asset.asOf);
   const asOf = moscowClock(asset.updatedAt);
+  const provider = asset.sourceLabel || ASSET_SOURCE_META[asset.id]?.provider || '';
+  const isYahooDaily = (asset.id === 'sp500' || asset.id === 'brent') && /yahoo finance/i.test(provider);
+  const yahooLag = isYahooDaily ? observationLagLabel(asset.asOf) : '';
   const tooltip =
     `${asset.name}: ${formatPriceText(asset.price)}` +
     // Если источник сказал, на какой момент верна цена, показываем именно это.
@@ -410,6 +386,7 @@ function HeatTile({
     "Белая мини-линия показывает форму последних сохранённых значений без оси цены и времени: точки стоят на равном расстоянии, поэтому пропуски в датах на ней не видны. " +
     "Площадь плитки одинакова для всех активов и ничего не кодирует. " +
     "Нажмите на плитку, чтобы развернуть график, статистику периода, диапазон сохранённых значений и источник данных." +
+    (yahooLag ? ` Дата Yahoo: ${yahooLag}.` : "") +
     (isFallback
       ? " Внимание: свежая цена для этой плитки не получена, поэтому цена и изменение не показаны."
       : "");
@@ -462,6 +439,11 @@ function HeatTile({
         {!isFallback && (observed || asset.updatedAt) && (
           <div className="mt-1 text-[11px] font-semibold text-white/95">
             {observed || `обновлено ${asOf} МСК`}
+            {yahooLag && (
+              <span data-testid="yahoo-observation-lag" className="mt-0.5 block text-white/85">
+                {yahooLag}
+              </span>
+            )}
           </div>
         )}
 
@@ -1155,7 +1137,7 @@ function AssetPanel({
                   >
                     {formatDateLong(lastHistoryPoint.date)}
                   </time>{" "}
-                  ({lagPhrase(lastHistoryPoint.date)}).
+                  ({observationLagLabel(lastHistoryPoint.date)}).
                 </p>
               </div>
               <div

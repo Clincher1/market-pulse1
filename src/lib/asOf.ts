@@ -52,3 +52,51 @@ export function observationLabel(asOf?: string | null): string {
   const clock = moscowClock(iso);
   return clock ? `на ${clock} МСК` : '';
 }
+
+const DAY_MS = 86_400_000;
+
+function moscowDateKey(value: Date): string | null {
+  if (Number.isNaN(value.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Moscow',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(value);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? '';
+  const year = part('year');
+  const month = part('month');
+  const day = part('day');
+  return /^\d{4}$/.test(year) && /^\d{2}$/.test(month) && /^\d{2}$/.test(day)
+    ? `${year}-${month}-${day}`
+    : null;
+}
+
+/** Calendar-date lag in Moscow time; this does not claim a trading-session delay. */
+export function observationLagDays(asOf?: string | null, now = new Date()): number | null {
+  if (!asOf?.trim()) return null;
+  const observation = new Date(asOf.trim());
+  const observationKey = moscowDateKey(observation);
+  const todayKey = moscowDateKey(now);
+  if (!observationKey || !todayKey) return null;
+  const observationMs = Date.parse(`${observationKey}T00:00:00Z`);
+  const todayMs = Date.parse(`${todayKey}T00:00:00Z`);
+  if (!Number.isFinite(observationMs) || !Number.isFinite(todayMs)) return null;
+  return Math.max(0, Math.round((todayMs - observationMs) / DAY_MS));
+}
+
+function calendarDaysWord(days: number): string {
+  const mod10 = days % 10;
+  const mod100 = days % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'календарный день';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'календарных дня';
+  return 'календарных дней';
+}
+
+/** Explicit calendar lag for daily series; an unknown date stays unlabelled. */
+export function observationLagLabel(asOf?: string | null, now = new Date()): string {
+  const days = observationLagDays(asOf, now);
+  if (days === null) return '';
+  if (days === 0) return 'сегодня по календарю источника';
+  return `отстаёт от сегодняшней даты на ${days} ${calendarDaysWord(days)}`;
+}
