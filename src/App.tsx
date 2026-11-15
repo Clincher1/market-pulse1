@@ -83,7 +83,7 @@ function App() {
 
     const tryScroll = () => {
       if (cancelled || userInterrupted) return;
-      let target: Element | null = null;
+      let target: Element | null;
       try {
         target = document.querySelector(currentHash);
       } catch {
