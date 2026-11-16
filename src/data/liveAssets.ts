@@ -18,13 +18,19 @@ const ASSET_ORDER = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'];
 const BASE_COLUMNS = 'id, name, price, change, sparkline, updated_at';
 
 /**
- * as_of пришёл миграцией 20261030120000, spark_dates — 20261031193000.
- * Код выкатывается отдельно от миграций, поэтому колонок может ещё не быть.
- * PostgREST отклоняет весь запрос, если хотя бы одной колонки нет, — поэтому
- * пробуем наборы от полного к базовому: без дат плитка честно покажет только
- * время записи в кэш, а ряд останется бездатым.
+ * as_of, spark_dates and source_label were added by separate migrations.
+ * Code deploys independently from schema, and PostgREST rejects a query if
+ * any requested column is absent, so try the richer projections first while
+ * retaining fallbacks for older schemas.
  */
-const COLUMN_SETS = [`${BASE_COLUMNS}, as_of, spark_dates`, `${BASE_COLUMNS}, as_of`, BASE_COLUMNS];
+const COLUMN_SETS = [
+  `${BASE_COLUMNS}, as_of, spark_dates, source_label`,
+  `${BASE_COLUMNS}, as_of, spark_dates`,
+  `${BASE_COLUMNS}, as_of, source_label`,
+  `${BASE_COLUMNS}, as_of`,
+  `${BASE_COLUMNS}, source_label`,
+  BASE_COLUMNS,
+];
 
 async function selectAssets(): Promise<{ data: unknown[] | null; error: unknown }> {
   let last: { data: unknown[] | null; error: unknown } = { data: null, error: new Error('Нет попыток') };

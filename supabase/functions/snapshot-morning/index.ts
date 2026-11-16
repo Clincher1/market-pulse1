@@ -2,9 +2,10 @@
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 //
 // Runs once a day at 04:00 UTC (07:00 MSK) via pg_cron. Captures the
-// public cached state (tension, global assets, forecasts) plus the
-// Russia indicators from the production /api/russia-insights endpoint
-// into public.daily_snapshots. The first write of a Moscow date wins:
+// public cached state (tension and global assets) plus the Russia
+// indicators from the production /api/russia-insights endpoint into
+// public.daily_snapshots. Legacy forecasts remain in past rows but are
+// not copied into new snapshots. The first write of a Moscow date wins:
 // retries never overwrite the morning baseline. The frontend compares
 // live values against this row for the "changed since morning" block.
 
@@ -123,15 +124,12 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
     const now = new Date();
     const date = moscowDate(now);
 
-    const [tensionRows, assetRows, forecastRows, russia] = await Promise.all([
+    const [tensionRows, assetRows, russia] = await Promise.all([
       restJson(
         "cached_tension?select=value,label,news_count,updated_at&id=eq.1&limit=1",
       ) as Promise<AnyRecord[]>,
       restJson(
         "cached_assets?select=id,name,price,change,sparkline,updated_at,as_of&limit=20",
-      ) as Promise<AnyRecord[]>,
-      restJson(
-        "cached_forecasts?select=id,asset,direction,probability,time_window,confidence,updated_at&limit=20",
       ) as Promise<AnyRecord[]>,
       fetchRussia(),
     ]);
@@ -160,16 +158,6 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       as_of: typeof row.as_of === "string" ? row.as_of : null,
     }));
 
-    const forecasts = forecastRows.map((row) => ({
-      id: String(row.id ?? ""),
-      asset: String(row.asset ?? ""),
-      direction: String(row.direction ?? "none"),
-      probability: finiteNumber(row.probability),
-      time_window: String(row.time_window ?? ""),
-      confidence: String(row.confidence ?? ""),
-      updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
-    }));
-
     const inserted = (await restJson("daily_snapshots?on_conflict=date", {
       method: "POST",
       headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
@@ -179,7 +167,6 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
         tension,
         assets,
         russia,
-        forecasts,
       }),
     })) as AnyRecord[] | null;
 
@@ -189,7 +176,8 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       captured_at: now.toISOString(),
       inserted: Array.isArray(inserted) && inserted.length > 0,
       assets: assets.length,
-      forecasts: forecasts.length,
+      // The legacy forecast cache is intentionally not copied into new snapshots.
+      forecasts: 0,
       russia_markets: Array.isArray(russia?.markets) ? russia.markets.length : 0,
     });
   } catch (error) {
