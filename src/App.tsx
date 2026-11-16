@@ -1,20 +1,22 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight, ArrowUpRight, BookOpen, HeartPulse, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 import DailyPassport from './components/DailyPassport';
 import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
 import Footer from '@/components/Footer';
-import GuideTeaser from '@/components/GuideTeaser';
-import DashboardQuickNav from '@/components/DashboardQuickNav';
 import MarketTicker from '@/components/MarketTicker';
 import TrustStrip from '@/components/TrustStrip';
 import HowWeKnow from '@/components/HowWeKnow';
+import PulseOrbit from '@/components/PulseOrbit';
 import BusinessMoney from '@/components/BusinessMoney';
-import { SectionThemeBadge } from '@/components/sectionThemes';
 import WhatChanged from '@/components/WhatChanged';
-import { DeferredMount, SectionFallback } from '@/components/SectionFallback';
+import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
+import { SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
+import { PAGE_PATHS, pathFromLegacyHash, viewFromLocation, type AppView } from '@/lib/routes';
 
 const NewsFeed = lazy(() => import('@/components/NewsFeed'));
 const MarketMemory = lazy(() => import('@/components/MarketMemory'));
@@ -22,31 +24,368 @@ const AboutProject = lazy(() => import('@/components/AboutProject'));
 const AnalyticsGuide = lazy(() => import('@/components/AnalyticsGuide'));
 const SystemStatus = lazy(() => import('@/components/SystemStatus'));
 
-type AppView = 'dashboard' | 'guide' | 'status';
+type SectionPageView = Exclude<AppView, 'dashboard' | 'guide' | 'status'>;
 
-function viewFromHash(hash: string): AppView {
-  if (hash === '#status') return 'status';
-  return hash === '#guide' || hash.startsWith('#guide-') ? 'guide' : 'dashboard';
+type PageInfo = {
+  themeId: SectionThemeId;
+  title: string;
+  description: string;
+};
+
+const VIEW_TITLES: Record<AppView, string> = {
+  dashboard: 'Обзор рынка',
+  passport: 'Сводка дня',
+  russia: 'Россия и бизнес',
+  global: 'Мировые рынки',
+  brief: 'Коротко о рынке',
+  news: 'Новости',
+  memory: 'Память рынка',
+  guide: 'Как читать сайт',
+  about: 'О проекте',
+  status: 'Состояние системы',
+};
+
+const PAGE_INFO: Record<SectionPageView, PageInfo> = {
+  passport: {
+    themeId: 'passport',
+    title: 'Сводка дня',
+    description: 'Зафиксированный паспорт, денежные ориентиры и изменения, уже видимые в рядах.',
+  },
+  russia: {
+    themeId: 'russia',
+    title: 'Россия и бизнес',
+    description: 'Курсы, Московская биржа и российские деловые заголовки — каждый блок со своим источником.',
+  },
+  global: {
+    themeId: 'global',
+    title: 'Мировые рынки',
+    description: 'Внешние рыночные ориентиры и история наблюдений, отделённые от российского контура.',
+  },
+  brief: {
+    themeId: 'brief',
+    title: 'Коротко о рынке',
+    description: 'Сжатый обзор фактов из текущего снимка данных — без прогнозов и рекомендаций.',
+  },
+  news: {
+    themeId: 'news',
+    title: 'Лента публикаций',
+    description: 'Исходные заголовки и ссылки на публикации; заголовок сам по себе не подтверждает событие или его причину.',
+  },
+  memory: {
+    themeId: 'memory',
+    title: 'Архив и оценки',
+    description: 'Исторические прогнозные записи и рассчитанные исходы сохранены для проверки; новые прогнозы не выпускаются.',
+  },
+  about: {
+    themeId: 'about',
+    title: 'О проекте',
+    description: 'Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.',
+  },
+};
+
+function PageHeading({ page }: { page: PageInfo }) {
+  const theme = SECTION_THEMES[page.themeId];
+  const Icon = theme.icon;
+
+  return (
+    <header className="page-intro relative mb-7 overflow-hidden rounded-[30px] border border-border-subtle bg-linear-to-br from-white via-blue-50/70 to-cyan-50/70 p-5 shadow-[0_12px_34px_rgba(15,23,42,0.06)] sm:p-7">
+      <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-blue-200/35 blur-3xl" aria-hidden="true" />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start">
+        <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ${theme.iconClass}`} aria-hidden="true">
+          <Icon className="h-6 w-6" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className={`text-[11px] font-extrabold uppercase tracking-[0.15em] ${theme.textClass}`}>
+            {theme.order} · {theme.label}
+          </div>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
+            {page.title}
+          </h1>
+          <p className="mt-2 max-w-4xl text-sm leading-relaxed text-text-secondary sm:text-base">
+            {page.description}
+          </p>
+        </div>
+        <a
+          href={PAGE_PATHS.dashboard}
+          className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-sm font-bold text-text-primary shadow-sm transition-colors hover:border-accent/40 hover:bg-blue-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          Все разделы <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </a>
+      </div>
+    </header>
+  );
+}
+
+function DashboardPage() {
+  const reduceMotion = useReducedMotion();
+  const appear = (delay: number) => ({
+    initial: reduceMotion ? false : { opacity: 0, y: 18 },
+    animate: { opacity: 1, y: 0 },
+    transition: reduceMotion
+      ? { duration: 0 }
+      : { duration: 0.52, delay, ease: 'easeOut' as const },
+  });
+
+  return (
+    <>
+      <section id="dashboard" className="overview-hero mb-8 scroll-mt-24 lg:mb-12">
+        <div className="overview-hero__backdrop" aria-hidden="true" />
+        <div className="overview-hero__copy">
+          <motion.div className="overview-hero__eyebrow" {...appear(0.04)}>
+            <span className="overview-hero__eyebrow-mark" aria-hidden="true">
+              <Sparkles className="h-3.5 w-3.5" />
+            </span>
+            <span>MARKET PULSE</span>
+            <span className="overview-hero__eyebrow-divider" aria-hidden="true" />
+            <span className="overview-hero__eyebrow-subtitle">картина без лишнего шума</span>
+          </motion.div>
+
+          <motion.h1 className="overview-hero__title" {...appear(0.1)}>
+            Рынки в движении.
+            <br />
+            <span>Факты — на виду.</span>
+          </motion.h1>
+
+          <motion.p className="overview-hero__description" {...appear(0.16)}>
+            Российский рынок, мировые ориентиры, публикации и архив — по отдельным страницам.
+            Источник и время наблюдения указаны рядом, когда они доступны.
+          </motion.p>
+
+          <motion.div className="overview-hero__actions" {...appear(0.22)}>
+            <a href={PAGE_PATHS.passport} className="overview-hero__primary-action">
+              Открыть сводку дня
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+            <a href={PAGE_PATHS.guide} className="overview-hero__secondary-action">
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+              Как устроены данные
+            </a>
+          </motion.div>
+
+          <motion.div className="overview-hero__note" {...appear(0.28)}>
+            <span className="overview-hero__note-mark" aria-hidden="true">01</span>
+            <p>Новых прогнозов нет. Архив и источники остаются доступны для проверки.</p>
+          </motion.div>
+        </div>
+
+        <motion.div className="overview-hero__visual" {...appear(0.14)}>
+          <PulseOrbit />
+        </motion.div>
+      </section>
+
+      <section aria-labelledby="page-links-title" className="overview-topics mb-10 lg:mb-14">
+        <div className="overview-topics__heading">
+          <div>
+            <p className="overview-section-kicker">ВЫБЕРИТЕ СВОЙ МАРШРУТ</p>
+            <h2 id="page-links-title" className="overview-topics__title">С чего начнём?</h2>
+          </div>
+          <p className="overview-topics__intro">
+            Одна тема — одна страница. Ничего лишнего не нужно прокручивать.
+          </p>
+        </div>
+
+        <nav aria-label="Страницы Market Pulse" className="overview-topics__grid">
+          {DASHBOARD_THEME_ORDER.map((themeId, index) => {
+            const theme = SECTION_THEMES[themeId];
+            const Icon = theme.icon;
+            return (
+              <motion.a
+                key={theme.id}
+                href={theme.href}
+                className={`overview-topic-card group ${theme.cardClass}`}
+                initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { duration: 0.42, delay: 0.08 + index * 0.045, ease: 'easeOut' }
+                }
+                whileHover={reduceMotion ? undefined : { y: -5, scale: 1.012 }}
+                whileTap={reduceMotion ? undefined : { scale: 0.99 }}
+              >
+                <span className="overview-topic-card__topline">
+                  <span className={`overview-topic-card__icon ${theme.iconClass}`} aria-hidden="true">
+                    <Icon className="h-[19px] w-[19px]" />
+                  </span>
+                  <span className="overview-topic-card__index" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </span>
+                <span className="overview-topic-card__copy">
+                  <span className={`overview-topic-card__title ${theme.textClass}`}>{theme.label}</span>
+                  <span className="overview-topic-card__description">{theme.description}</span>
+                </span>
+                <span className="overview-topic-card__open">
+                  Перейти
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </motion.a>
+            );
+          })}
+        </nav>
+
+        <a href={PAGE_PATHS.status} className="overview-status-link">
+          <span className="overview-status-link__icon" aria-hidden="true">
+            <HeartPulse className="h-[18px] w-[18px]" />
+          </span>
+          <span className="overview-status-link__text">
+            <span className="overview-status-link__title">Состояние системы</span>
+            <span className="overview-status-link__description">Источники, котировки и проверки</span>
+          </span>
+          <ArrowRight className="overview-status-link__arrow" aria-hidden="true" />
+        </a>
+      </section>
+    </>
+  );
+}
+
+function SectionPage({ view }: { view: SectionPageView }) {
+  const page = PAGE_INFO[view];
+
+  switch (view) {
+    case 'passport':
+      return (
+        <>
+          <PageHeading page={page} />
+          <SectionBoundary title="Паспорт дня"><DailyPassport /></SectionBoundary>
+          <SectionBoundary title="Деньги бизнеса сегодня"><BusinessMoney /></SectionBoundary>
+          <SectionBoundary title="Что меняется"><WhatChanged /></SectionBoundary>
+        </>
+      );
+    case 'russia':
+      return (
+        <>
+          <PageHeading page={page} />
+          <SectionBoundary title="Россия и бизнес"><RussiaBusiness /></SectionBoundary>
+        </>
+      );
+    case 'global':
+      return (
+        <>
+          <PageHeading page={page} />
+          <MarketTicker />
+          <section
+            id="global-economy"
+            aria-labelledby="global-economy-title"
+            className="mb-10 scroll-mt-24 rounded-[28px] border border-cyan-200/80 bg-linear-to-br from-cyan-50/80 via-white to-blue-50/70 p-3 shadow-sm sm:p-5 lg:mb-12 lg:p-6"
+          >
+            <div className="mb-6 px-1 pt-1 sm:px-2">
+              <h2 id="global-economy-title" className="text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
+                Глобальная экономика
+              </h2>
+              <p className="mt-2 max-w-4xl text-sm leading-relaxed text-text-secondary sm:text-base">
+                Мировые котировки и графики с датами наблюдений. Рубль и Мосбиржа находятся на отдельной странице российского контура.
+              </p>
+            </div>
+            <SectionBoundary title="Мировые рынки"><KeyAssets /></SectionBoundary>
+          </section>
+        </>
+      );
+    case 'brief':
+      return (
+        <>
+          <PageHeading page={page} />
+          <SectionBoundary title="Бриф"><DailyBrief /></SectionBoundary>
+        </>
+      );
+    case 'news':
+      return (
+        <>
+          <PageHeading page={page} />
+          <Suspense
+            fallback={
+              <SectionFallback
+                id="news"
+                title="Глобальные новости"
+                message="Готовим фильтры, источники и последние заголовки…"
+                minHeightClass="min-h-[560px]"
+                className="mb-10 lg:mb-12"
+              />
+            }
+          >
+            <SectionBoundary title="Глобальные новости"><NewsFeed /></SectionBoundary>
+          </Suspense>
+        </>
+      );
+    case 'memory':
+      return (
+        <>
+          <PageHeading page={page} />
+          <Suspense
+            fallback={
+              <SectionFallback
+                id="market-memory"
+                title="Память рынка"
+                message="Загружаем архив прежних записей и рассчитанные исходы по ценовым рядам…"
+                minHeightClass="min-h-[760px]"
+                className="mb-10 lg:mb-12"
+              />
+            }
+          >
+            <SectionBoundary title="Память рынка"><MarketMemory /></SectionBoundary>
+          </Suspense>
+        </>
+      );
+    case 'about':
+      return (
+        <>
+          <PageHeading page={page} />
+          <Suspense
+            fallback={
+              <SectionFallback
+                id="about"
+                title="О проекте"
+                message="Загружаем архитектуру, правила честности и ограничения проекта…"
+                minHeightClass="min-h-[460px]"
+                className="mb-10 lg:mb-12"
+              />
+            }
+          >
+            <SectionBoundary title="О проекте"><AboutProject /></SectionBoundary>
+          </Suspense>
+          <details className="mb-10 rounded-2xl border border-border-subtle bg-bg-card p-4 shadow-sm lg:mb-12">
+            <summary className="cursor-pointer text-sm font-extrabold text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent">
+              Как собираем и проверяем данные
+            </summary>
+            <div className="mt-4">
+              <HowWeKnow />
+            </div>
+          </details>
+        </>
+      );
+  }
 }
 
 function App() {
+  const reduceMotion = useReducedMotion();
   const [view, setView] = useState<AppView>(() =>
-    typeof window === 'undefined' ? 'dashboard' : viewFromHash(window.location.hash),
+    typeof window === 'undefined' ? 'dashboard' : viewFromLocation(window.location.pathname, window.location.hash),
   );
   const [currentHash, setCurrentHash] = useState(() =>
     typeof window === 'undefined' ? '' : window.location.hash,
   );
 
   useEffect(() => {
-    const syncViewWithHash = () => {
+    const syncViewWithLocation = () => {
+      const legacyPath = pathFromLegacyHash(window.location.pathname, window.location.hash);
+      if (legacyPath) window.history.replaceState(null, '', legacyPath);
+
       setCurrentHash(window.location.hash);
-      setView(viewFromHash(window.location.hash));
+      setView(viewFromLocation(window.location.pathname, window.location.hash));
     };
 
-    syncViewWithHash();
-    window.addEventListener('hashchange', syncViewWithHash);
-    return () => window.removeEventListener('hashchange', syncViewWithHash);
+    syncViewWithLocation();
+    window.addEventListener('hashchange', syncViewWithLocation);
+    window.addEventListener('popstate', syncViewWithLocation);
+    return () => {
+      window.removeEventListener('hashchange', syncViewWithLocation);
+      window.removeEventListener('popstate', syncViewWithLocation);
+    };
   }, []);
+
+  useEffect(() => {
+    document.title = `${VIEW_TITLES[view]} — Market Pulse`;
+  }, [view]);
 
   useEffect(() => {
     if (!currentHash) {
@@ -54,12 +393,8 @@ function App() {
       return;
     }
 
-    // После переключения между дашбордом и гидом целевой элемент может
-    // появиться только после загрузки lazy-чанка (например, #guide-memory
-    // внутри AnalyticsGuide). Кроме того, асинхронные данные в секциях выше
-    // цели могут изменить высоту страницы уже после первой прокрутки.
-    // Поэтому несколько секунд мягко проверяем позицию и корректируем её,
-    // пока пользователь сам не начнёт прокручивать страницу.
+    // A destination can appear after its lazy chunk loads. Recheck its position
+    // briefly while async data settles, but stop as soon as the user takes over.
     let cancelled = false;
     let userInterrupted = false;
     let timer = 0;
@@ -68,9 +403,6 @@ function App() {
     let stableTicks = 0;
     let lastHeight = 0;
     const startedAt = Date.now();
-    // Данные секций приходят асинхронно и могут сдвинуть цель уже после первой
-    // прокрутки, поэтому держим корректировку дольше, но выходим, как только
-    // положение стало устойчивым, либо вмешался пользователь.
     const SETTLE_LIMIT_MS = 15000;
     const MAX_CORRECTIONS = 12;
     const markInterrupted = () => {
@@ -83,7 +415,7 @@ function App() {
 
     const tryScroll = () => {
       if (cancelled || userInterrupted) return;
-      let target: Element | null = null;
+      let target: Element | null;
       try {
         target = document.querySelector(currentHash);
       } catch {
@@ -139,18 +471,10 @@ function App() {
   }, [currentHash, view]);
 
   return (
-    <div className="min-h-screen bg-bg-primary pb-20 text-text-primary lg:pb-0">
-      {/*
-        Первый Tab должен вести к содержанию, а не в шапку и нижнюю панель: до
-        этого до main добирались через девять ссылок навигации на каждой
-        странице. Ссылка видна только при фокусе — иначе она влезала бы в макет.
-      */}
+    <div className="site-shell min-h-screen pb-20 text-text-primary lg:pb-0">
       <a
         href="#main"
         onClick={(event) => {
-          // preventDefault обязателен: у роутера хэш — это адрес экрана, и
-          // переход по #main выбросил бы с гида на дашборд. Без скриптов
-          // ссылка остаётся рабочей как обычный якорь.
           const main = document.getElementById('main');
           if (!main) return;
           event.preventDefault();
@@ -167,7 +491,13 @@ function App() {
         tabIndex={-1}
         className="mx-auto max-w-[1400px] px-4 pb-8 pt-24 outline-hidden sm:px-6 lg:px-10 lg:pt-28"
       >
-        {view === 'status' ? (
+        <motion.div
+          key={view}
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.34, ease: 'easeOut' }}
+        >
+          {view === 'status' ? (
           <Suspense
             fallback={
               <SectionFallback
@@ -178,9 +508,8 @@ function App() {
               />
             }
           >
-            <SectionBoundary title="Состояние системы">
-              <SystemStatus />
-            </SectionBoundary>
+            <TrustStrip />
+            <SectionBoundary title="Состояние системы"><SystemStatus /></SectionBoundary>
           </Suspense>
         ) : view === 'guide' ? (
           <Suspense
@@ -193,175 +522,14 @@ function App() {
               />
             }
           >
-            <SectionBoundary title="Методология">
-              <AnalyticsGuide />
-            </SectionBoundary>
+            <SectionBoundary title="Методология"><AnalyticsGuide /></SectionBoundary>
           </Suspense>
+        ) : view === 'dashboard' ? (
+          <DashboardPage />
         ) : (
-          <>
-            <section id="dashboard" className="mb-8 max-w-5xl scroll-mt-24 lg:mb-10">
-              <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-accent">
-                Россия · мировая экономика · рынки
-              </div>
-              <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                Что сейчас происходит на рынках — и откуда это известно
-              </h1>
-              <p className="mt-3 max-w-4xl text-base leading-relaxed text-text-secondary lg:text-lg">
-                Дашборд показывает российские курсы и Мосбиржу, мировые котировки и заголовки
-                публикаций со ссылками на источники. У каждого числа видно, когда оно получено,
-                а у котировок — ещё и откуда: источник подписан на плитке или в раскрытой панели.
-                Сайт не предсказывает цены и не даёт рекомендаций: здесь нет вероятностей и
-                «сигналов» на будущее. Раздел «Что меняется» описывает только то, что уже произошло
-                в рядах — серии дней, края окна, узкие диапазоны. Новые прогнозы не выпускаются;
-                старые записи и рассчитанные исходы остаются в архиве памяти рынка.
-              </p>
-            </section>
-
-            {/* Первый экран по образцу лендингов: состояние рынка одной полосой,
-                затем то, что можно проверить, затем процесс. Данные здесь только
-                из кэша — новых запросов эти блоки не делают, кроме окна
-                самопроверки за 7 дней. */}
-            <MarketTicker />
-            <TrustStrip />
-            <HowWeKnow />
-
-            <SectionBoundary title="Деньги бизнеса сегодня">
-              <BusinessMoney />
-            </SectionBoundary>
-
-            <DashboardQuickNav />
-
-            <SectionBoundary title="Паспорт дня">
-              <DailyPassport />
-            </SectionBoundary>
-
-            <SectionBoundary title="Что меняется">
-              <WhatChanged />
-            </SectionBoundary>
-
-            <SectionBoundary title="Россия">
-              <RussiaBusiness />
-            </SectionBoundary>
-
-            <section
-              id="global-economy"
-              aria-labelledby="global-economy-title"
-              className="mb-10 scroll-mt-24 rounded-[28px] border border-cyan-300/25 bg-cyan-400/[0.03] p-3 shadow-xl shadow-cyan-950/20 sm:p-5 lg:mb-12 lg:p-6"
-            >
-              <div className="mb-7 px-1 pt-1 sm:px-2">
-                <SectionThemeBadge themeId="global" />
-                <h2
-                  id="global-economy-title"
-                  className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
-                >
-                  Глобальная экономика
-                </h2>
-                <p className="mt-2 max-w-4xl text-sm leading-relaxed text-slate-300 sm:text-base">
-                  Мировые котировки и графики с датами наблюдений. Рубль и Мосбиржа — выше,
-                  в синем разделе.
-                </p>
-              </div>
-
-              <SectionBoundary title="Мировые рынки">
-                <KeyAssets />
-              </SectionBoundary>
-            </section>
-
-            <SectionBoundary title="Бриф">
-              <DailyBrief />
-            </SectionBoundary>
-
-            <DeferredMount
-              targetId="news"
-              fallback={
-                <SectionFallback
-                  id="news"
-                  title="Глобальные новости"
-                  message="Раздел загрузится при приближении к нему, чтобы первая страница открывалась быстрее."
-                  minHeightClass="min-h-[560px]"
-                  className="mb-10 lg:mb-12"
-                />
-              }
-            >
-              <Suspense
-                fallback={
-                  <SectionFallback
-                    id="news"
-                    title="Глобальные новости"
-                    message="Готовим фильтры, источники и последние четыре новости…"
-                    minHeightClass="min-h-[560px]"
-                    className="mb-10 lg:mb-12"
-                  />
-                }
-              >
-                <SectionBoundary title="Глобальные новости" id="news">
-                  <NewsFeed />
-                </SectionBoundary>
-              </Suspense>
-            </DeferredMount>
-
-            <DeferredMount
-              targetId="market-memory"
-              fallback={
-                <SectionFallback
-                  id="market-memory"
-                  title="Память рынка"
-                  message="Исследовательский раздел подключится при прокрутке: архив прежних прогнозных записей и рассчитанные исходы ценовых рядов."
-                  minHeightClass="min-h-[760px]"
-                  className="mb-10 lg:mb-12"
-                />
-              }
-            >
-              <Suspense
-                fallback={
-                  <SectionFallback
-                    id="market-memory"
-                    title="Память рынка"
-                    message="Загружаем архив прежних прогнозных записей и рассчитанные исходы по ценовым рядам…"
-                    minHeightClass="min-h-[760px]"
-                    className="mb-10 lg:mb-12"
-                  />
-                }
-              >
-                <SectionBoundary title="Память рынка" id="market-memory">
-                  <MarketMemory />
-                </SectionBoundary>
-              </Suspense>
-            </DeferredMount>
-
-            <GuideTeaser />
-
-            <DeferredMount
-              targetId="about"
-              rootMargin="700px 0px"
-              fallback={
-                <SectionFallback
-                  id="about"
-                  title="О проекте"
-                  message="Как устроена автономная система Market Pulse и что она сознательно не обещает."
-                  minHeightClass="min-h-[460px]"
-                  className="mb-10 lg:mb-12"
-                />
-              }
-            >
-              <Suspense
-                fallback={
-                  <SectionFallback
-                    id="about"
-                    title="О проекте"
-                    message="Архитектура, стек, правила честности и ограничения…"
-                    minHeightClass="min-h-[460px]"
-                    className="mb-10 lg:mb-12"
-                  />
-                }
-              >
-                <SectionBoundary title="О проекте" id="about">
-                  <AboutProject />
-                </SectionBoundary>
-              </Suspense>
-            </DeferredMount>
-          </>
-        )}
+            <SectionPage view={view} />
+          )}
+        </motion.div>
       </main>
       <Footer />
     </div>

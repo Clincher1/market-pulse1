@@ -13,6 +13,10 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    // The browser preview uses a per-session *.e2b.app host rather than localhost.
+    allowedHosts: ['.e2b.app'],
+  },
   build: {
     rollupOptions: {
       output: {
