@@ -90,13 +90,128 @@ test('возраст наблюдения: нет даты — нет возра
   assert.equal(asOfAgeMinutes('2026-11-11T09:00:00Z', now), 0);
 });
 
+test('свежесть: дата-only Yahoo/ECB считается от закрытия или публикации, а не от полуночи UTC', () => {
+  const now = new Date('2026-11-16T11:37:00Z');
+  // PostgREST сериализует date-only в timestamptz как полночь UTC. Для S&P
+  // это не время закрытия: 13 ноября рынок закрылся в 16:00 EST = 21:00 UTC.
+  const sp500 = freshnessVerdict({ id: 'sp500', as_of: '2026-11-13T00:00:00+00:00' }, now);
+  assert.equal(sp500.ageMinutes, 62 * 60 + 37);
+  assert.equal(sp500.allowedMinutes, 72 * 60);
+  assert.equal(sp500.ok, true);
+
+  // ECB XML несёт только дату курса; около 16:00 во Франкфурте 13 ноября
+  // было 15:00 UTC. Сырая date-only строка и её DB round-trip равнозначны.
+  const ecb = freshnessVerdict({ id: 'usd-eur', as_of: '2026-11-13T00:00:00+00:00' }, now);
+  assert.equal(ecb.ageMinutes, 68 * 60 + 37);
+  assert.equal(ecb.allowedMinutes, 72 * 60);
+  assert.equal(ecb.ok, true);
+  for (const asOf of [
+    '2026-11-13',
+    '2026-11-13T00:00:00+00',
+    '2026-11-13T00:00:00+00:00',
+    '2026-11-13 00:00:00+00',
+  ]) {
+    assert.equal(freshnessVerdict({ id: 'usd-eur', as_of: asOf }, now).ageMinutes, ecb.ageMinutes, asOf);
+  }
+
+  // Никакого общего сдвига для всех рядов: без времени в контракте дата и
+  // обычные timestamp по-прежнему разбираются как раньше.
+  assert.equal(asOfAgeMinutes('2026-11-13', now), 83 * 60 + 37);
+  assert.equal(freshnessVerdict({ id: 'brent', as_of: '2026-11-13' }, now).ageMinutes, 83 * 60 + 37);
+  assert.equal(
+    freshnessVerdict({ id: 'sp500', as_of: '2026-11-13T00:01:00Z' }, now).ageMinutes,
+    83 * 60 + 36,
+  );
+});
+
+test('свежесть: date-only не маскирует реальную задержку после прежних 72 часов', () => {
+  const sp500 = freshnessVerdict(
+    { id: 'sp500', as_of: '2026-11-13T00:00:00+00:00' },
+    new Date('2026-11-16T21:01:00Z'),
+  );
+  assert.equal(sp500.ageMinutes, 72 * 60 + 1);
+  assert.equal(sp500.allowedMinutes, 72 * 60);
+  assert.equal(sp500.ok, false);
+
+  const ecb = freshnessVerdict(
+    { id: 'usd-eur', as_of: '2026-11-13T00:00:00+00:00' },
+    new Date('2026-11-16T15:01:00Z'),
+  );
+  assert.equal(ecb.ageMinutes, 72 * 60 + 1);
+  assert.equal(ecb.allowedMinutes, 72 * 60);
+  assert.equal(ecb.ok, false);
+});
+
+test('свежесть: осенний перевод часов даёт 73 реальных часа и остаётся за строгим лимитом 72', () => {
+  // США переводят часы после пятничного закрытия: 16:00 EDT в пятницу
+  // 30 октября — 16:00 EST в понедельник 2 ноября, но в UTC это 73 часа.
+  const sp500 = freshnessVerdict(
+    { id: 'sp500', as_of: '2026-10-30' },
+    new Date('2026-11-02T21:00:00Z'),
+  );
+  assert.equal(sp500.ageMinutes, 73 * 60);
+  assert.equal(sp500.allowedMinutes, 72 * 60);
+  assert.equal(sp500.ok, false);
+
+  // В Европе переход раньше: дата курса 23 октября 16:00 CEST →
+  // понедельник 26 октября 16:00 CET также занимает 73 часа UTC.
+  const ecb = freshnessVerdict(
+    { id: 'usd-eur', as_of: '2026-10-23' },
+    new Date('2026-10-26T15:00:00Z'),
+  );
+  assert.equal(ecb.ageMinutes, 73 * 60);
+  assert.equal(ecb.allowedMinutes, 72 * 60);
+  assert.equal(ecb.ok, false);
+});
+
+test('свежесть: весенний перевод часов сокращает пятницу–понедельник до 71 реального часа', () => {
+  // США переводят часы в воскресенье: пятница 16:00 EST → понедельник 16:00 EDT.
+  const sp500 = freshnessVerdict(
+    { id: 'sp500', as_of: '2026-03-06' },
+    new Date('2026-03-09T20:00:00Z'),
+  );
+  assert.equal(sp500.ageMinutes, 71 * 60);
+  assert.equal(sp500.allowedMinutes, 72 * 60);
+  assert.equal(sp500.ok, true);
+
+  // В Европе переход тоже происходит в воскресенье: 16:00 CET в пятницу
+  // 27 марта → 16:00 CEST в понедельник 30 марта.
+  const ecb = freshnessVerdict(
+    { id: 'usd-eur', as_of: '2026-03-27' },
+    new Date('2026-03-30T14:00:00Z'),
+  );
+  assert.equal(ecb.ageMinutes, 71 * 60);
+  assert.equal(ecb.allowedMinutes, 72 * 60);
+  assert.equal(ecb.ok, true);
+});
+
+test('свежесть: время даты-only учитывает летнее и зимнее время источника', () => {
+  assert.equal(
+    freshnessVerdict({ id: 'sp500', as_of: '2026-07-03' }, new Date('2026-07-03T20:00:00Z')).ageMinutes,
+    0,
+  ); // Нью-Йорк: 16:00 EDT = 20:00 UTC.
+  assert.equal(
+    freshnessVerdict({ id: 'sp500', as_of: '2026-01-02' }, new Date('2026-01-02T21:00:00Z')).ageMinutes,
+    0,
+  ); // Нью-Йорк: 16:00 EST = 21:00 UTC.
+  assert.equal(
+    freshnessVerdict({ id: 'usd-eur', as_of: '2026-07-03' }, new Date('2026-07-03T14:00:00Z')).ageMinutes,
+    0,
+  ); // Франкфурт: 16:00 CEST = 14:00 UTC.
+  assert.equal(
+    freshnessVerdict({ id: 'usd-eur', as_of: '2026-01-02' }, new Date('2026-01-02T15:00:00Z')).ageMinutes,
+    0,
+  ); // Франкфурт: 16:00 CET = 15:00 UTC.
+});
+
 test('свежесть: у каждого ряда свой порог, а не общий на всех', () => {
   const now = new Date('2026-11-11T07:00:00Z');
   // Золото на момент котировки: одиннадцать часов — это дефект для
-  // пятиминутной каденции, но не выход за календарный порог 48 часов.
+  // пятиминутной каденции, но не выход за календарный порог 72 часа.
   const gold = freshnessVerdict({ id: 'gold', as_of: '2026-11-10T20:00:00Z' }, now);
   assert.equal(gold.ok, true);
   assert.equal(gold.ageMinutes, 11 * 60);
+  assert.equal(gold.allowedMinutes, 72 * 60);
   assert.match(gold.note, /момент котировки/);
   // Курс ЕЦБ: сутки — норма, порог трое суток.
   assert.equal(freshnessVerdict({ id: 'usd-eur', as_of: '2026-11-10T00:00:00Z' }, now).ok, true);

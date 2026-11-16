@@ -36,6 +36,14 @@
  */
 export type AsOfKind = 'quote' | 'close-date' | 'candle-open' | 'official-rate';
 
+/** Время события, которое скрывается за датой без времени в `as_of`. */
+export interface DateOnlyAsOfTime {
+  /** IANA-зона закрытия рынка или публикации источника. */
+  timeZone: string;
+  hour: number;
+  minute: number;
+}
+
 /**
  * Насколько источник официальный.
  *
@@ -79,6 +87,13 @@ export interface AssetContract {
   /** Адрес, по которому писатель обязан брать данные. */
   endpoint: string;
   asOfKind: AsOfKind;
+  /**
+   * Источник отдаёт дату без времени: событие следует считать произошедшим
+   * в это локальное время. Для `cached_assets.as_of` дата могла сохраниться
+   * как `timestamptz` в полночь UTC — эту потерю времени можно восстановить
+   * только для рядов с таким явно заданным контрактом.
+   */
+  dateOnlyAsOfTime?: DateOnlyAsOfTime;
   /** Как часто писатель обязан обновлять ряд, минуты. */
   cadenceMinutes: number;
   /**
@@ -153,6 +168,10 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     asOfKind: 'close-date',
     cadenceMinutes: 5,
     maxAsOfAgeMinutes: 3 * DAY,
+    // Yahoo отдаёт закрытие только датой. 16:00 на бирже Нью-Йорка —
+    // фактическая точка закрытия; зона учитывает EST/EDT без фиксированного
+    // UTC-смещения.
+    dateOnlyAsOfTime: { timeZone: 'America/New_York', hour: 16, minute: 0 },
     historyInstrumentId: 'sp500_yahoo_gspc',
     displayUnit: 'index_points',
     rationale: 'индекс лицензирован S&P; бесплатный документированный интерфейс отсутствует, выходные — до трёх суток',
@@ -177,9 +196,12 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     endpoint: 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml',
     asOfKind: 'official-rate',
     cadenceMinutes: 12 * 60,
-    // ЕЦБ публикует курс один раз в рабочий день около 16:00 CET. Пятничный
-    // курс живёт до понедельника: это не задержка, а календарь источника.
+    // ЕЦБ публикует курс один раз в рабочий день около 16:00 по времени
+    // Франкфурта. Пятничный курс живёт до понедельника: это не задержка, а
+    // календарь источника.
     maxAsOfAgeMinutes: 3 * DAY,
+    // XML несёт только дату курса; зона учитывает CET/CEST.
+    dateOnlyAsOfTime: { timeZone: 'Europe/Berlin', hour: 16, minute: 0 },
     historyInstrumentId: 'eurusd_ecb_daily',
     displayUnit: 'usd_per_eur',
     rationale: 'официальный курс ЕЦБ на дату; выходные и праздники TARGET дают до трёх суток',
@@ -263,13 +285,111 @@ export function asOfMeaning(kind: AsOfKind): string {
   }
 }
 
+const DATE_ONLY = /^(\d{4}-\d{2}-\d{2})$/;
+// `cached_assets.as_of` is timestamptz. A source date such as `2026-11-13`
+// therefore round-trips from PostgREST as `2026-11-13T00:00:00+00:00`.
+const UTC_MIDNIGHT = /^(\d{4}-\d{2}-\d{2})[T ]00:00:00(?:\.0+)?(?:Z|\+00(?::?00)?)$/i;
+
+type ZonedParts = { year: number; month: number; day: number; hour: number; minute: number; second: number };
+
+function zonedPartsAt(formatter: Intl.DateTimeFormat, instant: number): ZonedParts | null {
+  const values = new Map(
+    formatter.formatToParts(new Date(instant))
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, Number(part.value)]),
+  );
+  const parts = {
+    year: values.get('year'),
+    month: values.get('month'),
+    day: values.get('day'),
+    hour: values.get('hour'),
+    minute: values.get('minute'),
+    second: values.get('second'),
+  };
+  if (Object.values(parts).some((value) => value === undefined || !Number.isFinite(value))) return null;
+  return parts as ZonedParts;
+}
+
+/** Convert a source calendar date and its contract-local event time to UTC. */
+function dateOnlyEventInstant(date: string, time: DateOnlyAsOfTime): number | null {
+  const [year, month, day] = date.split('-').map(Number);
+  const checkDate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    checkDate.getUTCFullYear() !== year || checkDate.getUTCMonth() !== month - 1 ||
+    checkDate.getUTCDate() !== day || !Number.isInteger(time.hour) || time.hour < 0 || time.hour > 23 ||
+    !Number.isInteger(time.minute) || time.minute < 0 || time.minute > 59
+  ) return null;
+
+  let formatter: Intl.DateTimeFormat;
+  try {
+    formatter = new Intl.DateTimeFormat('en-US-u-ca-gregory-nu-latn', {
+      timeZone: time.timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    });
+  } catch {
+    return null;
+  }
+
+  const wallClock = Date.UTC(year, month - 1, day, time.hour, time.minute);
+  let instant = wallClock;
+  // Resolve the timezone offset at the target date (including DST), then verify
+  // the result. The configured event times are away from DST transition gaps.
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const local = zonedPartsAt(formatter, instant);
+    if (!local) return null;
+    const localAsUtc = Date.UTC(local.year, local.month - 1, local.day, local.hour, local.minute, local.second);
+    const next = wallClock - (localAsUtc - instant);
+    if (next === instant) {
+      return local.year === year && local.month === month && local.day === day &&
+          local.hour === time.hour && local.minute === time.minute && local.second === 0
+        ? instant
+        : null;
+    }
+    instant = next;
+  }
+  return null;
+}
+
+/**
+ * If a configured source date survived a `timestamptz` round-trip, its UTC
+ * midnight is still only a serialization detail, not the time of the event.
+ * `undefined` means this is an ordinary timestamp and must be parsed as-is;
+ * `null` means a date-only value was recognized but invalid.
+ */
+function dateOnlyEventInstantFromValue(
+  value: string,
+  time: DateOnlyAsOfTime,
+): number | null | undefined {
+  const match = DATE_ONLY.exec(value) ?? UTC_MIDNIGHT.exec(value);
+  if (!match) return undefined;
+  return dateOnlyEventInstant(match[1], time);
+}
+
 /**
  * Возраст наблюдения в минутах. `null` — даты нет или она не разбирается:
- * «нет данных» нельзя показывать как «только что».
+ * «нет данных» нельзя показывать как «только что». Для источников, отдающих
+ * только дату, контракт может указать локальное время закрытия/публикации.
  */
-export function asOfAgeMinutes(asOf: string | null | undefined, now: Date): number | null {
+export function asOfAgeMinutes(
+  asOf: string | null | undefined,
+  now: Date,
+  dateOnlyAsOfTime?: DateOnlyAsOfTime,
+): number | null {
   if (!asOf) return null;
-  const value = Date.parse(String(asOf));
+  const text = String(asOf).trim();
+  if (!text) return null;
+
+  const dateOnlyInstant = dateOnlyAsOfTime
+    ? dateOnlyEventInstantFromValue(text, dateOnlyAsOfTime)
+    : undefined;
+  if (dateOnlyInstant === null) return null;
+  const value = dateOnlyInstant ?? Date.parse(text);
   if (!Number.isFinite(value)) return null;
   return Math.max(0, Math.round((now.getTime() - value) / 60000));
 }
@@ -308,7 +428,7 @@ export function freshnessVerdict(
       note: `${row.id ?? '—'}: ряд не описан контрактом`,
     };
   }
-  const age = asOfAgeMinutes(row.as_of, now);
+  const age = asOfAgeMinutes(row.as_of, now, contract.dateOnlyAsOfTime);
   const ok = age !== null && age <= contract.maxAsOfAgeMinutes;
   // Десятичная запятая: «0,3 ч». Точка в русской подписи читается как
   // небрежность, а текст проверки человек видит в статусе сайта.
@@ -397,7 +517,7 @@ export function quoteLagVerdict(
     };
   }
   const open = isTradingOpen(contract, now);
-  const age = asOfAgeMinutes(row.as_of, now);
+  const age = asOfAgeMinutes(row.as_of, now, contract.dateOnlyAsOfTime);
   if (!open) {
     return {
       id: contract.id,
