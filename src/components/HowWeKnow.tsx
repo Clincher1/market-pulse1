@@ -18,7 +18,7 @@ const STEPS = [
     title: 'Забираем',
     text:
       'Yahoo Finance (Brent, S&P 500), Европейский центральный банк (USD/EUR), Twelve Data (золото), Kraken (BTC), ЦБ РФ и Мосбиржа для рубля, индексов и ОФЗ. Новости — из открытых RSS-лент.',
-    href: '#guide-overview',
+    href: '/guide#guide-overview',
     link: 'Источники',
   },
   {
@@ -26,7 +26,7 @@ const STEPS = [
     title: 'Проверяем',
     text:
       'Раз в час самопроверка сверяет: не застряла ли дата наблюдения, сходится ли изменение на плитке с опубликованным рядом, есть ли у каждого значения дата. Итог — на странице состояния.',
-    href: '#guide-data-quality',
+    href: '/guide#guide-data-quality',
     link: 'Как проверяем',
   },
   {
@@ -34,7 +34,7 @@ const STEPS = [
     title: 'Считаем',
     text:
       'Изменения считаются по опубликованным значениям с указанной базой сравнения. Совпадение по времени не используется как доказательство причины.',
-    href: '#guide-changes',
+    href: '/guide#guide-changes',
     link: 'Формулы изменений',
   },
   {
@@ -42,7 +42,7 @@ const STEPS = [
     title: 'Показываем',
     text:
       'У каждого числа — источник и момент, на который оно верно: «за 2 нояб.» для закрытия, «на 10:21 МСК» для котировки. Если данных нет — прочерк и слова о том, чего не хватает.',
-    href: '#guide-assets',
+    href: '/guide#guide-assets',
     link: 'Как читать цену',
   },
 ];
@@ -60,13 +60,12 @@ export default function HowWeKnow() {
         {STEPS.map((step, index) => (
           <li
             key={step.title}
-            className="flex flex-col rounded-xl border border-white/10 bg-bg-card p-3.5"
+            className="flex flex-col rounded-xl border border-slate-200 bg-bg-card p-3.5"
           >
             <div className="flex items-center gap-2">
-              {/* Номер шага — текст 11 px: на подложке accent/15 #3b82f6 даёт
-                  3,99:1. Поэтому цифра белая, а акцент остаётся подложке и
-                  иконке (иконке хватает 3:1). */}
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-extrabold tabular-nums text-white">
+              {/* Номер остаётся тёмным на мягкой акцентной подложке, чтобы
+                  сохранить читаемость в светлой теме. */}
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-extrabold tabular-nums text-text-primary">
                 {String(index + 1).padStart(2, '0')}
               </span>
               <step.icon className="h-4 w-4 text-accent" aria-hidden="true" />

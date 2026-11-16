@@ -12,6 +12,17 @@
       "maxDuration": 30
     }
   },
+  "rewrites": [
+    { "source": "/passport", "destination": "/" },
+    { "source": "/russia", "destination": "/" },
+    { "source": "/world", "destination": "/" },
+    { "source": "/brief", "destination": "/" },
+    { "source": "/news", "destination": "/" },
+    { "source": "/memory", "destination": "/" },
+    { "source": "/guide", "destination": "/" },
+    { "source": "/about", "destination": "/" },
+    { "source": "/status", "destination": "/" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
