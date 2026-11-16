@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { mapAssetCacheRow } from '../src/data/assetCacheRow.ts';
@@ -50,4 +51,14 @@ test('пустые значения не превращаются в NaN и не
   assert.equal(asset.change, 0);
   assert.equal(asset.asOf, null);
   assert.equal(asset.sparkDates, null);
+});
+
+test('подпись источника из кэша попадает в модель плитки', () => {
+  const asset = mapAssetCacheRow(row({ source_label: 'Twelve Data' }));
+  assert.equal(asset.sourceLabel, 'Twelve Data');
+});
+
+test('запрос к cached_assets выбирает source_label для подписи источника', async () => {
+  const source = await readFile(new URL('../src/data/liveAssets.ts', import.meta.url), 'utf8');
+  assert.match(source, /as_of, spark_dates, source_label/);
 });

@@ -1,5 +1,6 @@
 // Token-lean news writer with a provider chain (2026-10-28).
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { removeStoredUrlCandidates } from "../_shared/cached-news-dedupe.ts";
 // Same public contract (cached_news rows, {success, updated} response), plus:
 // compact prompt + capped output, retries with backoff for per-minute limits,
 // immediate stop on a daily token quota, noise sections skipped before the
@@ -287,8 +288,9 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
   try {
     const blacklistRows = await restJson('news_blacklist?select=phrase') as Array<{ phrase: string }>;
     const blacklist = blacklistRows.map((b) => String(b.phrase ?? '').toLowerCase()).filter(Boolean);
-    const existingRows = await restJson('cached_news?select=url&order=published_at.desc&limit=1000') as Array<{ url: string }>;
-    const seenUrls = new Set(existingRows.map((r) => String(r.url ?? '')));
+    // Tracks duplicates within this run only. Existing rows are checked exactly
+    // against every candidate below, not just the latest 1,000 cached rows.
+    const seenUrls = new Set<string>();
     const results: AnyRecord[] = [];
     const perSource: AnyRecord = {};
     let analyzed = 0;
@@ -357,6 +359,42 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
       queues.push({ source, stats, items });
     }
 
+    // Check every collected candidate against the full URL index. The former
+    // `latest 1,000` lookup let older feed items be re-analysed and reinserted
+    // for as long as the seven-day date guard still accepted them. A database
+    // trigger is the final concurrency-safe guard; this lookup avoids wasting
+    // provider calls on articles already present in the cache.
+    const candidateUrlKeys = [...new Set(queues.flatMap((queue) => queue.items.map((item) => item.url)))];
+    let storedUrlKeys = new Set<string>();
+    if (candidateUrlKeys.length) {
+      try {
+        const storedRows = await restJson("rpc/cached_news_existing_url_keys", {
+          method: "POST",
+          body: JSON.stringify({ candidate_urls: candidateUrlKeys }),
+        });
+        if (!Array.isArray(storedRows)) {
+          throw new Error("Unexpected cached_news_existing_url_keys response");
+        }
+        storedUrlKeys = new Set(
+          (storedRows as Array<{ url_key: string }>)
+            .map((row) => String(row.url_key ?? ""))
+            .filter(Boolean),
+        );
+      } catch (error) {
+        // Fail closed to avoid spending model calls on possibly stored stories.
+        // The database trigger remains the final concurrency-safe insert guard.
+        const detail = error instanceof Error ? error.message.slice(0, 140) : String(error).slice(0, 140);
+        lastError = `dedupe: ${detail}`;
+        throw new Error(`Cached-news URL dedupe check failed: ${detail}`);
+      }
+    }
+    for (const queue of queues) {
+      const filtered = removeStoredUrlCandidates(queue.items, storedUrlKeys);
+      queue.items = filtered.fresh;
+      queue.stats.dup = Number(queue.stats.dup ?? 0) + filtered.duplicates;
+      queue.stats.fresh = Math.max(0, Number(queue.stats.fresh ?? 0) - filtered.duplicates);
+    }
+
     // How fresh each feed is, recorded every run. This is the check that was
     // missing when the WSJ feed froze: the writer kept analysing its items and
     // the table silently dropped them for 638 days. In its own try/catch, so a
@@ -402,8 +440,23 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
       }
       if (!pickedInPass) break;
     }
-    if (!dryRun && results.length) await restJson('cached_news', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(results) });
-    return Response.json({ success: true, updated: dryRun ? 0 : results.length, dry_run: dryRun, candidates: results.length, analyzed, max_items: maxItems, last_error: lastError || null, groq_error: lastError || null, groq_daily_limit: exhausted.has('groq120'), providers: usedProviders, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts, model: r.model })) });
+    let insertedRows: Array<{ id: number; source: string }> = [];
+    if (!dryRun && results.length) {
+      const inserted = await restJson('cached_news?select=id,source', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(results),
+      });
+      if (!Array.isArray(inserted)) throw new Error('Unexpected cached_news insert response');
+      insertedRows = inserted as Array<{ id: number; source: string }>;
+      for (const queue of queues) queue.stats.added = 0;
+      const queuesBySource = new Map(queues.map((queue) => [queue.source.name, queue]));
+      for (const row of insertedRows) {
+        const queue = queuesBySource.get(String(row.source ?? ''));
+        if (queue) queue.stats.added = Number(queue.stats.added ?? 0) + 1;
+      }
+    }
+    return Response.json({ success: true, updated: dryRun ? 0 : insertedRows.length, dry_run: dryRun, candidates: results.length, analyzed, max_items: maxItems, last_error: lastError || null, groq_error: lastError || null, groq_daily_limit: exhausted.has('groq120'), providers: usedProviders, sources: perSource, sample: results.slice(0, 5).map((r) => ({ source: r.source, title: r.title, importance: r.importance, sentiment: r.sentiment, impacts: r.impacts, model: r.model })) });
   } catch (error) {
     return Response.json({ success: false, error: error instanceof Error ? error.message.slice(0, 700) : String(error).slice(0, 700), groq_error: lastError || null }, { status: 500 });
   }
