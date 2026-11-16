@@ -58,7 +58,7 @@ function formatPct(value?: number): string {
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-bg-primary/55 p-4">
+    <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-bg-primary/55 p-4">
       <div className="break-words text-[11px] font-extrabold uppercase leading-snug tracking-[0.08em] text-text-secondary sm:tracking-[0.13em]">
         {label}
       </div>
@@ -91,7 +91,7 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
             Ценовой ряд: {ASSET_META[forecast.assetKey]?.source ?? forecast.assetKey}
           </p>
         </div>
-        <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-extrabold text-text-secondary">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-extrabold text-text-secondary">
           Записанное направление: {directionLabel}
         </span>
       </div>
@@ -117,7 +117,7 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs">
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 text-xs">
         <span className="font-semibold text-text-secondary">Изменение ценового ряда за горизонт</span>
         <span className="font-extrabold tabular-nums text-text-primary">
           {evaluated ? formatPct(forecast.returnPct) : 'не рассчитано'}
@@ -131,7 +131,7 @@ function ForecastLedgerCard({ forecast }: { forecast: MemoryForecast }) {
       {comparisonLabel && (
         <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">{comparisonLabel}.</p>
       )}
-      <p className="mt-2 border-t border-white/8 pt-2 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-2 border-t border-slate-200 pt-2 text-[11px] leading-relaxed text-text-secondary">
         Это сохранённая запись прогноза и результат по выбранному ценовому ряду; причинная связь с новостями не устанавливается.
         {forecast.promptVersion ? ` Версия классификатора: ${forecast.promptVersion}.` : ''}
       </p>
@@ -194,13 +194,13 @@ export default function MarketMemory() {
     >
       <SectionThemeBadge themeId="memory" className="mb-4" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-400/15 text-fuchsia-200">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-400/15 text-fuchsia-800">
           <Target className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-extrabold tracking-tight lg:text-2xl">Архив прогнозных записей</h2>
-            <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-extrabold text-text-secondary">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-extrabold text-text-secondary">
               Новые прогнозы не выпускаются
             </span>
           </div>
@@ -212,19 +212,19 @@ export default function MarketMemory() {
             изменений.
           </p>
         </div>
-        <GuideLink href="#guide-memory" label="Как читать архив" mobileLabel="Справка" />
+        <GuideLink href="/guide#guide-memory" label="Как читать архив" mobileLabel="Справка" />
       </div>
 
       <div className="overflow-hidden rounded-xl2 border border-fuchsia-300/25 bg-linear-to-br from-fuchsia-400/10 via-bg-card to-bg-card shadow-xl shadow-fuchsia-950/20">
-        <div className="border-b border-white/10 p-5 lg:p-6">
+        <div className="border-b border-slate-200 p-5 lg:p-6">
           {loading && !data ? (
             <div aria-busy="true" aria-label="Загрузка архива прогнозов">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="min-h-28 rounded-xl border border-white/10 bg-bg-primary/55 p-4">
-                    <div className="h-3 w-28 animate-pulse rounded-sm bg-white/10" />
-                    <div className="mt-4 h-8 w-16 animate-pulse rounded-sm bg-white/12" />
-                    <div className="mt-3 h-3 animate-pulse rounded-sm bg-white/[0.07]" />
+                  <div key={index} className="min-h-28 rounded-xl border border-slate-200 bg-bg-primary/55 p-4">
+                    <div className="h-3 w-28 animate-pulse rounded-sm bg-slate-50" />
+                    <div className="mt-4 h-8 w-16 animate-pulse rounded-sm bg-slate-50" />
+                    <div className="mt-3 h-3 animate-pulse rounded-sm bg-slate-50" />
                   </div>
                 ))}
               </div>
@@ -242,8 +242,8 @@ export default function MarketMemory() {
           ) : (
             <>
               {error && data && (
-                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-900" role="status">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-900" aria-hidden="true" />
                   <span className="min-w-0 flex-1">
                     Не удалось обновить архив. Ниже последний успешно загруженный снимок.
                   </span>
@@ -251,7 +251,7 @@ export default function MarketMemory() {
                     type="button"
                     onClick={() => void load()}
                     disabled={isRefreshing}
-                    className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
                   >
                     <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
                     {isRefreshing ? 'Проверяем…' : 'Повторить'}
@@ -282,8 +282,8 @@ export default function MarketMemory() {
                 </span>
                 <span>Последнее обновление цен: {formatDateTime(data?.stats?.latestPriceFetchAt)}</span>
               </div>
-              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-white/10 bg-bg-primary/55 p-4 text-xs leading-relaxed text-text-secondary">
-                <Target className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-200" aria-hidden="true" />
+              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-slate-200 bg-bg-primary/55 p-4 text-xs leading-relaxed text-text-secondary">
+                <Target className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-800" aria-hidden="true" />
                 <span>
                   <strong className="text-text-primary">Ограничение:</strong> архив содержит
                   записанные модельные ожидания. Результат показывает изменение цены за горизонт,
@@ -298,7 +298,7 @@ export default function MarketMemory() {
           {forecasts.length > 0 ? (
             <>
               {overdue > 0 && (
-                <p className="mb-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-100">
+                <p className="mb-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-900">
                   Торговый горизонт завершился у {overdue} из {forecasts.length} загруженных записей,
                   но результат не рассчитан. Эти записи остаются в архиве без изменения исходных полей.
                 </p>
@@ -310,7 +310,7 @@ export default function MarketMemory() {
               </div>
             </>
           ) : (
-            <div className="rounded-xl border border-dashed border-white/15 bg-bg-primary/45 px-5 py-10 text-center text-sm leading-relaxed text-text-secondary">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-bg-primary/45 px-5 py-10 text-center text-sm leading-relaxed text-text-secondary">
               В загруженной части архива нет прогнозных записей. Новые прогнозы не выпускаются;
               исходные архивные строки не удаляются.
             </div>

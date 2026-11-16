@@ -51,11 +51,11 @@ function GuideSection({ id, eyebrow, title, icon: Icon, children }: GuideSection
       className="scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-6 shadow-lg lg:p-8"
     >
       <div className="mb-5 flex items-start gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300/25 bg-rose-400/10 text-rose-200">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300/25 bg-rose-400/10 text-rose-800">
           <Icon className="h-5 w-5" />
         </div>
         <div>
-          <div className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-rose-300">
+          <div className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-rose-800">
             {eyebrow}
           </div>
           <h2 className="text-2xl font-extrabold tracking-tight text-text-primary sm:text-[28px]">
@@ -81,19 +81,19 @@ function GuideBlocks({
   return (
     <div className="grid gap-3 lg:grid-cols-3">
       <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.06] p-4">
-        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-cyan-200">
+        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-cyan-800">
           <Eye className="h-4 w-4" aria-hidden="true" /> Что видно
         </div>
         <div className="text-sm leading-relaxed text-text-secondary">{see}</div>
       </div>
       <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.06] p-4">
-        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-200">
+        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
           <Info className="h-4 w-4" aria-hidden="true" /> Что значит
         </div>
         <div className="text-sm leading-relaxed text-text-secondary">{means}</div>
       </div>
       <div className="rounded-xl border border-amber-300/20 bg-amber-400/[0.06] p-4">
-        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-amber-200">
+        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-amber-900">
           <TriangleAlert className="h-4 w-4" aria-hidden="true" /> Чего не утверждаем
         </div>
         <div className="text-sm leading-relaxed text-text-secondary">{limits}</div>
@@ -124,7 +124,7 @@ export default function AnalyticsGuide() {
         id="guide-start"
         className="scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-6 shadow-lg lg:p-8"
       >
-        <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-rose-300">
+        <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-rose-800">
           Руководство
         </div>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-text-primary sm:text-4xl">
@@ -140,7 +140,7 @@ export default function AnalyticsGuide() {
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] p-4">
-            <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-cyan-200">
+            <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-cyan-800">
               1 · Факт
             </div>
             <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
@@ -148,7 +148,7 @@ export default function AnalyticsGuide() {
             </p>
           </div>
           <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/[0.07] p-4">
-            <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-200">
+            <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
               2 · Измерение
             </div>
             <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
@@ -157,7 +157,7 @@ export default function AnalyticsGuide() {
             </p>
           </div>
           <div className="rounded-xl border border-slate-300/25 bg-slate-400/[0.07] p-4">
-            <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-200">
+            <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-700">
               3 · Архив
             </div>
             <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
@@ -172,7 +172,7 @@ export default function AnalyticsGuide() {
             <a
               key={href}
               href={href}
-              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-text-secondary transition-colors hover:border-white/35 hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300"
+              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-text-secondary transition-colors hover:border-slate-200 hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300"
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               {label}
@@ -206,18 +206,18 @@ export default function AnalyticsGuide() {
               </tr>
             </thead>
             <tbody className="text-text-secondary">
-              <tr className="border-t border-white/10">
-                <td className="py-2 pr-3 font-bold text-cyan-200">Факт</td>
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-3 font-bold text-cyan-800">Факт</td>
                 <td className="py-2 pr-3">Россия и бизнес, Мировые рынки, Новости</td>
                 <td className="py-2">«Такое значение было в такое время у такого источника»</td>
               </tr>
-              <tr className="border-t border-white/10">
-                <td className="py-2 pr-3 font-bold text-emerald-200">Измерение</td>
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-3 font-bold text-emerald-800">Измерение</td>
                 <td className="py-2 pr-3">Что меняется, бриф, графики с датами</td>
                 <td className="py-2">«Вот как мы это посчитали, вот формула»</td>
               </tr>
-              <tr className="border-t border-white/10">
-                <td className="py-2 pr-3 font-bold text-slate-300">Архив</td>
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-3 font-bold text-text-secondary">Архив</td>
                 <td className="py-2 pr-3">Память рынка (исторические записи)</td>
                 <td className="py-2">«Запись прогноза и рассчитанное изменение цены»</td>
               </tr>
@@ -258,7 +258,7 @@ export default function AnalyticsGuide() {
             </>
           }
         />
-        <GuideLink href="#russia-business" label="Открыть раздел «Россия и бизнес»" mobileLabel="К разделу" />
+        <GuideLink href="/russia" label="Открыть раздел «Россия и бизнес»" mobileLabel="К разделу" />
       </GuideSection>
 
       <GuideSection
@@ -293,7 +293,7 @@ export default function AnalyticsGuide() {
             </>
           }
         />
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">Что именно нарисовано на графике.</strong>{' '}
           Ось X линейна по календарным датам источника и подписана четырьмя датами.
           На графике только <strong className="text-text-primary">дневные закрытия</strong>:
@@ -302,7 +302,7 @@ export default function AnalyticsGuide() {
           значение точки показывается при наведении или касании. Цвет линии означает знак
           изменения за период, а не силу движения.
         </div>
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">Нажмите на плитку</strong> — откроется
           панель: график за 30, 90 или 180 календарных дней, изменение периода, минимум и
           максимум с датами, источник и блок «Проверить данные». В нём — те самые точки, из
@@ -310,20 +310,20 @@ export default function AnalyticsGuide() {
           ряда и провайдер. Показаны последние 30 записей выбранного периода; если их
           больше, под таблицей сказано, сколько всего.
         </div>
-        <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] p-4 text-sm leading-relaxed text-cyan-100">
+        <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] p-4 text-sm leading-relaxed text-cyan-800">
           Сегодняшний незакрытый день на график не попадает: он ещё меняется, а закрытый —
           нет. Где это сработало, под графиком есть отдельная пометка с датой последнего
           закрытия. Если датированной истории по активу нет, вместо неё показывается
           график по последним сохранённым наблюдениям без оси дат, и это подписано.
         </div>
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-text-secondary">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-text-secondary">
           Горизонты плитки — это <strong className="text-text-primary">наблюдения, а не
           календарные дни</strong>: день — одно наблюдение, неделя — пять, месяц — до 29.
           Для дня берётся изменение, посчитанное источником; для недели и месяца — разница
           между последним и N-м сохранённым значением. Поэтому «неделя» на карте и неделя
           в календаре могут расходиться.
         </div>
-        <GuideLink href="#global-economy" label="Открыть мировые рынки" mobileLabel="К рынкам" />
+        <GuideLink href="/world" label="Открыть мировые рынки" mobileLabel="К рынкам" />
       </GuideSection>
 
       <GuideSection
@@ -353,7 +353,7 @@ export default function AnalyticsGuide() {
             </>
           }
         />
-        <GuideLink href="#dashboard" label="К брифу на главной" mobileLabel="К брифу" />
+        <GuideLink href="/brief" label="Открыть отдельную страницу брифа" mobileLabel="К брифу" />
       </GuideSection>
 
       <GuideSection
@@ -381,7 +381,7 @@ export default function AnalyticsGuide() {
             </>
           }
         />
-        <GuideLink href="#news" label="Открыть новости" mobileLabel="К новостям" />
+        <GuideLink href="/news" label="Открыть новости" mobileLabel="К новостям" />
       </GuideSection>
 
       <GuideSection
@@ -394,9 +394,9 @@ export default function AnalyticsGuide() {
           see={
             <>
               Карточки по индикаторам: «растёт 3-й день подряд», «максимум с 01.10»,
-              «узкий диапазон: 0,49 %» — с числами и датами. Ниже таблица «неделя к
-              неделе»: насколько ряд сдвинулся за последние семь точек и насколько за
-              семь точек до них.
+              «узкий диапазон: 0,49 %» — с числами и датами. Ниже — сравнение двух периодов:
+              последние семь переходов между точками и семь предыдущих. Это не обязательно
+              календарные недели; для двух окон нужны 15 наблюдений.
             </>
           }
           means={
@@ -405,22 +405,24 @@ export default function AnalyticsGuide() {
               поэтому «0,00 %» никогда не называется ростом. Максимум и минимум — это
               положение последнего значения относительно всего окна в три месяца, а не
               предсказание. Узкий диапазон — размах последних пяти значений меньше 0,6 %
-              от их среднего. В таблице «Неделя к неделе» рядом с изменением стоит «Где в
-              окне»: доля значений всего окна, которые строго ниже последнего, — чтобы было
-              видно не только направление, но и место среди прошлых.
+              от их среднего. В сравнении изменение последних семи переходов сопоставляется
+              с предыдущими семью; «Разница окон» — вычитание предыдущего изменения из
+              последнего в процентных пунктах. «Где в окне» — доля значений доступной истории,
+              которые строго ниже последнего.
             </>
           }
           limits={
             <>
-              У мировых котировок дата — день закрытия, который назвал источник (Yahoo Finance, ЕЦБ,
-              Kraken, Twelve Data): она стоит в каждой строке. Пропущенные дни не достраиваются.
-              Если ряд пришёл без дат, блок прямо говорит, что считает позицию в окне, а не
-              число дней, — вместо того чтобы приписать значениям чужие даты.
+              У котировок дата — день закрытия или наблюдения, который сохранил источник; в
+              сравнении показываются крайние даты каждого периода, если они доступны. Для
+              российских рядов это торговые наблюдения, не календарные недели. Пропуски не
+              достраиваются. Если даты не сохранены, строка говорит об этом, а не приписывает
+              значениям чужой календарь.
             </>
           }
         />
         <GuideLink
-          href="#market-memory"
+          href="/memory"
           label="Архив прежних прогнозов с промахами"
           mobileLabel="К архиву"
         />
@@ -452,7 +454,7 @@ export default function AnalyticsGuide() {
             </>
           }
         />
-        <GuideLink href="#market-memory" label="Открыть память рынка" mobileLabel="К памяти" />
+        <GuideLink href="/memory" label="Открыть память рынка" mobileLabel="К памяти" />
       </GuideSection>
 
       <GuideSection
@@ -498,7 +500,7 @@ export default function AnalyticsGuide() {
             сохраняться, и пропущенные дни не дорисовываются.
           </p>
         </div>
-        <GuideLink href="#status" label="Открыть состояние системы" mobileLabel="К статусу" />
+        <GuideLink href="/status" label="Открыть состояние системы" mobileLabel="К статусу" />
       </GuideSection>
 
       <GuideSection
@@ -544,7 +546,7 @@ export default function AnalyticsGuide() {
           ].map(({ q, a }) => (
             <details
               key={q}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
             >
               <summary className="min-h-6 cursor-pointer py-1 text-sm font-extrabold text-text-primary">
                 {q}
@@ -557,7 +559,7 @@ export default function AnalyticsGuide() {
 
       <section className="rounded-xl2 border border-emerald-300/25 bg-emerald-400/[0.06] p-6 lg:p-8">
         <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden="true" />
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-800" aria-hidden="true" />
           <div>
             <h2 className="text-lg font-extrabold text-text-primary">
               Короткая памятка перед выводом

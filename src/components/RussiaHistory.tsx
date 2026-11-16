@@ -138,7 +138,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
   const y = (value: number) =>
     PAD_TOP + ((maxValue - value) / (maxValue - minValue)) * (HEIGHT - PAD_TOP - PAD_BOTTOM);
 
-  let path = '';
+  let path: string;
   if (series.kind === 'step') {
     const first = points[0];
     path = `M${x(first.date).toFixed(1)} ${y(first.value).toFixed(1)}`;

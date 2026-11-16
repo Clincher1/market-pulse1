@@ -48,8 +48,12 @@ test('список разрешённых префиксов не расшири
 test('из статики отдаётся index.html для маршрутов SPA', () => {
   const root = '/srv/site/dist';
   assert.equal(resolveStaticPath('/', root), join(root, 'index.html'));
-  // Прямой переход по якорю и вложенный маршрут без расширения — это SPA.
-  assert.equal(resolveStaticPath('/status', root), join(root, 'index.html'));
+  // Каждая тема — отдельный path URL; прямой переход и перезагрузка отдают SPA entry.
+  for (const route of ['/passport', '/russia', '/world', '/brief', '/news', '/memory', '/guide', '/about', '/status']) {
+    assert.equal(resolveStaticPath(route, root), join(root, 'index.html'), `${route} должен обслуживаться приложением`);
+  }
+  // Подразделы гида остаются обычными hash-якорями внутри его страницы.
+  assert.equal(resolveStaticPath('/guide#guide-memory', root), join(root, 'index.html'));
   assert.equal(resolveStaticPath('/guide-memory', root), join(root, 'index.html'));
   // Настоящий файл отдаётся как файл.
   assert.equal(resolveStaticPath('/assets/app-abc123.js', root), join(root, 'assets/app-abc123.js'));
