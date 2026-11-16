@@ -130,11 +130,11 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
     `максимум ${formatRate(highest.value)} на сроке ${formatTerm(highest.period)}. Источник: ${indicator.provider}, ${asOf}.`;
 
   return (
-    <figure className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+    <figure className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <figcaption className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <div className="text-sm font-extrabold text-white">Кривая доходности ОФЗ по срокам</div>
-          <div className="mt-0.5 text-[11px] font-medium text-slate-400">
+          <div className="text-sm font-extrabold text-text-primary">Кривая доходности ОФЗ по срокам</div>
+          <div className="mt-0.5 text-[11px] font-medium text-text-secondary">
             {curve.length} точек от {formatTerm(minPeriod)} до {formatTerm(maxPeriod)};{' '}
             {indicator.provider}, {asOf}
           </div>
@@ -143,7 +143,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
           href="https://www.moex.com/ru/marketdata/indices/state/gcurve/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-6 items-center text-[11px] font-semibold text-blue-300 underline-offset-2 hover:underline"
+          className="inline-flex min-h-6 items-center text-[11px] font-semibold text-blue-800 underline-offset-2 hover:underline"
         >
           Открыть источник
         </a>
@@ -166,7 +166,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
           role="img"
           aria-label={ariaLabel}
         >
-          <text x={padX} y={11} className="fill-slate-400 text-[11px]">
+          <text x={padX} y={11} className="fill-slate-600 text-[11px]">
             шкала — проценты
           </text>
 
@@ -183,14 +183,14 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
                   y1={y}
                   y2={y}
                   stroke="currentColor"
-                  className="text-white/10"
+                  className="text-slate-200"
                   strokeWidth="1"
                 />
                 <text
                   x={padX - 6}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-slate-400 text-[11px] tabular-nums"
+                  className="fill-slate-600 text-[11px] tabular-nums"
                 >
                   {formatTick(tick, yStep)}
                 </text>
@@ -206,32 +206,32 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
                 x={x}
                 y={height - 6}
                 textAnchor="middle"
-                className="fill-slate-400 text-[11px]"
+                className="fill-slate-600 text-[11px]"
               >
                 {formatTerm(tick)}
               </text>
             );
           })}
 
-          <path d={path} fill="none" stroke="currentColor" className="text-blue-300" strokeWidth="2" />
+          <path d={path} fill="none" stroke="currentColor" className="text-blue-800" strokeWidth="2" />
           {points.map((point) => (
             <circle
               key={`p-${point.period}`}
               cx={point.x}
               cy={point.y}
               r={2}
-              className="fill-blue-200"
+              className="fill-blue-700"
             />
           ))}
 
           {tenYear && (
             <g>
-              <circle cx={tenYear.x} cy={tenYear.y} r={4.5} className="fill-amber-300" />
+              <circle cx={tenYear.x} cy={tenYear.y} r={4.5} className="fill-amber-700" />
               <text
                 x={tenYear.x}
                 y={tenYear.y - 9}
                 textAnchor="middle"
-                className="fill-amber-200 text-[11px] font-semibold"
+                className="fill-amber-800 text-[11px] font-semibold"
               >
                 10 лет · {formatRate(tenYear.value)}
               </text>
@@ -246,7 +246,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
                 y1={padY}
                 y2={height - padY}
                 stroke="currentColor"
-                className="text-white/30"
+                className="text-slate-300"
                 strokeDasharray="4 4"
               />
               <circle
@@ -254,7 +254,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
                 cy={active.y}
                 r={4.5}
                 className="fill-white"
-                stroke="#0A1424"
+                stroke="#1e40af"
                 strokeWidth="1.5"
               />
             </g>
@@ -263,7 +263,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
 
         {active && (
           <div
-            className="pointer-events-none absolute z-10 rounded-xl border border-white/15 bg-[#111827]/96 px-3 py-2 text-center shadow-xl"
+            className="pointer-events-none absolute z-10 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-center shadow-lg"
             style={{
               left: `${(active.x / width) * 100}%`,
               top: `${(active.y / height) * 100}%`,
@@ -272,18 +272,18 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
               }, calc(-100% - 12px))`,
             }}
           >
-            <div className="whitespace-nowrap text-[11px] font-semibold text-slate-400">
+            <div className="whitespace-nowrap text-[11px] font-semibold text-text-secondary">
               срок {formatTerm(active.period)}
             </div>
-            <div className="whitespace-nowrap text-sm font-black text-white">
+            <div className="whitespace-nowrap text-sm font-black text-text-primary">
               {formatRate(active.value)}
             </div>
           </div>
         )}
       </div>
 
-      <div className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-300" />
+      <div className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-text-secondary">
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-800" />
         <span>
           Минимум {formatRate(lowest.value)} на сроке {formatTerm(lowest.period)}, максимум{' '}
           {formatRate(highest.value)} на сроке {formatTerm(highest.period)}. Ось сроков

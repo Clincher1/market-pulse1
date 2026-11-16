@@ -221,9 +221,9 @@ function factsFrom(
 }
 
 const TONE_CLASS: Record<'up' | 'down' | 'flat', string> = {
-  up: 'text-emerald-300',
-  down: 'text-red-300',
-  flat: 'text-slate-400',
+  up: 'text-emerald-800',
+  down: 'text-red-800',
+  flat: 'text-text-secondary',
 };
 
 export default function BusinessMoney() {
@@ -260,10 +260,10 @@ export default function BusinessMoney() {
   if (loading && markets.length === 0) {
     return (
       <section aria-busy="true" aria-label="Деньги бизнеса сегодня" className="mb-10 scroll-mt-24">
-        <div className="h-6 w-56 animate-pulse rounded bg-white/10" />
+        <div className="h-6 w-56 animate-pulse rounded bg-slate-200" />
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-44 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+            <div key={index} className="h-44 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
           ))}
         </div>
       </section>
@@ -304,18 +304,18 @@ export default function BusinessMoney() {
               target="_blank"
               rel="noopener noreferrer"
               data-testid={`business-money-${fact.id}`}
-              className="group flex flex-col rounded-2xl border border-white/10 bg-black/25 p-4 shadow-lg transition-all hover:-translate-y-0.5 hover:border-accent/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+              className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
             >
               <div className="flex items-center gap-2">
-                <Icon className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                <span className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-blue-200">
+                <Icon className="h-4 w-4 shrink-0 text-blue-700" aria-hidden="true" />
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-blue-800">
                   {fact.title}
                 </span>
-                <ArrowUpRight className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-300" />
+                <ArrowUpRight className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-800" />
               </div>
 
               <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-2xl font-extrabold tabular-nums text-white">
+                <span className="text-2xl font-extrabold tabular-nums text-text-primary">
                   {fact.value ?? '—'}
                 </span>
                 {fact.change && (
@@ -326,12 +326,12 @@ export default function BusinessMoney() {
                   </span>
                 )}
               </div>
-              <div className="mt-1 text-[11px] leading-snug text-slate-400">{fact.unit}</div>
+              <div className="mt-1 text-[11px] leading-snug text-text-secondary">{fact.unit}</div>
 
               {fact.secondary && (
-                <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[11px] text-slate-300">
+                <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[11px] text-text-secondary">
                   <span>{fact.secondary.label}:</span>
-                  <span className="font-bold tabular-nums text-slate-100">
+                  <span className="font-bold tabular-nums text-text-primary">
                     {fact.secondary.value}
                   </span>
                   {fact.secondary.change && (
@@ -344,18 +344,18 @@ export default function BusinessMoney() {
                     </span>
                   )}
                   {fact.secondary.note && (
-                    <span className="text-slate-400">· {fact.secondary.note}</span>
+                    <span className="text-text-secondary">· {fact.secondary.note}</span>
                   )}
                 </div>
               )}
 
-              <div className="mt-3 border-t border-white/10 pt-2 text-[11px] leading-snug text-slate-400">
-                <span className="font-bold text-slate-200">{fact.provider}</span>
+              <div className="mt-3 border-t border-slate-200 pt-2 text-[11px] leading-snug text-text-secondary">
+                <span className="font-bold text-slate-700">{fact.provider}</span>
                 {fact.asOf && <> · {fact.asOf}</>}
               </div>
 
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-300">
-                <span className="font-bold text-slate-100">Что сверить:</span> {fact.check}.
+              <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+                <span className="font-bold text-slate-700">Что сверить:</span> {fact.check}.
               </p>
             </a>
           );

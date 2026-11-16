@@ -84,7 +84,7 @@ function MorningAssets({ assets }: { assets: PassportAsset[] }) {
       {assets.map((asset) => (
         <div
           key={asset.id}
-          className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+          className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
         >
           <div className="truncate text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
             {asset.name}
@@ -145,14 +145,14 @@ export default function DailyPassport() {
         aria-label="Загрузка паспорта дня"
         className="mb-10 scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-5 lg:mb-12 lg:p-6"
       >
-        <div className="h-4 w-40 animate-pulse rounded-sm bg-white/10" />
+        <div className="h-4 w-40 animate-pulse rounded-sm bg-slate-200" />
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-          <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06] lg:col-span-6" />
-          <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06] lg:col-span-6" />
+          <div className="h-40 animate-pulse rounded-3xl bg-slate-100 lg:col-span-6" />
+          <div className="h-40 animate-pulse rounded-3xl bg-slate-100 lg:col-span-6" />
         </div>
         <div className="mt-2 grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
           {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-[86px] animate-pulse rounded-2xl bg-white/[0.04]" />
+            <div key={i} className="h-[86px] animate-pulse rounded-2xl bg-slate-100" />
           ))}
         </div>
       </section>
@@ -182,7 +182,7 @@ export default function DailyPassport() {
         className="mb-10 scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-5 lg:mb-12 lg:p-6"
       >
         <h2 className="flex items-center gap-2 text-lg font-extrabold text-text-primary">
-          <CalendarCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+          <CalendarCheck className="h-5 w-5 text-emerald-700" aria-hidden="true" />
           Паспорт дня
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
@@ -197,14 +197,14 @@ export default function DailyPassport() {
     <section
       id="daily-passport"
       aria-labelledby="daily-passport-title"
-      className="mb-10 scroll-mt-24 rounded-xl2 border border-emerald-300/25 bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(10,14,26,0.2))] p-4 lg:mb-12 lg:p-6"
+      className="mb-10 scroll-mt-24 rounded-xl2 border border-emerald-200 bg-linear-to-br from-emerald-50/70 via-white to-white p-4 shadow-sm lg:mb-12 lg:p-6"
     >
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2
           id="daily-passport-title"
           className="flex items-center gap-2 text-lg font-extrabold text-text-primary lg:text-xl"
         >
-          <CalendarCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+          <CalendarCheck className="h-5 w-5 text-emerald-700" aria-hidden="true" />
           Паспорт дня
         </h2>
         <span className="text-sm font-bold text-text-secondary">{passportDate(today.date)}</span>
@@ -215,7 +215,7 @@ export default function DailyPassport() {
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
         {/* Самое сильное движение дня. */}
-        <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] motion-safe:animate-fade-in lg:col-span-6 lg:p-5">
+        <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm motion-safe:animate-fade-in lg:col-span-6 lg:p-5">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Сильнейшее движение
           </div>
@@ -238,7 +238,7 @@ export default function DailyPassport() {
         </article>
 
         {/* Официальный курс — снимок утра, не текущий курс. */}
-        <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] motion-safe:animate-fade-in sm:col-span-2 lg:col-span-6 lg:p-5">
+        <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm motion-safe:animate-fade-in sm:col-span-2 lg:col-span-6 lg:p-5">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Курс USD/RUB на утро
           </div>
@@ -282,7 +282,7 @@ export default function DailyPassport() {
       </p>
 
       {archive.length > 0 ? (
-        <details className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+        <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
           <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Архив · {archive.length} {movingWord(archive.length)} до сегодня
           </summary>
@@ -297,7 +297,7 @@ export default function DailyPassport() {
               </thead>
               <tbody className="text-text-secondary">
                 {archive.map((day) => (
-                  <tr key={day.date} className="border-t border-white/[0.06]">
+                  <tr key={day.date} className="border-t border-slate-200">
                     <td className="py-1 pr-3 font-bold text-text-primary">
                       {passportDateShort(day.date)}
                     </td>
