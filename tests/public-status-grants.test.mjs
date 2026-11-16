@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 const migrationPath = new URL(
-  '../supabase/migrations/20261116113000_public_status_column_grants.sql',
+  '../supabase/migrations/20261116135651_public_status_column_grants.sql',
   import.meta.url,
 );
 
