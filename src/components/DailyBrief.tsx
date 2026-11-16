@@ -88,15 +88,15 @@ function formatSeriesValue(value: number, sample: string): string {
 function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode }) {
   const sourceUrl = item.sourceUrl ? safeHttpUrl(item.sourceUrl) : null;
   return (
-    <li className="flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-white/[0.04]">
+    <li className="flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-slate-50">
       {marker}
       <a
         href={item.href}
-        className="group flex min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+        className="group flex min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
       >
         <span className="min-w-0 flex-1">{item.body}</span>
         <ArrowRight
-          className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-violet-300"
+          className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-violet-800"
           aria-hidden="true"
         />
       </a>
@@ -105,7 +105,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-violet-200 hover:text-violet-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
           aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
         >
           {item.sourceLabel ?? 'Источник'}
@@ -181,7 +181,7 @@ export default function DailyBrief() {
       const observedAt = observationLabel(strongestGlobal.asOf);
       facts.push({
         id: 'global-move',
-        href: '#global-economy',
+        href: '/world',
         body: (
           <>
             Наибольшее по модулю дневное изменение среди загруженных мировых рядов:{' '}
@@ -221,7 +221,7 @@ export default function DailyBrief() {
       const observedAt = formatDateOnly(strongestRussia.asOf) ?? strongestRussia.asOf;
       facts.push({
         id: 'russia-move',
-        href: '#russia-business',
+        href: '/russia',
         body: (
           <>
             Наибольшее по модулю изменение среди выбранных российских рядов:{' '}
@@ -289,7 +289,7 @@ export default function DailyBrief() {
         magnitude: Math.abs(deltaPct),
         item: {
           id: `change-global-${asset.id}`,
-          href: '#global-economy',
+          href: '/world',
           body: (
             <>
               {asset.name}: {formatSeriesValue(current, asset.price)} против{' '}
@@ -338,7 +338,7 @@ export default function DailyBrief() {
         magnitude: Math.abs(deltaPct),
         item: {
           id: `change-russia-${indicator.id}`,
-          href: '#russia-business',
+          href: '/russia',
           body: (
             <>
               {indicator.name}: {formatIndicatorValue(indicator)} {indicator.unit} против{' '}
@@ -379,12 +379,12 @@ export default function DailyBrief() {
   const changesHeading = 'Сравнение с сохранённым снимком';
 
   const changesSection = (
-    <div data-testid="brief-changes" className="mt-5 border-t border-white/10 pt-4">
+    <div data-testid="brief-changes" className="mt-5 border-t border-slate-200 pt-4">
       <div className="flex flex-wrap items-center gap-2">
-        <History className="h-4 w-4 text-violet-300" aria-hidden="true" />
+        <History className="h-4 w-4 text-violet-800" aria-hidden="true" />
         <h3 className="text-sm font-extrabold tracking-tight">{changesHeading}</h3>
         {baselineStamp && (
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
             точка отсчёта: {baselineStamp}
           </span>
         )}
@@ -446,10 +446,10 @@ export default function DailyBrief() {
     <section id="brief" className="mb-10 scroll-mt-24 lg:mb-12" aria-label="Бриф за 60 секунд">
       <SectionThemeBadge themeId="brief" className="mb-4" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Zap className="h-5 w-5 text-violet-300" aria-hidden="true" />
+        <Zap className="h-5 w-5 text-violet-800" aria-hidden="true" />
         <h2 className="text-lg font-extrabold tracking-tight lg:text-xl">Бриф за 60 секунд</h2>
         {stamp && (
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
             обновлено {stamp}
           </span>
         )}
@@ -459,7 +459,7 @@ export default function DailyBrief() {
           download="market-pulse-brief.png"
           title="Серверная PNG-карточка с актуальными цифрами, без параметров отслеживания"
           aria-label="Снимок для Telegram — скачать PNG брифа"
-          className="ml-auto inline-flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-100 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="ml-auto inline-flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-800 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
           Снимок для Telegram
@@ -469,11 +469,11 @@ export default function DailyBrief() {
       <div className="rounded-xl2 border border-violet-300/25 bg-bg-card p-4 shadow-lg shadow-violet-950/20 sm:p-5">
         {loading ? (
           <div aria-busy="true" aria-label="Собираем бриф">
-            <div className="h-5 w-56 animate-pulse rounded-sm bg-white/10" />
+            <div className="h-5 w-56 animate-pulse rounded-sm bg-slate-50" />
             <div className="mt-4 space-y-2.5">
-              <div className="h-4 animate-pulse rounded-sm bg-white/[0.07]" />
-              <div className="h-4 w-11/12 animate-pulse rounded-sm bg-white/[0.06]" />
-              <div className="h-4 w-4/5 animate-pulse rounded-sm bg-white/[0.05]" />
+              <div className="h-4 animate-pulse rounded-sm bg-slate-50" />
+              <div className="h-4 w-11/12 animate-pulse rounded-sm bg-slate-50" />
+              <div className="h-4 w-4/5 animate-pulse rounded-sm bg-slate-50" />
             </div>
             <p className="mt-4 text-xs text-text-secondary">
               Загружаем рыночные значения и сохранённую точку сравнения…

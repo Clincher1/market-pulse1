@@ -32,7 +32,7 @@ export default function KeyAssets() {
       <div className="mb-5">
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-cyan-300">
+            <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-cyan-800">
               <Globe className="h-3.5 w-3.5" />
               Глобальный контур · котировки
             </div>
@@ -46,7 +46,7 @@ export default function KeyAssets() {
             </span>
           )}
           <GuideLink
-            href="#guide-assets"
+            href="/guide#guide-assets"
             label="Цена, % и график"
             mobileLabel="Справка"
           />
@@ -68,8 +68,8 @@ export default function KeyAssets() {
       ) : (
         <>
           {error && hasLiveData && (
-            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" />
+            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-900" role="status">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-900" />
               <span className="min-w-0 flex-1">
                 Обновление мировых цен не удалось. Показаны последние успешно полученные значения.
               </span>
@@ -77,7 +77,7 @@ export default function KeyAssets() {
                 type="button"
                 onClick={() => void refresh()}
                 disabled={isRefreshing}
-                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
               >
                 <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? 'Проверяем…' : 'Повторить'}
@@ -86,8 +86,8 @@ export default function KeyAssets() {
           )}
 
           {!error && hasLiveData && fallbackNames.length > 0 && (
-            <div className="mb-4 flex items-start gap-2.5 rounded-2xl border border-amber-300/20 bg-amber-400/[0.08] px-4 py-3 text-sm leading-relaxed text-amber-100" role="status">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+            <div className="mb-4 flex items-start gap-2.5 rounded-2xl border border-amber-300/20 bg-amber-400/[0.08] px-4 py-3 text-sm leading-relaxed text-amber-900" role="status">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-900" />
               <span>
                 Часть плиток не получила свежую цену: {fallbackNames.join(', ')}.
                 Они помечены «нет свежей цены» и окрашены нейтрально, чтобы резервное
@@ -110,7 +110,7 @@ export default function KeyAssets() {
                 {[0, 1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="h-[202px] animate-pulse rounded-xl bg-white/[0.05]"
+                    className="h-[202px] animate-pulse rounded-xl bg-slate-50"
                     style={{ animationDelay: `${i * 120}ms` }}
                   />
                 ))}

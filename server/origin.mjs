@@ -143,8 +143,8 @@ export function resolveStaticPath(rawUrl, rootDir) {
   const candidate = normalize(join(root, relative));
   if (candidate !== root && !candidate.startsWith(root + sep)) return null;
 
-  // Без расширения — это маршрут SPA (#status, #guide), а не файл: отдаём
-  // index.html, иначе прямой переход по ссылке даст 404.
+  // Без расширения — это адрес клиентской страницы (/russia, /guide), а не
+  // файл: отдаём index.html, иначе прямой переход или перезагрузка даст 404.
   return isFileRequest ? candidate : join(root, 'index.html');
 }
 

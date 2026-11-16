@@ -47,7 +47,7 @@ function NewsCard({ item, index }: { item: NewsHeadline; index: number }) {
       className="rounded-xl2 border border-border-subtle bg-bg-card p-5 shadow-lg transition-colors hover:border-amber-300/40 hover:bg-bg-card-hover lg:p-6"
     >
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-        <span className="rounded-md bg-amber-400/10 px-2.5 py-1 font-bold text-amber-200">
+        <span className="rounded-md bg-amber-400/10 px-2.5 py-1 font-bold text-amber-900">
           {item.source || 'Источник не указан'}
         </span>
         <span className="inline-flex items-center gap-1.5 text-text-secondary">
@@ -63,7 +63,7 @@ function NewsCard({ item, index }: { item: NewsHeadline; index: number }) {
           rel="noopener noreferrer"
           className="group block min-h-8 py-1"
         >
-          <h3 className="text-base font-bold leading-snug text-text-primary transition-colors group-hover:text-amber-200 lg:text-lg">
+          <h3 className="text-base font-bold leading-snug text-text-primary transition-colors group-hover:text-amber-900 lg:text-lg">
             {item.title || 'Заголовок не указан'}
             <ExternalLink className="ml-1 inline h-3.5 w-3.5 opacity-60" aria-hidden="true" />
           </h3>
@@ -115,13 +115,13 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className={`min-h-11 w-full rounded-xl border bg-white/6 px-3.5 py-2.5 text-left text-sm font-semibold text-text-primary transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent/50 ${
-          open ? 'border-accent bg-accent/10' : 'border-white/15 hover:border-accent/60 hover:bg-accent/10'
+        className={`min-h-11 w-full rounded-xl border bg-slate-50 px-3.5 py-2.5 text-left text-sm font-semibold text-text-primary transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent/50 ${
+          open ? 'border-accent bg-accent/10' : 'border-slate-200 hover:border-accent/60 hover:bg-accent/10'
         }`}
       >
         <span className="flex items-center justify-between gap-3">
           <span className="truncate">{value}</span>
-          <ChevronDown className={`h-4 w-4 shrink-0 text-amber-200 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+          <ChevronDown className={`h-4 w-4 shrink-0 text-amber-900 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
         </span>
       </button>
       <AnimatePresence>
@@ -133,7 +133,7 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.14 }}
-            className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-64 overflow-auto rounded-xl border border-white/12 bg-[#111827] p-1.5 shadow-2xl shadow-black/50"
+            className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-64 overflow-auto rounded-xl border border-slate-200 bg-bg-card p-1.5 shadow-2xl shadow-black/50"
           >
             {options.map((option) => {
               const selected = option === value;
@@ -148,7 +148,7 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
                     setOpen(false);
                   }}
                   className={`flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent/50 ${
-                    selected ? 'bg-accent-strong text-white' : 'text-text-primary hover:bg-white/10 hover:text-white'
+                    selected ? 'bg-accent-strong text-white' : 'text-text-primary hover:bg-slate-100 hover:text-text-primary'
                   }`}
                 >
                   <span className="truncate">{option}</span>
@@ -223,9 +223,9 @@ export default function NewsFeed() {
       <SectionThemeBadge themeId="news" className="mb-4" />
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <h2 className="text-xl font-bold tracking-tight lg:text-2xl">Глобальные новости</h2>
-        <GuideLink href="#guide-news" label="О новостной ленте" mobileLabel="Справка" />
+        <GuideLink href="/guide#guide-news" label="О новостной ленте" mobileLabel="Справка" />
         {lastUpdatedLabel && !error && (
-          <span className="ml-auto hidden text-xs font-semibold text-slate-400 sm:inline">
+          <span className="ml-auto hidden text-xs font-semibold text-text-secondary sm:inline">
             Последняя проверка в {lastUpdatedLabel}
           </span>
         )}
@@ -241,7 +241,7 @@ export default function NewsFeed() {
         <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-text-secondary">
             <Filter className="h-4 w-4" aria-hidden="true" />
-            <span className="text-sm font-extrabold text-slate-200">Фильтр по источнику</span>
+            <span className="text-sm font-extrabold text-slate-700">Фильтр по источнику</span>
             {activeFilterCount > 0 && (
               <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950">1</span>
             )}
@@ -254,28 +254,28 @@ export default function NewsFeed() {
             onClick={() => setFiltersOpen((open) => !open)}
             aria-expanded={filtersOpen}
             aria-controls="news-filter-panel"
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-4 py-2 text-sm font-extrabold text-amber-100 transition-colors hover:bg-amber-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-4 py-2 text-sm font-extrabold text-amber-900 transition-colors hover:bg-amber-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             {filtersOpen ? 'Свернуть' : 'Выбрать источник'}
             <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
           </button>
         </div>
-        <div id="news-filter-panel" className={filtersOpen ? 'mt-4 border-t border-white/8 pt-4' : 'hidden'}>
+        <div id="news-filter-panel" className={filtersOpen ? 'mt-4 border-t border-slate-200 pt-4' : 'hidden'}>
           <FilterSelect
             label="Фильтр по источнику"
             value={source}
             options={sourceOptions}
             onChange={setSource}
           />
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/8 pt-4">
-            <p className="text-xs leading-relaxed text-slate-400" aria-live="polite">
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+            <p className="text-xs leading-relaxed text-text-secondary" aria-live="polite">
               {`Загружено ${news.length} публикаций; показано ${filteredNews.length} по выбранному источнику.`}
             </p>
             <button
               type="button"
               onClick={resetFilters}
               disabled={activeFilterCount === 0}
-              className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-slate-100 transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
+              className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-extrabold text-text-primary transition-colors hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
               Сбросить фильтр
@@ -289,11 +289,11 @@ export default function NewsFeed() {
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="rounded-xl2 border border-border-subtle bg-bg-card p-5 lg:p-6">
               <div className="flex gap-2">
-                <div className="h-6 w-24 animate-pulse rounded-md bg-white/10" />
-                <div className="h-6 w-36 animate-pulse rounded-md bg-white/[0.07]" />
+                <div className="h-6 w-24 animate-pulse rounded-md bg-slate-50" />
+                <div className="h-6 w-36 animate-pulse rounded-md bg-slate-50" />
               </div>
-              <div className="mt-5 h-6 animate-pulse rounded-sm bg-white/10" />
-              <div className="mt-2 h-6 w-3/4 animate-pulse rounded-sm bg-white/[0.08]" />
+              <div className="mt-5 h-6 animate-pulse rounded-sm bg-slate-50" />
+              <div className="mt-2 h-6 w-3/4 animate-pulse rounded-sm bg-slate-50" />
             </div>
           ))}
         </div>
@@ -310,8 +310,8 @@ export default function NewsFeed() {
       )}
 
       {error && news.length > 0 && (
-        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100" role="status">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-900" role="status">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-900" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             Не удалось обновить ленту. Ниже последние успешно загруженные заголовки
             {lastUpdatedLabel ? ` (проверка в ${lastUpdatedLabel})` : ''}.
@@ -320,7 +320,7 @@ export default function NewsFeed() {
             type="button"
             onClick={() => void refresh()}
             disabled={isRefreshing}
-            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
           >
             <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
             {isRefreshing ? 'Проверяем…' : 'Повторить'}
@@ -340,7 +340,7 @@ export default function NewsFeed() {
         <div data-testid="news-expand-controls" className="mt-6 rounded-xl2 border border-amber-300/25 bg-amber-400/[0.06] p-4 shadow-lg shadow-amber-950/10">
           <div className="flex flex-wrap items-center gap-4">
             <div className="min-w-0 flex-1">
-              <p data-testid="news-visible-status" className="text-sm font-extrabold text-amber-100" aria-live="polite">
+              <p data-testid="news-visible-status" className="text-sm font-extrabold text-amber-900" aria-live="polite">
                 На экране {visibleCount} из {filteredNews.length}
               </p>
               <p className="mt-1 text-xs leading-relaxed text-text-secondary">
@@ -355,7 +355,7 @@ export default function NewsFeed() {
                 data-testid="news-show-latest"
                 aria-pressed={visibleMode === 'latest'}
                 onClick={() => setVisibleMode('latest')}
-                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${visibleMode === 'latest' ? 'border-amber-300 bg-amber-400 text-slate-950' : 'border-white/12 bg-white/[0.05] text-white hover:bg-white/10'}`}
+                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${visibleMode === 'latest' ? 'border-amber-300 bg-amber-400 text-slate-950' : 'border-slate-200 bg-slate-50 text-text-primary hover:bg-slate-100'}`}
               >
                 {visibleMode === 'latest' ? 'Последние 4' : 'Свернуть до 4'}
               </button>
@@ -364,7 +364,7 @@ export default function NewsFeed() {
                 data-testid="news-show-half"
                 aria-pressed={visibleMode === 'half'}
                 onClick={() => setVisibleMode('half')}
-                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${visibleMode === 'half' ? 'border-amber-300 bg-amber-400 text-slate-950' : 'border-amber-300/30 bg-amber-400/10 text-amber-100 hover:bg-amber-400/15'}`}
+                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${visibleMode === 'half' ? 'border-amber-300 bg-amber-400 text-slate-950' : 'border-amber-300/30 bg-amber-400/10 text-amber-900 hover:bg-amber-400/15'}`}
               >
                 Показать половину · {halfCount}
               </button>
@@ -373,7 +373,7 @@ export default function NewsFeed() {
                 data-testid="news-show-all"
                 aria-pressed={visibleMode === 'all'}
                 onClick={() => setVisibleMode('all')}
-                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${visibleMode === 'all' ? 'border-amber-300 bg-amber-400 text-slate-950' : 'border-amber-300/30 bg-amber-400/10 text-amber-100 hover:bg-amber-400/15'}`}
+                className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-200 ${visibleMode === 'all' ? 'border-amber-300 bg-amber-400 text-slate-950' : 'border-amber-300/30 bg-amber-400/10 text-amber-900 hover:bg-amber-400/15'}`}
               >
                 Показать все · {filteredNews.length}
               </button>
@@ -383,9 +383,9 @@ export default function NewsFeed() {
       )}
 
       {!loading && news.length > 0 && filteredNews.length === 0 && (
-        <div className="rounded-xl2 border border-dashed border-white/12 bg-white/[0.03] px-6 py-14 text-center">
+        <div className="rounded-xl2 border border-dashed border-slate-200 bg-slate-50 px-6 py-14 text-center">
           <SearchX className="mx-auto h-9 w-9 text-slate-500" aria-hidden="true" />
-          <h3 className="mt-4 text-lg font-extrabold text-white">У этого источника нет загруженных заголовков</h3>
+          <h3 className="mt-4 text-lg font-extrabold text-text-primary">У этого источника нет загруженных заголовков</h3>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-text-secondary">
             В кэше есть {news.length} публикаций, но ни одна не относится к выбранному источнику.
           </p>

@@ -3,19 +3,19 @@ import { SectionThemeBadge } from './sectionThemes';
 
 const entries = [
   {
-    href: '#guide-start',
+    href: '/guide#guide-start',
     icon: Clock3,
     title: 'Две минуты на всё',
     text: 'Как читать сайт по порядку: факт, измерение, гипотеза.',
   },
   {
-    href: '#guide-overview',
+    href: '/guide#guide-overview',
     icon: Scale,
     title: 'Факт, измерение, гипотеза',
     text: 'Где заканчивается наблюдение и начинается вывод модели.',
   },
   {
-    href: '#guide-faq',
+    href: '/guide#guide-faq',
     icon: ListChecks,
     title: 'Восемь частых вопросов',
     text: 'Почему у плитки прочерк, почему график актива кончается вчера и зачем показывать плохой счёт.',
@@ -34,8 +34,8 @@ export default function GuideTeaser() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SectionThemeBadge themeId="guide" />
           <a
-            href="#guide"
-            className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-rose-300/50 bg-rose-400/15 px-4 py-2 text-sm font-extrabold text-rose-50 transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-700 hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+            href="/guide"
+            className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-rose-300/50 bg-rose-400/15 px-4 py-2 text-sm font-extrabold text-rose-800 transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-700 hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           >
             <BookOpen className="h-4 w-4" />
             Открыть гид
