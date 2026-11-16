@@ -229,7 +229,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
         onBlur={() => setActiveIndex(null)}
       >
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full" role="img" aria-label={aria}>
-          <text x={PAD_LEFT} y={14} className="fill-slate-400 text-[11px]">
+          <text x={PAD_LEFT} y={14} className="fill-slate-600 text-[11px]">
             шкала — {axisUnitLabel(series.unit)}
           </text>
 
@@ -241,48 +241,48 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
                 y1={y(tick)}
                 y2={y(tick)}
                 stroke="currentColor"
-                className="text-white/10"
+                className="text-slate-200"
               />
               <text
                 x={PAD_LEFT - 8}
                 y={y(tick) + 3}
                 textAnchor="end"
-                className="fill-slate-400 text-[11px] tabular-nums"
+                className="fill-slate-600 text-[11px] tabular-nums"
               >
                 {formatTick(tick, step)}
               </text>
             </g>
           ))}
 
-          <path d={path} fill="none" stroke="currentColor" className="text-blue-300" strokeWidth="2" />
+          <path d={path} fill="none" stroke="currentColor" className="text-blue-800" strokeWidth="2" />
 
           {series.kind === 'line' &&
             points.map((point) => (
-              <circle key={`dot-${point.date}`} cx={x(point.date)} cy={y(point.value)} r={1.8} className="fill-blue-200" />
+              <circle key={`dot-${point.date}`} cx={x(point.date)} cy={y(point.value)} r={1.8} className="fill-blue-700" />
             ))}
           {series.kind === 'step' &&
             points.map((point) => (
-              <circle key={`step-${point.date}`} cx={x(point.date)} cy={y(point.value)} r={3} className="fill-amber-300" />
+              <circle key={`step-${point.date}`} cx={x(point.date)} cy={y(point.value)} r={3} className="fill-amber-800" />
             ))}
 
           {/* Минимум и максимум подписаны на самом графике: без них «высоко или
               низко» приходилось угадывать по двум крайним числам. */}
           <g>
-            <circle cx={x(highest.date)} cy={y(highest.value)} r={3} className="fill-emerald-300" />
+            <circle cx={x(highest.date)} cy={y(highest.value)} r={3} className="fill-emerald-700" />
             <text
               x={x(highest.date)}
               y={y(highest.value) - 8}
               textAnchor={labelAnchor(highest.date)}
-              className="fill-emerald-200 text-[11px] font-semibold tabular-nums"
+              className="fill-emerald-800 text-[11px] font-semibold tabular-nums"
             >
               макс {formatValue(highest.value, series.unit)}
             </text>
-            <circle cx={x(lowest.date)} cy={y(lowest.value)} r={3} className="fill-rose-300" />
+            <circle cx={x(lowest.date)} cy={y(lowest.value)} r={3} className="fill-rose-700" />
             <text
               x={x(lowest.date)}
               y={y(lowest.value) + 14}
               textAnchor={labelAnchor(lowest.date)}
-              className="fill-rose-200 text-[11px] font-semibold tabular-nums"
+              className="fill-rose-800 text-[11px] font-semibold tabular-nums"
             >
               мин {formatValue(lowest.value, series.unit)}
             </text>
@@ -296,7 +296,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
                 y1={PAD_TOP}
                 y2={HEIGHT - PAD_BOTTOM}
                 stroke="currentColor"
-                className="text-white/30"
+                className="text-text-secondary"
                 strokeDasharray="4 4"
               />
               <circle cx={activeX} cy={activeY} r={4.5} className="fill-white" stroke="#0A1424" strokeWidth="1.5" />
@@ -309,7 +309,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
               x={x(iso)}
               y={HEIGHT - 8}
               textAnchor={labelAnchor(iso)}
-              className="fill-slate-400 text-[11px] tabular-nums"
+              className="fill-slate-600 text-[11px] tabular-nums"
             >
               {shortDate(iso)}
             </text>
@@ -318,15 +318,15 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
 
         {active && (
           <div
-            className="pointer-events-none absolute z-10 rounded-xl border border-white/15 bg-[#111827]/96 px-3 py-2 text-center shadow-xl"
+            className="pointer-events-none absolute z-10 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-center shadow-lg"
             style={{ left: tooltipLeft, top: tooltipTop, transform: `translate(${tooltipShift}, calc(-100% - 12px))` }}
           >
-            <div className="whitespace-nowrap text-[11px] font-semibold text-slate-400">{ruDate(active.date)}</div>
-            <div className="whitespace-nowrap text-sm font-black text-white">
+            <div className="whitespace-nowrap text-[11px] font-semibold text-text-secondary">{ruDate(active.date)}</div>
+            <div className="whitespace-nowrap text-sm font-black text-text-primary">
               {formatValue(active.value, series.unit)}
             </div>
             {series.kind === 'step' && active.since && (
-              <div className="whitespace-nowrap text-[11px] font-semibold text-slate-400">
+              <div className="whitespace-nowrap text-[11px] font-semibold text-text-secondary">
                 действует с {ruDate(active.since)}
               </div>
             )}
@@ -334,7 +334,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
         )}
       </div>
 
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] font-medium text-slate-400">
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] font-medium text-text-secondary">
         <span>Наведите курсор или коснитесь графика — дата и значение появятся в подсказке.</span>
         <span>Отметки шкалы — круглые числа; пропущенные дни не заполняются.</span>
       </div>
@@ -383,24 +383,24 @@ export default function RussiaHistory() {
   return (
     <div className="mt-5">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-        <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+        <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
           Динамика за 3 месяца — из первоисточников
         </div>
         {data?.window.from && (
-          <div className="text-[11px] font-medium text-slate-400">
+          <div className="text-[11px] font-medium text-text-secondary">
             окно {ruDate(data.window.from)} — {ruDate(data.window.till)}
           </div>
         )}
       </div>
 
       {loading && (
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-xs text-slate-400">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-text-secondary">
           Загружаем историю из Мосбиржи и Банка России. Пока ответа нет — чисел здесь не будет.
         </div>
       )}
 
       {!loading && data && data.series.length === 0 && (
-        <div className="flex items-start gap-2 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-100">
+        <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             Историю получить не удалось, поэтому графиков нет.
@@ -410,7 +410,7 @@ export default function RussiaHistory() {
       )}
 
       {!loading && data && data.series.length > 0 && series && stats && (
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
             {data.series.map((item) => {
               const active = item.id === series.id;
@@ -422,8 +422,8 @@ export default function RussiaHistory() {
                   onClick={() => setSelectedId(item.id)}
                   className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                     active
-                      ? 'border-accent/60 bg-accent/15 text-white'
-                      : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/25'
+                      ? 'border-blue-300 bg-blue-50 text-blue-800'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                   }`}
                 >
                   {item.name}
@@ -433,18 +433,18 @@ export default function RussiaHistory() {
           </div>
 
           <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
-            <span className="text-lg font-extrabold tabular-nums text-white">
+            <span className="text-lg font-extrabold tabular-nums text-text-primary">
               {formatValue(stats.last.value, series.unit)}
             </span>
             {stats.change && (
-              <span className="text-xs font-semibold text-slate-300">
+              <span className="text-xs font-semibold text-text-secondary">
                 {stats.change} с {ruDate(stats.first.date)}
               </span>
             )}
             {!stats.change && series.kind === 'step' && (
-              <span className="text-xs text-slate-400">в этом окне ставка не менялась</span>
+              <span className="text-xs text-text-secondary">в этом окне ставка не менялась</span>
             )}
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-text-secondary">
               минимум {formatValue(stats.min, series.unit)} · максимум {formatValue(stats.max, series.unit)}
             </span>
           </div>
@@ -453,16 +453,16 @@ export default function RussiaHistory() {
             <Chart series={series} window={data.window} />
           </div>
 
-          <div className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-slate-400">
+          <div className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-text-secondary">
             <div className="flex items-start gap-1.5">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-300" />
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-800" />
               <span>
                 {series.note} Точек: {series.points.length}. Источник — {series.provider};{' '}
                 <a
                   href={series.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-6 items-center text-blue-300 underline-offset-2 hover:underline"
+                  className="inline-flex min-h-6 items-center text-blue-800 underline-offset-2 hover:underline"
                 >
                   открыть источник
                 </a>
@@ -478,8 +478,8 @@ export default function RussiaHistory() {
               </div>
             ))}
             {data.notes.length > 1 && (
-              <details className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
-                <summary className="min-h-6 cursor-pointer select-none py-1 font-bold text-slate-400 transition-colors hover:text-slate-200">
+              <details className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+                <summary className="min-h-6 cursor-pointer select-none py-1 font-bold text-text-secondary transition-colors hover:text-text-primary">
                   Как читать график
                 </summary>
                 <div className="mt-1.5 flex flex-col gap-1.5">
@@ -494,14 +494,14 @@ export default function RussiaHistory() {
             )}
           </div>
 
-          <details className="mt-2 text-[11px] text-slate-400">
-            <summary className="min-h-6 cursor-pointer select-none py-1 font-semibold text-slate-300">
+          <details className="mt-2 text-[11px] text-text-secondary">
+            <summary className="min-h-6 cursor-pointer select-none py-1 font-semibold text-text-secondary">
               Все {series.points.length} значений ряда
             </summary>
             <div className="mt-2 max-h-64 overflow-auto">
               <table className="w-full text-left tabular-nums">
                 <thead>
-                  <tr className="text-slate-400">
+                  <tr className="text-text-secondary">
                     <th scope="col" className="py-1 pr-3 font-medium">
                       Дата
                     </th>
@@ -533,7 +533,7 @@ export default function RussiaHistory() {
           </details>
 
           {data.errors.length > 0 && (
-            <div className="mt-2 text-[11px] font-medium text-amber-200/80">
+            <div className="mt-2 text-[11px] font-medium text-amber-800">
               Не получено: {data.errors.join('; ')}. Ряд без данных не рисуется и не заменяется
               похожим.
             </div>

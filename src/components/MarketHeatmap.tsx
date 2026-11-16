@@ -78,14 +78,14 @@ const PALETTES: Record<
     // Насыщенность по-прежнему кодирует величину, число рядом остаётся точным.
     tilePositive: [4, 120, 87],
     tileNegative: [185, 28, 28],
-    linePositive: "#34d399",
-    lineNegative: "#f87171",
+    linePositive: "#047857",
+    lineNegative: "#b91c1c",
   },
   colorblind: {
     tilePositive: [3, 105, 161],
     tileNegative: [194, 65, 12],
-    linePositive: "#38bdf8",
-    lineNegative: "#fb923c",
+    linePositive: "#0369a1",
+    lineNegative: "#c2410c",
   },
 };
 
@@ -172,9 +172,9 @@ function tileColor(change: number, cap: number, paletteId: PaletteId): string {
 
 function directionalTextClass(value: number, paletteId: PaletteId): string {
   if (paletteId === "colorblind") {
-    return value >= 0 ? "text-sky-300" : "text-orange-300";
+    return value >= 0 ? "text-sky-800" : "text-orange-800";
   }
-  return value >= 0 ? "text-emerald-300" : "text-red-300";
+  return value >= 0 ? "text-emerald-800" : "text-red-800";
 }
 
 function readInitialPalette(): PaletteId {
@@ -499,7 +499,7 @@ function AssetChart({
 
   if (points.length < 2) {
     return (
-      <div className="flex h-52 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-sm text-text-secondary">
+      <div className="flex h-52 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm text-text-secondary">
         Недостаточно сохранённых значений для графика.
       </div>
     );
@@ -585,7 +585,7 @@ function AssetChart({
               x2={width}
               y1={padTop + fraction * (height - padTop - padBottom)}
               y2={padTop + fraction * (height - padTop - padBottom)}
-              stroke="rgba(255,255,255,0.07)"
+              stroke="rgba(148,163,184,0.22)"
               strokeWidth="1"
               strokeDasharray="4 5"
               vectorEffect="non-scaling-stroke"
@@ -608,7 +608,7 @@ function AssetChart({
                 x2={highlight.x}
                 y1={padTop}
                 y2={height - padBottom}
-                stroke="rgba(255,255,255,0.45)"
+                stroke="rgba(71,85,105,0.45)"
                 strokeWidth="1.2"
                 strokeDasharray="4 4"
                 vectorEffect="non-scaling-stroke"
@@ -643,29 +643,29 @@ function AssetChart({
           )}
         </svg>
 
-        <span className="absolute right-1 top-0 rounded-sm bg-black/25 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/85">
+        <span className="absolute right-1 top-0 rounded-sm border border-slate-200 bg-white/95 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-slate-700 shadow-sm">
           max {formatValue(rawMax)}
         </span>
-        <span className="absolute bottom-0 right-1 rounded-sm bg-black/25 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/85">
+        <span className="absolute bottom-0 right-1 rounded-sm border border-slate-200 bg-white/95 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-slate-700 shadow-sm">
           min {formatValue(rawMin)}
         </span>
 
         {active && (
           <>
             <div
-              className="absolute bottom-0 top-0 w-px bg-white/25"
+              className="absolute bottom-0 top-0 w-px bg-slate-500/50"
               style={{ left: `${activePct}%` }}
               aria-hidden="true"
             />
             <div
-              className="absolute top-1 whitespace-nowrap rounded-md border border-white/15 bg-[#0B1526]/95 px-2 py-1 text-[11px] font-bold tabular-nums text-white shadow-lg"
+              className="absolute top-1 whitespace-nowrap rounded-md border border-slate-200 bg-white/95 px-2 py-1 text-[11px] font-bold tabular-nums text-text-primary shadow-sm"
               style={{
                 left: `${activePct}%`,
                 transform: `translateX(${activePct < 18 ? "0%" : activePct > 82 ? "-100%" : "-50%"})`,
               }}
             >
               {formatValue(active.value)}
-              <span className="ml-1.5 font-semibold text-white/60">
+              <span className="ml-1.5 font-semibold text-text-secondary">
                 {activeOffset === 0
                   ? "последнее закрытие"
                   : `${activeOffset} ${daysWord(activeOffset)} назад`}
@@ -708,7 +708,7 @@ function DatedAssetChart({
 
   if (points.length < 2 || domainEndMs <= domainStartMs) {
     return (
-      <div className="flex h-52 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-sm text-text-secondary">
+      <div className="flex h-52 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm text-text-secondary">
         Недостаточно датированных значений для выбранного периода.
       </div>
     );
@@ -804,7 +804,7 @@ function DatedAssetChart({
               x2={width}
               y1={padTop + fraction * (height - padTop - padBottom)}
               y2={padTop + fraction * (height - padTop - padBottom)}
-              stroke="rgba(255,255,255,0.07)"
+              stroke="rgba(148,163,184,0.22)"
               strokeWidth="1"
               strokeDasharray="4 5"
               vectorEffect="non-scaling-stroke"
@@ -817,7 +817,7 @@ function DatedAssetChart({
               x2={fraction * width}
               y1={padTop}
               y2={height - padBottom}
-              stroke="rgba(255,255,255,0.045)"
+              stroke="rgba(148,163,184,0.15)"
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
@@ -852,30 +852,30 @@ function DatedAssetChart({
           )}
         </svg>
 
-        <span className="absolute right-1 top-0 rounded-sm bg-black/25 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/85">
+        <span className="absolute right-1 top-0 rounded-sm border border-slate-200 bg-white/95 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-slate-700 shadow-sm">
           max {formatValue(rawMax)}
         </span>
-        <span className="absolute bottom-0 right-1 rounded-sm bg-black/25 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/85">
+        <span className="absolute bottom-0 right-1 rounded-sm border border-slate-200 bg-white/95 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-slate-700 shadow-sm">
           min {formatValue(rawMin)}
         </span>
 
         {active && (
           <>
             <div
-              className="absolute bottom-0 top-0 w-px bg-white/25"
+              className="absolute bottom-0 top-0 w-px bg-slate-500/50"
               style={{ left: `${activePct}%` }}
               aria-hidden="true"
             />
             <div
               data-testid="dated-chart-tooltip"
-              className="absolute top-1 whitespace-nowrap rounded-md border border-white/15 bg-[#0B1526]/95 px-2 py-1 text-[11px] font-bold tabular-nums text-white shadow-lg"
+              className="absolute top-1 whitespace-nowrap rounded-md border border-slate-200 bg-white/95 px-2 py-1 text-[11px] font-bold tabular-nums text-text-primary shadow-sm"
               style={{
                 left: `${activePct}%`,
                 transform: `translateX(${activePct < 18 ? "0%" : activePct > 82 ? "-100%" : "-50%"})`,
               }}
             >
               {formatValue(active.value)}
-              <span className="ml-1.5 font-semibold text-white/60">
+              <span className="ml-1.5 font-semibold text-text-secondary">
                 {formatDateLong(active.date)}
               </span>
             </div>
@@ -1049,7 +1049,7 @@ function AssetPanel({
       id="asset-panel"
       role="region"
       aria-label={`Подробно об активе ${asset.name}`}
-      className="mt-3 animate-fade-in rounded-xl border border-cyan-300/25 bg-[#0A1424] p-4 shadow-lg sm:p-5"
+      className="mt-3 animate-fade-in rounded-xl border border-cyan-200 bg-white p-4 shadow-sm sm:p-5"
     >
       <div className="flex flex-wrap items-start gap-3">
         <div>
@@ -1058,7 +1058,7 @@ function AssetPanel({
               {asset.name}
             </h4>
             {isFallback && (
-              <span className="inline-flex rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100">
+              <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-900">
                 нет свежей цены
               </span>
             )}
@@ -1094,7 +1094,7 @@ function AssetPanel({
           type="button"
           onClick={onClose}
           aria-label="Свернуть панель актива"
-          className="ml-auto inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-extrabold text-cyan-100 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+          className="ml-auto inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-extrabold text-cyan-900 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
         >
           Свернуть
           <X className="h-4 w-4" aria-hidden="true" />
@@ -1102,7 +1102,7 @@ function AssetPanel({
       </div>
 
       {isFallback && (
-        <p className="mt-3 rounded-lg border border-amber-300/20 bg-amber-400/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100">
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
           Свежая цена по этому активу не получена, поэтому цена и изменение не
           показаны: подставлять вместо них сохранённое или выдуманное число мы
           не будем.
@@ -1112,7 +1112,7 @@ function AssetPanel({
       <div className="mt-4">
         {historyLoading ? (
           <div
-            className="flex h-52 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] px-4 text-center text-sm text-text-secondary"
+            className="flex h-52 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-center text-sm text-text-secondary"
             role="status"
           >
             Загружаем датированную историю дневных значений…
@@ -1143,7 +1143,7 @@ function AssetPanel({
               <div
                 role="group"
                 aria-label="Период датированного графика в календарных днях"
-                className="inline-flex shrink-0 rounded-full border border-white/15 bg-white/5 p-1"
+                className="inline-flex shrink-0 rounded-full border border-slate-200 bg-slate-50 p-1"
               >
                 {HISTORY_RANGE_OPTIONS.map((days) => (
                   <button
@@ -1155,7 +1155,7 @@ function AssetPanel({
                     className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
                       historyRangeDays === days
                         ? "bg-cyan-300 text-[#071120]"
-                        : "text-text-secondary hover:bg-white/10 hover:text-white"
+                        : "text-text-secondary hover:bg-slate-100 hover:text-text-primary"
                     }`}
                   >
                     {days} дн.
@@ -1173,7 +1173,7 @@ function AssetPanel({
             />
 
             {history.unfinishedDayExcluded && (
-              <p className="mt-2 rounded-lg border border-cyan-300/20 bg-cyan-400/[0.07] px-3 py-2 text-[11px] leading-relaxed text-cyan-100">
+              <p className="mt-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] leading-relaxed text-cyan-900">
                 Сегодняшний день ещё не закрыт, поэтому последняя точка графика
                 — закрытие {formatDateLong(lastHistoryPoint.date)}. Текущая цена
                 дня показана на плитке выше и меняется в течение суток; на
@@ -1183,7 +1183,7 @@ function AssetPanel({
             )}
 
             {isHistoryPartial && historyPoints[0] && (
-              <p className="mt-2 rounded-lg border border-amber-300/20 bg-amber-400/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-100">
+              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
                 Доступная датированная история начинается{" "}
                 {formatDateLong(historyPoints[0].date)}, поэтому выбранный
                 диапазон {historyRangeDays} {calendarDaysWord(historyRangeDays)}{" "}
@@ -1292,7 +1292,7 @@ function AssetPanel({
       )}
 
       {history && visibleHistoryPoints.length > 0 && (
-        <details className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+        <details className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
           <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Проверить данные · {visibleHistoryPoints.length}{" "}
             {observationsWord(visibleHistoryPoints.length)}
@@ -1308,7 +1308,7 @@ function AssetPanel({
           </p>
           <div className="mt-2 max-h-56 overflow-auto">
             <table className="w-full text-left text-[11px] tabular-nums">
-              <thead className="sticky top-0 bg-[#0A1424] text-text-secondary">
+              <thead className="sticky top-0 bg-slate-50 text-text-secondary">
                 <tr>
                   <th scope="col" className="py-1 pr-2 font-bold">
                     Дата
@@ -1323,7 +1323,7 @@ function AssetPanel({
               </thead>
               <tbody>
                 {checkRows.map(({ point, delta }) => (
-                  <tr key={point.date} className="border-t border-white/[0.06]">
+                  <tr key={point.date} className="border-t border-slate-200">
                     <td className="py-1 pr-2 text-text-secondary">
                       {formatDateShort(point.date)}
                     </td>
@@ -1356,7 +1356,7 @@ function AssetPanel({
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <section
           aria-label="Диапазон сохранённых значений"
-          className="rounded-lg border border-white/10 bg-white/[0.03] p-4"
+          className="rounded-lg border border-slate-200 bg-white p-4"
         >
           <h5 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Диапазон 30 значений
@@ -1375,15 +1375,15 @@ function AssetPanel({
                 {windowPositionPct}% выше минимума окна
               </p>
               <div
-                className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10"
+                className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200"
                 aria-hidden="true"
               >
                 <div
-                  className="h-full rounded-full bg-cyan-400/70"
+                  className="h-full rounded-full bg-cyan-700"
                   style={{ width: `${windowPositionPct}%` }}
                 />
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-text-secondary/80">
+              <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
                 Это факт по сохранённым закрытиям: где цена стоит внутри своего
                 окна. Ожиданий и рекомендаций здесь нет — выдача прогнозов
                 остановлена 31 октября 2026 года.
@@ -1399,7 +1399,7 @@ function AssetPanel({
 
         <section
           aria-label="Источник данных"
-          className="rounded-lg border border-white/10 bg-white/[0.03] p-4"
+          className="rounded-lg border border-slate-200 bg-white p-4"
         >
           <h5 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Источник данных
@@ -1420,7 +1420,7 @@ function AssetPanel({
                   href={meta.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-extrabold text-white transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-blue-800 transition-colors hover:border-cyan-300 hover:bg-cyan-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-700"
                 >
                   Открыть первоисточник
                   <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1433,7 +1433,7 @@ function AssetPanel({
               цен.
             </p>
           )}
-          <p className="mt-3 text-[11px] leading-relaxed text-text-secondary/80">
+          <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
             Это дневные закрытия, а не поток котировок в реальном времени.
           </p>
         </section>
@@ -1453,11 +1453,11 @@ function SkeletonTiles() {
           key={index}
           className="min-h-[202px] animate-pulse rounded-xl border border-border-subtle bg-bg-card p-4"
         >
-          <div className="h-4 w-20 rounded-sm bg-white/10" />
-          <div className="mt-5 h-6 w-24 rounded-sm bg-white/10" />
-          <div className="mt-4 h-5 w-16 rounded-sm bg-white/10" />
-          <div className="mt-5 h-7 rounded-sm bg-white/10" />
-          <div className="mt-3 h-7 rounded-full bg-white/10" />
+          <div className="h-4 w-20 rounded-sm bg-slate-200" />
+          <div className="mt-5 h-6 w-24 rounded-sm bg-slate-200" />
+          <div className="mt-4 h-5 w-16 rounded-sm bg-slate-200" />
+          <div className="mt-5 h-7 rounded-sm bg-slate-200" />
+          <div className="mt-3 h-7 rounded-full bg-slate-200" />
         </div>
       ))}
     </div>
@@ -1538,7 +1538,7 @@ export default function MarketHeatmap({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl2 border border-cyan-300/20 bg-[#0C1626] p-4 shadow-lg sm:p-5">
+    <div className="relative overflow-hidden rounded-xl2 border border-cyan-200 bg-white/95 p-4 shadow-sm sm:p-5">
       <div
         className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-blue-500 via-cyan-400 to-emerald-500"
         aria-hidden="true"
@@ -1546,10 +1546,10 @@ export default function MarketHeatmap({
       <div className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
           <h3 className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary">
-            <Grid2x2 className="h-5 w-5 text-cyan-300" />
+            <Grid2x2 className="h-5 w-5 text-cyan-800" />
             Тепловая карта мировых рынков
           </h3>
-          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-cyan-100">
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-cyan-900">
             <Globe className="h-3.5 w-3.5" />
             Глобальный контур
           </span>
@@ -1566,7 +1566,7 @@ export default function MarketHeatmap({
         <div
           role="group"
           aria-label="Горизонт изменения на тепловой карте"
-          className="inline-flex rounded-full border border-white/15 bg-white/5 p-1"
+          className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1"
         >
           {HORIZON_OPTIONS.map((option) => (
             <button
@@ -1579,7 +1579,7 @@ export default function MarketHeatmap({
               className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
                 horizonId === option.id
                   ? "bg-cyan-300 text-[#071120]"
-                  : "text-text-secondary hover:bg-white/10 hover:text-white"
+                  : "text-text-secondary hover:bg-slate-100 hover:text-text-primary"
               }`}
             >
               {option.label}
@@ -1603,8 +1603,8 @@ export default function MarketHeatmap({
           }
           className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
             paletteId === "colorblind"
-              ? "border-orange-300/50 bg-sky-400/15 text-sky-100"
-              : "border-white/15 bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white"
+              ? "border-sky-200 bg-sky-50 text-sky-900"
+              : "border-slate-200 bg-white text-text-secondary hover:bg-slate-100 hover:text-text-primary"
           }`}
         >
           <PaletteIcon className="h-3.5 w-3.5" aria-hidden="true" />

@@ -50,13 +50,13 @@ export default function Footer() {
         </div>
 
         <div className="site-footer__legal mt-6">
-        <p className="text-center text-xs leading-relaxed text-text-secondary/80">
+        <p className="text-center text-xs leading-relaxed text-text-secondary">
           Сайт не использует cookies, не ставит трекеры и не собирает
           персональные данные. Локально в вашем браузере сохраняются только две
           настройки: выбранные профили в разделе «Россия и бизнес» и включённая
           палитра тепловой карты. Эти данные никуда не отправляются.
         </p>
-        <p className="mt-2 text-center text-xs leading-relaxed text-text-secondary/80">
+        <p className="mt-2 text-center text-xs leading-relaxed text-text-secondary">
           Материалы сайта носят информационный характер и не являются
           персональной инвестиционной рекомендацией.
         </p>

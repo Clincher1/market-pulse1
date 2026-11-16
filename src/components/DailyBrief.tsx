@@ -424,14 +424,14 @@ export default function DailyBrief() {
       )}
 
       {snapshot && changeView.renamed.length > 0 && (
-        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary">
           Для {changeView.renamed.join(', ')} сравнение не выполняется: с момента снимка сменился
           инструмент или источник.
         </p>
       )}
 
       {snapshot && changeView.comparable > 0 && (
-        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary/80">
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary">
           Формула: (текущее значение / значение в снимке − 1) × 100. Изменения округляются до
           0,01 % и сортируются по абсолютной величине; показано не более шести рядов.
           {changeView.changed > changeView.items.length
@@ -506,7 +506,7 @@ export default function DailyBrief() {
               ))}
             </ol>
             {changesSection}
-            <p className="mt-3.5 text-[11px] leading-relaxed text-text-secondary/80">
+            <p className="mt-3.5 text-[11px] leading-relaxed text-text-secondary">
               Сводка показывает загруженные значения и арифметические сравнения с сохранённым
               снимком. Совпадение по времени не объясняет причину изменения; рекомендации не
               выдаются.

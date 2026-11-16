@@ -55,7 +55,7 @@ export default function MarketTicker() {
           return (
             <li
               key={asset.id}
-              className="rounded-xl border border-white/10 bg-bg-card px-3 py-2.5"
+              className="rounded-xl border border-border-subtle bg-bg-card px-3 py-2.5"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="truncate text-[11px] font-bold text-text-secondary">

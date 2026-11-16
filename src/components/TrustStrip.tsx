@@ -94,7 +94,7 @@ export default function TrustStrip() {
         {cells.map((cell) => (
           <div
             key={cell.title}
-            className="rounded-xl border border-white/10 bg-bg-card px-3.5 py-3"
+            className="rounded-xl border border-border-subtle bg-bg-card px-3.5 py-3"
           >
             <dt className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
               <cell.icon className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />

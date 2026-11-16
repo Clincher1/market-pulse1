@@ -22,9 +22,9 @@ import {
  * придуманными нулями.
  */
 function stateClass(verdict: string | null): string {
-  if (verdict === 'ok') return 'text-emerald-300';
-  if (verdict === 'paused') return 'text-amber-300';
-  if (verdict === 'failing') return 'text-rose-300';
+  if (verdict === 'ok') return 'text-emerald-800';
+  if (verdict === 'paused') return 'text-amber-900';
+  if (verdict === 'failing') return 'text-rose-800';
   return 'text-text-secondary';
 }
 
@@ -50,11 +50,11 @@ export default function SourcesMonitor() {
 
   if (!slots.length) {
     return (
-      <div className="mb-5 flex items-start gap-3 rounded-xl2 border border-amber-300/25 bg-amber-400/10 p-5 text-amber-100">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+      <div className="mb-5 flex items-start gap-3 rounded-xl2 border border-amber-200 bg-amber-50 p-5 text-amber-900">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
         <div>
           <div className="font-bold">Реестр слотов пока пуст</div>
-          <p className="mt-1 text-sm text-amber-100/80">
+          <p className="mt-1 text-sm text-amber-900">
             Реестр заполняется писателем цен при каждом запуске. Пустая таблица означает, что
             синхронизация ещё не проходила — это же проверяет самопроверка, проверка
             «Слоты и источники совпадают с реестром».
@@ -73,7 +73,7 @@ export default function SourcesMonitor() {
   return (
     <div className="mb-5 rounded-xl2 border border-border-subtle bg-bg-card p-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Database className="h-4 w-4 text-cyan-300" />
+        <Database className="h-4 w-4 text-cyan-800" />
         <span className="text-xs font-bold uppercase tracking-widest text-text-secondary">
           Слоты и источники
         </span>
@@ -89,7 +89,7 @@ export default function SourcesMonitor() {
       </p>
 
       {withoutSource.length > 0 && (
-        <p className="mb-3 text-sm text-amber-200">
+        <p className="mb-3 text-sm text-amber-900">
           Без источника сейчас: слоты {withoutSource.join(', ')} — они не будут обновляться, пока
           владелец не включит источник.
         </p>
@@ -126,12 +126,12 @@ export default function SourcesMonitor() {
                   </td>
                   <td className="py-2 pr-3">
                     <div className="flex items-center gap-1.5">
-                      <Radio className="h-3.5 w-3.5 shrink-0 text-cyan-300" />
+                      <Radio className="h-3.5 w-3.5 shrink-0 text-cyan-800" />
                       <span className="font-semibold">{primary?.id ?? '—'}</span>
                     </div>
                     <div className="text-[11px] text-text-secondary">{primary?.why ?? 'источник не задан'}</div>
                     {backup.length > 0 && (
-                      <div className="mt-0.5 text-[11px] text-text-secondary/80">
+                      <div className="mt-0.5 text-[11px] text-text-secondary">
                         запасные: {backup.map((source) => source.id).join(', ')}
                       </div>
                     )}
@@ -170,7 +170,7 @@ export default function SourcesMonitor() {
           Одна строка SQL — и писатель цен возьмёт новый источник на следующем запуске (не позже пяти
           минут):
         </p>
-        <pre className="overflow-x-auto rounded-lg border border-border-subtle bg-black/30 p-3 font-mono text-[11px] text-text-secondary">
+        <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] text-slate-700">
 {`insert into public.source_preferences (slot_id, source_id, priority, enabled)
 values ('price.btc', 'coinbase', 1, true)
 on conflict (slot_id, source_id)

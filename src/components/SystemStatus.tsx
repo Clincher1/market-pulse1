@@ -131,7 +131,7 @@ export default function SystemStatus() {
   return (
     <section id="status" className="mx-auto max-w-5xl scroll-mt-24 px-1 pt-2">
       <div className="mb-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-emerald-200">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-emerald-800">
           <Activity className="h-3.5 w-3.5" />
           Состояние системы
         </div>
@@ -150,18 +150,18 @@ export default function SystemStatus() {
       {loading ? (
         <div className="min-h-[320px] animate-pulse rounded-xl2 border border-border-subtle bg-bg-card p-6" />
       ) : failed || !row ? (
-        <div className="flex items-start gap-3 rounded-xl2 border border-amber-300/25 bg-amber-400/10 p-5 text-amber-100">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+        <div className="flex items-start gap-3 rounded-xl2 border border-amber-200 bg-amber-50 p-5 text-amber-900">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
           <div>
             <div className="font-bold">Отчёт пока недоступен</div>
-            <p className="mt-1 text-sm text-amber-100/80">
+            <p className="mt-1 text-sm text-amber-900">
               Не удалось прочитать таблицу самопроверки. Первая запись
               появляется через несколько минут после очередного часового запуска.
             </p>
             <button
               type="button"
               onClick={() => void load()}
-              className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-50 transition-colors hover:bg-amber-300/25"
+              className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-100"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Обновить
@@ -177,21 +177,21 @@ export default function SystemStatus() {
             transition={{ duration: 0.4 }}
             className={`mb-5 rounded-xl2 border p-5 sm:p-6 ${
               allOk
-                ? 'border-emerald-300/25 bg-emerald-400/[0.06]'
-                : 'border-rose-300/30 bg-rose-400/[0.07]'
+                ? 'border-emerald-200 bg-emerald-50'
+                : 'border-rose-200 bg-rose-50'
             }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5">
                   {allOk ? (
-                    <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-300" />
+                    <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-700" />
                   ) : (
-                    <XCircle className="h-6 w-6 shrink-0 text-rose-300" />
+                    <XCircle className="h-6 w-6 shrink-0 text-rose-700" />
                   )}
                   <span
                     className={`text-lg font-extrabold sm:text-xl ${
-                      allOk ? 'text-emerald-200' : 'text-rose-200'
+                      allOk ? 'text-emerald-800' : 'text-rose-800'
                     }`}
                   >
                     {allOk ? 'Все публичные проверки пройдены' : `Публичных проблемных проверок: ${failing.length}`}
@@ -199,14 +199,14 @@ export default function SystemStatus() {
                 </div>
                 <div className="mt-2 text-sm text-text-secondary">
                   Последняя проверка: {formatCheckedAt(row.checked_at)}
-                  <span className="ml-2 rounded-full bg-white/5 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">
+                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">
                     {row.trigger === 'manual' ? 'вручную' : 'по расписанию'}
                   </span>
                 </div>
                 {!allOk && (
                   <div className="mt-3 space-y-1">
                     {failing.map(([name, value]) => (
-                      <div key={name} className="text-sm text-rose-100">
+                      <div key={name} className="text-sm text-rose-900">
                         <span className="font-bold">
                           {CHECK_LABELS[name]?.title ?? name}:
                         </span>{' '}
@@ -221,7 +221,7 @@ export default function SystemStatus() {
                 type="button"
                 onClick={() => void runNow()}
                 disabled={running}
-                className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-emerald-300/15 px-5 py-2.5 text-sm font-extrabold text-emerald-50 transition-colors hover:bg-emerald-300/25 disabled:opacity-60"
+                className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-white px-5 py-2.5 text-sm font-extrabold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:opacity-60"
               >
                 <RefreshCw className={`h-4 w-4 ${running ? 'animate-spin' : ''}`} />
                 {running ? 'Проверяем…' : 'Проверить сейчас'}
@@ -229,7 +229,7 @@ export default function SystemStatus() {
             </div>
 
             {note && (
-              <div className="mt-4 border-t border-white/10 pt-3 text-xs text-text-secondary">
+              <div className="mt-4 border-t border-slate-200 pt-3 text-xs text-text-secondary">
                 {note}
               </div>
             )}
@@ -246,7 +246,7 @@ export default function SystemStatus() {
                 простоя — это одна строка, а не восемь.
               </p>
               {incidents.length === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-emerald-200">
+                <div className="flex items-center gap-2 text-sm text-emerald-800">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                   Ни одной красной проверки в этом окне.
                 </div>
@@ -257,8 +257,8 @@ export default function SystemStatus() {
                       key={incident.start}
                       className={`rounded-xl border p-3 ${
                         incident.open
-                          ? 'border-rose-300/30 bg-rose-400/[0.06]'
-                          : 'border-border-subtle bg-white/[0.02]'
+                          ? 'border-rose-200 bg-rose-50'
+                          : 'border-border-subtle bg-slate-50'
                       }`}
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -269,7 +269,7 @@ export default function SystemStatus() {
                         </span>
                         <span
                           className={`text-xs font-bold tabular-nums ${
-                            incident.open ? 'text-rose-200' : 'text-text-secondary'
+                            incident.open ? 'text-rose-800' : 'text-text-secondary'
                           }`}
                         >
                           {incident.open ? 'идёт сейчас' : durationLabel(incident.minutes)}
@@ -290,7 +290,7 @@ export default function SystemStatus() {
           )}
 
           {/* Все проверки */}
-          <p className="mb-3 flex items-start gap-2 rounded-xl border border-border-subtle bg-white/[0.02] px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mb-3 flex items-start gap-2 rounded-xl border border-border-subtle bg-slate-50 px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
             <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
               Зелёный — данные пришли в пределах своего расписания, оно подписано у каждой
@@ -300,7 +300,7 @@ export default function SystemStatus() {
             </span>
           </p>
           {weekStats.samples > 0 && (
-            <p className="mb-3 rounded-xl border border-border-subtle bg-white/[0.02] px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
+            <p className="mb-3 rounded-xl border border-border-subtle bg-slate-50 px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
               <span className="font-bold text-text-primary">{weekStats.headline}</span>{' '}
               Свежий прогон отвечает, что происходит сейчас; окно за неделю показывает, насколько
               это часто. Источник, не ответивший в один час, — задержка, а не поломка: следующий
@@ -316,14 +316,14 @@ export default function SystemStatus() {
                   className={`rounded-xl2 border p-4 ${
                     value.ok
                       ? 'border-border-subtle bg-bg-card'
-                      : 'border-rose-300/30 bg-rose-400/[0.06]'
+                      : 'border-rose-200 bg-rose-50'
                   }`}
                 >
                   <div className="flex items-start gap-2.5">
                     {value.ok ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
                     ) : (
-                      <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-300" />
+                      <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-700" />
                     )}
                     <div className="min-w-0">
                       <div className="text-sm font-bold text-text-primary">
@@ -333,14 +333,14 @@ export default function SystemStatus() {
                         {CHECK_LABELS[name]?.hint ?? ''}
                       </div>
                       {CHECK_LABELS[name]?.cadence && (
-                        <div className="mt-1 flex items-start gap-1.5 text-[11px] text-text-secondary/80">
+                        <div className="mt-1 flex items-start gap-1.5 text-[11px] text-text-secondary">
                           <Clock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
                           <span>{CHECK_LABELS[name]?.cadence}</span>
                         </div>
                       )}
                       <div
                         className={`mt-1.5 text-xs ${
-                          value.ok ? 'text-slate-300' : 'text-rose-100'
+                          value.ok ? 'text-text-secondary' : 'text-rose-900'
                         }`}
                       >
                         {value.detail}
@@ -353,7 +353,7 @@ export default function SystemStatus() {
                         const label = checkWindowLabel(stat);
                         const last = stat.last_fail_at ? mskLabel(stat.last_fail_at) : null;
                         return (
-                          <div className="mt-1 text-[11px] leading-relaxed text-text-secondary/80">
+                          <div className="mt-1 text-[11px] leading-relaxed text-text-secondary">
                             {label}
                             {last ? ` · последнее предупреждение ${last} МСК` : ''}
                           </div>
@@ -372,7 +372,7 @@ export default function SystemStatus() {
           {feeds.length > 0 && (
             <div className="mb-5 rounded-xl2 border border-border-subtle bg-bg-card p-5">
               <div className="mb-3 flex items-center gap-2">
-                <Radio className="h-4 w-4 text-emerald-300" />
+                <Radio className="h-4 w-4 text-emerald-700" />
                 <span className="text-xs font-bold uppercase tracking-widest text-text-secondary">
                   Новостные ленты
                 </span>
@@ -397,12 +397,12 @@ export default function SystemStatus() {
                       const hours = hoursSince(feed.last_new_at);
                       const stale = hours === null || hours > 24;
                       return (
-                        <tr key={feed.source} className="border-t border-white/5">
+                        <tr key={feed.source} className="border-t border-slate-200">
                           <td className="py-2 pr-4 font-semibold text-text-primary">
                             {feed.source}
                           </td>
                           <td
-                            className={`py-2 pr-4 ${stale ? 'text-rose-200' : 'text-text-secondary'}`}
+                            className={`py-2 pr-4 ${stale ? 'text-rose-800' : 'text-text-secondary'}`}
                           >
                             {feedAgeLabel(hours)}
                           </td>
