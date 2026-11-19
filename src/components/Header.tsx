@@ -110,27 +110,21 @@ export default function Header({ activeView }: HeaderProps) {
         initial={reduceMotion ? false : { y: -24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={reduceMotion ? { duration: 0 } : { duration: 0.42, ease: 'easeOut' }}
-        className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
-          scrolled || menuOpen
-            ? 'border-slate-200/90 bg-white/94 shadow-[0_10px_30px_rgba(15,23,42,0.09)] backdrop-blur-xl'
-            : 'border-white/75 bg-white/72 backdrop-blur-xl'
-        }`}
+        className={`site-header ${scrolled || menuOpen ? 'is-scrolled' : ''}`}
       >
-        <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
+        <div className="site-header__inner mx-auto flex max-w-[1500px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
           <a
             href={PAGE_PATHS.dashboard}
             onClick={() => setMenuOpen(false)}
-            className="group flex shrink-0 items-center gap-2.5 rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+            className="site-brand group flex shrink-0 items-center gap-2.5 rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
             aria-label="Market Pulse — обзор"
             aria-current={activeView === 'dashboard' ? 'page' : undefined}
           >
-            <BrandMark className="h-10 w-10 drop-shadow-[0_8px_18px_rgba(37,99,235,0.18)] transition-transform duration-200 group-hover:scale-[1.03]" />
+            <BrandMark className="site-brand__mark h-11 w-11" />
             <span className="flex flex-col">
-              <span className="text-lg font-extrabold leading-none tracking-tight text-text-primary">
-                Market Pulse
-              </span>
-              <span className="mt-1 hidden text-[9px] font-bold uppercase tracking-[0.16em] text-text-secondary xl:block">
-                факты · источники · контекст
+              <span className="brand-wordmark">Market Pulse</span>
+              <span className="brand-tagline mt-1 hidden xl:block">
+                ФАКТЫ <i>·</i> ИСТОЧНИКИ <i>·</i> КОНТЕКСТ
               </span>
             </span>
           </a>
@@ -144,6 +138,7 @@ export default function Header({ activeView }: HeaderProps) {
                   key={link.href}
                   href={link.href}
                   data-testid={`header-nav-${link.themeId ?? 'dashboard'}`}
+                  data-theme={link.themeId ?? 'dashboard'}
                   onClick={() => setMenuOpen(false)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`desktop-navigation__link ${isActive ? 'is-active' : ''}`}
@@ -228,7 +223,7 @@ export default function Header({ activeView }: HeaderProps) {
 
           <button
             type="button"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-extrabold text-text-primary shadow-sm transition-all hover:border-accent/40 hover:bg-blue-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] lg:hidden"
+            className="site-header__mobile-toggle inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full px-3.5 py-2 text-sm font-extrabold shadow-sm transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] lg:hidden"
             onClick={() => setMenuOpen((open) => !open)}
             aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
             aria-expanded={menuOpen}

@@ -147,18 +147,18 @@ function DashboardPage() {
           </motion.h1>
 
           <motion.p className="overview-hero__description" {...appear(0.16)}>
-            Российский рынок, мировые ориентиры, публикации и архив — по отдельным страницам.
-            Источник и время наблюдения указаны рядом, когда они доступны.
+            Россия, мировые активы и деловые публикации — в одном обзоре. У каждого числа есть источник
+            и время наблюдения, когда они доступны.
           </motion.p>
 
           <motion.div className="overview-hero__actions" {...appear(0.22)}>
             <a href={PAGE_PATHS.passport} className="overview-hero__primary-action">
-              Открыть сводку дня
+              Смотреть паспорт дня
               <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </a>
             <a href={PAGE_PATHS.guide} className="overview-hero__secondary-action">
               <BookOpen className="h-4 w-4" aria-hidden="true" />
-              Как устроены данные
+              Как проверяем данные
             </a>
           </motion.div>
 
