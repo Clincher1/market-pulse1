@@ -9,11 +9,9 @@ export default function Footer() {
           <a href="/" className="site-footer__brand flex items-center gap-3">
             <BrandMark className="h-9 w-9" />
             <span className="flex flex-col">
-              <span className="text-base font-extrabold leading-none tracking-tight text-text-primary">
-                Market Pulse
-              </span>
-              <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.15em] text-text-secondary">
-                наблюдения с источниками
+              <span className="brand-wordmark brand-wordmark--footer">Market Pulse</span>
+              <span className="brand-tagline mt-1">
+                НАБЛЮДЕНИЯ С ИСТОЧНИКАМИ
               </span>
             </span>
           </a>
