@@ -11,6 +11,7 @@ import MarketTicker from '@/components/MarketTicker';
 import TrustStrip from '@/components/TrustStrip';
 import HowWeKnow from '@/components/HowWeKnow';
 import PulseOrbit from '@/components/PulseOrbit';
+import PageSignalIntro from '@/components/PageSignalIntro';
 import BusinessMoney from '@/components/BusinessMoney';
 import WhatChanged from '@/components/WhatChanged';
 import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
@@ -25,6 +26,7 @@ const AnalyticsGuide = lazy(() => import('@/components/AnalyticsGuide'));
 const SystemStatus = lazy(() => import('@/components/SystemStatus'));
 
 type SectionPageView = Exclude<AppView, 'dashboard' | 'guide' | 'status'>;
+type InnerPageView = Exclude<AppView, 'dashboard'>;
 
 type PageInfo = {
   themeId: SectionThemeId;
@@ -45,7 +47,7 @@ const VIEW_TITLES: Record<AppView, string> = {
   status: 'Состояние системы',
 };
 
-const PAGE_INFO: Record<SectionPageView, PageInfo> = {
+const PAGE_INFO: Record<InnerPageView, PageInfo> = {
   passport: {
     themeId: 'passport',
     title: 'Сводка дня',
@@ -76,45 +78,22 @@ const PAGE_INFO: Record<SectionPageView, PageInfo> = {
     title: 'Архив и оценки',
     description: 'Исторические прогнозные записи и рассчитанные исходы сохранены для проверки; новые прогнозы не выпускаются.',
   },
+  guide: {
+    themeId: 'guide',
+    title: 'Методология Market Pulse',
+    description: 'Как читать факты и расчёты, проверять источники и понимать ограничения данных.',
+  },
   about: {
     themeId: 'about',
     title: 'О проекте',
     description: 'Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.',
   },
+  status: {
+    themeId: 'status',
+    title: 'Состояние системы',
+    description: 'Свежесть источников, котировок и публикаций; результаты почасовой самопроверки.',
+  },
 };
-
-function PageHeading({ page }: { page: PageInfo }) {
-  const theme = SECTION_THEMES[page.themeId];
-  const Icon = theme.icon;
-
-  return (
-    <header className="page-intro relative mb-7 overflow-hidden rounded-[30px] border border-border-subtle bg-linear-to-br from-white via-blue-50/70 to-cyan-50/70 p-5 shadow-[0_12px_34px_rgba(15,23,42,0.06)] sm:p-7">
-      <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-blue-200/35 blur-3xl" aria-hidden="true" />
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start">
-        <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ${theme.iconClass}`} aria-hidden="true">
-          <Icon className="h-6 w-6" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className={`text-[11px] font-extrabold uppercase tracking-[0.15em] ${theme.textClass}`}>
-            {theme.order} · {theme.label}
-          </div>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
-            {page.title}
-          </h1>
-          <p className="mt-2 max-w-4xl text-sm leading-relaxed text-text-secondary sm:text-base">
-            {page.description}
-          </p>
-        </div>
-        <a
-          href={PAGE_PATHS.dashboard}
-          className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-sm font-bold text-text-primary shadow-sm transition-colors hover:border-accent/40 hover:bg-blue-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          Все разделы <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </a>
-      </div>
-    </header>
-  );
-}
 
 function DashboardPage() {
   const reduceMotion = useReducedMotion();
@@ -246,7 +225,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
     case 'passport':
       return (
         <>
-          <PageHeading page={page} />
+          <PageSignalIntro page={page} />
           <SectionBoundary title="Паспорт дня"><DailyPassport /></SectionBoundary>
           <SectionBoundary title="Деньги бизнеса сегодня"><BusinessMoney /></SectionBoundary>
           <SectionBoundary title="Что меняется"><WhatChanged /></SectionBoundary>
@@ -255,14 +234,14 @@ function SectionPage({ view }: { view: SectionPageView }) {
     case 'russia':
       return (
         <>
-          <PageHeading page={page} />
+          <PageSignalIntro page={page} />
           <SectionBoundary title="Россия и бизнес"><RussiaBusiness /></SectionBoundary>
         </>
       );
     case 'global':
       return (
         <>
-          <PageHeading page={page} />
+          <PageSignalIntro page={page} />
           <MarketTicker />
           <section
             id="global-economy"
@@ -284,14 +263,14 @@ function SectionPage({ view }: { view: SectionPageView }) {
     case 'brief':
       return (
         <>
-          <PageHeading page={page} />
+          <PageSignalIntro page={page} />
           <SectionBoundary title="Бриф"><DailyBrief /></SectionBoundary>
         </>
       );
     case 'news':
       return (
         <>
-          <PageHeading page={page} />
+          <PageSignalIntro page={page} />
           <Suspense
             fallback={
               <SectionFallback
@@ -310,7 +289,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
     case 'memory':
       return (
         <>
-          <PageHeading page={page} />
+          <PageSignalIntro page={page} />
           <Suspense
             fallback={
               <SectionFallback
@@ -329,7 +308,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
     case 'about':
       return (
         <>
-          <PageHeading page={page} />
+          <PageSignalIntro page={page} />
           <Suspense
             fallback={
               <SectionFallback
@@ -471,7 +450,7 @@ function App() {
   }, [currentHash, view]);
 
   return (
-    <div className="site-shell min-h-screen pb-20 text-text-primary lg:pb-0">
+    <div className="site-shell min-h-screen pb-20 text-text-primary lg:pb-0" data-view={view}>
       <a
         href="#main"
         onClick={(event) => {
@@ -498,35 +477,41 @@ function App() {
           transition={reduceMotion ? { duration: 0 } : { duration: 0.34, ease: 'easeOut' }}
         >
           {view === 'status' ? (
-          <Suspense
-            fallback={
-              <SectionFallback
-                title="Состояние системы"
-                message="Читаем отчёт самопроверки: источники, котировки, даты и историю…"
-                minHeightClass="min-h-[60vh]"
-                className="rounded-[28px]"
-              />
-            }
-          >
-            <TrustStrip />
-            <SectionBoundary title="Состояние системы"><SystemStatus /></SectionBoundary>
-          </Suspense>
-        ) : view === 'guide' ? (
-          <Suspense
-            fallback={
-              <SectionFallback
-                title="Методология Market Pulse"
-                message="Загружаем полный гид: источники, ограничения и память рынка…"
-                minHeightClass="min-h-[70vh]"
-                className="rounded-[28px]"
-              />
-            }
-          >
-            <SectionBoundary title="Методология"><AnalyticsGuide /></SectionBoundary>
-          </Suspense>
-        ) : view === 'dashboard' ? (
-          <DashboardPage />
-        ) : (
+            <>
+              <PageSignalIntro page={PAGE_INFO.status} />
+              <Suspense
+                fallback={
+                  <SectionFallback
+                    title="Состояние системы"
+                    message="Читаем отчёт самопроверки: источники, котировки, даты и историю…"
+                    minHeightClass="min-h-[60vh]"
+                    className="rounded-[28px]"
+                  />
+                }
+              >
+                <TrustStrip />
+                <SectionBoundary title="Состояние системы"><SystemStatus /></SectionBoundary>
+              </Suspense>
+            </>
+          ) : view === 'guide' ? (
+            <>
+              <PageSignalIntro page={PAGE_INFO.guide} />
+              <Suspense
+                fallback={
+                  <SectionFallback
+                    title="Методология Market Pulse"
+                    message="Загружаем полный гид: источники, ограничения и память рынка…"
+                    minHeightClass="min-h-[70vh]"
+                    className="rounded-[28px]"
+                  />
+                }
+              >
+                <SectionBoundary title="Методология"><AnalyticsGuide /></SectionBoundary>
+              </Suspense>
+            </>
+          ) : view === 'dashboard' ? (
+            <DashboardPage />
+          ) : (
             <SectionPage view={view} />
           )}
         </motion.div>

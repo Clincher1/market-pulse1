@@ -122,14 +122,15 @@ export default function AnalyticsGuide() {
     <div id="guide" className="scroll-mt-24 space-y-6 lg:space-y-8">
       <section
         id="guide-start"
+        aria-labelledby="guide-start-title"
         className="scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-6 shadow-lg lg:p-8"
       >
         <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-rose-800">
           Руководство
         </div>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-text-primary sm:text-4xl">
+        <h2 id="guide-start-title" className="mt-2 text-3xl font-extrabold tracking-tight text-text-primary sm:text-4xl">
           Как читать этот сайт за две минуты
-        </h1>
+        </h2>
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-text-secondary">
           Сайт фиксирует то, что происходит на рынках, и показывает источник у каждого
           числа. Он не предсказывает цены и не даёт рекомендаций. Прогнозов здесь больше
