@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, Globe2, Landmark, Newspaper } from 'lucide-react';
 import { PAGE_PATHS } from '@/lib/routes';
@@ -30,6 +31,11 @@ const ORBIT_LINKS = [
 /** Abstract vector artwork for the overview hero; it is not a live chart. */
 export default function PulseOrbit() {
   const reduceMotion = useReducedMotion();
+  const rawId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const mobileNebulaId = `pulse-mobile-nebula-${rawId}`;
+  const mobileOrbitId = `pulse-mobile-orbit-${rawId}`;
+  const mobileMarkId = `pulse-mobile-mark-${rawId}`;
+  const mobileGlowId = `pulse-mobile-glow-${rawId}`;
 
   return (
     <nav
@@ -39,6 +45,57 @@ export default function PulseOrbit() {
       <div className="pulse-orbit__aura pulse-orbit__aura--blue" aria-hidden="true" />
       <div className="pulse-orbit__aura pulse-orbit__aura--mint" aria-hidden="true" />
       <div className="pulse-orbit__mesh" aria-hidden="true" />
+
+      <svg
+        className="pulse-orbit__mobile-scene"
+        viewBox="0 0 360 300"
+        preserveAspectRatio="none"
+        fill="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <radialGradient id={mobileNebulaId} cx="180" cy="150" r="146" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#517DFF" stopOpacity="0.24" />
+            <stop offset="0.48" stopColor="#37D7D2" stopOpacity="0.1" />
+            <stop offset="1" stopColor="#10224A" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id={mobileOrbitId} x1="26" y1="207" x2="333" y2="89" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#4DE5D4" stopOpacity="0.05" />
+            <stop offset="0.38" stopColor="#52C9F0" stopOpacity="0.82" />
+            <stop offset="0.72" stopColor="#8D88FF" stopOpacity="0.9" />
+            <stop offset="1" stopColor="#B1FFE5" stopOpacity="0.08" />
+          </linearGradient>
+          <filter id={mobileGlowId} x="-40%" y="-70%" width="180%" height="240%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <circle cx="180" cy="150" r="146" fill={`url(#${mobileNebulaId})`} />
+        <ellipse className="pulse-orbit__mobile-track pulse-orbit__mobile-track--far" cx="180" cy="150" rx="140" ry="77" transform="rotate(-27 180 150)" />
+        <ellipse className="pulse-orbit__mobile-track pulse-orbit__mobile-track--near" cx="180" cy="150" rx="104" ry="57" transform="rotate(31 180 150)" />
+        <path
+          className="pulse-orbit__mobile-thread"
+          d="M24 207C75 122 119 99 163 133C208 168 247 211 334 89"
+          stroke={`url(#${mobileOrbitId})`}
+        />
+        <path
+          className="pulse-orbit__mobile-runner"
+          d="M24 207C75 122 119 99 163 133C208 168 247 211 334 89"
+          pathLength="100"
+          stroke={`url(#${mobileOrbitId})`}
+          filter={`url(#${mobileGlowId})`}
+        />
+        <circle className="pulse-orbit__mobile-node pulse-orbit__mobile-node--mint" cx="56" cy="177" r="3.4" />
+        <circle className="pulse-orbit__mobile-node pulse-orbit__mobile-node--violet" cx="288" cy="119" r="4" />
+        <circle className="pulse-orbit__mobile-node pulse-orbit__mobile-node--cyan" cx="323" cy="104" r="2.8" />
+        <circle className="pulse-orbit__mobile-star" cx="107" cy="78" r="1.4" />
+        <circle className="pulse-orbit__mobile-star" cx="257" cy="62" r="1.2" />
+        <circle className="pulse-orbit__mobile-star" cx="302" cy="209" r="1.3" />
+        <circle className="pulse-orbit__mobile-star" cx="83" cy="242" r="1.1" />
+      </svg>
 
       <svg className="pulse-orbit__chart" viewBox="0 0 640 600" fill="none" aria-hidden="true">
         <defs>
@@ -90,6 +147,33 @@ export default function PulseOrbit() {
         <span className="pulse-orbit__center-halo" />
         <span className="pulse-orbit__center-label">MARKET PULSE</span>
         <BrandMark className="pulse-orbit__brand" />
+        <svg className="pulse-orbit__mobile-mark" viewBox="0 0 100 54" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id={mobileMarkId} x1="8" y1="28" x2="91" y2="14" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#79F4DE" />
+              <stop offset="0.5" stopColor="#70C9FF" />
+              <stop offset="0.78" stopColor="#A795FF" />
+              <stop offset="1" stopColor="#A8FFE7" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M8 29H22L29 15L37 40L46 21L53 29H68L77 14"
+            stroke={`url(#${mobileMarkId})`}
+            strokeWidth="4.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            className="pulse-orbit__mobile-mark-flow"
+            d="M8 29H22L29 15L37 40L46 21L53 29H68L77 14"
+            pathLength="100"
+            stroke="#F0FFFC"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle className="pulse-orbit__mobile-mark-node" cx="77" cy="14" r="3.5" />
+        </svg>
         <span className="pulse-orbit__center-caption">факты · источники · контекст</span>
       </div>
 
