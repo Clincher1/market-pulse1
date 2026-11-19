@@ -497,6 +497,104 @@
   mask-image: radial-gradient(ellipse, #000 16%, transparent 72%);
 }
 
+.pulse-orbit__mobile-scene,
+.pulse-orbit__mobile-mark {
+  display: none;
+}
+
+.pulse-orbit__mobile-scene {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.pulse-orbit__mobile-track {
+  fill: none;
+  stroke: rgb(150 193 255 / 0.28);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 9;
+}
+
+.pulse-orbit__mobile-track--far {
+  opacity: 0.55;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mobile-orbit-drift 34s linear infinite;
+}
+
+.pulse-orbit__mobile-track--near {
+  stroke: rgb(101 231 219 / 0.26);
+  opacity: 0.68;
+}
+
+.pulse-orbit__mobile-thread {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.34;
+}
+
+.pulse-orbit__mobile-runner {
+  fill: none;
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  stroke-dasharray: 12 88;
+  stroke-dashoffset: 100;
+  opacity: 0.88;
+  animation: mobile-pulse-travel 5.8s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+}
+
+.pulse-orbit__mobile-node {
+  fill: #f2fffc;
+  filter: drop-shadow(0 0 7px rgb(89 234 221 / 0.8));
+}
+
+.pulse-orbit__mobile-node--mint {
+  fill: #9bffe2;
+}
+
+.pulse-orbit__mobile-node--violet {
+  fill: #c9c0ff;
+  filter: drop-shadow(0 0 9px rgb(156 137 255 / 0.9));
+}
+
+.pulse-orbit__mobile-node--cyan {
+  fill: #8ce9ff;
+}
+
+.pulse-orbit__mobile-star {
+  fill: #e2f0ff;
+  opacity: 0.44;
+  animation: mobile-star-twinkle 4s ease-in-out infinite;
+}
+
+.pulse-orbit__mobile-star:nth-of-type(2n) {
+  animation-delay: -1.4s;
+}
+
+.pulse-orbit__mobile-mark {
+  overflow: visible;
+}
+
+.pulse-orbit__mobile-mark-flow {
+  stroke-dasharray: 16 84;
+  stroke-dashoffset: 100;
+  opacity: 0;
+  animation: mobile-pulse-travel 4s ease-in-out infinite;
+}
+
+.pulse-orbit__mobile-mark-node {
+  fill: #c7fff0;
+  filter: drop-shadow(0 0 5px rgb(91 255 221 / 0.88));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: brand-node-beat 1.85s ease-in-out infinite;
+}
+
 .pulse-orbit__chart {
   inset: 1% 0 0;
   width: 100%;
@@ -851,41 +949,129 @@
   }
 
   .pulse-orbit {
-    width: min(100%, 440px);
-    aspect-ratio: 1.02;
+    width: min(100%, 380px);
+    aspect-ratio: 1.18;
+  }
+
+  .pulse-orbit__chart,
+  .pulse-orbit__mesh,
+  .pulse-orbit__aura--mint {
+    display: none;
+  }
+
+  .pulse-orbit__mobile-scene {
+    display: block;
+  }
+
+  .pulse-orbit__center {
+    top: 49%;
+    width: auto;
+    aspect-ratio: auto;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .pulse-orbit__center-halo {
+    inset: -34px;
+    border: 0;
+    background: radial-gradient(circle, rgb(62 154 255 / 0.22), rgb(40 209 195 / 0.11) 42%, transparent 74%);
+    filter: blur(5px);
+  }
+
+  .pulse-orbit__brand {
+    display: none;
+  }
+
+  .pulse-orbit__mobile-mark {
+    display: block;
+    width: 74px;
+    height: 40px;
+    filter: drop-shadow(0 0 15px rgb(73 191 255 / 0.35));
+  }
+
+  .pulse-orbit__center-label {
+    margin: 0 0 0.22rem;
+    font-size: 0.42rem;
+    letter-spacing: 0.2em;
+  }
+
+  .pulse-orbit__center-caption {
+    max-width: none;
+    margin-top: 0.24rem;
+    color: #b9cbe9;
+    font-size: 0.4rem;
+    white-space: nowrap;
   }
 
   .pulse-orbit__link {
-    width: 47%;
-    min-height: 55px;
+    width: auto;
+    min-height: 0;
     gap: 0.42rem;
-    padding: 0.48rem 0.5rem;
-    border-radius: 15px;
+    padding: 0.2rem 0;
+    border: 0;
+    border-radius: 0;
+    color: #f3f7ff;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    text-shadow: 0 0 20px rgb(70 128 255 / 0.22);
+  }
+
+  .pulse-orbit__link:hover {
+    border: 0;
+    color: #a9fff0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .pulse-orbit__link--russia {
-    top: 7%;
-    left: 0;
+    top: 14%;
+    left: 1%;
   }
 
   .pulse-orbit__link--world {
-    top: 9%;
+    top: 48%;
     right: 0;
   }
 
   .pulse-orbit__link--news {
-    bottom: 8%;
-    left: 8%;
+    bottom: 7%;
+    left: 4%;
   }
 
   .pulse-orbit__link-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 10px;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    color: #8fe5ff;
+    background: transparent;
+    box-shadow: none;
+    filter: drop-shadow(0 0 9px rgb(75 195 255 / 0.7));
+  }
+
+  .pulse-orbit__link--world .pulse-orbit__link-icon {
+    color: #9ef7e3;
+    background: transparent;
+    filter: drop-shadow(0 0 9px rgb(63 222 200 / 0.65));
+  }
+
+  .pulse-orbit__link--news .pulse-orbit__link-icon {
+    color: #d6baff;
+    background: transparent;
+    filter: drop-shadow(0 0 9px rgb(174 120 255 / 0.62));
+  }
+
+  .pulse-orbit__link-copy {
+    gap: 0;
   }
 
   .pulse-orbit__link-title {
-    font-size: 0.66rem;
+    font-size: 0.72rem;
+    font-weight: 820;
   }
 
   .pulse-orbit__link-detail,
@@ -893,29 +1079,34 @@
     display: none;
   }
 
-  .pulse-orbit__center {
-    width: 34%;
-  }
-
-  .pulse-orbit__center-label {
-    font-size: 0.38rem;
-  }
-
-  .pulse-orbit__center-caption {
-    max-width: 82%;
-    font-size: 0.41rem;
-  }
-
   .pulse-orbit__status {
-    top: 4%;
-    gap: 0.35rem;
-    min-height: 28px;
-    padding-inline: 0.55rem;
-    font-size: 0.38rem;
+    top: 1%;
+    gap: 0.4rem;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: rgb(184 204 232 / 0.78);
+    background: transparent;
+    box-shadow: none;
+    font-size: 0.4rem;
+    letter-spacing: 0.16em;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .pulse-orbit__status-divider {
+    display: none;
+  }
+
+  .pulse-orbit__status-dot {
+    width: 5px;
+    height: 5px;
+    box-shadow: 0 0 9px rgb(105 239 208 / 0.75);
   }
 
   .pulse-orbit__micro-label {
-    font-size: 0.34rem;
+    display: none;
   }
 }
 
@@ -928,6 +1119,11 @@
   .pulse-orbit__chart-ring--outer,
   .pulse-orbit__chart-runner,
   .pulse-orbit__chart-node--bright,
+  .pulse-orbit__mobile-track--far,
+  .pulse-orbit__mobile-runner,
+  .pulse-orbit__mobile-mark-flow,
+  .pulse-orbit__mobile-mark-node,
+  .pulse-orbit__mobile-star,
   .pulse-orbit__center-halo,
   .pulse-orbit__status-dot {
     animation: none !important;
@@ -982,4 +1178,20 @@
 @keyframes hero-light-drift {
   from { transform: translateX(-16%) rotate(28deg); opacity: 0.32; }
   to { transform: translateX(16%) rotate(28deg); opacity: 0.85; }
+}
+
+@keyframes mobile-orbit-drift {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes mobile-pulse-travel {
+  0%, 10% { stroke-dashoffset: 100; opacity: 0.12; }
+  22% { opacity: 0.9; }
+  82% { stroke-dashoffset: -26; opacity: 0.84; }
+  96%, 100% { stroke-dashoffset: -26; opacity: 0.08; }
+}
+
+@keyframes mobile-star-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 0.76; transform: scale(1.25); }
 }
