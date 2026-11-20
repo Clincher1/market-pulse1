@@ -129,15 +129,15 @@ export default function SystemStatus() {
   const incidents = groupIncidents(visibleHistory).slice().reverse();
 
   return (
-    <section id="status" className="mx-auto max-w-5xl scroll-mt-24 px-1 pt-2">
+    <section id="status" aria-labelledby="status-report-title" className="mx-auto max-w-5xl scroll-mt-24 px-1 pt-2">
       <div className="mb-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-emerald-800">
           <Activity className="h-3.5 w-3.5" />
-          Состояние системы
+          ТЕКУЩИЙ ОТЧЁТ · ПУБЛИЧНЫЕ ДАННЫЕ
         </div>
-        <h1 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+        <h2 id="status-report-title" className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
           Сайт проверяет сам себя — вот отчёт
-        </h1>
+        </h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary sm:text-base">
           Раз в час система проверяет свежесть публикаций и котировок, даты наблюдений,
           доступность истории и архива, сборку PNG-карточки, подключённые ленты и ответ

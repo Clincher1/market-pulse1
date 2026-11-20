@@ -293,7 +293,10 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
         </span>
       </div>
 
-      <table className="sr-only">
+      {/* A table's intrinsic minimum width can exceed sr-only's 1px box.
+          Clip a normal table inside a screen-reader-only block instead. */}
+      <div className="sr-only">
+      <table>
         <caption>Значения кривой доходности ОФЗ по срокам</caption>
         <thead>
           <tr>
@@ -310,6 +313,7 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
           ))}
         </tbody>
       </table>
+      </div>
     </figure>
   );
 }

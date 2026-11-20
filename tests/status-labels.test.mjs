@@ -68,3 +68,15 @@ test('у каждой подписи есть заголовок и поясне
     assert.ok(label.hint.trim().length > 3, `${name}: пустое пояснение`);
   }
 });
+
+// The public memory page is a forecast archive, not the legacy event/analogy engine.
+test('legacy event memory does not certify the public forecast archive', async () => {
+  const { HIDDEN_PUBLIC_CHECKS, PUBLIC_CHECK_NAMES } = await import('../src/lib/checkLabels.ts');
+  assert.equal(HIDDEN_PUBLIC_CHECKS.has('market_memory'), true);
+  assert.equal(PUBLIC_CHECK_NAMES.includes('market_memory'), false);
+});
+
+test('price truth description covers all five assets and distinguishes quote from close', () => {
+  assert.match(CHECK_LABELS.asset_change_truth.hint, /все пять/);
+  assert.match(CHECK_LABELS.asset_change_truth.hint, /непроверенной/);
+});

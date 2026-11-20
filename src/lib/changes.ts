@@ -433,6 +433,9 @@ export interface WeekComparison {
   days: number;
   /** Изменение за последнее окно: проценты, а для ставок — п.п. */
   recentPct: number;
+  recentFrom?: string;
+  recentTill?: string;
+  previousFrom?: string;
   /** Изменение за предыдущее окно такой же длины: проценты или п.п. */
   previousPct: number;
   recentLabel: string;
@@ -493,6 +496,9 @@ export function buildWeekComparisons(inputs: ChangeInput[], days = 7): WeekCompa
       dateKind: input.dateKind,
       days,
       recentPct,
+      recentFrom: points[points.length - 1 - days]?.date,
+      recentTill: lastPoint?.date,
+      previousFrom: points[points.length - 1 - days * 2]?.date,
       previousPct,
       recentLabel: formatSeriesDelta(mid, last, input.unit),
       previousLabel: formatSeriesDelta(start, mid, input.unit),

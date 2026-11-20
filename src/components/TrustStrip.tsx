@@ -48,14 +48,14 @@ export default function TrustStrip() {
   const summary = stats ? summariseCheckStats(stats, ACTIVE_CHECKS) : null;
   // Разряды и знаки после запятой — вручную (NBSP + запятая): Intl в узкой
   // плашке дал бы «99.6 %» через locale-фолбэк, а lib-функции сайта печатают
-  // проценты иначе, чем проценты прогонов.
+  // проценты иначе, чем проценты проверок.
   const passRate =
     summary && summary.okPercent !== null
       ? `${String(summary.okPercent).replace('.', ',')}${NBSP}%`
       : '—';
   const passNote = summary
     ? summary.okPercent !== null
-      ? `${groupDigits(summary.okSamples)} из ${groupDigits(summary.samples)} прогонов за 7 дней`
+      ? `${groupDigits(summary.okSamples)} из ${groupDigits(summary.samples)} проверок за 7 дней`
       : 'окно пока пустое'
     : failed
       ? 'статистика недоступна'
@@ -71,7 +71,7 @@ export default function TrustStrip() {
     {
       icon: Timer,
       value: passRate,
-      title: 'прогонов прошли',
+      title: 'проверок прошли',
       note: passNote,
     },
     {

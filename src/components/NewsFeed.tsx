@@ -269,7 +269,7 @@ export default function NewsFeed() {
           />
           <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
             <p className="text-xs leading-relaxed text-text-secondary" aria-live="polite">
-              {`Загружено ${news.length} публикаций; показано ${filteredNews.length} по выбранному источнику.`}
+              {`Загружено ${news.length} публикаций; фильтру соответствуют ${filteredNews.length}; на экране ${visibleCount}.`}
             </p>
             <button
               type="button"

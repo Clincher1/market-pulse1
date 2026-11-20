@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { mkdir } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { JSDOM } from 'jsdom';
+const directory = new URL('../.local/ofz-layout-tests/', import.meta.url);
+await mkdir(directory, { recursive: true });
+const output = new URL('ofz.cjs', directory).pathname;
+await build({ entryPoints: ['src/components/OfzCurve.tsx'], outfile: output, bundle: true, platform: 'node', format: 'cjs', jsx: 'automatic', external: ['react', 'react-dom'], alias: { '@': './src' }, logLevel: 'silent' });
+const OfzCurve = createRequire(import.meta.url)(output).default;
+test('OFZ accessible data is clipped by a block, not an intrinsically-sized sr-only table', () => {
+  const curve = [.25,.5,.75,1,2,3,5,7,10,15,20].map((period,i) => ({ period, value: 13.54 + i * .37 }));
+  const html = renderToStaticMarkup(React.createElement(OfzCurve, { indicator: { curve, provider: 'Мосбиржа ISS', curveAsOf: '2026-11-20 18:54:59' } }));
+  const dom = new JSDOM(html);
+  const table = dom.window.document.querySelector('table');
+  assert.equal(table.parentElement.tagName, 'DIV');
+  assert.ok(table.parentElement.classList.contains('sr-only'));
+  assert.ok(!table.classList.contains('sr-only'));
+  assert.equal(table.querySelectorAll('tbody tr').length, 11);
+  assert.equal(table.querySelector('caption').textContent, 'Значения кривой доходности ОФЗ по срокам');
+  assert.ok(dom.window.document.querySelector('[role="img"]'));
+  dom.window.close();
+});

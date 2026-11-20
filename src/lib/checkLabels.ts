@@ -102,7 +102,7 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
   },
   asset_change_truth: {
     title: 'Процент на плитке сходится с рядом',
-    hint: 'Изменение пересчитывается из двух последних опубликованных точек, цена — из последней. Где цена берётся из кавычки (золото, BTC), сверка ряда не применяется, и это сказано в подписи результата',
+    hint: 'Для закрытия сравниваются две последние точки; для более поздней котировки — цена с последним закрытием. Проверяются все пять активов, включая золото и BTC. Без необходимых дат база считается непроверенной',
     cadence: 'сверяется при каждом прогоне — раз в час',
   },
   asset_series_identity: {
@@ -141,7 +141,7 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
  * Внутренние исторические проверки остаются в `site_health` для аудита,
  * но их результаты больше не относятся к публичным проверкам продукта.
  */
-export const HIDDEN_PUBLIC_CHECKS = new Set(['tension_matches', 'sample_size']);
+export const HIDDEN_PUBLIC_CHECKS = new Set(['tension_matches', 'sample_size', 'market_memory']);
 export const PUBLIC_CHECK_NAMES = Object.keys(CHECK_LABELS).filter(
   (name) => !HIDDEN_PUBLIC_CHECKS.has(name),
 );

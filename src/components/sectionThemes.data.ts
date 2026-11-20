@@ -11,6 +11,7 @@ import {
   BrainCircuit,
   CalendarCheck,
   Globe,
+  HeartPulse,
   Info,
   Landmark,
   Newspaper,
@@ -25,7 +26,8 @@ export type SectionThemeId =
   | 'news'
   | 'memory'
   | 'guide'
-  | 'about';
+  | 'about'
+  | 'status';
 
 export interface SectionTheme {
   id: SectionThemeId;
@@ -47,10 +49,10 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
   passport: {
     id: 'passport',
     order: '00',
-    label: 'Паспорт дня',
-    navLabel: 'Паспорт',
+    label: 'Сводка дня',
+    navLabel: 'Сводка',
     href: '/passport',
-    description: 'Зафиксированный снимок и изменения за день',
+    description: 'Денежные ориентиры и наблюдаемая динамика',
     icon: CalendarCheck,
     badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-800',
     cardClass: 'border-emerald-200 bg-emerald-50/80 hover:border-emerald-300 hover:bg-emerald-100',
@@ -164,6 +166,21 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
     activeClass: 'border-slate-700 bg-slate-700 text-white shadow-sm shadow-slate-900/10',
     textClass: 'text-slate-800',
   },
+  status: {
+    id: 'status',
+    order: '09',
+    label: 'Состояние системы',
+    navLabel: 'Система',
+    href: '/status',
+    description: 'Свежесть источников, котировок и проверок',
+    icon: HeartPulse,
+    badgeClass: 'border-teal-200 bg-teal-50 text-teal-800',
+    cardClass: 'border-teal-200 bg-teal-50/80 hover:border-teal-300 hover:bg-teal-100',
+    iconClass: 'bg-teal-700 text-white',
+    dotClass: 'bg-teal-600',
+    activeClass: 'border-teal-700 bg-teal-700 text-white shadow-sm shadow-teal-900/10',
+    textClass: 'text-teal-800',
+  },
 };
 
 export const DASHBOARD_THEME_ORDER: SectionThemeId[] = [
@@ -172,7 +189,6 @@ export const DASHBOARD_THEME_ORDER: SectionThemeId[] = [
   'global',
   'brief',
   'news',
-  'memory',
   'guide',
   'about',
 ];

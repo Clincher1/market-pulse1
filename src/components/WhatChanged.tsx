@@ -11,6 +11,7 @@ import {
   type ChangeNote,
   type WeekComparison,
 } from '@/lib/changes';
+import { WORLD_ASSET_UNITS } from '@/lib/marketUnits';
 import { ErrorNotice } from './SectionFallback';
 
 /**
@@ -44,13 +45,7 @@ const WORLD_DIGITS: Record<string, number> = {
  * Единица мирового ряда словами. Без неё два разных золота — 10 149,50 ₽/г на
  * Мосбирже и 3 875,34 $/унц. в мировом блоке — выглядят как ошибка сайта.
  */
-const WORLD_UNITS: Record<string, string> = {
-  brent: '$ за баррель',
-  sp500: 'пункты индекса',
-  gold: '$ за тройскую унцию',
-  btc: '$ за BTC',
-  'usd-eur': 'USD за 1 EUR',
-};
+const WORLD_UNITS = WORLD_ASSET_UNITS;
 
 function shortDate(iso: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
@@ -126,8 +121,8 @@ function WeekRow({ row }: { row: WeekComparison }) {
         {row.name}
         {row.unitLabel ? <span className="block text-[11px] font-normal text-text-secondary">{row.unitLabel}</span> : null}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums text-text-primary">{row.recentLabel}</td>
-      <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{row.previousLabel}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-text-primary">{row.recentLabel}{row.recentFrom && row.recentTill && <span className="block text-[10px] font-normal">{shortDate(row.recentFrom)} → {shortDate(row.recentTill)}</span>}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-text-secondary">{row.previousLabel}{row.previousFrom && row.recentFrom && <span className="block text-[10px] font-normal">{shortDate(row.previousFrom)} → {shortDate(row.recentFrom)}</span>}</td>
       <td className={`px-3 py-2 text-right font-bold tabular-nums ${tone}`}>{formatPp(row.deltaPct)}</td>
       <td className="px-3 py-2 text-right text-[11px] leading-tight text-text-secondary">{place}</td>
     </tr>
@@ -249,7 +244,7 @@ export default function WhatChanged() {
           </h3>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-secondary">
             Одно и то же сравнение для всех рядов: насколько значение сдвинулось за последние
-            семь точек и насколько — за семь точек до них. Никаких выводов «хорошо/плохо»:
+            семь переходов между точками и насколько — за семь предыдущих переходов. Никаких выводов «хорошо/плохо»:
             только два факта и их разница в процентных пунктах.
           </p>
           {/* Таблица шире экрана на телефоне: без tabIndex прокрутить её
@@ -278,10 +273,10 @@ export default function WhatChanged() {
             </table>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
-            «Последние 7» — семь последних наблюдений с датой у каждого: торговые дни у российских
-            рядов, дни закрытия у мировых котировок. У ставок и доходностей изменения подписаны в
+            «Последние 7» — семь переходов между восемью наблюдениями; для двух смежных окон нужны
+            15 точек. Это не обязательно календарные недели. У ставок и доходностей изменения подписаны в
             процентных пунктах: процент от процента сайт не считает. «Где в окне» — доля значений
-            всего окна (три месяца торговых дней или 30 закрытий), которые не выше последнего:
+            всего окна (три месяца торговых дней или 30 закрытий), которые строго ниже последнего:
             так видно не только направление, но и место значения среди прошлых.
           </p>
         </div>

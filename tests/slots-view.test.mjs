@@ -90,3 +90,12 @@ test('слот без единого выбранного источника н�
   );
   assert.deepEqual(slotsWithoutSource(slots), [3]);
 });
+
+test('database queue rank wins over shuffled network rows', () => {
+  const slots = groupSlotRows([
+    row({ source_id: 'binance', chosen: false, priority: 3 }),
+    row({ source_id: 'coinbase', chosen: false, priority: 2 }),
+    row({ source_id: 'kraken', chosen: true, priority: 1 }),
+  ], []);
+  assert.deepEqual(slots[0].sources.map((source) => source.id), ['kraken', 'coinbase', 'binance']);
+});

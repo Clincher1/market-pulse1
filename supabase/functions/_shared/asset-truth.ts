@@ -20,15 +20,10 @@
  * цена $106.61 против закрытия 104.77 (это +1.76 %) считалась как −10.94 %
  * по двум последним закрытиям.
  *
- * Почему не для всех рядов: у золота и BTC цена приходит из кавычки, а база
- * изменения — `previous_close` той же кавычки, а не два последних закрытия
- * нашего ряда. Сравнивать их — значит получать «расхождение» там, где всё
- * верно. Поэтому такие ряды явно перечислены и пропускаются, а не угадываются
- * по эвристике.
+ * Gold и BTC используют тот же контракт: более поздняя котировка
+ * сравнивается с последним сохранённым закрытием. Без дат база неизвестна.
  */
-
-/** Ряды, у которых цена И ЕСТЬ последнее закрытие опубликованного ряда. */
-const CLOSE_DRIVEN = new Set(["brent", "sp500", "usd-eur"]);
+const SUPPORTED = new Set(["brent", "sp500", "usd-eur", "gold", "btc"]);
 
 /** Расхождение в процентных пунктах, которое ещё можно списать на округление. */
 const CHANGE_TOLERANCE_PP = 0.02;
@@ -100,13 +95,20 @@ export interface ChangeVerdict {
 /**
  * Сходится ли опубликованное изменение с опубликованным рядом.
  *
- * Возвращает `checked: false` для рядов, где цена — кавычка (золото, BTC):
- * там база изменения живёт в ответе источника, а не в нашем ряду закрытий.
+ * Для gold/BTC даты обязательны: без них база сравнения не проверена.
  */
 export function checkChangeAgainstSeries(row: AssetRowLike): ChangeVerdict {
   const id = String(row.id ?? "");
-  if (!CLOSE_DRIVEN.has(id)) {
-    return { checked: false, ok: true, reason: "цена из кавычки, база — из ответа источника" };
+  if (!SUPPORTED.has(id)) {
+    return { checked: false, ok: true, reason: "неизвестный контракт ряда" };
+  }
+  if (id === "gold" || id === "btc") {
+    const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
+    const values = Array.isArray(row.sparkline) ? row.sparkline : [];
+    if (!isoDate(row.as_of) || dates.length !== values.length || !dates.length ||
+        dates.some((date, index) => !isoDate(String(date)) || (index > 0 && String(date) <= String(dates[index - 1])))) {
+      return { checked: false, ok: true, reason: "база кавычки не проверена: отсутствуют согласованные даты" };
+    }
   }
   const values = seriesValues(row);
   if (values.length < 2) {
@@ -143,7 +145,7 @@ export function checkChangeAgainstSeries(row: AssetRowLike): ChangeVerdict {
   const quoteIsNewer = Boolean(
     lastSeriesDate &&
       priceValue !== null &&
-      !priceEqualsLast &&
+      (Boolean(asOfDate && asOfDate > lastSeriesDate) || !priceEqualsLast) &&
       // Кавычка не может быть старше ряда: если as_of раньше последней точки,
       // расхождение — это расхождение, а не другая база.
       (!asOfDate || asOfDate >= lastSeriesDate),

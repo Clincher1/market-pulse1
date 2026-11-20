@@ -72,3 +72,9 @@ test('битые данные не роняют карточку', () => {
   assert.equal(outlook.state, 'waiting');
   assert.match(horizonLabel(outlook, (iso) => iso), /ждёт горизонта$/);
 });
+
+test('missing original-series coverage is unavailable, not an overdue pending result', () => {
+  const outlook = horizonOutlook({ ...pendingFrom31, outcomeStatus: 'insufficient_price_data' }, '2026-11-20');
+  assert.equal(outlook.state, 'unavailable');
+  assert.equal(horizonLabel(outlook, (iso) => iso), 'нет достаточной истории исходного инструмента');
+});

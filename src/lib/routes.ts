@@ -52,6 +52,7 @@ export function normalizePath(pathname: string): string {
 }
 
 export function viewFromLocation(pathname: string, hash: string): AppView {
+  if (normalizePath(pathname) === '/memory') return 'dashboard';
   const pathView = VIEW_BY_PATH.get(normalizePath(pathname));
   if (pathView) return pathView;
   if (hash.startsWith('#guide-')) return 'guide';
@@ -60,6 +61,8 @@ export function viewFromLocation(pathname: string, hash: string): AppView {
 
 /** Return a replacement URL only for old root-level route fragments. */
 export function pathFromLegacyHash(pathname: string, hash: string): string | null {
+  if (normalizePath(pathname) === '/memory') return '/';
+  if (hash === '#market-memory' || hash === '#guide-memory') return '/guide';
   if (normalizePath(pathname) !== '/' || !hash) return null;
 
   const view = hash.startsWith('#guide-')

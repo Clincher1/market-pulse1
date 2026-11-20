@@ -817,7 +817,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
           id: String(row.id ?? ''),
           name: String(row.name ?? ''),
           price: row.price === null || row.price === undefined ? null : String(row.price),
-          change: typeof row.change === 'number' ? row.change : Number(row.change),
+          change: row.change === null || row.change === undefined ? null : Number(row.change),
           sparkline: row.sparkline,
           // spark_dates обязателен: без даты последнего закрытия сверка не
           // может отличить кавычку от закрытия и валится в ветку «два
@@ -856,9 +856,9 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         };
       }
       return {
-        ok: true,
+        ok: skipped.length === 0 && ['brent', 'sp500', 'usd-eur', 'gold', 'btc'].every((id) => verdicts.some((item) => item.id === id)),
         detail: `сходится у ${checked} из ${verdicts.length} рядов${
-          skipped.length ? `; цена из кавычки, сверка не применима: ${skipped.join(', ')}` : ''
+          skipped.length ? `; база не проверена: ${skipped.join(', ')}` : ''
         }`,
       };
     }),

@@ -65,6 +65,26 @@ const mobileQuickLinks = [
   }),
 ];
 
+function mobileLinksForView(activeView: AppView) {
+  if (activeView === 'dashboard' || mobileQuickLinks.some((link) => link.page === activeView)) {
+    return mobileQuickLinks;
+  }
+
+  // Keep the five-slot bar useful on every route: for a page outside the pinned
+  // set, replace News with the current page instead of leaving every tab idle.
+  const theme = SECTION_THEMES[activeView];
+  return [
+    ...mobileQuickLinks.slice(0, -1),
+    {
+      label: theme.navLabel,
+      href: theme.href,
+      icon: theme.icon,
+      theme,
+      page: activeView,
+    },
+  ];
+}
+
 type HeaderProps = {
   activeView: AppView;
 };
@@ -103,6 +123,7 @@ export default function Header({ activeView }: HeaderProps) {
   }, []);
 
   const isActiveLink = (themeId: SectionThemeId) => activeView === themeId;
+  const visibleMobileLinks = mobileLinksForView(activeView);
 
   return (
     <>
@@ -263,9 +284,10 @@ export default function Header({ activeView }: HeaderProps) {
                     <a
                       key={link.href}
                       href={link.href}
+                      data-theme={link.theme.id}
                       onClick={() => setMenuOpen(false)}
                       aria-current={isActive ? 'page' : undefined}
-                      className={`group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.99] ${
+                      className={`mobile-navigation__link group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.99] ${
                         isActive
                           ? link.theme.activeClass
                           : `${link.theme.cardClass} text-text-primary`
@@ -274,7 +296,7 @@ export default function Header({ activeView }: HeaderProps) {
                       <span
                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                           isActive
-                            ? 'border-slate-200 bg-slate-50 text-current'
+                            ? 'border-white/25 bg-white/15 text-current'
                             : `border-transparent ${link.theme.iconClass}`
                         }`}
                       >
@@ -303,22 +325,34 @@ export default function Header({ activeView }: HeaderProps) {
                 })}
                 <a
                   href={PAGE_PATHS.status}
+                  data-theme={SECTION_THEMES.status.id}
                   onClick={() => setMenuOpen(false)}
                   aria-current={activeView === 'status' ? 'page' : undefined}
-                  className={`group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary ${
+                  className={`mobile-navigation__link group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary ${
                     activeView === 'status'
-                      ? 'border-emerald-700 bg-emerald-700 text-white'
-                      : 'border-emerald-200 bg-emerald-50 text-text-primary hover:bg-emerald-100'
+                      ? SECTION_THEMES.status.activeClass
+                      : `${SECTION_THEMES.status.cardClass} text-text-primary`
                   }`}
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
+                    activeView === 'status'
+                      ? 'border-white/25 bg-white/15 text-current'
+                      : `border-transparent ${SECTION_THEMES.status.iconClass}`
+                  }`}>
                     <HeartPulse className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-base font-extrabold">Состояние системы</span>
-                    <span className="mt-0.5 text-xs text-text-secondary">Источники, котировки и проверки</span>
+                    <span className={`mt-0.5 text-xs ${activeView === 'status' ? 'text-current opacity-85' : 'text-text-secondary'}`}>
+                      Источники, котировки и проверки
+                    </span>
                   </span>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+                  <ChevronRight
+                    className={`h-5 w-5 shrink-0 text-current transition-transform duration-200 group-hover:translate-x-0.5 ${
+                      activeView === 'status' ? '' : SECTION_THEMES.status.textClass
+                    }`}
+                    aria-hidden="true"
+                  />
                 </a>
               </div>
             </div>
@@ -329,19 +363,20 @@ export default function Header({ activeView }: HeaderProps) {
       {/* A separate sibling avoids transformed-header containing blocks from
           changing the fixed positioning of the mobile page switcher. */}
       <nav
-        aria-label="Частые страницы"
+        aria-label="Быстрая навигация по страницам"
         className="mobile-quick-nav fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 flex items-stretch justify-between rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-[0_14px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl lg:hidden"
       >
-        {mobileQuickLinks.map((link) => {
+        {visibleMobileLinks.map((link) => {
           const Icon = link.icon;
           const isActive = activeView === link.page;
           return (
             <a
               key={link.href}
               href={link.href}
+              data-theme={link.theme?.id ?? 'dashboard'}
               onClick={() => setMenuOpen(false)}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex min-h-10 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`mobile-quick-nav__link flex min-h-10 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive
                   ? link.theme?.activeClass ?? 'border-accent-strong bg-accent-strong text-white shadow-sm'
                   : link.theme

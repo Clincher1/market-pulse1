@@ -19,8 +19,8 @@ import { ErrorNotice } from './SectionFallback';
  * вставка дня), поэтому через неделю видно ровно то, что сайт показывал тогда,
  * а не то, что ему удобно показать сейчас.
  *
- * Числа из архива не досчитываются задним числом: если значение не попало
- * в снимок, на его месте прочерк, а не оценка.
+ * Исходные цены не меняются. Производная проверка процента золота показана
+ * с подтверждённой датой базы. Компонент выведен из публичного приложения.
  *
  * Паспорт показывает сохранённые рыночные значения и даты наблюдений.
  */
@@ -104,12 +104,15 @@ function MorningAssets({ assets }: { assets: PassportAsset[] }) {
                       : 'text-text-secondary'
               }`}
             >
-              {asset.change === null ? 'изменение не сохранено' : changeWord(asset.change)}
+              {asset.change === null ? (asset.goldAudit ? 'база не подтверждена' : 'изменение не сохранено') : changeWord(asset.change)}
             </span>
             {observationLabel(asset.asOf) && (
               <span className="text-text-secondary">{observationLabel(asset.asOf)}</span>
             )}
           </div>
+          {asset.goldAudit && <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+            {asset.goldAudit.baseDate ? `Проверено: цена снимка к закрытию ${asset.goldAudit.baseValue?.toLocaleString('ru-RU')} от ${asset.goldAudit.baseDate}.` : 'Золото исключено из выбора лидера: нет подтверждённой базы.'}
+          </p>}
         </div>
       ))}
     </div>
@@ -209,7 +212,7 @@ export default function DailyPassport() {
         </h2>
         <span className="text-sm font-bold text-text-secondary">{passportDate(today.date)}</span>
         <span className="text-xs text-text-secondary">
-          зафиксировано в {moscowTime(today.capturedAt)} МСК и больше не меняется
+          цены зафиксированы в {moscowTime(today.capturedAt)} МСК
         </span>
       </div>
 
@@ -217,7 +220,7 @@ export default function DailyPassport() {
         {/* Самое сильное движение дня. */}
         <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm motion-safe:animate-fade-in lg:col-span-6 lg:p-5">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
-            Сильнейшее движение
+            Сильнейшее изменение снимка
           </div>
           <div
             className={`mt-3 text-4xl leading-none font-normal tracking-[-0.03em] tabular-nums lg:text-5xl ${
@@ -232,7 +235,7 @@ export default function DailyPassport() {
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
             {today.topMover
-              ? `${today.topMover.name} — среди пяти мировых индикаторов${priceAsOf(today.topMover.asOf)}`
+              ? `${today.topMover.name} — среди доступных изменений мировых индикаторов${priceAsOf(today.topMover.asOf)}`
               : 'в снимке нет движений за день'}
           </p>
         </article>
@@ -279,6 +282,13 @@ export default function DailyPassport() {
           Поэтому сюда нельзя «подтянуть» более удачные цифры задним числом — можно
           только добавить новый день.
         </span>
+      </p>
+
+      <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+        Процент золота рассчитан заново из цены именно этого снимка и подтверждённого
+        закрытия XAU/USD; другие проценты сохранены как в записи. Это не текущая цена.
+        Если база золота не подтверждена, процент не показывается и не участвует в выборе лидера.
+        Исходные записи оставлены без изменений. Периоды активов могут различаться.
       </p>
 
       {archive.length > 0 ? (

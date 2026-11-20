@@ -1,0 +1,43 @@
+.market-desk-stack { display: grid; gap: 1.25rem; margin: 1.5rem 0 2rem; }
+.market-desk { min-width: 0; border: 1px solid #cbd5e1; border-radius: 24px; background: #fff; padding: clamp(1rem, 3vw, 1.75rem); color: #0f172a; }
+.market-desk h2 { margin: .15rem 0; font-size: clamp(1.3rem, 3vw, 1.65rem); font-weight: 800; letter-spacing: -.025em; }
+.market-desk h3 { font-size: 1rem; font-weight: 750; }
+.market-desk p { margin: .5rem 0; line-height: 1.6; font-size: .875rem; }
+.market-desk .market-desk__eyebrow { margin: 0; color: #0e7490; font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
+.market-desk__heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; margin-bottom: .65rem; }
+.market-desk a { display: inline-flex; align-items: center; gap: .3rem; color: #075985; font-size: .85rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.market-desk .market-desk__muted { color: #475569; font-size: .8rem; overflow-wrap: anywhere; }
+.market-desk button, .market-desk select { min-height: 44px; border: 1px solid #94a3b8; border-radius: 12px; background: #fff; color: #334155; font: inherit; font-size: .82rem; padding: .6rem .8rem; }
+.market-desk button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; cursor: pointer; }
+.market-desk button:hover { background: #f0f9ff; border-color: #0284c7; }
+.market-desk button[aria-pressed="true"] { color: #075985; background: #e0f2fe; border-color: #0284c7; font-weight: 750; }
+.market-desk button:disabled { cursor: wait; color: #64748b; }
+.market-desk :is(a, button, input, select, summary):focus-visible { outline: 3px solid #0284c7; outline-offset: 4px; }
+.minute-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.minute-grid article { min-width: 0; padding: 1rem; background: #f8fafc; border-radius: 16px; }
+.minute-grid h3 { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0; }
+.minute-grid h3 span { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.desk-favorites { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.desk-empty { border-radius: 14px; background: #f1f5f9; padding: 1rem; color: #475569; }
+.market-desk .desk-warning { background: #fffbeb; color: #92400e; padding: .75rem; border-radius: 12px; }
+.desk-watchlist { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: .75rem; }
+.desk-watchlist article { min-width: 0; border: 1px solid #cbd5e1; border-radius: 16px; padding: 1rem; }
+.market-desk .desk-price { font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.desk-next { margin-top: 1rem; }
+.desk-choices { display: flex; flex-wrap: wrap; gap: .4rem .8rem; border: 0; padding: 0; margin: 1rem 0; }
+.desk-choices legend { font-size: .8rem; font-weight: 750; margin-bottom: .5rem; }
+.desk-choices label { display: flex; align-items: center; min-height: 44px; gap: .5rem; font-size: .85rem; cursor: pointer; }
+.desk-choices input { accent-color: #0369a1; width: 18px; height: 18px; }
+.desk-controls { display: flex; flex-wrap: wrap; gap: .75rem; }
+.desk-controls label { display: grid; min-width: 0; max-width: 100%; gap: .35rem; font-size: .75rem; font-weight: 700; }
+.desk-controls select { width: 100%; max-width: 100%; }
+.desk-period { font-weight: 700; font-variant-numeric: tabular-nums; }
+.desk-chart { width: 100%; height: auto; display: block; margin: 1rem 0; }
+.desk-table-wrap { overflow-x: auto; }
+.desk-table { width: 100%; font-size: .8rem; border-collapse: collapse; text-align: left; }
+.desk-table caption { text-align: left; color: #475569; padding: .5rem 0; }
+.desk-table :is(th, td) { padding: .65rem .5rem; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+.desk-table th { font-weight: 700; }
+.desk-table svg { display: inline-block; }
+.desk-table td { font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .minute-grid { grid-template-columns: 1fr; } .desk-controls { display: grid; } .desk-chart { min-height: 170px; } }

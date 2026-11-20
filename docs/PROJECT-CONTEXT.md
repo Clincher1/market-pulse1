@@ -106,3 +106,30 @@ For repository-specific review, see `AGENTS.md`, `docs/DATA-CONTRACT.md`,
 `docs/SELF-CHECK.md`, `docs/VERIFICATION-METHOD.md` and `supabase/README.md`.
 `docs/CONCEPT.md` is retained as a historical artifact and is not the current product
 specification.
+
+## Personal market desk
+
+`src/components/MarketDesk.tsx` adds a short factual summary and an optional watchlist
+on the overview. The global page reuses the watchlist and offers a comparison chart.
+Only the five existing global instruments are offered; provider/instrument selection
+and database policies are unchanged. Favorites are a validated list of instrument IDs
+in localStorage, not a user identifier. Storage denial falls back to tab-only state.
+
+Summary selection is deterministic: the largest absolute available percentage move
+within each contour. The Russian candidates are IMOEX, RGBI and USD/RUB; global moves
+are recalculated from the last two dated cached observations. Comparison periods can
+differ and are displayed, so this is not a claim about all markets over one session.
+
+Comparison uses the exact intersection of the selected instruments' dated calendars,
+then rebases every series at the same first observation: `(value / first - 1) * 100`.
+The optional base-100 scale adds 100. The window is a count of common observations,
+not a promise of a calendar week/month. Missing/invalid dates, nonpositive prices or
+insufficient common history produce an explicit empty state, never interpolation or
+silent omission of a selected instrument. Endpoints, units and sources are printed
+beside the chart; dividends, currency conversion and costs are not included.
+
+Validation lives in `tests/market-desk.test.mjs` (pure calculations) and
+`tests/market-desk-ui.test.mjs` (React interactions in jsdom; only network boundaries
+are mocked). The latter includes favorites/remount, corrupt/denied storage, initial
+and refresh failures, partial coverage, cross-tab sync, chart selection/scale and a
+narrow chart coordinate system. These are not full-browser visual tests.

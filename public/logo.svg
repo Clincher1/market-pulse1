@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 88" role="img" aria-labelledby="title desc">
   <title id="title">Market Pulse</title>
-  <desc id="desc">Пульс рынка: события, каналы влияния, цены и память исходов.</desc>
+  <desc id="desc">Пульс рынка: котировки, новости, источники и даты наблюдений.</desc>
   <defs>
     <linearGradient id="mp-logo-bg" x1="8" y1="6" x2="76" y2="82" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#13233F"/>

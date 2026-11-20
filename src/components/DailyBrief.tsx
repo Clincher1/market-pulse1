@@ -1,7 +1,6 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Camera, ExternalLink, History, Zap } from 'lucide-react';
 import { formatPercent } from '@/lib/percent';
-import { observationLabel } from '@/lib/asOf';
 import { formatPriceText } from '@/lib/price';
 import type { DailySnapshot } from '@/data/dailySnapshots';
 import { fetchTodaySnapshot } from '@/data/dailySnapshots';
@@ -13,7 +12,8 @@ import {
 } from '@/data/russiaInsights';
 import { SectionThemeBadge } from './sectionThemes';
 import { startPolling } from '@/lib/polling';
-import { instrumentChanged, sameObservationDay } from '@/lib/snapshotIdentity';
+import { instrumentChanged } from '@/lib/snapshotIdentity';
+import { briefDelta, lastSeriesMove, lastSeriesObservation, snapshotSeriesDateLabel, orderBriefComparisons } from '@/lib/briefComparison';
 import { safeHttpUrl } from '@/lib/safeUrl';
 
 /**
@@ -28,6 +28,7 @@ interface BriefItem {
   body: ReactNode;
   sourceUrl?: string;
   sourceLabel?: string;
+  deltaKind?: 'relative' | 'points';
 }
 
 function formatPct(value: number | null | undefined): string {
@@ -71,12 +72,6 @@ function formatStamp(values: Array<string | undefined>): string | null {
   );
 }
 
-function currentSparklineLast(sparkline?: number[]): number | null {
-  if (!Array.isArray(sparkline)) return null;
-  const values = sparkline.filter((value) => Number.isFinite(value));
-  return values.length ? values[values.length - 1] : null;
-}
-
 function formatSeriesValue(value: number, sample: string): string {
   const match = sample.match(/^([^\d\-−]*)(\d[\d,]*(?:\.(\d+))?)/);
   const prefix = match?.[1] ?? '';
@@ -88,7 +83,7 @@ function formatSeriesValue(value: number, sample: string): string {
 function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode }) {
   const sourceUrl = item.sourceUrl ? safeHttpUrl(item.sourceUrl) : null;
   return (
-    <li className="flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-slate-50">
+    <li className="flex flex-wrap items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-slate-50">
       {marker}
       <a
         href={item.href}
@@ -105,7 +100,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="inline-flex basis-full items-center gap-1 pl-6 text-[11px] sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
           aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
         >
           {item.sourceLabel ?? 'Источник'}
@@ -175,22 +170,24 @@ export default function DailyBrief() {
   const brief = useMemo(() => {
     const facts: BriefItem[] = [];
     const strongestGlobal =
-      [...liveAssets].sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0] ?? null;
+      liveAssets.map((asset) => ({ asset, move: lastSeriesMove(asset) }))
+        .filter((row) => row.move !== null)
+        .sort((a, b) => Math.abs(b.move!.change) - Math.abs(a.move!.change) || a.asset.id.localeCompare(b.asset.id))[0] ?? null;
 
-    if (strongestGlobal) {
-      const observedAt = observationLabel(strongestGlobal.asOf);
+    if (strongestGlobal?.move) {
+      const { asset, move } = strongestGlobal;
       facts.push({
         id: 'global-move',
         href: '/world',
         body: (
           <>
-            Наибольшее по модулю дневное изменение среди загруженных мировых рядов:{' '}
+            Наибольшее по модулю изменение двух последних закрытий среди загруженных мировых рядов:{' '}
             <strong className="text-text-primary">
-              {strongestGlobal.name} {formatPct(strongestGlobal.change)}
+              {asset.name} {formatPct(move.change)}
             </strong>
-            {` · последнее значение ${formatPriceText(strongestGlobal.price)}`}
-            {strongestGlobal.sourceLabel ? ` · источник ${strongestGlobal.sourceLabel}` : ''}
-            {observedAt ? ` · дата наблюдения ${observedAt}` : ' · дата наблюдения не указана'}.
+            {` · закрытия ${formatSeriesValue(move.previousValue, asset.price)} → ${formatSeriesValue(move.value, asset.price)}`}
+            {asset.sourceLabel ? ` · источник ${asset.sourceLabel}` : ''}
+            {` · ${formatDateOnly(move.previousDate)} → ${formatDateOnly(move.date)}; (последнее / предыдущее − 1) × 100 %`}. Периоды активов могут различаться.
           </>
         ),
       });
@@ -250,7 +247,7 @@ export default function DailyBrief() {
     };
     if (!snapshot) return empty;
 
-    const candidates: Array<{ magnitude: number; item: BriefItem }> = [];
+    const candidates: Array<{ magnitude: number; kind: 'relative' | 'points'; item: BriefItem }> = [];
     let comparable = 0;
     const renamed: string[] = [];
     const snapshotAssets = new Map(snapshot.assets.map((asset) => [asset.id, asset]));
@@ -263,7 +260,8 @@ export default function DailyBrief() {
       }
 
       const base = baseline?.last;
-      const current = currentSparklineLast(asset.sparkline);
+      const observation = lastSeriesObservation(asset);
+      const current = observation?.value ?? null;
       if (
         typeof base !== 'number' ||
         !Number.isFinite(base) ||
@@ -278,17 +276,13 @@ export default function DailyBrief() {
       const deltaPct = (current / base - 1) * 100;
       if (Math.round(deltaPct * 100) === 0) return;
 
-      const currentDate = observationLabel(asset.asOf);
-      const baselineDate = observationLabel(baseline?.asOf);
-      const dateText = sameObservationDay(baseline?.asOf, asset.asOf)
-        ? currentDate
-          ? ` · дата наблюдения ${currentDate}`
-          : ''
-        : ` · дата в снимке ${baselineDate ?? 'не указана'}, сейчас ${currentDate ?? 'не указана'}`;
+      const dateText = ` · даты точек: ${snapshotSeriesDateLabel(baseline?.lastDate)} → ${snapshotSeriesDateLabel(observation?.date)}`;
       candidates.push({
         magnitude: Math.abs(deltaPct),
+        kind: 'relative',
         item: {
           id: `change-global-${asset.id}`,
+          deltaKind: 'relative',
           href: '/world',
           body: (
             <>
@@ -322,31 +316,31 @@ export default function DailyBrief() {
       if (
         typeof base !== 'number' ||
         !Number.isFinite(base) ||
-        base <= 0 ||
-        !Number.isFinite(current) ||
-        current <= 0
+        !Number.isFinite(current)
       ) {
         return;
       }
 
       comparable += 1;
-      const deltaPct = (current / base - 1) * 100;
-      if (Math.round(deltaPct * 100) === 0) return;
+      const delta = briefDelta(base, current, indicator.unit);
+      if (!delta) return;
       const baselineDate = formatDateOnly(baseline.asOf) ?? baseline.asOf;
       const currentDate = formatDateOnly(indicator.asOf) ?? indicator.asOf;
       candidates.push({
-        magnitude: Math.abs(deltaPct),
+        magnitude: delta.magnitude,
+        kind: delta.kind,
         item: {
           id: `change-russia-${indicator.id}`,
+          deltaKind: delta.kind,
           href: '/russia',
           body: (
             <>
               {indicator.name}: {formatIndicatorValue(indicator)} {indicator.unit} против{' '}
               {new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 8 }).format(base)}{' '}
               {indicator.unit} в снимке; <strong className="tabular-nums text-text-primary">
-                {formatPct(deltaPct)}
+                {delta.label}
               </strong>{' '}
-              = (текущее значение / значение в снимке − 1) × 100
+              = {delta.formula}
               {indicator.provider ? ` · источник ${indicator.provider}` : ''}
               {baselineDate || currentDate
                 ? ` · даты наблюдений: ${baselineDate ?? 'не указана'} → ${currentDate ?? 'не указана'}`
@@ -359,11 +353,11 @@ export default function DailyBrief() {
       });
     });
 
-    const ordered = candidates.sort((a, b) => b.magnitude - a.magnitude);
+    const ordered = orderBriefComparisons(candidates);
     return {
-      items: ordered.slice(0, 6).map((candidate) => candidate.item),
+      items: ordered.map((candidate) => candidate.item),
       comparable,
-      changed: ordered.length,
+      changed: candidates.length,
       renamed: [...new Set(renamed)],
     };
   }, [insights, liveAssets, snapshot]);
@@ -403,23 +397,25 @@ export default function DailyBrief() {
           Нет сопоставимых актуальных значений для сравнения.
         </p>
       ) : changeView.items.length > 0 ? (
-        <ul data-testid="brief-changes-list" className="mt-1.5 space-y-0.5">
-          {changeView.items.map((item) => (
-            <BriefLinkItem
-              key={item.id}
-              item={item}
-              marker={
-                <span
-                  className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-300"
-                  aria-hidden="true"
-                />
-              }
-            />
-          ))}
-        </ul>
+        <div data-testid="brief-changes-list">
+          {(['relative', 'points'] as const).map((kind) => {
+            const items = changeView.items.filter((item) => item.deltaKind === kind);
+            return items.length > 0 && (
+              <div key={kind} className="mt-3">
+                <h4 className="px-2 text-xs font-bold text-text-secondary">
+                  {kind === 'points' ? 'Ставки и доходности · п.п.' : 'Цены и курсы · %'}
+                </h4>
+                <ul className="mt-1.5 space-y-0.5">
+                  {items.map((item) => <BriefLinkItem key={item.id} item={item}
+                    marker={<span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-300" aria-hidden="true" />} />)}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
-          В сопоставимых рядах изменение не отличается от нуля на точности вывода 0,01 %.
+          В сопоставимых рядах изменение не отличается от нуля на точности вывода 0,01 % или 0,01 п.п. для ставок.
         </p>
       )}
 
@@ -432,8 +428,12 @@ export default function DailyBrief() {
 
       {snapshot && changeView.comparable > 0 && (
         <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary">
-          Формула: (текущее значение / значение в снимке − 1) × 100. Изменения округляются до
-          0,01 % и сортируются по абсолютной величине; показано не более шести рядов.
+          Цены и курсы: (текущее значение / значение в снимке − 1) × 100 %.
+          Ставки и доходности: текущее значение − значение в снимке, в процентных пунктах.
+          Точность — 0,01 % или 0,01 п.п. В каждой группе — до шести наибольших по модулю
+          изменений; проценты и процентные пункты между собой не ранжируются.
+          Мировые сравнения используют точки дневного ряда, а не текущую котировку.
+          У старого снимка дата точки могла не сохраниться; время котировки её не заменяет.
           {changeView.changed > changeView.items.length
             ? ` Выведено ${changeView.items.length} из ${changeView.changed} рядов с ненулевой дельтой.`
             : ''}

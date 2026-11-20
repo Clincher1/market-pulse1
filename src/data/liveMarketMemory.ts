@@ -50,12 +50,13 @@ function optionalStr(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
-function normalizeStats(row: Row | undefined): MemoryStats | null {
+export function normalizeStats(row: Row | undefined): MemoryStats | null {
   if (!row) return null;
   return {
     forecastSnapshots: num(row.forecast_snapshots),
     evaluatedForecasts: num(row.evaluated_forecasts),
-    pendingForecasts: num(row.pending_forecasts),
+    // Includes terminal insufficient_price_data, not just the pending queue.
+    pendingForecasts: Math.max(0, num(row.forecast_snapshots) - num(row.evaluated_forecasts)),
     latestPriceFetchAt: optionalStr(row.latest_price_fetch_at),
     latestForecastIssuedAt: optionalStr(row.latest_forecast_issued_at),
   };
