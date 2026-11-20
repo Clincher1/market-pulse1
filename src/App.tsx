@@ -14,6 +14,7 @@ import PulseOrbit from '@/components/PulseOrbit';
 import PageSignalIntro from '@/components/PageSignalIntro';
 import BusinessMoney from '@/components/BusinessMoney';
 import WhatChanged from '@/components/WhatChanged';
+import MarketDesk from '@/components/MarketDesk';
 import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
 import { SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
@@ -152,6 +153,8 @@ function DashboardPage() {
         </motion.div>
       </section>
 
+      <SectionBoundary title="Обзор и мои ориентиры"><MarketDesk summary /></SectionBoundary>
+
       <section aria-labelledby="page-links-title" className="overview-topics mb-10 lg:mb-14">
         <div className="overview-topics__heading">
           <div>
@@ -243,6 +246,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
         <>
           <PageSignalIntro page={page} />
           <MarketTicker />
+          <SectionBoundary title="Мои ориентиры и сравнение"><MarketDesk /></SectionBoundary>
           <section
             id="global-economy"
             aria-labelledby="global-economy-title"
