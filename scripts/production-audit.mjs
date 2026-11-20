@@ -60,6 +60,9 @@ try {
         result.currentPage = { path, width };
         const target = new URL(path, origin);
         target.searchParams.set('acceptance', `${round}-${width}`);
+        // A bookmark is a fresh document load. Hash-only navigation from the previous
+        // redirected root can legitimately return null instead of an HTTP response.
+        await page.goto('about:blank');
         const response = await page.goto(target.href, { waitUntil: 'networkidle', timeout: 90000 });
         assert.equal(response.status(), 200, path);
         await page.locator('main').waitFor();
