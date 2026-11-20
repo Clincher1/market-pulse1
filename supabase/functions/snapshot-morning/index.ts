@@ -59,6 +59,7 @@ async function restJson(path: string, init: RequestInit = {}): Promise<unknown> 
 }
 
 function finiteNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
@@ -73,10 +74,18 @@ function moscowDate(now: Date): string {
   }).format(now);
 }
 
-function lastSparklineValue(sparkline: unknown): number | null {
-  if (!Array.isArray(sparkline)) return null;
-  const values = sparkline.map((value) => Number(value)).filter((value) => Number.isFinite(value));
-  return values.length ? values[values.length - 1] : null;
+/** Keep the last value paired with its own date; never use the quote timestamp. */
+export function snapshotLastObservation(sparkline: unknown, sparkDates: unknown): { last: number | null; last_date: string | null } {
+  const values = Array.isArray(sparkline) ? sparkline : [];
+  const last = values.at(-1);
+  const validValue = typeof last === "number" && Number.isFinite(last) && last > 0;
+  const dates = Array.isArray(sparkDates) ? sparkDates : [];
+  const validDates = dates.length === values.length && dates.length > 0 && dates.every((date, index) =>
+    typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+    Number.isFinite(Date.parse(`${date}T00:00:00Z`)) &&
+    new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date &&
+    (index === 0 || date > dates[index - 1]));
+  return { last: validValue ? last : null, last_date: validValue && validDates ? dates.at(-1) : null };
 }
 
 async function fetchRussia(): Promise<AnyRecord | null> {
@@ -129,7 +138,7 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
         "cached_tension?select=value,label,news_count,updated_at&id=eq.1&limit=1",
       ) as Promise<AnyRecord[]>,
       restJson(
-        "cached_assets?select=id,name,price,change,sparkline,updated_at,as_of&limit=20",
+        "cached_assets?select=id,name,price,change,sparkline,spark_dates,updated_at,as_of&limit=20",
       ) as Promise<AnyRecord[]>,
       fetchRussia(),
     ]);
@@ -153,7 +162,7 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       name: String(row.name ?? ""),
       price: String(row.price ?? ""),
       change: finiteNumber(row.change),
-      last: lastSparklineValue(row.sparkline),
+      ...snapshotLastObservation(row.sparkline, row.spark_dates),
       updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
       as_of: typeof row.as_of === "string" ? row.as_of : null,
     }));
