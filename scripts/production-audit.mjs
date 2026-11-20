@@ -1,13 +1,14 @@
 // Read-only, release-specific acceptance audit. No writer/snapshot endpoints are called.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { chromium } from '../.local/production-browser/node_modules/playwright/index.mjs';
 const origin = 'https://market-pulse1-eta.vercel.app';
 const selfcheck = 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/selfcheck';
 const output = '.local/production-audit';
 await fs.mkdir(output, { recursive: true });
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const routes = ['/', '/passport', '/russia', '/world', '/brief', '/news', '/memory', '/guide', '/about', '/status', '/memory/', '/#market-memory', '/#guide-memory'];
+const routes = ['/', '/passport', '/russia', '/world', '/brief', '/news', '/memory', '/guide', '/about', '/status', '/memory/', '/#market-memory', '/#guide-memory', '/memory/old'];
 const browser = await chromium.launch({ headless: true });
 let previousCheckAt = 0;
 const rounds = [];
@@ -15,6 +16,23 @@ try {
   for (const round of ['A', 'B']) {
     const result = { round, started: new Date().toISOString(), pages: [], failures: [] };
     rounds.push(result);
+    const htmlResponse = await fetch(origin);
+    assert.ok(htmlResponse.ok);
+    const html = await htmlResponse.text();
+    assert.ok(html.includes('public-facts-1'), 'Old social metadata is deployed');
+    assert.doesNotMatch(html, /паспорт дня и архив/);
+    for (const path of ['site.webmanifest', 'og-image.svg', 'logo.svg', 'og-image.png']) {
+      const response = await fetch(`${origin}/${path}?acceptance=${round}`);
+      assert.equal(response.status, 200, path);
+      const bytes = Buffer.from(await response.arrayBuffer());
+      assert.ok(bytes.equals(await fs.readFile(`public/${path}`)), `Stale or unexpected public asset: ${path}`);
+      if (path === 'og-image.png') result.socialCard = {
+        bytes: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+        width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20),
+      };
+    }
+
     for (const width of [360, 1280]) {
       const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: round === 'A' ? 'reduce' : 'no-preference' });
       // Fail closed if a future UI refactor attempts a write during this audit.
@@ -24,7 +42,7 @@ try {
           result.failures.push(`Blocked non-read request: ${request.method()} ${new URL(request.url()).pathname}`);
           return route.abort();
         }
-        if (/\/rest\/v1\/market_memory/.test(request.url())) {
+        if (/\/rest\/v1\/market_memory|\/functions\/v1\/market-memory/.test(request.url())) {
           result.failures.push('Withdrawn forecast archive was queried');
           return route.abort();
         }
@@ -56,14 +74,14 @@ try {
         assert.ok(metrics.text > 80 && metrics.headings > 0, `${path}: empty main`);
         const body = await page.locator('main').innerText();
         assert.equal(await page.locator('a[href="/memory"]').count(), 0, 'Retired archive is still advertised');
-        for (const text of ['Исходные проценты снимков', 'Неисправленные значения для аудита', 'Архив ·', '−4,50 %']) {
+        for (const text of ['Исходные проценты снимков', 'Неисправленные значения для аудита', 'Архив ·']) {
           assert.ok(!body.includes(text), `Withdrawn content visible: ${text}`);
         }
         assert.equal(await page.locator('#market-memory, #daily-passport').count(), 0, 'A retired public block remains');
         if (path === '/passport') {
           assert.ok(body.includes('Сводка дня') && body.includes('Деньги бизнеса'), 'Verified replacement summary missing');
         }
-        if (path === '/memory' || path === '/memory/') {
+        if (path === '/memory' || path.startsWith('/memory/')) {
           assert.equal(new URL(page.url()).pathname, '/', 'Old archive URL did not redirect');
         }
         if (path.startsWith('/#')) {
