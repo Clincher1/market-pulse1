@@ -16,8 +16,8 @@ import {
 const EMPTY_FORECASTS: MemoryForecast[] = [];
 
 const ASSET_META: Record<string, { label: string; source: string }> = {
-  sp500: { label: 'S&P 500', source: 'Yahoo Finance ^GSPC, дневной индекс' },
-  Brent: { label: 'Brent', source: 'Yahoo Finance BZ=F, фьючерс Brent' },
+  sp500: { label: 'S&P 500', source: 'FRED SP500, дневной индекс (архивный ряд)'  },
+  Brent: { label: 'Brent', source: 'FRED DCOILBRENTEU, спот Brent (архивный ряд)'  },
   gold: { label: 'Gold index', source: 'Nasdaq gold index: доходность, не USD/oz' },
   btc: { label: 'BTC', source: 'FRED/Coinbase, дневной ряд' },
   eurusd: { label: 'EUR/USD', source: 'USD за EUR; обратная величина к плитке USD/EUR' },
