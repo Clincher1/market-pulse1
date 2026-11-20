@@ -551,13 +551,24 @@ export default async function handler(req, res) {
     // Самопроверка зовёт этот адрес с ?diag=1 и называет стадию в отчёте:
     // снаружи бинарный ответ не посмотреть, поэтому причина нужна изнутри.
     let stage = 'data';
-    const wantsDiagnostics = new URL(req.url ?? '/', 'https://x').searchParams.get('diag') === '1';
+    const diagnosticMode = new URL(req.url ?? '/', 'https://x').searchParams.get('diag');
+    const wantsDiagnostics = diagnosticMode === '1' || diagnosticMode === 'json';
     try {
         const card = await buildBriefCard();
         // Стадии рендера сообщает сам renderBrief: renderers → fonts → satori →
         // resvg. Здесь остаются только «данные» до вызова и «отдача» после.
         const body = await renderBrief(card, (next) => { stage = next; });
         stage = 'send';
+        // A text-only audit can verify actual rendered PNG bytes without guessing
+        // whether its page reader rejected a binary response. Existing diag=1
+        // behavior remains unchanged for selfcheck.
+        if (diagnosticMode === 'json') {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.status(200).json({ ok: true, type: 'image/png', bytes: body.length,
+                signature: body.subarray(0, 8).toString('hex'),
+                width: body.readUInt32BE(16), height: body.readUInt32BE(20) });
+            return;
+        }
         // Keep the existing Vercel edge TTL without allowing browser storage.
         setVercelCdnCache(res, 's-maxage=60, stale-while-revalidate=300');
         // asPng() отдаёт Uint8Array. Через res.end нужен именно Buffer с

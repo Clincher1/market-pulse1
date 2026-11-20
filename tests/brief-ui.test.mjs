@@ -74,3 +74,24 @@ test('Telegram card uses the same units and dates as the browser', async () => {
   } finally { globalThis.fetch = original; }
 });
 after(async () => { await rm(directory, { recursive: true, force: true }); });
+
+test('HTTP diagnostics report the real rendered PNG, not a presumed successful build', async () => {
+  const { default: handler } = await import('../api/brief-image.js');
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => new Response(JSON.stringify(String(url).includes('cached_assets')
+    ? assets.map((row) => ({ ...row, spark_dates: row.sparkDates, as_of: row.asOf }))
+    : String(url).includes('daily_snapshots') ? [] : russia), { headers: { 'Content-Type': 'application/json' } });
+  const response = { headers: {}, setHeader(name, value) { this.headers[name] = value; },
+    status(code) { this.statusCode = code; return this; }, json(payload) { this.payload = payload; } };
+  try {
+    await handler({ method: 'GET', url: '/api/brief-image?diag=json' }, response);
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.payload.ok, true);
+    assert.equal(response.payload.signature, '89504e470d0a1a0a');
+    assert.equal(response.payload.width, 1080);
+    assert.ok(response.payload.height >= 900);
+    assert.ok(response.payload.bytes > 10000);
+    assert.equal(response.headers['Cache-Control'], 'no-store');
+    assert.equal(response.headers['Vercel-CDN-Cache-Control'], undefined);
+  } finally { globalThis.fetch = original; }
+});
