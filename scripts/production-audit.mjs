@@ -7,7 +7,7 @@ const selfcheck = 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/selfche
 const output = '.local/production-audit';
 await fs.mkdir(output, { recursive: true });
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const routes = ['/', '/passport', '/russia', '/world', '/brief', '/news', '/memory', '/guide', '/about', '/status'];
+const routes = ['/', '/passport', '/russia', '/world', '/brief', '/news', '/memory', '/guide', '/about', '/status', '/memory/', '/#market-memory', '/#guide-memory'];
 const browser = await chromium.launch({ headless: true });
 let previousCheckAt = 0;
 const rounds = [];
@@ -24,6 +24,13 @@ try {
           result.failures.push(`Blocked non-read request: ${request.method()} ${new URL(request.url()).pathname}`);
           return route.abort();
         }
+        if (/\/rest\/v1\/market_memory/.test(request.url())) {
+          result.failures.push('Withdrawn forecast archive was queried');
+          return route.abort();
+        }
+        if (request.url().includes('/rest/v1/daily_snapshots')) {
+          assert.ok(new URL(request.url()).searchParams.get('date')?.startsWith('eq.'), 'Historical passport fetch is still public');
+        }
         return route.continue();
       });
       const page = await context.newPage();
@@ -33,7 +40,9 @@ try {
       });
       for (const path of routes) {
         result.currentPage = { path, width };
-        const response = await page.goto(origin + path + `?acceptance=${round}-${width}`, { waitUntil: 'networkidle', timeout: 90000 });
+        const target = new URL(path, origin);
+        target.searchParams.set('acceptance', `${round}-${width}`);
+        const response = await page.goto(target.href, { waitUntil: 'networkidle', timeout: 90000 });
         assert.equal(response.status(), 200, path);
         await page.locator('main').waitFor();
         await page.waitForTimeout(1200);
@@ -46,17 +55,22 @@ try {
         assert.equal(metrics.overflow, false, `${width} ${path}: horizontal overflow ${JSON.stringify(metrics.overflowNodes)}`);
         assert.ok(metrics.text > 80 && metrics.headings > 0, `${path}: empty main`);
         const body = await page.locator('main').innerText();
+        assert.equal(await page.locator('a[href="/memory"]').count(), 0, 'Retired archive is still advertised');
+        for (const text of ['Исходные проценты снимков', 'Неисправленные значения для аудита', 'Архив ·', '−4,50 %']) {
+          assert.ok(!body.includes(text), `Withdrawn content visible: ${text}`);
+        }
+        assert.equal(await page.locator('#market-memory, #daily-passport').count(), 0, 'A retired public block remains');
         if (path === '/passport') {
-          assert.ok(body.includes('−3,02 %') && body.includes('2026-11-19'), 'Verified snapshot Gold return/base missing');
-          assert.ok(body.includes('$3,556.3'), 'Stored morning price changed');
-          await page.getByText('Исходные проценты снимков · до проверки золота', { exact: true }).click();
-          assert.ok((await page.locator('main').innerText()).includes('−4,50 %'), 'Original Gold percentage unavailable');
+          assert.ok(body.includes('Сводка дня') && body.includes('Деньги бизнеса'), 'Verified replacement summary missing');
         }
-        if (path === '/memory') {
-          for (const text of ['150', '106', '44', 'нет достаточной истории исходного инструмента', 'FRED DCOILBRENTEU', 'FRED SP500']) assert.ok(body.includes(text), `Missing archive fact: ${text}`);
-          assert.ok(!body.includes('Торговый горизонт завершился'), 'Unavailable history is incorrectly still pending');
+        if (path === '/memory' || path === '/memory/') {
+          assert.equal(new URL(page.url()).pathname, '/', 'Old archive URL did not redirect');
         }
-        if (path === '/guide') assert.ok(body.includes('Производный процент золота проверяется отдельно'));
+        if (path.startsWith('/#')) {
+          assert.equal(new URL(page.url()).pathname, '/guide', 'Legacy archive bookmark did not reach guide');
+          assert.equal(new URL(page.url()).hash, '');
+        }
+        if (path === '/guide') assert.ok(body.includes('записи не публикуются'));
         if (path === '/news') {
           for (const [testId, count] of [['news-show-all', null], ['news-show-half', null], ['news-show-latest', 4]]) {
             await page.getByTestId(testId).click();

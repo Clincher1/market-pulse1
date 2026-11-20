@@ -20,7 +20,7 @@ import { ErrorNotice } from './SectionFallback';
  * а не то, что ему удобно показать сейчас.
  *
  * Исходные цены не меняются. Производная проверка процента золота показана
- * отдельно от исходных процентов, с подтверждённой датой базы.
+ * с подтверждённой датой базы. Компонент выведен из публичного приложения.
  *
  * Паспорт показывает сохранённые рыночные значения и даты наблюдений.
  */
@@ -290,17 +290,6 @@ export default function DailyPassport() {
         Если база золота не подтверждена, процент не показывается и не участвует в выборе лидера.
         Исходные записи оставлены без изменений. Периоды активов могут различаться.
       </p>
-      <details className="mt-3 rounded-xl border border-slate-200 px-3 py-2">
-        <summary className="cursor-pointer text-xs font-bold">Исходные проценты снимков · до проверки золота</summary>
-        <p className="mt-2 text-xs">Неисправленные значения для аудита, не текущие дневные изменения.</p>
-        <ul className="mt-2 space-y-1 text-xs">
-          {days.map((day) => <li key={day.date}>
-            {passportDateShort(day.date)}: {day.assets.map((asset) => `${asset.name} ${
-              (asset.goldAudit ? asset.originalChange : asset.change) == null ? '—' : changeWord((asset.goldAudit ? asset.originalChange : asset.change)!)}
-            `).join('; ')}
-          </li>)}
-        </ul>
-      </details>
 
       {archive.length > 0 ? (
         <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">

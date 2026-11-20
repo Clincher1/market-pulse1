@@ -26,16 +26,19 @@ test('dated gold closing price is compared with its previous close', () => {
   assert.equal(result.baseDate, '2026-11-18');
   assert.equal(result.change.toFixed(2), '-1.53');
 });
-test('archive offers original numbers separately and excludes unverifiable gold leaders', async () => {
+test('known-wrong source percentages have no presentation control', async () => {
   const source = await readFile(new URL('../src/components/DailyPassport.tsx', import.meta.url), 'utf8');
-  assert.match(source, /Исходные проценты снимков/);
-  assert.match(source, /Исходные записи оставлены без изменений/);
-  assert.match(source, /Золото исключено из выбора лидера/);
+  assert.doesNotMatch(source, /Исходные проценты снимков|asset\.originalChange/);
 });
 
-test('guide distinguishes immutable source percentages from the verified derived return', async () => {
+test('withdrawn archive and passports cannot be imported by the public app', async () => {
+  const source = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /import.*(?:MarketMemory|DailyPassport)|<MarketMemory|<DailyPassport/);
+});
+
+test('guide describes only published sections, not historical accuracy claims', async () => {
   const source = await readFile(new URL('../src/components/AnalyticsGuide.tsx', import.meta.url), 'utf8');
-  assert.match(source, /Производный процент золота проверяется отдельно/);
-  assert.match(source, /Исходные проценты доступны/);
-  assert.doesNotMatch(source, /через неделю видно ровно то/);
+  assert.doesNotMatch(source, /href="\/memory"|id="guide-memory"|Исходные проценты доступны|46 %|0,40/);
+  assert.match(source, /не публикуются/);
+  assert.match(source, /текущего московского дня/);
 });

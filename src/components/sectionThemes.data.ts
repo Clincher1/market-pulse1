@@ -49,10 +49,10 @@ export const SECTION_THEMES: Record<SectionThemeId, SectionTheme> = {
   passport: {
     id: 'passport',
     order: '00',
-    label: 'Паспорт дня',
-    navLabel: 'Паспорт',
+    label: 'Сводка дня',
+    navLabel: 'Сводка',
     href: '/passport',
-    description: 'Зафиксированный снимок и изменения за день',
+    description: 'Денежные ориентиры и наблюдаемая динамика',
     icon: CalendarCheck,
     badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-800',
     cardClass: 'border-emerald-200 bg-emerald-50/80 hover:border-emerald-300 hover:bg-emerald-100',
@@ -189,7 +189,6 @@ export const DASHBOARD_THEME_ORDER: SectionThemeId[] = [
   'global',
   'brief',
   'news',
-  'memory',
   'guide',
   'about',
 ];

@@ -1,11 +1,7 @@
 name: Read-only production acceptance audit
 
 on:
-  push:
-    branches: ['arena/12edd106-market-pulse1']
-    paths:
-      - 'scripts/production-audit.mjs'
-      - '.github/workflows/production-audit.yml'
+  # Run only after the pinned release is READY and promoted, never race deployment.
   workflow_dispatch:
 
 permissions:

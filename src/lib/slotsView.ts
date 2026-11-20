@@ -131,5 +131,5 @@ export function slotsWithoutSource(slots: SlotView[]): number[] {
 /** These registry entries describe internal/legacy processes, not public blocks. */
 export function isInternalSlot(slotId: string): boolean {
   return new Set(['news.tension', 'news.events', 'news.classify', 'news.digest',
-    'memory.market', 'passport.delivery']).has(slotId);
+    'memory.market', 'passport.delivery', 'forecast.archive', 'snapshot.morning']).has(slotId);
 }

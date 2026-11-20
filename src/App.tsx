@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, BookOpen, HeartPulse, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
-import DailyPassport from './components/DailyPassport';
 import DailyBrief from '@/components/DailyBrief';
 import RussiaBusiness from '@/components/RussiaBusiness';
 import KeyAssets from '@/components/KeyAssets';
@@ -21,7 +20,6 @@ import { SectionBoundary } from '@/components/SectionBoundary';
 import { PAGE_PATHS, pathFromLegacyHash, viewFromLocation, type AppView } from '@/lib/routes';
 
 const NewsFeed = lazy(() => import('@/components/NewsFeed'));
-const MarketMemory = lazy(() => import('@/components/MarketMemory'));
 const AboutProject = lazy(() => import('@/components/AboutProject'));
 const AnalyticsGuide = lazy(() => import('@/components/AnalyticsGuide'));
 const SystemStatus = lazy(() => import('@/components/SystemStatus'));
@@ -52,7 +50,7 @@ const PAGE_INFO: Record<InnerPageView, PageInfo> = {
   passport: {
     themeId: 'passport',
     title: 'Сводка дня',
-    description: 'Зафиксированный паспорт, денежные ориентиры и изменения, уже видимые в рядах.',
+    description: 'Денежные ориентиры с источниками и датами, наблюдаемая динамика рынков.',
   },
   russia: {
     themeId: 'russia',
@@ -133,7 +131,7 @@ function DashboardPage() {
 
           <motion.div className="overview-hero__actions" {...appear(0.22)}>
             <a href={PAGE_PATHS.passport} className="overview-hero__primary-action">
-              Смотреть паспорт дня
+              Смотреть сводку дня
               <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </a>
             <a href={PAGE_PATHS.guide} className="overview-hero__secondary-action">
@@ -144,7 +142,7 @@ function DashboardPage() {
 
           <motion.div className="overview-hero__note" {...appear(0.28)}>
             <span className="overview-hero__note-mark" aria-hidden="true">01</span>
-            <p>Новых прогнозов нет. Архив и источники остаются доступны для проверки.</p>
+            <p>Без прогнозов и рекомендаций. Источники и даты — рядом с числами.</p>
           </motion.div>
         </div>
 
@@ -229,7 +227,6 @@ function SectionPage({ view }: { view: SectionPageView }) {
       return (
         <>
           <PageSignalIntro page={page} />
-          <SectionBoundary title="Паспорт дня"><DailyPassport /></SectionBoundary>
           <SectionBoundary title="Деньги бизнеса сегодня"><BusinessMoney /></SectionBoundary>
           <SectionBoundary title="Что меняется"><WhatChanged /></SectionBoundary>
         </>
@@ -291,24 +288,8 @@ function SectionPage({ view }: { view: SectionPageView }) {
         </>
       );
     case 'memory':
-      return (
-        <>
-          <PageSignalIntro page={page} />
-          <Suspense
-            fallback={
-              <SectionFallback
-                id="market-memory"
-                title="Память рынка"
-                message="Загружаем архив прежних записей и рассчитанные исходы по ценовым рядам…"
-                minHeightClass="min-h-[760px]"
-                className="mb-10 lg:mb-12"
-              />
-            }
-          >
-            <SectionBoundary title="Память рынка"><MarketMemory /></SectionBoundary>
-          </Suspense>
-        </>
-      );
+      // Compatibility only: the incomplete forecast archive is not public.
+      return <DashboardPage />;
     case 'about':
       return (
         <>
