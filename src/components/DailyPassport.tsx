@@ -217,7 +217,7 @@ export default function DailyPassport() {
         {/* Самое сильное движение дня. */}
         <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm motion-safe:animate-fade-in lg:col-span-6 lg:p-5">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
-            Сильнейшее движение
+            Сильнейшее движение в исходной записи
           </div>
           <div
             className={`mt-3 text-4xl leading-none font-normal tracking-[-0.03em] tabular-nums lg:text-5xl ${
@@ -279,6 +279,13 @@ export default function DailyPassport() {
           Поэтому сюда нельзя «подтянуть» более удачные цифры задним числом — можно
           только добавить новый день.
         </span>
+      </p>
+
+      <p className="mt-3 rounded-xl bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-950">
+        Ограничение архива: здесь сохранены исходно опубликованные проценты и выбор лидера,
+        а не их повторная проверка. В старом расчёте золота могла использоваться база на одно
+        закрытие раньше нужного. Такие проценты и лидер снимка могут быть неверны; исходные
+        записи оставлены без изменений и не являются текущими дневными изменениями.
       </p>
 
       {archive.length > 0 ? (
