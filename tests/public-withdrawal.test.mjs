@@ -32,6 +32,7 @@ test('registry does not advertise withdrawn blocks as public slots', () => {
 
 test('old forecast path has a server-side redirect, not only a hidden menu entry', () => {
   const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  assert.equal(config.trailingSlash, false, 'Slash-ending bookmarks must be canonicalized before routing');
   assert.deepEqual(config.redirects.find((item) => item.source === '/memory/:path*'), {
     source: '/memory/:path*', destination: '/', permanent: false,
   });
