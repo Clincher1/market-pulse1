@@ -167,6 +167,16 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       as_of: typeof row.as_of === "string" ? row.as_of : null,
     }));
 
+    // A first insertion is immutable: never freeze a partial/undated cache.
+    for (const id of ["usd-eur", "sp500", "brent", "gold", "btc"]) {
+      const matches = assets.filter((asset) => asset.id === id);
+      const asset = matches[0];
+      if (matches.length !== 1 || !asset.last || !asset.last_date || !asset.price ||
+          !asset.as_of || !Number.isFinite(Date.parse(asset.as_of))) {
+        throw new Error(`Snapshot rejected: ${id} has no unique dated observation`);
+      }
+    }
+
     const inserted = (await restJson("daily_snapshots?on_conflict=date", {
       method: "POST",
       headers: { Prefer: "resolution=ignore-duplicates,return=representation" },

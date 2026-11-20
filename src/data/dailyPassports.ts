@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { DailySnapshot } from './dailySnapshots';
+import { auditPassportGold, type GoldClose } from '@/lib/passportGold';
 
 /**
  * Архив дневных паспортов.
@@ -29,6 +30,8 @@ export interface PassportAsset {
   /** Цена так, как её напечатал источник. Пусто — цена не сохранилась. */
   price: string;
   change: number | null;
+  originalChange?: number | null;
+  goldAudit?: { baseDate: string | null; baseValue: number | null };
   /** Дата наблюдения от источника: в субботу это может быть пятница. */
   asOf: string | null;
 }
@@ -58,6 +61,7 @@ export interface PassportResult {
 }
 
 function finiteNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
@@ -66,34 +70,29 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function normalizeDay(row: Record<string, unknown>): PassportDay {
+export function normalizeDay(row: Record<string, unknown>, goldHistory: GoldClose[] = []): PassportDay {
   const assets = Array.isArray(row.assets) ? row.assets.filter(isRecord) : [];
   const russia = isRecord(row.russia) ? row.russia : {};
   const markets = Array.isArray(russia.markets) ? russia.markets.filter(isRecord) : [];
-
-  let topMover: PassportDay['topMover'] = null;
-  for (const asset of assets) {
-    const change = finiteNumber(asset.change);
-    const name = typeof asset.name === 'string' ? asset.name : '';
-    if (change === null || !name) continue;
-    if (!topMover || Math.abs(change) > Math.abs(topMover.change)) {
-      topMover = { name, change, asOf: typeof asset.as_of === 'string' && asset.as_of ? asset.as_of : null };
-    }
-  }
 
   const snapshotAssets: PassportAsset[] = [];
   for (const asset of assets) {
     const id = typeof asset.id === 'string' ? asset.id : '';
     const name = typeof asset.name === 'string' ? asset.name : '';
     if (!id || !name) continue;
+    const goldAudit = id === 'gold' ? auditPassportGold(asset, goldHistory) : null;
     snapshotAssets.push({
       id,
       name,
       price: typeof asset.price === 'string' ? asset.price : '',
-      change: finiteNumber(asset.change),
+      change: goldAudit ? goldAudit.change : finiteNumber(asset.change),
+      ...(goldAudit ? { originalChange: finiteNumber(asset.change), goldAudit } : {}),
       asOf: typeof asset.as_of === 'string' && asset.as_of ? asset.as_of : null,
     });
   }
+
+  const strongest = snapshotAssets.filter((a) => a.change !== null).sort((a, b) => Math.abs(b.change!) - Math.abs(a.change!))[0];
+  const topMover = strongest ? { name: strongest.name, change: strongest.change!, asOf: strongest.asOf } : null;
 
   const usdRubRow = markets.find((market) => market.id === 'usd-rub');
 
@@ -117,7 +116,17 @@ export async function fetchDailyPassports(limit = 14): Promise<PassportResult> {
 
     if (error) throw error;
     const rows = Array.isArray(data) ? data.filter(isRecord) : [];
-    return { days: rows.map(normalizeDay), error: false };
+    // Only the identical XAU/USD instrument can supply evidence for Gold.
+    // A failed audit read must not hide the snapshot or reuse an unverified %.
+    let goldHistory: GoldClose[] = [];
+    try {
+      const history = await supabase.from('asset_price_history_v1')
+        .select('observation_date,price')
+        .eq('frontend_asset_id', 'gold').eq('instrument_id', 'gold_twelve_xauusd_daily')
+        .order('observation_date', { ascending: false }).limit(500);
+      if (!history.error && Array.isArray(history.data)) goldHistory = history.data.map((p) => ({ date: p.observation_date, value: Number(p.price) }));
+    } catch { /* Snapshot remains readable, Gold is explicitly unverified. */ }
+    return { days: rows.map((row) => normalizeDay(row, goldHistory)), error: false };
   } catch (e) {
     console.error('Ошибка загрузки дневных паспортов:', e);
     return { days: [], error: true };
