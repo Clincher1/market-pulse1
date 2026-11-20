@@ -1,0 +1,23 @@
+{
+  "local": {
+    "node": "v22.22.3",
+    "npm_ci": "PASS; 247 packages installed, zero vulnerabilities reported",
+    "tests": { "result": "PASS", "total": 336, "passed": 336, "failed": 0, "skipped": 0 },
+    "typecheck": "PASS",
+    "lint": "PASS; repeated after supplementary audit script addition",
+    "build": "PASS",
+    "npm_audit_omit_dev": { "info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0 },
+    "git_diff_check": "PASS before report commit"
+  },
+  "ci": {
+    "quality_first": { "run": 44807452564, "conclusion": "success", "includes_edge_function_deno_check": true },
+    "quality_second": { "run": 44808901105, "conclusion": "success", "includes_edge_function_deno_check": true },
+    "browser": { "run": 44807452314, "conclusion": "success", "route_viewport_checks": 56, "accessibility_findings": 1, "note": "Workflow success is not an all-findings-closed verdict; accessibility and SEO findings were recorded, not asserted away." },
+    "http": { "run": 44808901329, "conclusion": "success", "note": "Collector completed successfully; expected/observed 401 and 404 plus retired archive HTTP 200 are analysed in the report." }
+  },
+  "production_unchanged": true,
+  "database_mutations_by_audit": false,
+  "manual_selfcheck_invoked": false,
+  "snapshot_invoked": false,
+  "two_completely_clean_audits": false
+}

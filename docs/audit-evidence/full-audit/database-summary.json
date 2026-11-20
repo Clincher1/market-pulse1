@@ -1,0 +1,23 @@
+{
+  "provenance": "Read-only Supabase connector SELECT queries and infrastructure health reads during this audit. Compact transcription of observed results; no credentials or SQL mutation calls.",
+  "database_observed_at": "2026-11-20T20:11:05.009628+00:00",
+  "latest_scheduled_health": { "checked_at": "2026-11-20T19:25:02.436+00:00", "ok": true, "checks": 25, "failed": 0 },
+  "health_24h_at_first_observation": { "runs": 41, "failed_runs": 0 },
+  "health_7d": { "runs": 186, "runs_with_failure": 19, "individual_checks": 4650, "passed_checks": 4630, "failed_checks": 20, "first": "2026-11-13T20:25:01.769+00:00", "last": "2026-11-20T19:25:02.436+00:00" },
+  "failed_checks_7d": { "assets_asof": 14, "asset_quote_lag": 3, "market_memory": 1, "ru_insights": 1, "ru_history_api": 1 },
+  "health_since_release": { "release_time": "2026-11-20T17:39:22Z", "runs": 5, "failed_runs": 0, "first": "2026-11-20T17:40:47.835+00:00", "last": "2026-11-20T19:25:02.436+00:00" },
+  "cron_48h": { "active_jobs": 12, "runs": 1262, "failed_sql_dispatches": 0, "caveat": "A successful cron SQL dispatch does not prove a successful asynchronous HTTP writer response." },
+  "net_http_2h_sample": { "responses": 52, "all_status_200": true, "timeouts": 0, "caveat": "Sample only; no attribution to every scheduled writer." },
+  "news": { "total_cached": 12844, "published_24h": 537, "latest_published_at": "2026-11-20T19:49:45+00:00", "enabled_feeds": 19, "per_feed_active_probes_24h": 24, "per_feed_successful_probes_24h": 24, "per_feed_paused_entries_24h": 24, "per_feed_failed_active_probes_24h": 0 },
+  "preserved_history": { "snapshots": 25, "forecasts": 150, "last_forecast_issued_at": "2026-10-31T05:45:03.257+00:00", "latest_snapshot_date": "2026-11-20" },
+  "db_size_mib": 107.03,
+  "security": { "anon_public_table_write_grants": 0, "anon_public_column_write_grants": 0, "anon_executable_public_security_definer_functions": 0, "raw_forecast_outcomes_readable": false, "source_preferences_readable": false, "retired_forecast_view_selected_columns_readable": true, "retired_forecast_view_rows_as_privileged_reader": 150 },
+  "cache_vs_history_overlap": [
+    { "id": "brent", "compared_points": 30, "max_abs_delta": 4.8e-9 },
+    { "id": "btc", "compared_points": 30, "max_abs_delta": 0 },
+    { "id": "gold", "compared_points": 29, "max_abs_delta": 0 },
+    { "id": "sp500", "compared_points": 30, "max_abs_delta": 5e-9 },
+    { "id": "usd-eur", "compared_points": 30, "max_abs_delta": 4.99727619393e-9, "conversion": "1 / ECB USD per EUR" }
+  ],
+  "infrastructure": { "first_read": { "db": "healthy", "rest": "healthy", "auth": "healthy", "storage": "healthy", "realtime": "unhealthy" }, "second_read": { "db": "healthy", "rest": "healthy", "realtime": "healthy", "realtime_db_connected": false, "realtime_replication_connected": false }, "caveat": "Realtime recovered at service-health level; no realtime subscriptions are used in the current frontend, and no websocket subscription test was performed." }
+}
