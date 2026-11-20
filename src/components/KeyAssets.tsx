@@ -53,8 +53,8 @@ export default function KeyAssets() {
         </div>
         <p className="mt-2 max-w-4xl text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">Это не российский рынок.</strong> Ниже только внешние ориентиры:
-          USD/EUR, S&amp;P 500, Brent, золото и BTC. Рубль, Мосбиржа и RGBI показаны выше в отдельном
-          российском контуре — так внешний драйвер не смешивается с реакцией России.
+          USD/EUR, S&amp;P 500, Brent, золото и BTC. Рубль, Мосбиржа и RGBI находятся на отдельной странице российского
+          контура — так внешний драйвер не смешивается с реакцией России.
         </p>
       </div>
 
