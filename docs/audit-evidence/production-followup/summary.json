@@ -1,14 +1,14 @@
 [
   {
     "round": "A",
-    "started": "2026-11-20T16:31:44.348Z",
+    "started": "2026-11-20T17:17:12.319Z",
     "pages": [
       {
         "path": "/",
         "width": 360,
         "overflow": false,
         "overflowNodes": [],
-        "text": 1964,
+        "text": 1941,
         "headings": 4
       },
       {
@@ -122,8 +122,8 @@
             "width": 111
           }
         ],
-        "text": 5445,
-        "headings": 4
+        "text": 4316,
+        "headings": 3
       },
       {
         "path": "/russia",
@@ -236,7 +236,7 @@
             "width": 248
           }
         ],
-        "text": 8688,
+        "text": 8599,
         "headings": 2
       },
       {
@@ -389,31 +389,16 @@
             "width": 203
           }
         ],
-        "text": 1087,
+        "text": 1078,
         "headings": 2
       },
       {
         "path": "/memory",
         "width": 360,
         "overflow": false,
-        "overflowNodes": [
-          {
-            "tag": "DIV",
-            "cls": "page-signal-intro__art",
-            "text": "МАРШРУТ ПРОВЕРКИ",
-            "right": 370,
-            "width": 203
-          },
-          {
-            "tag": "svg",
-            "cls": null,
-            "text": "",
-            "right": 370,
-            "width": 203
-          }
-        ],
-        "text": 29660,
-        "headings": 2
+        "overflowNodes": [],
+        "text": 2045,
+        "headings": 4
       },
       {
         "path": "/guide",
@@ -460,7 +445,7 @@
             "cls": "py-2 font-bold",
             "text": "Что можно утверждать",
             "right": 601,
-            "width": 254
+            "width": 261
           },
           {
             "tag": "TBODY",
@@ -481,7 +466,7 @@
             "cls": "py-2",
             "text": "«Такое значение было в такое время у такого источника»",
             "right": 601,
-            "width": 254
+            "width": 261
           },
           {
             "tag": "TR",
@@ -495,25 +480,25 @@
             "cls": "py-2",
             "text": "«Вот как мы это посчитали, вот формула»",
             "right": 601,
-            "width": 254
+            "width": 261
           },
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "АрхивПамять рынка (исторические записи)«Запись прогноза и рассчитанное изменение цены»",
+            "text": "ПроверкаИсточники и состояние системы«Данные прошли указанные проверки на момент отчёта»",
             "right": 601,
             "width": 560
           },
           {
             "tag": "TD",
             "cls": "py-2",
-            "text": "«Запись прогноза и рассчитанное изменение цены»",
+            "text": "«Данные прошли указанные проверки на момент отчёта»",
             "right": 601,
-            "width": 254
+            "width": 261
           }
         ],
-        "text": 10659,
-        "headings": 12
+        "text": 9697,
+        "headings": 11
       },
       {
         "path": "/about",
@@ -535,7 +520,7 @@
             "width": 203
           }
         ],
-        "text": 2982,
+        "text": 2926,
         "headings": 3
       },
       {
@@ -546,7 +531,7 @@
           {
             "tag": "TABLE",
             "cls": "w-full text-left text-sm",
-            "text": "ЛентаПоследний материалВ лентеНовых в проходеCNBC Investing16.6 ч назад250Bloomberg Economics1.3 ч н",
+            "text": "ЛентаПоследний материалВ лентеНовых в проходеCNBC Investing17.4 ч назад250Financial Times1.0 ч назад",
             "right": 372,
             "width": 331
           },
@@ -574,28 +559,14 @@
           {
             "tag": "TBODY",
             "cls": null,
-            "text": "CNBC Investing16.6 ч назад250Bloomberg Economics1.3 ч назад200Financial Times35 мин назад110Investin",
+            "text": "CNBC Investing17.4 ч назад250Financial Times1.0 ч назад120Bloomberg Economics36 мин назад202Investin",
             "right": 372,
             "width": 331
           },
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "CNBC Investing16.6 ч назад250",
-            "right": 372,
-            "width": 331
-          },
-          {
-            "tag": "TD",
-            "cls": "py-2 text-text-secondary",
-            "text": "0",
-            "right": 372,
-            "width": 61
-          },
-          {
-            "tag": "TR",
-            "cls": "border-t border-slate-200",
-            "text": "Bloomberg Economics1.3 ч назад200",
+            "text": "CNBC Investing17.4 ч назад250",
             "right": 372,
             "width": 331
           },
@@ -609,7 +580,7 @@
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "Financial Times35 мин назад110",
+            "text": "Financial Times1.0 ч назад120",
             "right": 372,
             "width": 331
           },
@@ -623,21 +594,7 @@
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "Investing.com14 мин назад106",
-            "right": 372,
-            "width": 331
-          },
-          {
-            "tag": "TD",
-            "cls": "py-2 text-text-secondary",
-            "text": "6",
-            "right": 372,
-            "width": 61
-          },
-          {
-            "tag": "TR",
-            "cls": "border-t border-slate-200",
-            "text": "Bloomberg6 мин назад202",
+            "text": "Bloomberg Economics36 мин назад202",
             "right": 372,
             "width": 331
           },
@@ -647,17 +604,261 @@
             "text": "2",
             "right": 372,
             "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Investing.com14 мин назад107",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "7",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Bloomberg5 мин назад201",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "1",
+            "right": 372,
+            "width": 61
           }
         ],
-        "text": 14242,
+        "text": 14209,
         "headings": 2
+      },
+      {
+        "path": "/memory/",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2045,
+        "headings": 4
+      },
+      {
+        "path": "/#market-memory",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "w-full min-w-[560px] text-left text-sm",
+            "text": "СлойГде на сайтеЧто можно утверждатьФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было ",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wider text-text-secondary",
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TH",
+            "cls": "py-2 font-bold",
+            "text": "Что можно утверждать",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TBODY",
+            "cls": "text-text-secondary",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»Изм",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ИзмерениеЧто меняется, бриф, графики с датами«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ПроверкаИсточники и состояние системы«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 261
+          }
+        ],
+        "text": 9697,
+        "headings": 11
+      },
+      {
+        "path": "/#guide-memory",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "w-full min-w-[560px] text-left text-sm",
+            "text": "СлойГде на сайтеЧто можно утверждатьФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было ",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wider text-text-secondary",
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TH",
+            "cls": "py-2 font-bold",
+            "text": "Что можно утверждать",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TBODY",
+            "cls": "text-text-secondary",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»Изм",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ИзмерениеЧто меняется, бриф, графики с датами«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ПроверкаИсточники и состояние системы«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 261
+          }
+        ],
+        "text": 9697,
+        "headings": 11
+      },
+      {
+        "path": "/memory/old",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2045,
+        "headings": 4
       },
       {
         "path": "/",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 2487,
+        "text": 2400,
         "headings": 4
       },
       {
@@ -665,15 +866,15 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 5462,
-        "headings": 4
+        "text": 4333,
+        "headings": 3
       },
       {
         "path": "/russia",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 8713,
+        "text": 8624,
         "headings": 2
       },
       {
@@ -697,7 +898,7 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 1145,
+        "text": 1136,
         "headings": 2
       },
       {
@@ -705,23 +906,23 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 29686,
-        "headings": 2
+        "text": 2504,
+        "headings": 4
       },
       {
         "path": "/guide",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 10797,
-        "headings": 12
+        "text": 9796,
+        "headings": 11
       },
       {
         "path": "/about",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 2999,
+        "text": 2943,
         "headings": 3
       },
       {
@@ -729,19 +930,57 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 14259,
+        "text": 14226,
         "headings": 2
+      },
+      {
+        "path": "/memory/",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2504,
+        "headings": 4
+      },
+      {
+        "path": "/#market-memory",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 9796,
+        "headings": 11
+      },
+      {
+        "path": "/#guide-memory",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 9796,
+        "headings": 11
+      },
+      {
+        "path": "/memory/old",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2504,
+        "headings": 4
       }
     ],
     "failures": [],
+    "socialCard": {
+      "bytes": 264453,
+      "sha256": "eb37dfbb6579e288162abd9675829a771c105b11f7d23d8402dbcd1e31c3dc8a",
+      "width": 1200,
+      "height": 630
+    },
     "currentPage": {
-      "path": "/status",
+      "path": "/memory/old",
       "width": 1280
     },
     "health": {
       "success": true,
       "ok": true,
-      "checked_at": "2026-11-20T16:32:39.839Z",
+      "checked_at": "2026-11-20T17:18:22.179Z",
       "trigger": "manual",
       "healing": "",
       "linear": "Linear: команда «Clincher», заведено 0, закрыто 0",
@@ -753,7 +992,7 @@
         },
         "news_fresh": {
           "ok": true,
-          "detail": "свежему материалу 0.2 ч"
+          "detail": "свежему материалу 0.3 ч"
         },
         "sample_size": {
           "ok": true,
@@ -765,11 +1004,11 @@
         },
         "assets_asof": {
           "ok": true,
-          "detail": "usd-eur: 1,6 ч (дата официального курса), допустимо 72 ч; gold: 0,1 ч (момент котировки), допустимо 72 ч; btc: 0,1 ч (момент котировки), допустимо 24 ч; sp500: 0,1 ч (дата закрытия), допустимо 72 ч; brent: 0,3 ч (момент котировки), допустимо 72 ч"
+          "detail": "usd-eur: 2,3 ч (дата официального курса), допустимо 72 ч; sp500: 0,1 ч (дата закрытия), допустимо 72 ч; brent: 0,2 ч (момент котировки), допустимо 72 ч; gold: 0,1 ч (момент котировки), допустимо 72 ч; btc: 0,1 ч (момент котировки), допустимо 24 ч"
         },
         "source_politeness": {
           "ok": true,
-          "detail": "расход в пределах квот: yahoo 152/300, kraken 119/300, gold-api 119/300, twelve 16/100, coinbase 3/300, frankfurter 1/24, ecb 8/24"
+          "detail": "расход в пределах квот: yahoo 160/300, kraken 124/300, gold-api 124/300, twelve 16/100, coinbase 3/300, frankfurter 1/24, ecb 8/24"
         },
         "slots_registry": {
           "ok": true,
@@ -777,7 +1016,7 @@
         },
         "asset_quote_lag": {
           "ok": true,
-          "detail": "gold: рынок открыт, цена отстала на 0,1 ч, допустимо 180 мин; btc: рынок открыт, цена отстала на 0,1 ч, допустимо 120 мин; brent: рынок открыт, цена отстала на 0,3 ч, допустимо 180 мин"
+          "detail": "brent: рынок открыт, цена отстала на 0,2 ч, допустимо 180 мин; gold: рынок открыт, цена отстала на 0,1 ч, допустимо 180 мин; btc: рынок открыт, цена отстала на 0,1 ч, допустимо 120 мин"
         },
         "asset_contract": {
           "ok": true,
@@ -809,7 +1048,7 @@
         },
         "feed_reliability": {
           "ok": true,
-          "detail": "все 19 включённых лент отвечают чаще, чем отказывают (frank-media: 53/53, Bloomberg-politics: 53/53, Bloomberg-markets: 53/53, interfax: 53/53…)"
+          "detail": "все 19 включённых лент отвечают чаще, чем отказывают (fed-press: 52/52, frank-media: 53/53, Bloomberg-markets: 53/53, CNBC-economy: 53/53…)"
         },
         "no_third_party": {
           "ok": true,
@@ -817,11 +1056,11 @@
         },
         "site_online": {
           "ok": true,
-          "detail": "HTTP 200 за 70 мс"
+          "detail": "HTTP 200 за 67 мс"
         },
         "ru_insights": {
           "ok": true,
-          "detail": "все 12 индикаторов и 18 заголовков за 69 мс"
+          "detail": "все 12 индикаторов и 18 заголовков за 68 мс"
         },
         "no_telemetry": {
           "ok": true,
@@ -829,7 +1068,7 @@
         },
         "ru_history_api": {
           "ok": true,
-          "detail": "все 6 рядов в своём сроке: key-rate ступень на месте, imoex 2/7 дн, rgbi 2/7 дн, usd-rub 1/7 дн, ruonia 2/7 дн, reserves 8/21 дн за 70 мс"
+          "detail": "все 6 рядов в своём сроке: key-rate ступень на месте, imoex 2/7 дн, rgbi 2/7 дн, usd-rub 1/7 дн, ruonia 2/7 дн, reserves 8/21 дн за 73 мс"
         },
         "asset_history_panel": {
           "ok": true,
@@ -837,30 +1076,30 @@
         },
         "market_memory": {
           "ok": true,
-          "detail": "событие 13 ч назад, аналоги есть"
+          "detail": "событие 14 ч назад, аналоги есть"
         },
         "sentry": {
           "ok": true,
-          "detail": "Sentry принял пробное событие за 123 мс"
+          "detail": "Sentry принял пробное событие за 24 мс"
         },
         "brief_image": {
           "ok": true,
-          "detail": "image/png, 510 КБ за 2547 мс"
+          "detail": "image/png, 227 КБ за 3376 мс"
         }
       }
     },
-    "finished": "2026-11-20T16:32:44.417Z"
+    "finished": "2026-11-20T17:18:27.498Z"
   },
   {
     "round": "B",
-    "started": "2026-11-20T16:32:44.418Z",
+    "started": "2026-11-20T17:18:27.498Z",
     "pages": [
       {
         "path": "/",
         "width": 360,
         "overflow": false,
         "overflowNodes": [],
-        "text": 1964,
+        "text": 1941,
         "headings": 4
       },
       {
@@ -974,8 +1213,8 @@
             "width": 111
           }
         ],
-        "text": 5445,
-        "headings": 4
+        "text": 4316,
+        "headings": 3
       },
       {
         "path": "/russia",
@@ -1088,7 +1327,7 @@
             "width": 248
           }
         ],
-        "text": 8688,
+        "text": 8599,
         "headings": 2
       },
       {
@@ -1241,31 +1480,16 @@
             "width": 203
           }
         ],
-        "text": 1087,
+        "text": 1078,
         "headings": 2
       },
       {
         "path": "/memory",
         "width": 360,
         "overflow": false,
-        "overflowNodes": [
-          {
-            "tag": "DIV",
-            "cls": "page-signal-intro__art",
-            "text": "МАРШРУТ ПРОВЕРКИ",
-            "right": 370,
-            "width": 203
-          },
-          {
-            "tag": "svg",
-            "cls": null,
-            "text": "",
-            "right": 370,
-            "width": 203
-          }
-        ],
-        "text": 29660,
-        "headings": 2
+        "overflowNodes": [],
+        "text": 2045,
+        "headings": 4
       },
       {
         "path": "/guide",
@@ -1312,7 +1536,7 @@
             "cls": "py-2 font-bold",
             "text": "Что можно утверждать",
             "right": 601,
-            "width": 254
+            "width": 261
           },
           {
             "tag": "TBODY",
@@ -1333,7 +1557,7 @@
             "cls": "py-2",
             "text": "«Такое значение было в такое время у такого источника»",
             "right": 601,
-            "width": 254
+            "width": 261
           },
           {
             "tag": "TR",
@@ -1347,25 +1571,25 @@
             "cls": "py-2",
             "text": "«Вот как мы это посчитали, вот формула»",
             "right": 601,
-            "width": 254
+            "width": 261
           },
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "АрхивПамять рынка (исторические записи)«Запись прогноза и рассчитанное изменение цены»",
+            "text": "ПроверкаИсточники и состояние системы«Данные прошли указанные проверки на момент отчёта»",
             "right": 601,
             "width": 560
           },
           {
             "tag": "TD",
             "cls": "py-2",
-            "text": "«Запись прогноза и рассчитанное изменение цены»",
+            "text": "«Данные прошли указанные проверки на момент отчёта»",
             "right": 601,
-            "width": 254
+            "width": 261
           }
         ],
-        "text": 10659,
-        "headings": 12
+        "text": 9697,
+        "headings": 11
       },
       {
         "path": "/about",
@@ -1387,7 +1611,7 @@
             "width": 203
           }
         ],
-        "text": 2982,
+        "text": 2926,
         "headings": 3
       },
       {
@@ -1398,7 +1622,7 @@
           {
             "tag": "TABLE",
             "cls": "w-full text-left text-sm",
-            "text": "ЛентаПоследний материалВ лентеНовых в проходеCNBC Investing16.6 ч назад250Bloomberg Economics1.4 ч н",
+            "text": "ЛентаПоследний материалВ лентеНовых в проходеCNBC Investing17.4 ч назад250Financial Times1.0 ч назад",
             "right": 372,
             "width": 331
           },
@@ -1426,28 +1650,14 @@
           {
             "tag": "TBODY",
             "cls": null,
-            "text": "CNBC Investing16.6 ч назад250Bloomberg Economics1.4 ч назад200Financial Times36 мин назад110Investin",
+            "text": "CNBC Investing17.4 ч назад250Financial Times1.0 ч назад120Bloomberg Economics37 мин назад202Investin",
             "right": 372,
             "width": 331
           },
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "CNBC Investing16.6 ч назад250",
-            "right": 372,
-            "width": 331
-          },
-          {
-            "tag": "TD",
-            "cls": "py-2 text-text-secondary",
-            "text": "0",
-            "right": 372,
-            "width": 61
-          },
-          {
-            "tag": "TR",
-            "cls": "border-t border-slate-200",
-            "text": "Bloomberg Economics1.4 ч назад200",
+            "text": "CNBC Investing17.4 ч назад250",
             "right": 372,
             "width": 331
           },
@@ -1461,7 +1671,7 @@
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "Financial Times36 мин назад110",
+            "text": "Financial Times1.0 ч назад120",
             "right": 372,
             "width": 331
           },
@@ -1475,21 +1685,7 @@
           {
             "tag": "TR",
             "cls": "border-t border-slate-200",
-            "text": "Investing.com15 мин назад106",
-            "right": 372,
-            "width": 331
-          },
-          {
-            "tag": "TD",
-            "cls": "py-2 text-text-secondary",
-            "text": "6",
-            "right": 372,
-            "width": 61
-          },
-          {
-            "tag": "TR",
-            "cls": "border-t border-slate-200",
-            "text": "Bloomberg7 мин назад202",
+            "text": "Bloomberg Economics37 мин назад202",
             "right": 372,
             "width": 331
           },
@@ -1499,17 +1695,261 @@
             "text": "2",
             "right": 372,
             "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Investing.com16 мин назад107",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "7",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Bloomberg6 мин назад201",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "1",
+            "right": 372,
+            "width": 61
           }
         ],
-        "text": 14211,
+        "text": 14204,
         "headings": 2
+      },
+      {
+        "path": "/memory/",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2045,
+        "headings": 4
+      },
+      {
+        "path": "/#market-memory",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "w-full min-w-[560px] text-left text-sm",
+            "text": "СлойГде на сайтеЧто можно утверждатьФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было ",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wider text-text-secondary",
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TH",
+            "cls": "py-2 font-bold",
+            "text": "Что можно утверждать",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TBODY",
+            "cls": "text-text-secondary",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»Изм",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ИзмерениеЧто меняется, бриф, графики с датами«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ПроверкаИсточники и состояние системы«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 261
+          }
+        ],
+        "text": 9697,
+        "headings": 11
+      },
+      {
+        "path": "/#guide-memory",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "w-full min-w-[560px] text-left text-sm",
+            "text": "СлойГде на сайтеЧто можно утверждатьФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было ",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wider text-text-secondary",
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TH",
+            "cls": "py-2 font-bold",
+            "text": "Что можно утверждать",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TBODY",
+            "cls": "text-text-secondary",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»Изм",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ИзмерениеЧто меняется, бриф, графики с датами«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 261
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ПроверкаИсточники и состояние системы«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Данные прошли указанные проверки на момент отчёта»",
+            "right": 601,
+            "width": 261
+          }
+        ],
+        "text": 9697,
+        "headings": 11
+      },
+      {
+        "path": "/memory/old",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2045,
+        "headings": 4
       },
       {
         "path": "/",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 2487,
+        "text": 2400,
         "headings": 4
       },
       {
@@ -1517,15 +1957,15 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 5462,
-        "headings": 4
+        "text": 4333,
+        "headings": 3
       },
       {
         "path": "/russia",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 8713,
+        "text": 8624,
         "headings": 2
       },
       {
@@ -1549,7 +1989,7 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 1145,
+        "text": 1136,
         "headings": 2
       },
       {
@@ -1557,23 +1997,23 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 29686,
-        "headings": 2
+        "text": 2504,
+        "headings": 4
       },
       {
         "path": "/guide",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 10797,
-        "headings": 12
+        "text": 9796,
+        "headings": 11
       },
       {
         "path": "/about",
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 2999,
+        "text": 2943,
         "headings": 3
       },
       {
@@ -1581,19 +2021,57 @@
         "width": 1280,
         "overflow": false,
         "overflowNodes": [],
-        "text": 14228,
+        "text": 14221,
         "headings": 2
+      },
+      {
+        "path": "/memory/",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2504,
+        "headings": 4
+      },
+      {
+        "path": "/#market-memory",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 9796,
+        "headings": 11
+      },
+      {
+        "path": "/#guide-memory",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 9796,
+        "headings": 11
+      },
+      {
+        "path": "/memory/old",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2504,
+        "headings": 4
       }
     ],
     "failures": [],
+    "socialCard": {
+      "bytes": 264453,
+      "sha256": "eb37dfbb6579e288162abd9675829a771c105b11f7d23d8402dbcd1e31c3dc8a",
+      "width": 1200,
+      "height": 630
+    },
     "currentPage": {
-      "path": "/status",
+      "path": "/memory/old",
       "width": 1280
     },
     "health": {
       "success": true,
       "ok": true,
-      "checked_at": "2026-11-20T16:37:45.183Z",
+      "checked_at": "2026-11-20T17:23:27.417Z",
       "trigger": "manual",
       "healing": "",
       "linear": "Linear: команда «Clincher», заведено 0, закрыто 0",
@@ -1617,11 +2095,11 @@
         },
         "assets_asof": {
           "ok": true,
-          "detail": "usd-eur: 1,6 ч (дата официального курса), допустимо 72 ч; gold: 0,1 ч (момент котировки), допустимо 72 ч; btc: 0,1 ч (момент котировки), допустимо 24 ч; sp500: 0,2 ч (дата закрытия), допустимо 72 ч; brent: 0,4 ч (момент котировки), допустимо 72 ч"
+          "detail": "usd-eur: 2,4 ч (дата официального курса), допустимо 72 ч; sp500: 0,1 ч (дата закрытия), допустимо 72 ч; brent: 0,3 ч (момент котировки), допустимо 72 ч; gold: 0,2 ч (момент котировки), допустимо 72 ч; btc: 0,1 ч (момент котировки), допустимо 24 ч"
         },
         "source_politeness": {
           "ok": true,
-          "detail": "расход в пределах квот: yahoo 152/300, kraken 119/300, gold-api 119/300, twelve 16/100, coinbase 3/300, frankfurter 1/24, ecb 8/24"
+          "detail": "расход в пределах квот: yahoo 160/300, kraken 124/300, gold-api 124/300, twelve 16/100, coinbase 3/300, frankfurter 1/24, ecb 8/24"
         },
         "slots_registry": {
           "ok": true,
@@ -1629,7 +2107,7 @@
         },
         "asset_quote_lag": {
           "ok": true,
-          "detail": "gold: рынок открыт, цена отстала на 0,1 ч, допустимо 180 мин; btc: рынок открыт, цена отстала на 0,1 ч, допустимо 120 мин; brent: рынок открыт, цена отстала на 0,4 ч, допустимо 180 мин"
+          "detail": "brent: рынок открыт, цена отстала на 0,3 ч, допустимо 180 мин; gold: рынок открыт, цена отстала на 0,2 ч, допустимо 180 мин; btc: рынок открыт, цена отстала на 0,1 ч, допустимо 120 мин"
         },
         "asset_contract": {
           "ok": true,
@@ -1657,11 +2135,11 @@
         },
         "feeds_fresh": {
           "ok": true,
-          "detail": "все 19 включённых лент отработали за сутки, последняя — 1 мин назад"
+          "detail": "все 19 включённых лент отработали за сутки, последняя — 0 мин назад"
         },
         "feed_reliability": {
           "ok": true,
-          "detail": "все 19 включённых лент отвечают чаще, чем отказывают (frank-media: 53/53, Bloomberg-politics: 53/53, Bloomberg-markets: 53/53, interfax: 53/53…)"
+          "detail": "все 19 включённых лент отвечают чаще, чем отказывают (fed-press: 52/52, frank-media: 53/53, Bloomberg-markets: 53/53, CNBC-economy: 53/53…)"
         },
         "no_third_party": {
           "ok": true,
@@ -1669,11 +2147,11 @@
         },
         "site_online": {
           "ok": true,
-          "detail": "HTTP 200 за 83 мс"
+          "detail": "HTTP 200 за 70 мс"
         },
         "ru_insights": {
           "ok": true,
-          "detail": "все 12 индикаторов и 18 заголовков за 88 мс"
+          "detail": "все 12 индикаторов и 18 заголовков за 80 мс"
         },
         "no_telemetry": {
           "ok": true,
@@ -1681,7 +2159,7 @@
         },
         "ru_history_api": {
           "ok": true,
-          "detail": "все 6 рядов в своём сроке: key-rate ступень на месте, imoex 2/7 дн, rgbi 2/7 дн, usd-rub 1/7 дн, ruonia 2/7 дн, reserves 8/21 дн за 86 мс"
+          "detail": "все 6 рядов в своём сроке: key-rate ступень на месте, imoex 2/7 дн, rgbi 2/7 дн, usd-rub 1/7 дн, ruonia 2/7 дн, reserves 8/21 дн за 75 мс"
         },
         "asset_history_panel": {
           "ok": true,
@@ -1689,18 +2167,18 @@
         },
         "market_memory": {
           "ok": true,
-          "detail": "событие 13 ч назад, аналоги есть"
+          "detail": "событие 14 ч назад, аналоги есть"
         },
         "sentry": {
           "ok": true,
-          "detail": "Sentry принял пробное событие за 142 мс"
+          "detail": "Sentry принял пробное событие за 31 мс"
         },
         "brief_image": {
           "ok": true,
-          "detail": "image/png, 510 КБ за 112 мс"
+          "detail": "image/png, 227 КБ за 75 мс"
         }
       }
     },
-    "finished": "2026-11-20T16:37:49.507Z"
+    "finished": "2026-11-20T17:23:32.640Z"
   }
 ]
