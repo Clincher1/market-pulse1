@@ -141,7 +141,7 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
  * Внутренние исторические проверки остаются в `site_health` для аудита,
  * но их результаты больше не относятся к публичным проверкам продукта.
  */
-export const HIDDEN_PUBLIC_CHECKS = new Set(['tension_matches', 'sample_size']);
+export const HIDDEN_PUBLIC_CHECKS = new Set(['tension_matches', 'sample_size', 'market_memory']);
 export const PUBLIC_CHECK_NAMES = Object.keys(CHECK_LABELS).filter(
   (name) => !HIDDEN_PUBLIC_CHECKS.has(name),
 );
