@@ -1,0 +1,1706 @@
+[
+  {
+    "round": "A",
+    "started": "2026-11-20T16:31:44.348Z",
+    "pages": [
+      {
+        "path": "/",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 1964,
+        "headings": 4
+      },
+      {
+        "path": "/passport",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "USD/EUREUR за 1 USD+1,25 %11.11.2026 → 20.11.2026+0,80 %02.11.2026 → 11.11.2026+0,45 п.п.выше 90 % о",
+            "right": 678,
+            "width": 640
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right tabular-nums text-text-secondary",
+            "text": "+0,80 %02.11.2026 → 11.11.2026",
+            "right": 464,
+            "width": 144
+          },
+          {
+            "tag": "SPAN",
+            "cls": "block text-[10px] font-normal",
+            "text": "02.11.2026 → 11.11.2026",
+            "right": 452,
+            "width": 120
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right font-bold tabular-nums text-emerald-800",
+            "text": "+0,45 п.п.",
+            "right": 567,
+            "width": 103
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right text-[11px] leading-tight text-text-secondary",
+            "text": "выше 90 % окна",
+            "right": 678,
+            "width": 111
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "RUONIA+0,19 п.п.10.11.2026 → 19.11.2026−0,24 п.п.29.10.2026 → 10.11.2026+0,43 п.п.выше 58 % окна",
+            "right": 678,
+            "width": 640
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right tabular-nums text-text-secondary",
+            "text": "−0,24 п.п.29.10.2026 → 10.11.2026",
+            "right": 464,
+            "width": 144
+          },
+          {
+            "tag": "SPAN",
+            "cls": "block text-[10px] font-normal",
+            "text": "29.10.2026 → 10.11.2026",
+            "right": 452,
+            "width": 120
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right font-bold tabular-nums text-emerald-800",
+            "text": "+0,43 п.п.",
+            "right": 567,
+            "width": 103
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right text-[11px] leading-tight text-text-secondary",
+            "text": "выше 58 % окна",
+            "right": 678,
+            "width": 111
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "RGBI−0,67 %10.11.2026 → 19.11.2026−0,29 %29.10.2026 → 10.11.2026−0,38 п.п.выше 9 % окна",
+            "right": 678,
+            "width": 640
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right tabular-nums text-text-secondary",
+            "text": "−0,29 %29.10.2026 → 10.11.2026",
+            "right": 464,
+            "width": 144
+          },
+          {
+            "tag": "SPAN",
+            "cls": "block text-[10px] font-normal",
+            "text": "29.10.2026 → 10.11.2026",
+            "right": 452,
+            "width": 120
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right font-bold tabular-nums text-rose-800",
+            "text": "−0,38 п.п.",
+            "right": 567,
+            "width": 103
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right text-[11px] leading-tight text-text-secondary",
+            "text": "выше 9 % окна",
+            "right": 678,
+            "width": 111
+          }
+        ],
+        "text": 5445,
+        "headings": 4
+      },
+      {
+        "path": "/russia",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "14,18 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "2 г15,01 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "15,01 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "3 г15,65 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "15,65 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "5 г16,44 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "16,44 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "7 г16,83 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "16,83 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "10 г17,05 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "17,05 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "15 г17,18 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "17,18 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "20 г17,25 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "17,25 %",
+            "right": 413,
+            "width": 248
+          }
+        ],
+        "text": 8688,
+        "headings": 2
+      },
+      {
+        "path": "/world",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "desk-table",
+            "text": "Результаты за общий период · изменение в %Инструмент / линияИзменениеНачало → конец, исходные единиц",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "CAPTION",
+            "cls": null,
+            "text": "Результаты за общий период · изменение в %",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "THEAD",
+            "cls": null,
+            "text": "Инструмент / линияИзменениеНачало → конец, исходные единицыИсточник",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "Инструмент / линияИзменениеНачало → конец, исходные единицыИсточник",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TH",
+            "cls": null,
+            "text": "Источник",
+            "right": 404,
+            "width": 80
+          },
+          {
+            "tag": "TBODY",
+            "cls": null,
+            "text": " S&P 500−2,73 %7 376,859863 → 7 175,830078пункты индексаYahoo Finance Gold−9,76 %4 063,32727 → 3 666",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": " S&P 500−2,73 %7 376,859863 → 7 175,830078пункты индексаYahoo Finance",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "Yahoo Finance",
+            "right": 404,
+            "width": 80
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": " Gold−9,76 %4 063,32727 → 3 666,8714$ за тройскую унциюgold-api.com + Twelve Data",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "gold-api.com + Twelve Data",
+            "right": 404,
+            "width": 80
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": " BTC−18,26 %75 741,6 → 61 913,5$ за BTCKraken",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "Kraken",
+            "right": 404,
+            "width": 80
+          }
+        ],
+        "text": 6845,
+        "headings": 6
+      },
+      {
+        "path": "/brief",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 3064,
+        "headings": 2
+      },
+      {
+        "path": "/news",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 1087,
+        "headings": 2
+      },
+      {
+        "path": "/memory",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 29660,
+        "headings": 2
+      },
+      {
+        "path": "/guide",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "w-full min-w-[560px] text-left text-sm",
+            "text": "СлойГде на сайтеЧто можно утверждатьФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было ",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wider text-text-secondary",
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TH",
+            "cls": "py-2 font-bold",
+            "text": "Что можно утверждать",
+            "right": 601,
+            "width": 254
+          },
+          {
+            "tag": "TBODY",
+            "cls": "text-text-secondary",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»Изм",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 254
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ИзмерениеЧто меняется, бриф, графики с датами«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 254
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "АрхивПамять рынка (исторические записи)«Запись прогноза и рассчитанное изменение цены»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Запись прогноза и рассчитанное изменение цены»",
+            "right": 601,
+            "width": 254
+          }
+        ],
+        "text": 10659,
+        "headings": 12
+      },
+      {
+        "path": "/about",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 2982,
+        "headings": 3
+      },
+      {
+        "path": "/status",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "TABLE",
+            "cls": "w-full text-left text-sm",
+            "text": "ЛентаПоследний материалВ лентеНовых в проходеCNBC Investing16.6 ч назад250Bloomberg Economics1.3 ч н",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wide text-text-secondary",
+            "text": "ЛентаПоследний материалВ лентеНовых в проходе",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "ЛентаПоследний материалВ лентеНовых в проходе",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TH",
+            "cls": "pb-2 font-bold",
+            "text": "Новых в проходе",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TBODY",
+            "cls": null,
+            "text": "CNBC Investing16.6 ч назад250Bloomberg Economics1.3 ч назад200Financial Times35 мин назад110Investin",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "CNBC Investing16.6 ч назад250",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "0",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Bloomberg Economics1.3 ч назад200",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "0",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Financial Times35 мин назад110",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "0",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Investing.com14 мин назад106",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "6",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Bloomberg6 мин назад202",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "2",
+            "right": 372,
+            "width": 61
+          }
+        ],
+        "text": 14242,
+        "headings": 2
+      },
+      {
+        "path": "/",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2487,
+        "headings": 4
+      },
+      {
+        "path": "/passport",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 5462,
+        "headings": 4
+      },
+      {
+        "path": "/russia",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 8713,
+        "headings": 2
+      },
+      {
+        "path": "/world",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 6871,
+        "headings": 6
+      },
+      {
+        "path": "/brief",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 3081,
+        "headings": 2
+      },
+      {
+        "path": "/news",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 1145,
+        "headings": 2
+      },
+      {
+        "path": "/memory",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 29686,
+        "headings": 2
+      },
+      {
+        "path": "/guide",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 10797,
+        "headings": 12
+      },
+      {
+        "path": "/about",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2999,
+        "headings": 3
+      },
+      {
+        "path": "/status",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 14259,
+        "headings": 2
+      }
+    ],
+    "failures": [],
+    "currentPage": {
+      "path": "/status",
+      "width": 1280
+    },
+    "health": {
+      "success": true,
+      "ok": true,
+      "checked_at": "2026-11-20T16:32:39.839Z",
+      "trigger": "manual",
+      "healing": "",
+      "linear": "Linear: команда «Clincher», заведено 0, закрыто 0",
+      "digest": "",
+      "checks": {
+        "tension_matches": {
+          "ok": true,
+          "detail": "опубликовано 22, пересчитано 24, расхождение 2, выборка 304"
+        },
+        "news_fresh": {
+          "ok": true,
+          "detail": "свежему материалу 0.2 ч"
+        },
+        "sample_size": {
+          "ok": true,
+          "detail": "подходящих материалов 304"
+        },
+        "assets_fresh": {
+          "ok": true,
+          "detail": "котировкам 3 мин"
+        },
+        "assets_asof": {
+          "ok": true,
+          "detail": "usd-eur: 1,6 ч (дата официального курса), допустимо 72 ч; gold: 0,1 ч (момент котировки), допустимо 72 ч; btc: 0,1 ч (момент котировки), допустимо 24 ч; sp500: 0,1 ч (дата закрытия), допустимо 72 ч; brent: 0,3 ч (момент котировки), допустимо 72 ч"
+        },
+        "source_politeness": {
+          "ok": true,
+          "detail": "расход в пределах квот: yahoo 152/300, kraken 119/300, gold-api 119/300, twelve 16/100, coinbase 3/300, frankfurter 1/24, ecb 8/24"
+        },
+        "slots_registry": {
+          "ok": true,
+          "detail": "33 слотов совпадают с базой, выбор владельца допустим"
+        },
+        "asset_quote_lag": {
+          "ok": true,
+          "detail": "gold: рынок открыт, цена отстала на 0,1 ч, допустимо 180 мин; btc: рынок открыт, цена отстала на 0,1 ч, допустимо 120 мин; brent: рынок открыт, цена отстала на 0,3 ч, допустимо 180 мин"
+        },
+        "asset_contract": {
+          "ok": true,
+          "detail": "все 5 рядов описаны контрактом, подписи совпадают, даты на месте"
+        },
+        "asset_dates": {
+          "ok": true,
+          "detail": "даты есть у всех 5 рядов, последняя — 2026-11-20"
+        },
+        "asset_change_truth": {
+          "ok": true,
+          "detail": "сходится у 5 из 5 рядов"
+        },
+        "asset_series_identity": {
+          "ok": true,
+          "detail": "первичный ряд совпадает с плиткой: brent=brent_yahoo_bzf, sp500=sp500_yahoo_gspc, usd-eur=eurusd_ecb_daily, btc=btc_kraken_xbtusd_daily, gold=gold_twelve_xauusd_daily"
+        },
+        "asset_names": {
+          "ok": true,
+          "detail": "подписи не противоречат типу инструмента у 5 рядов"
+        },
+        "snapshot_taken": {
+          "ok": true,
+          "detail": "последний снимок за 2026-11-20"
+        },
+        "feeds_fresh": {
+          "ok": true,
+          "detail": "все 19 включённых лент отработали за сутки, последняя — 0 мин назад"
+        },
+        "feed_reliability": {
+          "ok": true,
+          "detail": "все 19 включённых лент отвечают чаще, чем отказывают (frank-media: 53/53, Bloomberg-politics: 53/53, Bloomberg-markets: 53/53, interfax: 53/53…)"
+        },
+        "no_third_party": {
+          "ok": true,
+          "detail": "в разметке только свои домены (market-pulse1-eta.vercel.app, hekzplfftannlzwvgwwm.supabase.co)"
+        },
+        "site_online": {
+          "ok": true,
+          "detail": "HTTP 200 за 70 мс"
+        },
+        "ru_insights": {
+          "ok": true,
+          "detail": "все 12 индикаторов и 18 заголовков за 69 мс"
+        },
+        "no_telemetry": {
+          "ok": true,
+          "detail": "счётчиков нет: проверено 11 признаков, ни одного в разметке"
+        },
+        "ru_history_api": {
+          "ok": true,
+          "detail": "все 6 рядов в своём сроке: key-rate ступень на месте, imoex 2/7 дн, rgbi 2/7 дн, usd-rub 1/7 дн, ruonia 2/7 дн, reserves 8/21 дн за 70 мс"
+        },
+        "asset_history_panel": {
+          "ok": true,
+          "detail": "по всем 5 активам есть точки не старше 7 дн"
+        },
+        "market_memory": {
+          "ok": true,
+          "detail": "событие 13 ч назад, аналоги есть"
+        },
+        "sentry": {
+          "ok": true,
+          "detail": "Sentry принял пробное событие за 123 мс"
+        },
+        "brief_image": {
+          "ok": true,
+          "detail": "image/png, 510 КБ за 2547 мс"
+        }
+      }
+    },
+    "finished": "2026-11-20T16:32:44.417Z"
+  },
+  {
+    "round": "B",
+    "started": "2026-11-20T16:32:44.418Z",
+    "pages": [
+      {
+        "path": "/",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 1964,
+        "headings": 4
+      },
+      {
+        "path": "/passport",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "USD/EUREUR за 1 USD+1,25 %11.11.2026 → 20.11.2026+0,80 %02.11.2026 → 11.11.2026+0,45 п.п.выше 90 % о",
+            "right": 678,
+            "width": 640
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right tabular-nums text-text-secondary",
+            "text": "+0,80 %02.11.2026 → 11.11.2026",
+            "right": 464,
+            "width": 144
+          },
+          {
+            "tag": "SPAN",
+            "cls": "block text-[10px] font-normal",
+            "text": "02.11.2026 → 11.11.2026",
+            "right": 452,
+            "width": 120
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right font-bold tabular-nums text-emerald-800",
+            "text": "+0,45 п.п.",
+            "right": 567,
+            "width": 103
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right text-[11px] leading-tight text-text-secondary",
+            "text": "выше 90 % окна",
+            "right": 678,
+            "width": 111
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "RUONIA+0,19 п.п.10.11.2026 → 19.11.2026−0,24 п.п.29.10.2026 → 10.11.2026+0,43 п.п.выше 58 % окна",
+            "right": 678,
+            "width": 640
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right tabular-nums text-text-secondary",
+            "text": "−0,24 п.п.29.10.2026 → 10.11.2026",
+            "right": 464,
+            "width": 144
+          },
+          {
+            "tag": "SPAN",
+            "cls": "block text-[10px] font-normal",
+            "text": "29.10.2026 → 10.11.2026",
+            "right": 452,
+            "width": 120
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right font-bold tabular-nums text-emerald-800",
+            "text": "+0,43 п.п.",
+            "right": 567,
+            "width": 103
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right text-[11px] leading-tight text-text-secondary",
+            "text": "выше 58 % окна",
+            "right": 678,
+            "width": 111
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "RGBI−0,67 %10.11.2026 → 19.11.2026−0,29 %29.10.2026 → 10.11.2026−0,38 п.п.выше 9 % окна",
+            "right": 678,
+            "width": 640
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right tabular-nums text-text-secondary",
+            "text": "−0,29 %29.10.2026 → 10.11.2026",
+            "right": 464,
+            "width": 144
+          },
+          {
+            "tag": "SPAN",
+            "cls": "block text-[10px] font-normal",
+            "text": "29.10.2026 → 10.11.2026",
+            "right": 452,
+            "width": 120
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right font-bold tabular-nums text-rose-800",
+            "text": "−0,38 п.п.",
+            "right": 567,
+            "width": 103
+          },
+          {
+            "tag": "TD",
+            "cls": "px-3 py-2 text-right text-[11px] leading-tight text-text-secondary",
+            "text": "выше 9 % окна",
+            "right": 678,
+            "width": 111
+          }
+        ],
+        "text": 5445,
+        "headings": 4
+      },
+      {
+        "path": "/russia",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "14,18 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "2 г15,01 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "15,01 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "3 г15,65 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "15,65 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "5 г16,44 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "16,44 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "7 г16,83 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "16,83 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "10 г17,05 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "17,05 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "15 г17,18 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "17,18 %",
+            "right": 413,
+            "width": 248
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "20 г17,25 %",
+            "right": 413,
+            "width": 360
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "17,25 %",
+            "right": 413,
+            "width": 248
+          }
+        ],
+        "text": 8688,
+        "headings": 2
+      },
+      {
+        "path": "/world",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "desk-table",
+            "text": "Результаты за общий период · изменение в %Инструмент / линияИзменениеНачало → конец, исходные единиц",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "CAPTION",
+            "cls": null,
+            "text": "Результаты за общий период · изменение в %",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "THEAD",
+            "cls": null,
+            "text": "Инструмент / линияИзменениеНачало → конец, исходные единицыИсточник",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "Инструмент / линияИзменениеНачало → конец, исходные единицыИсточник",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TH",
+            "cls": null,
+            "text": "Источник",
+            "right": 404,
+            "width": 80
+          },
+          {
+            "tag": "TBODY",
+            "cls": null,
+            "text": " S&P 500−2,73 %7 376,859863 → 7 175,830078пункты индексаYahoo Finance Gold−9,76 %4 063,32727 → 3 666",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": " S&P 500−2,73 %7 376,859863 → 7 175,830078пункты индексаYahoo Finance",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "Yahoo Finance",
+            "right": 404,
+            "width": 80
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": " Gold−9,76 %4 063,32727 → 3 666,8714$ за тройскую унциюgold-api.com + Twelve Data",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "gold-api.com + Twelve Data",
+            "right": 404,
+            "width": 80
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": " BTC−18,26 %75 741,6 → 61 913,5$ за BTCKraken",
+            "right": 404,
+            "width": 371
+          },
+          {
+            "tag": "TD",
+            "cls": null,
+            "text": "Kraken",
+            "right": 404,
+            "width": 80
+          }
+        ],
+        "text": 6845,
+        "headings": 6
+      },
+      {
+        "path": "/brief",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 3064,
+        "headings": 2
+      },
+      {
+        "path": "/news",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 1087,
+        "headings": 2
+      },
+      {
+        "path": "/memory",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 29660,
+        "headings": 2
+      },
+      {
+        "path": "/guide",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "TABLE",
+            "cls": "w-full min-w-[560px] text-left text-sm",
+            "text": "СлойГде на сайтеЧто можно утверждатьФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было ",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wider text-text-secondary",
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "СлойГде на сайтеЧто можно утверждать",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TH",
+            "cls": "py-2 font-bold",
+            "text": "Что можно утверждать",
+            "right": 601,
+            "width": 254
+          },
+          {
+            "tag": "TBODY",
+            "cls": "text-text-secondary",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»Изм",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ФактРоссия и бизнес, Мировые рынки, Новости«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Такое значение было в такое время у такого источника»",
+            "right": 601,
+            "width": 254
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "ИзмерениеЧто меняется, бриф, графики с датами«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Вот как мы это посчитали, вот формула»",
+            "right": 601,
+            "width": 254
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "АрхивПамять рынка (исторические записи)«Запись прогноза и рассчитанное изменение цены»",
+            "right": 601,
+            "width": 560
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2",
+            "text": "«Запись прогноза и рассчитанное изменение цены»",
+            "right": 601,
+            "width": 254
+          }
+        ],
+        "text": 10659,
+        "headings": 12
+      },
+      {
+        "path": "/about",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "DIV",
+            "cls": "page-signal-intro__art",
+            "text": "МАРШРУТ ПРОВЕРКИ",
+            "right": 370,
+            "width": 203
+          },
+          {
+            "tag": "svg",
+            "cls": null,
+            "text": "",
+            "right": 370,
+            "width": 203
+          }
+        ],
+        "text": 2982,
+        "headings": 3
+      },
+      {
+        "path": "/status",
+        "width": 360,
+        "overflow": false,
+        "overflowNodes": [
+          {
+            "tag": "TABLE",
+            "cls": "w-full text-left text-sm",
+            "text": "ЛентаПоследний материалВ лентеНовых в проходеCNBC Investing16.6 ч назад250Bloomberg Economics1.4 ч н",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "THEAD",
+            "cls": "text-xs uppercase tracking-wide text-text-secondary",
+            "text": "ЛентаПоследний материалВ лентеНовых в проходе",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TR",
+            "cls": null,
+            "text": "ЛентаПоследний материалВ лентеНовых в проходе",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TH",
+            "cls": "pb-2 font-bold",
+            "text": "Новых в проходе",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TBODY",
+            "cls": null,
+            "text": "CNBC Investing16.6 ч назад250Bloomberg Economics1.4 ч назад200Financial Times36 мин назад110Investin",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "CNBC Investing16.6 ч назад250",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "0",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Bloomberg Economics1.4 ч назад200",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "0",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Financial Times36 мин назад110",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "0",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Investing.com15 мин назад106",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "6",
+            "right": 372,
+            "width": 61
+          },
+          {
+            "tag": "TR",
+            "cls": "border-t border-slate-200",
+            "text": "Bloomberg7 мин назад202",
+            "right": 372,
+            "width": 331
+          },
+          {
+            "tag": "TD",
+            "cls": "py-2 text-text-secondary",
+            "text": "2",
+            "right": 372,
+            "width": 61
+          }
+        ],
+        "text": 14211,
+        "headings": 2
+      },
+      {
+        "path": "/",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2487,
+        "headings": 4
+      },
+      {
+        "path": "/passport",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 5462,
+        "headings": 4
+      },
+      {
+        "path": "/russia",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 8713,
+        "headings": 2
+      },
+      {
+        "path": "/world",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 6871,
+        "headings": 6
+      },
+      {
+        "path": "/brief",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 3081,
+        "headings": 2
+      },
+      {
+        "path": "/news",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 1145,
+        "headings": 2
+      },
+      {
+        "path": "/memory",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 29686,
+        "headings": 2
+      },
+      {
+        "path": "/guide",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 10797,
+        "headings": 12
+      },
+      {
+        "path": "/about",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 2999,
+        "headings": 3
+      },
+      {
+        "path": "/status",
+        "width": 1280,
+        "overflow": false,
+        "overflowNodes": [],
+        "text": 14228,
+        "headings": 2
+      }
+    ],
+    "failures": [],
+    "currentPage": {
+      "path": "/status",
+      "width": 1280
+    },
+    "health": {
+      "success": true,
+      "ok": true,
+      "checked_at": "2026-11-20T16:37:45.183Z",
+      "trigger": "manual",
+      "healing": "",
+      "linear": "Linear: команда «Clincher», заведено 0, закрыто 0",
+      "digest": "",
+      "checks": {
+        "tension_matches": {
+          "ok": true,
+          "detail": "опубликовано 22, пересчитано 24, расхождение 2, выборка 304"
+        },
+        "news_fresh": {
+          "ok": true,
+          "detail": "свежему материалу 0.3 ч"
+        },
+        "sample_size": {
+          "ok": true,
+          "detail": "подходящих материалов 304"
+        },
+        "assets_fresh": {
+          "ok": true,
+          "detail": "котировкам 8 мин"
+        },
+        "assets_asof": {
+          "ok": true,
+          "detail": "usd-eur: 1,6 ч (дата официального курса), допустимо 72 ч; gold: 0,1 ч (момент котировки), допустимо 72 ч; btc: 0,1 ч (момент котировки), допустимо 24 ч; sp500: 0,2 ч (дата закрытия), допустимо 72 ч; brent: 0,4 ч (момент котировки), допустимо 72 ч"
+        },
+        "source_politeness": {
+          "ok": true,
+          "detail": "расход в пределах квот: yahoo 152/300, kraken 119/300, gold-api 119/300, twelve 16/100, coinbase 3/300, frankfurter 1/24, ecb 8/24"
+        },
+        "slots_registry": {
+          "ok": true,
+          "detail": "33 слотов совпадают с базой, выбор владельца допустим"
+        },
+        "asset_quote_lag": {
+          "ok": true,
+          "detail": "gold: рынок открыт, цена отстала на 0,1 ч, допустимо 180 мин; btc: рынок открыт, цена отстала на 0,1 ч, допустимо 120 мин; brent: рынок открыт, цена отстала на 0,4 ч, допустимо 180 мин"
+        },
+        "asset_contract": {
+          "ok": true,
+          "detail": "все 5 рядов описаны контрактом, подписи совпадают, даты на месте"
+        },
+        "asset_dates": {
+          "ok": true,
+          "detail": "даты есть у всех 5 рядов, последняя — 2026-11-20"
+        },
+        "asset_change_truth": {
+          "ok": true,
+          "detail": "сходится у 5 из 5 рядов"
+        },
+        "asset_series_identity": {
+          "ok": true,
+          "detail": "первичный ряд совпадает с плиткой: brent=brent_yahoo_bzf, sp500=sp500_yahoo_gspc, usd-eur=eurusd_ecb_daily, btc=btc_kraken_xbtusd_daily, gold=gold_twelve_xauusd_daily"
+        },
+        "asset_names": {
+          "ok": true,
+          "detail": "подписи не противоречат типу инструмента у 5 рядов"
+        },
+        "snapshot_taken": {
+          "ok": true,
+          "detail": "последний снимок за 2026-11-20"
+        },
+        "feeds_fresh": {
+          "ok": true,
+          "detail": "все 19 включённых лент отработали за сутки, последняя — 1 мин назад"
+        },
+        "feed_reliability": {
+          "ok": true,
+          "detail": "все 19 включённых лент отвечают чаще, чем отказывают (frank-media: 53/53, Bloomberg-politics: 53/53, Bloomberg-markets: 53/53, interfax: 53/53…)"
+        },
+        "no_third_party": {
+          "ok": true,
+          "detail": "в разметке только свои домены (market-pulse1-eta.vercel.app, hekzplfftannlzwvgwwm.supabase.co)"
+        },
+        "site_online": {
+          "ok": true,
+          "detail": "HTTP 200 за 83 мс"
+        },
+        "ru_insights": {
+          "ok": true,
+          "detail": "все 12 индикаторов и 18 заголовков за 88 мс"
+        },
+        "no_telemetry": {
+          "ok": true,
+          "detail": "счётчиков нет: проверено 11 признаков, ни одного в разметке"
+        },
+        "ru_history_api": {
+          "ok": true,
+          "detail": "все 6 рядов в своём сроке: key-rate ступень на месте, imoex 2/7 дн, rgbi 2/7 дн, usd-rub 1/7 дн, ruonia 2/7 дн, reserves 8/21 дн за 86 мс"
+        },
+        "asset_history_panel": {
+          "ok": true,
+          "detail": "по всем 5 активам есть точки не старше 7 дн"
+        },
+        "market_memory": {
+          "ok": true,
+          "detail": "событие 13 ч назад, аналоги есть"
+        },
+        "sentry": {
+          "ok": true,
+          "detail": "Sentry принял пробное событие за 142 мс"
+        },
+        "brief_image": {
+          "ok": true,
+          "detail": "image/png, 510 КБ за 112 мс"
+        }
+      }
+    },
+    "finished": "2026-11-20T16:37:49.507Z"
+  }
+]
