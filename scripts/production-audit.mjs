@@ -74,7 +74,7 @@ try {
           assert.ok((await page.locator('.desk-table').innerText()).includes('Индекс в конце'));
           await page.locator('.desk-controls select').nth(0).selectOption('500');
         }
-        if (['/passport', '/memory', '/brief', '/world'].includes(path)) {
+        if (['/passport', '/memory', '/brief', '/world', '/russia'].includes(path)) {
           await page.screenshot({ path: `${output}/${round}-${width}-${path.slice(1)}.png`, fullPage: false });
         }
         result.pages.push({ path, width, ...metrics });

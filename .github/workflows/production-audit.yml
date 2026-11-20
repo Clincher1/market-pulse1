@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: read-only-production-acceptance
@@ -31,6 +31,23 @@ jobs:
           .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
       - name: Two independent live browser and health rounds (read only)
         run: node scripts/production-audit.mjs
+      - name: Save compact evidence on this same audit branch
+        if: success()
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "arena/12edd106-market-pulse1"
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          mkdir -p docs/audit-evidence/production-followup
+          cp .local/production-audit/summary.json docs/audit-evidence/production-followup/
+          for page in passport memory russia world; do
+            cp ".local/production-audit/B-360-$page.png" docs/audit-evidence/production-followup/
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/audit-evidence/production-followup
+          git commit -m "docs: save two read-only production audit rounds and mobile evidence"
+          git push origin "HEAD:$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
