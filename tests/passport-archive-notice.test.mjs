@@ -32,3 +32,10 @@ test('archive offers original numbers separately and excludes unverifiable gold 
   assert.match(source, /Исходные записи оставлены без изменений/);
   assert.match(source, /Золото исключено из выбора лидера/);
 });
+
+test('guide distinguishes immutable source percentages from the verified derived return', async () => {
+  const source = await readFile(new URL('../src/components/AnalyticsGuide.tsx', import.meta.url), 'utf8');
+  assert.match(source, /Производный процент золота проверяется отдельно/);
+  assert.match(source, /Исходные проценты доступны/);
+  assert.doesNotMatch(source, /через неделю видно ровно то/);
+});
