@@ -2,9 +2,7 @@ import type { AssetData } from '../data/marketTypes.ts';
 
 export const DESK_ASSET_IDS = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'] as const;
 export const FAVORITES_KEY = 'market-pulse-favorites-v1';
-export const DESK_UNITS: Record<string, string> = {
-  'usd-eur': 'EUR за 1 USD', sp500: 'пункты индекса', brent: '$ за баррель', gold: '$ за тройскую унцию', btc: '$ за BTC',
-};
+export { WORLD_ASSET_UNITS as DESK_UNITS } from './marketUnits.ts';
 export function deskValue(value: number): string {
   return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 6 }).format(value);
 }
