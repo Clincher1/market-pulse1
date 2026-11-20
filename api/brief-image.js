@@ -1,3 +1,4 @@
+import { briefDelta, lastSeriesObservation, snapshotSeriesDateLabel, orderBriefComparisons } from './_shared/briefComparison.js';
 import { setBrowserNoStore, setVercelCdnCache } from './_shared/responseCache.js';
 import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { readFile } from 'node:fs/promises';
@@ -45,6 +46,7 @@ function isRecord(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 function finiteNumber(value) {
+    if (value === null || value === undefined || value === '') return null;
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
 }
@@ -191,12 +193,6 @@ function firstRow(value) {
 function rows(value) {
     return Array.isArray(value) ? value.filter(isRecord) : [];
 }
-function lastSparkline(value) {
-    if (!Array.isArray(value))
-        return null;
-    const values = value.map((item) => Number(item)).filter((item) => Number.isFinite(item));
-    return values.length ? values[values.length - 1] : null;
-}
 function formatIndicatorValue(indicator) {
     const value = finiteNumber(indicator.value) ?? 0;
     const decimals = stringValue(indicator.unit) === '₽' ? 4 : 2;
@@ -211,16 +207,11 @@ function formatSeriesValue(value, sample) {
     const decimals = Math.min(match?.[3]?.length ?? 2, 8);
     return formatPriceText(`${prefix}${value.toFixed(decimals)}`);
 }
-function sameObservationDay(a, b) {
-    const left = stringValue(a).slice(0, 10);
-    const right = stringValue(b).slice(0, 10);
-    return Boolean(left && right && left === right);
-}
-async function buildBriefCard() {
+export async function buildBriefCard() {
     const today = moscowDateKey();
     const [assetsResult, snapshotResult, russia] = await Promise.all([
         Promise.allSettled([
-            fetchSupabase('cached_assets?select=id,name,price,change,sparkline,as_of,source_label,updated_at&limit=20'),
+            fetchSupabase('cached_assets?select=id,name,price,change,sparkline,spark_dates,as_of,source_label,updated_at&limit=20'),
         ]).then((items) => items[0]),
         Promise.allSettled([
             fetchSupabase(`daily_snapshots?select=date,captured_at,assets,russia&date=eq.${today}&limit=1`),
@@ -300,17 +291,16 @@ async function buildBriefCard() {
                 return;
             }
             const base = finiteNumber(baseline.last);
-            const current = lastSparkline(asset.sparkline);
+            const observation = lastSeriesObservation({ sparkline: asset.sparkline, sparkDates: asset.spark_dates });
+            const current = observation?.value ?? null;
             if (base === null || base <= 0 || current === null || current <= 0) return;
             comparable += 1;
             const deltaPct = (current / base - 1) * 100;
             if (Math.round(deltaPct * 100) === 0) return;
-            const baselineDate = observationLabel(baseline.as_of);
-            const currentDate = observationLabel(asset.as_of);
-            const dateText = sameObservationDay(baseline.as_of, asset.as_of)
-                ? (currentDate ? `; дата наблюдения ${currentDate}` : '')
-                : `; дата в снимке ${baselineDate || 'не указана'}, сейчас ${currentDate || 'не указана'}`;
+            const dateText = `; даты точек ${snapshotSeriesDateLabel(baseline.last_date)} → ${snapshotSeriesDateLabel(observation?.date)}`;
             candidates.push({
+                kind: 'relative',
+                item: { id: stringValue(asset.id) },
                 magnitude: Math.abs(deltaPct),
                 text: `${currentName || stringValue(asset.id)}: ${formatSeriesValue(current, asset.price)} против ${formatSeriesValue(base, stringValue(baseline.price) || stringValue(asset.price))} в снимке; ${formatPct(deltaPct)} = (последняя точка ряда / точка снимка − 1) × 100${asset.source_label ? `; источник ${stringValue(asset.source_label)}` : ''}${dateText}.`,
             });
@@ -332,38 +322,38 @@ async function buildBriefCard() {
             }
             const base = finiteNumber(baseline.value);
             const current = finiteNumber(indicator.value);
-            if (base === null || base <= 0 || current === null || current <= 0) return;
+            if (base === null || current === null) return;
             comparable += 1;
-            const deltaPct = (current / base - 1) * 100;
-            if (Math.round(deltaPct * 100) === 0) return;
+            const delta = briefDelta(base, current, stringValue(indicator.unit));
+            if (!delta) return;
             const baselineDate = formatDateOnly(stringValue(baseline.asOf)) ?? stringValue(baseline.asOf);
             const currentDate = formatDateOnly(stringValue(indicator.asOf)) ?? stringValue(indicator.asOf);
             candidates.push({
-                magnitude: Math.abs(deltaPct),
-                text: `${stringValue(indicator.name)}: ${formatIndicatorValue(indicator)} ${stringValue(indicator.unit)} против ${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 8 }).format(base)} ${stringValue(indicator.unit)} в снимке; ${formatPct(deltaPct)} = (текущее значение / значение в снимке − 1) × 100${currentProvider ? `; источник ${currentProvider}` : ''}; даты наблюдений ${baselineDate || 'не указана'} → ${currentDate || 'не указана'}.`,
+                kind: delta.kind,
+                item: { id },
+                magnitude: delta.magnitude,
+                text: `${delta.kind === 'points' ? 'Ставки и доходности · ' : ''}${stringValue(indicator.name)}: ${formatIndicatorValue(indicator)} ${stringValue(indicator.unit)} против ${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 8 }).format(base)} ${stringValue(indicator.unit)} в снимке; ${delta.label} = ${delta.formula}${currentProvider ? `; источник ${currentProvider}` : ''}; даты наблюдений ${baselineDate || 'не указана'} → ${currentDate || 'не указана'}.`,
             });
         });
 
-        const ordered = candidates.sort((a, b) => b.magnitude - a.magnitude);
+        const ordered = orderBriefComparisons(candidates);
         if (comparable === 0) {
             changes.push('Нет сопоставимых актуальных значений для сравнения.');
         }
         else if (ordered.length === 0) {
-            changes.push('В сопоставимых рядах изменение не отличается от нуля на точности вывода 0,01 %.');
+            changes.push('В сопоставимых рядах изменение не отличается от нуля на точности вывода 0,01 % или 0,01 п.п. для ставок.');
         }
         else {
-            changes.push(...ordered.slice(0, 6).map((item) => item.text));
+            changes.push(...ordered.map((item) => item.text));
         }
-        const notes = [];
-        if (ordered.length > 6) {
-            notes.push(`Показано 6 из ${ordered.length} рядов с ненулевой дельтой на точности 0,01 %, отсортированных по абсолютной величине.`);
+        const notes = ['Цены и курсы — изменение в %, ставки и доходности — разность в п.п. До шести строк в каждой группе, по модулю; разные единицы не ранжируются вместе. Мировые сравнения — по дневным точкам, не текущим котировкам.'];
+        if (candidates.length > ordered.length) {
+            notes.push(`Показано ${ordered.length} из ${candidates.length} рядов с ненулевой дельтой.`);
         }
         if (unchangedNames.length > 0) {
             notes.push(`Не сравнивались: ${[...new Set(unchangedNames)].join(', ')} — изменился инструмент или источник.`);
         }
-        if (comparable > 0) {
-            notes.push('Формула: (текущее значение / значение в снимке − 1) × 100; дельта округлена до 0,01 %.');
-        }
+
         changesExtraNote = notes.length ? notes.join(' ') : null;
     }
 

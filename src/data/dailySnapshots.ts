@@ -6,6 +6,8 @@ export interface SnapshotAsset {
   price: string;
   change: number | null;
   last: number | null;
+  /** Date paired with last, not the quote timestamp. Old snapshots may lack it. */
+  lastDate?: string | null;
   updatedAt: string | null;
   /** Дата наблюдения от источника. Пусто — источник её не назвал. */
   asOf: string | null;
@@ -42,6 +44,7 @@ function isRecord(value: unknown): value is UnknownRecord {
 }
 
 function finiteNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
@@ -58,6 +61,7 @@ function normalizeAssets(value: unknown): SnapshotAsset[] {
     price: String(row.price ?? ''),
     change: finiteNumber(row.change),
     last: finiteNumber(row.last),
+    lastDate: stringOrNull(row.last_date),
     updatedAt: stringOrNull(row.updated_at),
     asOf: stringOrNull(row.as_of),
   })).filter((row) => row.id);
