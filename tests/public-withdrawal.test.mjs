@@ -32,7 +32,15 @@ test('registry does not advertise withdrawn blocks as public slots', () => {
 
 test('old forecast path has a server-side redirect, not only a hidden menu entry', () => {
   const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
-  assert.deepEqual(config.redirects.find((item) => item.source === '/memory'), {
-    source: '/memory', destination: '/', permanent: false,
+  assert.deepEqual(config.redirects.find((item) => item.source === '/memory/:path*'), {
+    source: '/memory/:path*', destination: '/', permanent: false,
   });
+});
+
+test('share previews, install description and loading states match the remaining site', () => {
+  for (const path of ['index.html', 'public/site.webmanifest', 'public/og-image.svg', 'public/logo.svg']) {
+    const source = readFileSync(path, 'utf8');
+    assert.doesNotMatch(source, /паспорт дня|Память рынка|память исходов|сигнал|Tension|и архив/i, path);
+  }
+  assert.doesNotMatch(readFileSync('src/App.tsx', 'utf8'), /Загружаем.*память рынка/);
 });

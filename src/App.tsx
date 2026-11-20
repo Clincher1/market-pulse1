@@ -485,7 +485,7 @@ function App() {
                 fallback={
                   <SectionFallback
                     title="Методология Market Pulse"
-                    message="Загружаем полный гид: источники, ограничения и память рынка…"
+                    message="Загружаем полный гид: источники, формулы и ограничения…"
                     minHeightClass="min-h-[70vh]"
                     className="rounded-[28px]"
                   />

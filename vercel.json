@@ -87,7 +87,7 @@
   ],
   "redirects": [
     {
-      "source": "/memory",
+      "source": "/memory/:path*",
       "destination": "/",
       "permanent": false
     }
