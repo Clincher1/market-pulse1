@@ -18,7 +18,7 @@
  * точную дату наблюдения пишет сам оценщик, когда он работает.
  */
 
-export type HorizonState = 'evaluated' | 'waiting' | 'overdue';
+export type HorizonState = 'evaluated' | 'waiting' | 'overdue' | 'unavailable';
 
 export interface HorizonOutlook {
   state: HorizonState;
@@ -74,6 +74,7 @@ export function horizonOutlook(
   today: string = isoDate(new Date()),
 ): HorizonOutlook {
   if (forecast.outcomeStatus === 'evaluated') return { state: 'evaluated', days: 0 };
+  if (forecast.outcomeStatus === 'insufficient_price_data') return { state: 'unavailable', days: 0 };
   const horizon = Number(forecast.horizonTradingDays);
   const expectedDate = forecast.issueDate ? addTradingDays(forecast.issueDate, horizon) : null;
   if (!expectedDate) return { state: 'waiting', days: 0 };
@@ -87,6 +88,7 @@ export function horizonOutlook(
 /** Подпись словами: без числа там, где число ничего не добавляет. */
 export function horizonLabel(outlook: HorizonOutlook, formatDate: (iso: string) => string): string {
   if (outlook.state === 'evaluated') return 'исход посчитан';
+  if (outlook.state === 'unavailable') return 'нет достаточной истории исходного инструмента';
   if (outlook.state === 'waiting') {
     return outlook.expectedDate
       ? `ждёт горизонта до ${formatDate(outlook.expectedDate)}`

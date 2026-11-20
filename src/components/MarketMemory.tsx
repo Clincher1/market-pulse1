@@ -178,6 +178,7 @@ export default function MarketMemory() {
   }, [load]);
 
   const forecasts = data?.forecasts ?? EMPTY_FORECASTS;
+  const unavailable = forecasts.filter((forecast) => forecast.outcomeStatus === 'insufficient_price_data').length;
   const overdue = useMemo(
     () => forecasts.filter((forecast) => horizonOutlook(forecast).state === 'overdue').length,
     [forecasts],
@@ -297,6 +298,14 @@ export default function MarketMemory() {
         <div className="p-5 lg:p-6">
           {forecasts.length > 0 ? (
             <>
+              {unavailable > 0 && (
+                <p className="mb-4 rounded-xl border border-slate-200 bg-bg-primary/55 px-4 py-3 text-xs leading-relaxed text-text-secondary">
+                  У {unavailable} из {forecasts.length} загруженных записей не хватает последующих наблюдений
+                  исходного инструмента. Срок уже прошёл, но подмена старого ряда FRED Brent или S&amp;P 500
+                  другим источником исказила бы результат. Новые прогнозы не запускаются;
+                  исходные прогнозы сохранены, доступные исходы досчитаны по тем же рядам.
+                </p>
+              )}
               {overdue > 0 && (
                 <p className="mb-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.07] px-4 py-3 text-xs leading-relaxed text-amber-900">
                   Торговый горизонт завершился у {overdue} из {forecasts.length} загруженных записей,
