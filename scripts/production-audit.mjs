@@ -32,6 +32,7 @@ try {
         if (response.status() >= 500) result.failures.push(`HTTP ${response.status()} ${new URL(response.url()).pathname}`);
       });
       for (const path of routes) {
+        result.currentPage = { path, width };
         const response = await page.goto(origin + path + `?acceptance=${round}-${width}`, { waitUntil: 'networkidle', timeout: 90000 });
         assert.equal(response.status(), 200, path);
         await page.locator('main').waitFor();
@@ -118,6 +119,10 @@ try {
     await fs.writeFile(`${output}/round-${round}.json`, JSON.stringify(result, null, 2));
     console.log(`PASS round ${round}: ${result.pages.length} live route/viewport pairs; selfcheck ${health.checked_at}; ${Object.keys(health.checks).length} checks`);
   }
+} catch (error) {
+  const detail = `${error.stack || error} | page=${JSON.stringify(rounds.at(-1)?.currentPage)} | failures=${JSON.stringify(rounds.at(-1)?.failures)}`;
+  console.error(`::error::${detail.replaceAll('%', '%25').replaceAll('\n', '%0A').replaceAll('\r', '%0D')}`);
+  throw error;
 } finally {
   await fs.writeFile(`${output}/summary.json`, JSON.stringify(rounds, null, 2));
   await browser.close();
