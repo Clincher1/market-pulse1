@@ -43,6 +43,7 @@ export interface SlotView {
     id: string;
     chosen: boolean;
     why: string;
+    priority: number | null;
     state: SourceStateRow | null;
   }>;
 }
@@ -71,13 +72,16 @@ export function groupSlotRows(rows: SlotSourceRow[], states: SourceStateRow[]): 
       id: row.source_id,
       chosen: row.chosen,
       why: row.why,
+      priority: row.priority,
       state: bySource.get(row.source_id) ?? null,
     });
   }
   for (const slot of slots.values()) {
     // Сервисный источник (внутренний счёт) идёт последним: он не «источник
     // данных», а наша дисциплина.
-    slot.sources.sort((a, b) => Number(b.chosen) - Number(a.chosen));
+    slot.sources.sort((a, b) => Number(b.chosen) - Number(a.chosen)
+      || (a.priority ?? Number.MAX_SAFE_INTEGER) - (b.priority ?? Number.MAX_SAFE_INTEGER)
+      || a.id.localeCompare(b.id));
   }
   return [...slots.values()].sort((a, b) => a.number - b.number);
 }
@@ -122,4 +126,10 @@ export function pauseLabel(now: Date, state: SourceStateRow | null): string | nu
 /** Сколько слотов сейчас без источника — то, что нельзя показывать молча. */
 export function slotsWithoutSource(slots: SlotView[]): number[] {
   return slots.filter((slot) => slot.sources.every((source) => !source.chosen)).map((slot) => slot.number);
+}
+
+/** These registry entries describe internal/legacy processes, not public blocks. */
+export function isInternalSlot(slotId: string): boolean {
+  return new Set(['news.tension', 'news.events', 'news.classify', 'news.digest',
+    'memory.market', 'passport.delivery']).has(slotId);
 }
