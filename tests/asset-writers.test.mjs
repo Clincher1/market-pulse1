@@ -11,12 +11,14 @@ async function loadWriter(name) {
     bundle: true, platform: 'node', format: 'esm', logLevel: 'silent',
     plugins: [{ name: 'no-server', setup(builder) {
       builder.onResolve({ filter: /observability\.ts$/ }, () => ({ path: 'serve', namespace: 'fixture' }));
-      builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: 'export function serveWithErrorReporting() {}' }));
+      builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: 'export function serveWithErrorReporting(name, handler) { globalThis.__assetWriterHandler = handler; }' }));
     } }],
   });
   return import(output.href);
 }
 const { makeAsset } = await loadWriter('update-assets');
+const handler = globalThis.__assetWriterHandler;
+delete globalThis.__assetWriterHandler;
 const points = Array.from({ length: 8 }, (_, i) => ({ date: `2026-11-${12 + i}`, value: 3900 - i * 20 }));
 points[6].value = 3723.72756; points[7].value = 3666.8714;
 function asset(overrides = {}) {
@@ -45,6 +47,38 @@ test('fresh quote equal to yesterday close is zero, not the preceding daily move
   assert.equal(row.change, 0);
   assert.equal(checkChangeAgainstSeries(row).basis, 'quote');
   assert.equal(checkChangeAgainstSeries(row).ok, true);
+});
+
+test('handler: all gated sources are an explained no-op, not an empty 502', async (t) => {
+  const { PRICE_SOURCES } = await import('../supabase/functions/_shared/price-sources.ts');
+  const previousDeno = globalThis.Deno;
+  globalThis.Deno = { env: { get: (key) => key === 'SUPABASE_SERVICE_ROLE_KEY' ? 'fixture-service' : undefined } };
+  t.after(() => { if (previousDeno === undefined) delete globalThis.Deno; else globalThis.Deno = previousDeno; });
+  const now = new Date();
+  const states = PRICE_SOURCES.map((source) => ({ source_id: source.id, last_attempt_at: now.toISOString(),
+    last_ok_at: now.toISOString(), last_status: 200, consecutive_failures: 0, paused_until: null,
+    requests_today: 1, day: now.toISOString().slice(0, 10), last_error: null }));
+  const writes = [];
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    const table = new URL(url).pathname.split('/').at(-1);
+    assert.ok(['cached_assets', 'asset_source_state', 'source_preferences', 'data_slot_registry'].includes(table), 'No external provider requests');
+    if (init.method === 'POST') { writes.push(table); return new Response(null, { status: 204 }); }
+    return Response.json(table === 'asset_source_state' ? states : []);
+  });
+  const response = await handler(new Request('https://example.test/functions/v1/update-assets', {
+    headers: { Authorization: 'Bearer fixture-service' },
+  }));
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.success, true);
+  assert.equal(result.skipped, true);
+  assert.equal(result.reason, 'all_sources_gated');
+  assert.equal(result.published, false);
+  assert.equal(result.skipped_by_gate.length, 5);
+  assert.ok(result.skipped_by_gate.every((slot) => slot.reasons.length > 0));
+  assert.equal(result.slots.length, 5);
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(writes, ['data_slot_registry']);
 });
 
 after(() => rm(directory, { recursive: true, force: true }));

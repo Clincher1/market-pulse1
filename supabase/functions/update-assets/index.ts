@@ -1090,6 +1090,24 @@ serveWithErrorReporting("update-assets", async (request) => {
       due.push({ slotId: plan.slotId, assetId, sourceId: usable.id, load: () => plan.load(usable.id) });
     }
 
+    // No request was due: this is pacing/backoff, not five failed requests.
+    // Keep every cached timestamp untouched and explain each gated slot.
+    if (!due.length) {
+      return Response.json({
+        success: true,
+        skipped: true,
+        reason: "all_sources_gated",
+        publish,
+        published: false,
+        published_ids: [],
+        assets_ok: 0,
+        assets_total: plans.length,
+        skipped_by_gate: skippedByGate,
+        slots: slotReport,
+        errors: [],
+      });
+    }
+
     const settled = await Promise.allSettled(due.map((task) => task.load()));
     const results: AssetResult[] = [];
     const errors: AnyRecord[] = [];
@@ -1126,6 +1144,8 @@ serveWithErrorReporting("update-assets", async (request) => {
         published_ids: [] as string[],
         assets_ok: 0,
         assets_total: plans.length,
+        skipped_by_gate: skippedByGate,
+        slots: slotReport,
         errors,
       }, { status: 502 });
     }
