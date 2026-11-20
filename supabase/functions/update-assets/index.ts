@@ -281,7 +281,7 @@ function asOfValue(value?: string | null): string | null {
   return Number.isFinite(parsed) ? text : null;
 }
 
-function makeAsset(input: {
+export function makeAsset(input: {
   id: string;
   name: string;
   instrument: string;
@@ -317,7 +317,7 @@ function makeAsset(input: {
   // Предыдущее закрытие зависит от того, попала ли цена в историю: если это
   // последнее закрытие — предыдущее на шаг раньше; если цена из кавычки, а бар
   // ещё формируется — предыдущее это и есть последнее закрытие.
-  const previous = input.previousPrice ?? previousClosedValue(history.points, latestPoint.date);
+  const previous = input.previousPrice ?? previousClosedValue(history.points, asOf);
   if (!previous || previous <= 0) throw new Error(`${input.id}: missing previous price`);
   const computedChange = ((price - previous) / previous) * 100;
   const change = input.changePct != null && Number.isFinite(input.changePct) ? input.changePct : computedChange;

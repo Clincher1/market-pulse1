@@ -281,3 +281,15 @@ test('проверка в selfcheck передаёт дату ряда — ин�
   // случался и стоил восьми часов красной проверки на верных данных.
   assert.match(source, /cached_assets\?select=id,name,price,change,sparkline,spark_dates,as_of/);
 });
+
+test('gold/BTC are verified from quote to dated last close; wrong base cannot pass', () => {
+  for (const id of ['gold', 'btc']) {
+    const row = { id, price: '$90.0', sparkline: [110, 100],
+      spark_dates: ['2026-11-18', '2026-11-19'], as_of: '2026-11-20T12:00:00Z', change: -10 };
+    assert.equal(checkChangeAgainstSeries(row).checked, true);
+    assert.equal(checkChangeAgainstSeries(row).ok, true);
+    assert.equal(checkChangeAgainstSeries({ ...row, change: -18.1818 }).ok, false);
+    assert.equal(checkChangeAgainstSeries({ ...row, change: null }).ok, false);
+    assert.equal(checkChangeAgainstSeries({ ...row, spark_dates: null }).checked, false);
+  }
+});

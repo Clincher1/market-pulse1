@@ -75,3 +75,8 @@ test('legacy event memory does not certify the public forecast archive', async (
   assert.equal(HIDDEN_PUBLIC_CHECKS.has('market_memory'), true);
   assert.equal(PUBLIC_CHECK_NAMES.includes('market_memory'), false);
 });
+
+test('price truth description covers all five assets and distinguishes quote from close', () => {
+  assert.match(CHECK_LABELS.asset_change_truth.hint, /все пять/);
+  assert.match(CHECK_LABELS.asset_change_truth.hint, /непроверенной/);
+});
