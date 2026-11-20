@@ -1,20 +1,29 @@
-// Read-only, release-specific acceptance audit. No writer/snapshot endpoints are called.
+// Read-only production audit. No Edge Functions, writers, healing or snapshots are invoked.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { chromium } from '../.local/production-browser/node_modules/playwright/index.mjs';
 const origin = 'https://market-pulse1-eta.vercel.app';
-const selfcheck = 'https://hekzplfftannlzwvgwwm.supabase.co/functions/v1/selfcheck';
+import AxeBuilder from '../.local/production-browser/node_modules/@axe-core/playwright/dist/index.mjs';
+const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
+const clientSource = await fs.readFile('src/lib/supabase.ts', 'utf8');
+const publicKey = clientSource.match(/'(sb_publishable_[^']+)'/)[1];
+const headers = { apikey: publicKey };
+async function readPublic(path) {
+  const response = await fetch(`${sb}/rest/v1/${path}`, { headers, signal: AbortSignal.timeout(30000) });
+  assert.ok(response.ok, `${path.split('?')[0]} HTTP ${response.status}`);
+  return response.json();
+}
 const output = '.local/production-audit';
 await fs.mkdir(output, { recursive: true });
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const routes = ['/', '/passport', '/russia', '/world', '/brief', '/news', '/memory', '/guide', '/about', '/status', '/memory/', '/#market-memory', '/#guide-memory', '/memory/old'];
 const browser = await chromium.launch({ headless: true });
-let previousCheckAt = 0;
+
 const rounds = [];
 try {
   for (const round of ['A', 'B']) {
-    const result = { round, started: new Date().toISOString(), pages: [], failures: [] };
+    const result = { round, started: new Date().toISOString(), pages: [], failures: [], accessibility: [], consoleErrors: [], httpErrors: [], requestFailures: [] };
     rounds.push(result);
     const htmlResponse = await fetch(origin);
     assert.ok(htmlResponse.ok);
@@ -38,7 +47,7 @@ try {
       // Fail closed if a future UI refactor attempts a write during this audit.
       await context.route('**/*', (route) => {
         const request = route.request();
-        if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method()) || request.url().includes('/snapshot-morning')) {
+        if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method()) || request.url().includes('/functions/v1/')) {
           result.failures.push(`Blocked non-read request: ${request.method()} ${new URL(request.url()).pathname}`);
           return route.abort();
         }
@@ -52,12 +61,16 @@ try {
         return route.continue();
       });
       const page = await context.newPage();
+      page.on('console', (message) => { if (message.type() === 'error') result.consoleErrors.push(message.text().slice(0, 600)); });
+      page.on('requestfailed', (request) => result.requestFailures.push({ path: new URL(request.url()).pathname, error: request.failure()?.errorText }));
       page.on('pageerror', (error) => result.failures.push(error.message));
       page.on('response', (response) => {
+        if (response.status() >= 400) result.httpErrors.push({ status: response.status(), path: new URL(response.url()).pathname });
         if (response.status() >= 500) result.failures.push(`HTTP ${response.status()} ${new URL(response.url()).pathname}`);
       });
       for (const path of routes) {
         result.currentPage = { path, width };
+        try {
         const target = new URL(path, origin);
         target.searchParams.set('acceptance', `${round}-${width}`);
         // A bookmark is a fresh document load. Hash-only navigation from the previous
@@ -112,7 +125,27 @@ try {
         if (['/passport', '/memory', '/brief', '/world', '/russia'].includes(path)) {
           await page.screenshot({ path: `${output}/${round}-${width}-${path.slice(1)}.png`, fullPage: false });
         }
-        result.pages.push({ path, width, ...metrics });
+        const extra = await page.evaluate(() => ({
+          title: document.title,
+          description: document.querySelector('meta[name="description"]')?.content,
+          canonical: document.querySelector('link[rel="canonical"]')?.href,
+          lang: document.documentElement.lang,
+          h1: [...document.querySelectorAll('main h1')].map(n => n.textContent),
+          timing: performance.getEntriesByType('navigation').map(n => ({ ttfb: n.responseStart - n.requestStart, domContentLoaded: n.domContentLoadedEventEnd, load: n.loadEventEnd })),
+          externalHosts: [...new Set(performance.getEntriesByType('resource').map(n => new URL(n.name).host))],
+          brokenImages: [...document.images].filter(n => n.complete && n.naturalWidth === 0).map(n => n.getAttribute('src')),
+          body: document.querySelector('main').innerText,
+        }));
+        assert.deepEqual(extra.brokenImages, [], 'Broken images');
+        if (round === 'A' && !path.includes('#') && !path.startsWith('/memory')) {
+          const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+          result.accessibility.push({ path, width, violations: axe.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.map(n => ({ target: n.target, html: n.html, failureSummary: n.failureSummary })) })) });
+        }
+        result.pages.push({ path, width, ...metrics, ...extra });
+        } catch (error) {
+          result.failures.push(`${width} ${path}: ${error.message}`);
+          await page.screenshot({ path: `${output}/${round}-${width}-error-${result.pages.length}.png` }).catch(() => {});
+        }
       }
       if (width === 360) {
         await page.goto(origin + '/world', { waitUntil: 'networkidle' });
@@ -135,26 +168,16 @@ try {
       }
       await context.close();
     }
-    assert.deepEqual(result.failures, [], 'Live page/runtime errors');
-    // Respect the production five-minute limiter, including a run already in progress.
-    await pause(Math.max(0, previousCheckAt + 305000 - Date.now()));
-    let healthResponse = await fetch(selfcheck);
-    assert.ok(healthResponse.ok, `Selfcheck HTTP ${healthResponse.status}`);
-    let health = await healthResponse.json();
-    if (health.skipped) {
-      await pause(Math.max(1000, Date.parse(health.checked_at) + 305000 - Date.now()));
-      healthResponse = await fetch(selfcheck);
-      assert.ok(healthResponse.ok);
-      health = await healthResponse.json();
-    }
-    assert.ok(!health.skipped && health.ok, 'A cached result is not an independent selfcheck');
-    assert.ok(Object.values(health.checks).every((check) => check.ok));
-    previousCheckAt = Date.parse(health.checked_at);
-    result.health = health;
+    // Observe existing scheduled evidence only. selfcheck can heal/write despite GET.
+    result.healthObserved = (await readPublic('site_health?select=checked_at,ok,trigger,checks&order=checked_at.desc&limit=1'))[0];
+    result.assets = await readPublic('cached_assets?select=id,name,price,change,as_of,updated_at,spark_dates,sparkline');
+    result.healthIsIndependentRun = false;
+    if (round === 'A') await pause(65000);
     result.finished = new Date().toISOString();
     await fs.writeFile(`${output}/round-${round}.json`, JSON.stringify(result, null, 2));
-    console.log(`PASS round ${round}: ${result.pages.length} live route/viewport pairs; selfcheck ${health.checked_at}; ${Object.keys(health.checks).length} checks`);
+    console.log(`AUDIT round ${round}: ${result.pages.length} completed route/viewport pairs; failures=${result.failures.length}; observed health=${result.healthObserved?.checked_at}`);
   }
+  if (rounds.some(r => r.failures.length)) process.exitCode = 1;
 } catch (error) {
   const detail = `${error.stack || error} | page=${JSON.stringify(rounds.at(-1)?.currentPage)} | failures=${JSON.stringify(rounds.at(-1)?.failures)}`;
   console.error(`::error::${detail.replaceAll('%', '%25').replaceAll('\n', '%0A').replaceAll('\r', '%0D')}`);

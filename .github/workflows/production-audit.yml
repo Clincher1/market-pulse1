@@ -3,7 +3,7 @@ name: Read-only production acceptance audit
 on:
   # Audit-only pushes are made after the pinned release is READY and promoted.
   push:
-    branches: ['arena/12edd106-market-pulse1']
+    branches: ['arena/0b3e4807-market-pulse1']
     paths:
       - 'scripts/production-audit.mjs'
       - '.github/workflows/production-audit.yml'
@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   browser:
-    if: github.repository == 'Clincher1/market-pulse1' && github.ref == 'refs/heads/arena/12edd106-market-pulse1'
+    if: github.repository == 'Clincher1/market-pulse1' && github.ref == 'refs/heads/arena/0b3e4807-market-pulse1'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -28,26 +28,26 @@ jobs:
           node-version: 22
       - name: Install isolated browser tooling (no application dependency changes)
         run: |
-          npm install --prefix .local/production-browser playwright@1.65.1
+          npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0
           .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
-      - name: Two independent live browser and health rounds (read only)
+      - name: Two live browser rounds and observed health (no selfcheck invocation)
         run: node scripts/production-audit.mjs
       - name: Save compact evidence on this same audit branch
-        if: success()
+        if: always()
         run: |
           set -euo pipefail
-          test "$GITHUB_REF_NAME" = "arena/12edd106-market-pulse1"
+          test "$GITHUB_REF_NAME" = "arena/0b3e4807-market-pulse1"
           git fetch origin "$GITHUB_REF_NAME"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          mkdir -p docs/audit-evidence/production-followup
-          cp .local/production-audit/summary.json docs/audit-evidence/production-followup/
-          for page in passport memory russia world; do
-            cp ".local/production-audit/B-360-$page.png" docs/audit-evidence/production-followup/
+          mkdir -p docs/audit-evidence/full-audit
+          cp .local/production-audit/summary.json docs/audit-evidence/full-audit/
+          for page in passport memory russia world brief; do
+            cp ".local/production-audit/B-360-$page.png" docs/audit-evidence/full-audit/
           done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/audit-evidence/production-followup
-          git commit -m "docs: save two read-only production audit rounds and mobile evidence"
+          git add docs/audit-evidence/full-audit
+          git commit -m "docs: save current full production audit evidence"
           git push origin "HEAD:$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v7
         if: always()
