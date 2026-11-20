@@ -26,8 +26,8 @@ await build({ entryPoints: ['src/components/DailyBrief.tsx'], outfile: output.pa
 });
 const Brief = createRequire(import.meta.url)(output.pathname).default;
 const base = [
-  { id: 'ruonia', name: 'RUONIA', value: 13.96, unit: '%', asOf: '2026-10-26', provider: 'Банк России' },
-  { id: 'ofz-10y', name: 'ОФЗ 10 лет', value: 16.99, unit: '%', asOf: '2026-10-26', provider: 'Мосбиржа ISS' },
+  { id: 'ruonia', name: 'RUONIA', value: 13.96, unit: '%', asOf: '2026-10-26', provider: 'Банк России', sourceUrl: 'https://www.cbr.ru/' },
+  { id: 'ofz-10y', name: 'ОФЗ 10 лет', value: 16.99, unit: '%', asOf: '2026-10-26', provider: 'Мосбиржа ISS', sourceUrl: 'https://www.moex.com/' },
 ];
 const assets = [{ id: 'gold', name: 'Gold', price: '$110.00', change: 1, sparkline: [100, 110], sparkDates: ['2026-10-26', '2026-10-27'], asOf: '2026-10-28T14:00:00Z' }];
 const russia = { markets: base.map((row) => ({ ...row, value: row.id === 'ruonia' ? 14 : 17.07, asOf: '2026-10-27' })), headlines: [] };
@@ -47,6 +47,9 @@ test('rendered brief separates rates, uses point dates, labels missing snapshot 
     assert.doesNotMatch(text, /\+0,29\s*%|\+0,47\s*%/);
     assert.match(text, /дата точки в снимке не сохранена → 27\.10\.2026/);
     assert.match(text, /Ставки и доходности · п\.п\./);
+    const source = document.querySelector('li a[aria-label^="Открыть источник"]');
+    assert.ok(source, 'fixture must include a source link');
+    assert.ok(source.classList.contains('basis-full'), 'mobile source must not squeeze prose into a narrow column');
   } finally {
     await act(async () => root.unmount()); dom.window.close();
     delete globalThis.__brief; delete globalThis.window; delete globalThis.document;

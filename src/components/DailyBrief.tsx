@@ -83,7 +83,7 @@ function formatSeriesValue(value: number, sample: string): string {
 function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode }) {
   const sourceUrl = item.sourceUrl ? safeHttpUrl(item.sourceUrl) : null;
   return (
-    <li className="flex items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-slate-50">
+    <li className="flex flex-wrap items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-slate-50">
       {marker}
       <a
         href={item.href}
@@ -100,7 +100,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="inline-flex basis-full items-center gap-1 pl-6 text-[11px] sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
           aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
         >
           {item.sourceLabel ?? 'Источник'}
