@@ -39,10 +39,11 @@ try {
         await page.waitForTimeout(1200);
         const metrics = await page.evaluate(() => ({
           overflow: document.documentElement.scrollWidth > innerWidth + 1,
+          overflowNodes: [...document.querySelectorAll('main *')].map((n) => ({tag:n.tagName,cls:n.getAttribute('class'),text:n.textContent.slice(0,100),right:Math.round(n.getBoundingClientRect().right),width:Math.round(n.getBoundingClientRect().width)})).filter((n) => n.right > innerWidth + 1).slice(-15),
           text: document.querySelector('main').innerText.length,
           headings: document.querySelectorAll('main h1,main h2').length,
         }));
-        assert.equal(metrics.overflow, false, `${width} ${path}: horizontal overflow`);
+        assert.equal(metrics.overflow, false, `${width} ${path}: horizontal overflow ${JSON.stringify(metrics.overflowNodes)}`);
         assert.ok(metrics.text > 80 && metrics.headings > 0, `${path}: empty main`);
         const body = await page.locator('main').innerText();
         if (path === '/passport') {
