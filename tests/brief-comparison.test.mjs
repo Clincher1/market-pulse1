@@ -34,3 +34,12 @@ test('rates do not compete against prices for six places', () => {
 test('displayed currency unit is EUR per USD, not its reciprocal', () => {
   assert.equal(WORLD_ASSET_UNITS['usd-eur'], 'EUR за 1 USD');
 });
+
+test('brief leader compares dated closes even when live quote change is different', async () => {
+  const { lastSeriesMove } = await import('../api/_shared/briefComparison.js');
+  const move = lastSeriesMove({ sparkline: [3723.72756, 3666.8714], sparkDates: ['2026-11-18', '2026-11-19'] });
+  assert.equal(move.change.toFixed(2), '-1.53');
+  assert.equal(move.previousValue, 3723.72756);
+  assert.equal(move.date, '2026-11-19');
+  assert.equal(lastSeriesMove({ sparkline: [1, 2], sparkDates: null }), null);
+});

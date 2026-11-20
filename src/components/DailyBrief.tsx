@@ -1,7 +1,6 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Camera, ExternalLink, History, Zap } from 'lucide-react';
 import { formatPercent } from '@/lib/percent';
-import { observationLabel } from '@/lib/asOf';
 import { formatPriceText } from '@/lib/price';
 import type { DailySnapshot } from '@/data/dailySnapshots';
 import { fetchTodaySnapshot } from '@/data/dailySnapshots';
@@ -14,7 +13,7 @@ import {
 import { SectionThemeBadge } from './sectionThemes';
 import { startPolling } from '@/lib/polling';
 import { instrumentChanged } from '@/lib/snapshotIdentity';
-import { briefDelta, lastSeriesObservation, snapshotSeriesDateLabel, orderBriefComparisons } from '@/lib/briefComparison';
+import { briefDelta, lastSeriesMove, lastSeriesObservation, snapshotSeriesDateLabel, orderBriefComparisons } from '@/lib/briefComparison';
 import { safeHttpUrl } from '@/lib/safeUrl';
 
 /**
@@ -171,22 +170,24 @@ export default function DailyBrief() {
   const brief = useMemo(() => {
     const facts: BriefItem[] = [];
     const strongestGlobal =
-      [...liveAssets].sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0] ?? null;
+      liveAssets.map((asset) => ({ asset, move: lastSeriesMove(asset) }))
+        .filter((row) => row.move !== null)
+        .sort((a, b) => Math.abs(b.move!.change) - Math.abs(a.move!.change) || a.asset.id.localeCompare(b.asset.id))[0] ?? null;
 
-    if (strongestGlobal) {
-      const observedAt = observationLabel(strongestGlobal.asOf);
+    if (strongestGlobal?.move) {
+      const { asset, move } = strongestGlobal;
       facts.push({
         id: 'global-move',
         href: '/world',
         body: (
           <>
-            Наибольшее по модулю дневное изменение среди загруженных мировых рядов:{' '}
+            Наибольшее по модулю изменение двух последних закрытий среди загруженных мировых рядов:{' '}
             <strong className="text-text-primary">
-              {strongestGlobal.name} {formatPct(strongestGlobal.change)}
+              {asset.name} {formatPct(move.change)}
             </strong>
-            {` · последнее значение ${formatPriceText(strongestGlobal.price)}`}
-            {strongestGlobal.sourceLabel ? ` · источник ${strongestGlobal.sourceLabel}` : ''}
-            {observedAt ? ` · дата наблюдения ${observedAt}` : ' · дата наблюдения не указана'}.
+            {` · закрытия ${formatSeriesValue(move.previousValue, asset.price)} → ${formatSeriesValue(move.value, asset.price)}`}
+            {asset.sourceLabel ? ` · источник ${asset.sourceLabel}` : ''}
+            {` · ${formatDateOnly(move.previousDate)} → ${formatDateOnly(move.date)}; (последнее / предыдущее − 1) × 100 %`}. Периоды активов могут различаться.
           </>
         ),
       });

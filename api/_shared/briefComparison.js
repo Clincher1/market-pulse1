@@ -46,3 +46,12 @@ export function orderBriefComparisons(rows) {
     .sort((a, b) => b.magnitude - a.magnitude || a.item.id.localeCompare(b.item.id))
     .slice(0, 6));
 }
+
+/** Leaders use two dated closes, not a mix of live quote changes. */
+export function lastSeriesMove(asset) {
+  const last = lastSeriesObservation(asset);
+  if (!last || asset.sparkline.length < 2) return null;
+  const previous = asset.sparkline[asset.sparkline.length - 2];
+  return { change: (last.value / previous - 1) * 100, value: last.value,
+    date: last.date, previousValue: previous, previousDate: asset.sparkDates[asset.sparkDates.length - 2] };
+}

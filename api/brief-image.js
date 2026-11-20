@@ -1,4 +1,4 @@
-import { briefDelta, lastSeriesObservation, snapshotSeriesDateLabel, orderBriefComparisons } from './_shared/briefComparison.js';
+import { briefDelta, lastSeriesMove, lastSeriesObservation, snapshotSeriesDateLabel, orderBriefComparisons } from './_shared/briefComparison.js';
 import { setBrowserNoStore, setVercelCdnCache } from './_shared/responseCache.js';
 import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { readFile } from 'node:fs/promises';
@@ -245,13 +245,14 @@ export async function buildBriefCard() {
         .filter((indicator) => finiteNumber(indicator.changePct) !== null);
 
     const facts = [];
-    const strongestGlobal = [...liveAssets].sort(
-        (a, b) => Math.abs(finiteNumber(b.change) ?? 0) - Math.abs(finiteNumber(a.change) ?? 0),
-    )[0] ?? null;
+    const strongestGlobal = liveAssets.map((asset) => ({ asset,
+        move: lastSeriesMove({ sparkline: asset.sparkline, sparkDates: asset.spark_dates }) }))
+        .filter((row) => row.move !== null)
+        .sort((a, b) => Math.abs(b.move.change) - Math.abs(a.move.change) || stringValue(a.asset.id).localeCompare(stringValue(b.asset.id)))[0];
     if (strongestGlobal) {
-        const observed = observationLabel(strongestGlobal.as_of);
+        const { asset, move } = strongestGlobal;
         facts.push(
-            `Наибольшее по модулю дневное изменение среди загруженных мировых рядов: ${stringValue(strongestGlobal.name)} ${formatPct(finiteNumber(strongestGlobal.change))}; последнее значение ${formatPriceText(strongestGlobal.price)}${strongestGlobal.source_label ? `; источник ${stringValue(strongestGlobal.source_label)}` : ''}${observed ? `; дата наблюдения ${observed}` : '; дата наблюдения не указана источником'}.`,
+            `Наибольшее по модулю изменение двух последних закрытий среди загруженных мировых рядов: ${stringValue(asset.name)} ${formatPct(move.change)}; закрытия ${formatSeriesValue(move.previousValue, asset.price)} → ${formatSeriesValue(move.value, asset.price)}; ${formatDateOnly(move.previousDate)} → ${formatDateOnly(move.date)}. Формула: (последнее / предыдущее − 1) × 100 %. Периоды активов могут различаться.${asset.source_label ? ` Источник: ${stringValue(asset.source_label)}.` : ''}`,
         );
     }
     const strongestRussia = [...russiaCandidates].sort(
