@@ -468,7 +468,7 @@ async function fetchMoexOfz10y() {
     basis: exact
       ? 'Точка кривой бескупонной доходности на 10 лет; публичный поток может быть задержан'
       : `Точки на 10 лет в кривой нет: показана ближайшая — ${best.period} г.`,
-    sourceUrl: 'https://www.moex.com/ru/marketdata/indices/state/gcurve/',
+    sourceUrl: 'https://iss.moex.com/iss/engines/stock/zcyc.json?iss.meta=off',
     // Для рисунка кривой: точки, которые реально пришли, без сглаживания.
     curve: curve.length >= 2 ? curve : null,
     curveAsOf: `${best.row.tradedate ?? ''} ${best.row.tradetime ?? ''}`.trim(),
