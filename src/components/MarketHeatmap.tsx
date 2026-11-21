@@ -447,7 +447,7 @@ function HeatTile({
           </div>
         )}
 
-        <div className="mt-3 flex items-end justify-between gap-2">
+        <div data-testid="heat-tile-change-scale" className="mt-3 flex flex-wrap items-end justify-between gap-2">
           <span className="text-base font-extrabold tabular-nums">
             {isFallback || horizonChangeValue === null
               ? "—"
