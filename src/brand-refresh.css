@@ -150,42 +150,43 @@
 
 .desktop-navigation__link[data-theme='dashboard'] {
   --nav-color: #2452cc;
-  --nav-main: #2659e8;
-  --nav-alt: #5754ec;
+  --nav-main: #1d4ed8;
+  --nav-alt: #4338ca;
   --nav-tint: #edf3ff;
   --nav-border: #d8e4ff;
 }
 
 .desktop-navigation__link[data-theme='passport'] {
-  --nav-color: #8d4d06;
-  --nav-main: #e49a1c;
-  --nav-alt: #f07836;
-  --nav-tint: #fff5df;
-  --nav-border: #f5e3b8;
+  --nav-color: #065f46;
+  --nav-main: #047857;
+  --nav-alt: #065f46;
+  --nav-tint: #ecfdf5;
+  --nav-border: #a7f3d0;
 }
 
 .desktop-navigation__link[data-theme='russia'] {
-  --nav-color: #047857;
-  --nav-main: #079879;
-  --nav-alt: #11a6a5;
-  --nav-tint: #e8fbf5;
-  --nav-border: #c4efe1;
+  --nav-color: #1e40af;
+  --nav-main: #1d4ed8;
+  --nav-alt: #1e40af;
+  --nav-tint: #eff6ff;
+  --nav-border: #bfdbfe;
 }
 
 .desktop-navigation__link[data-theme='global'] {
   --nav-color: #08749a;
-  --nav-main: #0b91be;
-  --nav-alt: #5262e8;
+  --nav-main: #0e7490;
+  --nav-alt: #155e75;
   --nav-tint: #e8f8ff;
   --nav-border: #c8eefe;
 }
 
 .desktop-navigation__link[data-theme='news'] {
-  --nav-color: #9a3b83;
-  --nav-main: #d54aa5;
-  --nav-alt: #7656ed;
-  --nav-tint: #fff0fa;
-  --nav-border: #f5d4eb;
+  --nav-color: #78350f;
+  --nav-main: #fcd34d;
+  --nav-alt: #fbbf24;
+  --nav-active-ink: #020617;
+  --nav-tint: #fffbeb;
+  --nav-border: #fde68a;
 }
 
 .desktop-navigation__link:hover {
@@ -197,19 +198,19 @@
 }
 
 .desktop-navigation__link.is-active {
-  color: #fff;
+  color: var(--nav-active-ink, #fff);
   border-color: transparent;
   background: linear-gradient(118deg, var(--nav-main), var(--nav-alt));
   box-shadow: 0 7px 16px color-mix(in srgb, var(--nav-main) 28%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.25);
 }
 
 .desktop-navigation__link.is-active:hover {
-  color: #fff;
+  color: var(--nav-active-ink, #fff);
   background: linear-gradient(118deg, var(--nav-main), var(--nav-alt));
 }
 
 .desktop-navigation__link.is-active .desktop-navigation__icon {
-  color: #fff;
+  color: var(--nav-active-ink, #fff);
 }
 
 .desktop-navigation__active-bg {
@@ -235,7 +236,7 @@
 .desktop-navigation__more[open] > .desktop-navigation__more-trigger {
   color: #fff;
   border-color: transparent;
-  background: linear-gradient(120deg, #7954df, #b653bf);
+  background: linear-gradient(120deg, #6d28d9, #7e22ce);
   box-shadow: 0 6px 15px rgb(121 84 223 / 0.2);
 }
 
@@ -1400,7 +1401,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.48rem;
-  color: #708098;
+  color: #526277;
   font-size: 0.59rem;
   font-weight: 800;
   letter-spacing: 0.105em;
