@@ -472,7 +472,7 @@ function App() {
       <main
         id="main"
         tabIndex={-1}
-        className="mx-auto max-w-[1400px] px-4 pb-8 pt-24 outline-hidden sm:px-6 lg:px-10 lg:pt-28"
+        className="site-container pb-8 pt-24 outline-hidden lg:pt-28"
       >
         <motion.div
           key={view}

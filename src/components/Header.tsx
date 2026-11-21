@@ -202,7 +202,7 @@ export default function Header({ activeView }: HeaderProps) {
         transition={reduceMotion ? { duration: 0 } : { duration: 0.42, ease: 'easeOut' }}
         className={`site-header ${scrolled || menuOpen ? 'is-scrolled' : ''}`}
       >
-        <div className="site-header__inner mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
+        <div className="site-header__inner site-container flex items-center justify-between gap-3">
           <a
             href={PAGE_PATHS.dashboard}
             onClick={() => setMenuOpen(false)}

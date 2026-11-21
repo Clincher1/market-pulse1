@@ -3,7 +3,7 @@ import BrandMark from './BrandMark';
 
 export default function Footer() {
   return (
-    <footer id="footer" className="site-footer mx-auto mt-12 w-full max-w-[1400px] px-4 sm:px-6 lg:mt-16 lg:px-10">
+    <footer id="footer" className="site-footer site-container mt-12 lg:mt-16">
       <div className="site-footer__panel mx-auto px-5 py-7 sm:px-6 lg:px-8 lg:py-8">
         <div className="site-footer__main flex flex-col items-center justify-between gap-6 md:flex-row">
           <a href="/" className="site-footer__brand flex min-h-11 items-center gap-3">

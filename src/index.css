@@ -91,6 +91,28 @@
   }
 }
 
+/* Shared page shell: preserve the existing 1400px border-box and gutters.
+   Inner card padding and vertical section spacing remain component-owned. */
+:root {
+  --layout-max-width: 1400px;
+  --layout-gutter: 16px;
+}
+
+@media (min-width: 640px) {
+  :root { --layout-gutter: 24px; }
+}
+
+@media (min-width: 1024px) {
+  :root { --layout-gutter: 40px; }
+}
+
+.site-container {
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin-inline: auto;
+  padding-inline: var(--layout-gutter);
+}
+
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
