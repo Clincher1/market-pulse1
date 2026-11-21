@@ -2,11 +2,12 @@
 // Source-date comparisons are exact; different-time quotes are observations, not errors.
 import fs from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
+import { parseInflationTable } from '../api/_shared/cbrInflation.js';
 import { chromium } from '../.local/production-browser/node_modules/playwright/index.mjs';
 const origin = 'https://market-pulse1-eta.vercel.app';
 const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const key = (await fs.readFile('src/lib/supabase.ts', 'utf8')).match(/'(sb_publishable_[^']+)'/)[1];
-const output = '.local/facts-links-audit';
+const output = process.env.FACTS_LINKS_OUTPUT || '.local/facts-links-audit';
 await fs.mkdir(output, { recursive: true });
 const window = new JSDOM('').window;
 const xml = text => new window.DOMParser().parseFromString(text, 'text/xml');
@@ -71,10 +72,28 @@ try {
       const response = await page.goto(origin + path, { waitUntil: 'networkidle', timeout: 60000 });
       await page.locator('main').waitFor();
       if (path === '/news') {
-        const all = page.getByRole('button', { name: /^Все \d/ });
+        const all = page.getByTestId('news-show-all');
         if (await all.count()) await all.click();
       }
       await page.waitForTimeout(1500);
+      // Full-page captures alone do not trigger lazy in-view sections.
+      // Scroll like a reader before collecting links, text and screenshots.
+      await page.evaluate(async () => {
+        for (let y = 0; y < document.documentElement.scrollHeight; y += 650) {
+          window.scrollTo({ top: y, behavior: 'instant' });
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
+      await page.waitForTimeout(500);
+      if (path === '/world') {
+        for (const id of ['usd-eur', 'sp500', 'brent', 'gold', 'btc']) {
+          await page.locator(`#heat-tile-${id}`).click();
+          await page.getByRole('region', { name: /^Подробно об активе / }).waitFor();
+          for (const url of await page.locator('a[href]').evaluateAll(nodes => nodes.map(n => n.href))) addLink(url, `/world:expanded-${id}`);
+          await page.getByRole('button', { name: 'Свернуть панель актива' }).click();
+        }
+      }
       const data = await page.evaluate(() => ({
         title: document.title, finalUrl: location.href,
         text: document.querySelector('main').innerText,
@@ -182,6 +201,16 @@ await source('MOEX original yield curve', 'https://iss.moex.com/iss/engines/stoc
   return { site: russia.markets.find(m => m.id === 'ofz-10y'), original: rows };
 });
 
+// Re-read the already configured official inflation table export. Reuses the
+// existing table parser; this is a direct-source check, not an independent parser.
+await source('CBR configured inflation table export', 'https://www.cbr.ru/Queries/UniDbQuery/DownloadExcel/132934', text => {
+  const rows = parseInflationTable(text);
+  const m = russia.markets.find(m => m.id === 'inflation');
+  const original = rows.find(r => r.month === m?.asOf?.slice(0, 7));
+  if (!original) throw new Error('Observation month not found in configured export; not independently verified');
+  return compare('inflation year over year', original.month, m.value, original.inflation, 0.00001);
+});
+
 // Public publisher RSS only; do not scrape article bodies or bypass paywalls.
 const feeds = [
   'https://feeds.bbci.co.uk/news/business/rss.xml', 'https://feeds.bbci.co.uk/news/world/rss.xml',
@@ -193,8 +222,11 @@ const feeds = [
   'https://oilprice.com/rss/main', 'https://www.vedomosti.ru/rss/rubric/economics', 'https://www.vedomosti.ru/rss/rubric/finance',
   'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain', 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews',
 ];
+const writerSource = await fs.readFile('supabase/functions/update-news-v2/index.ts', 'utf8');
+const publicFeedSection = writerSource.split('const SOURCES = [')[1].split('];')[0];
+for (const match of publicFeedSection.matchAll(/url: '([^']+)'/g)) feeds.push(match[1]);
 const originals = new Map();
-for (const feed of feeds) await source('Publisher RSS', feed, text => {
+for (const feed of new Set(feeds)) await source('Publisher RSS', feed, text => {
   const doc = xml(text);
   const entries = [...doc.querySelectorAll('item, entry')].map(item => ({ title: item.querySelector('title')?.textContent?.trim(), url: item.querySelector('link')?.getAttribute('href') || item.querySelector('link')?.textContent?.trim(), date: item.querySelector('pubDate, published, updated')?.textContent }));
   for (const e of entries) if (e.url) originals.set(e.url.replace(/#.*$/, ''), e);
@@ -208,6 +240,9 @@ for (const item of [...news, ...(russia.headlines || [])]) {
   if (original) {
     entry.original = original;
     entry.sameTitle = norm(item.title) === norm(original.title);
+    const siteTime = Date.parse(entry.publishedAt), sourceTime = Date.parse(original.date);
+    entry.samePublicationInstant = Number.isFinite(siteTime) && Number.isFinite(sourceTime) && siteTime === sourceTime;
+    if (Number.isFinite(siteTime) && Number.isFinite(sourceTime) && siteTime !== sourceTime) report.unverified.push({ name: 'publisher date differs; revision or ingestion needs inspection', ...entry, differenceSeconds: (siteTime - sourceTime) / 1000 });
     if (!entry.sameTitle) report.unverified.push({ name: 'headline changed or parser mismatch', ...entry });
   }
   // An article can leave a rolling RSS feed; absence is not evidence of fabrication.
@@ -232,7 +267,7 @@ async function worker() {
       entry.type = r.headers.get('content-type');
       await r.body?.cancel();
       entry.verdict = r.ok ? 'reachable' : [404,410].includes(r.status) ? 'not-found-candidate' : 'unverified-access';
-      if (entry.verdict === 'not-found-candidate') report.findings.push({ type: 'link-not-found-candidate', ...entry });
+      if (entry.verdict === 'not-found-candidate') report.findings.push({ ...entry, kind: 'link-not-found-candidate' });
       if (entry.verdict === 'unverified-access') report.unverified.push(entry);
     } catch (e) { entry.verdict = 'unverified-network'; entry.error = e.message; report.unverified.push(entry); }
     finally { activeHosts.set(u.hostname, activeHosts.get(u.hostname) - 1); }

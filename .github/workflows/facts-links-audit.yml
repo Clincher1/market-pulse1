@@ -5,7 +5,7 @@ on:
     paths: ['scripts/facts-links-check.mjs', '.github/workflows/facts-links-audit.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: facts-links-audit
   cancel-in-progress: false
@@ -25,11 +25,46 @@ jobs:
         run: |
           npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0
           .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
-      - name: Original sources, all pages, fragments, publisher feeds and every discovered link
+      - name: Original sources and every link, round A
+        env:
+          FACTS_LINKS_OUTPUT: .local/facts-links-audit/A
+        run: node scripts/facts-links-check.mjs
+      - name: Original sources and every link, independent round B
+        if: ${{ !cancelled() }}
+        env:
+          FACTS_LINKS_OUTPUT: .local/facts-links-audit/B
         run: node scripts/facts-links-check.mjs
       - name: Two independent live interaction, accessibility, math and rights rounds
         if: ${{ !cancelled() }}
         run: node scripts/production-audit.mjs
+      - name: Preserve compact public findings on this same unchanged work branch
+        if: always()
+        run: |
+          set -euo pipefail
+          case "$GITHUB_REF_NAME" in arena/*) ;; *) exit 1 ;; esac
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          for round in A B; do
+            mkdir -p "docs/audit-evidence/facts-links/$round"
+            if [ -f ".local/facts-links-audit/$round/report.json" ]; then
+              cp ".local/facts-links-audit/$round/report.json" "docs/audit-evidence/facts-links/$round/"
+            fi
+          done
+          for name in home world russia news passport brief guide about; do
+            if [ -f ".local/facts-links-audit/B/$name.png" ]; then
+              cp ".local/facts-links-audit/B/$name.png" docs/audit-evidence/facts-links/B/
+            fi
+          done
+          for name in summary.json http-A.json http-B.json; do
+            if [ -f ".local/production-audit/$name" ]; then
+              cp ".local/production-audit/$name" docs/audit-evidence/facts-links/
+            fi
+          done
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/audit-evidence/facts-links
+          git commit -m 'docs: save both post-fix fact, link and interaction audits'
+          git push origin "HEAD:$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
