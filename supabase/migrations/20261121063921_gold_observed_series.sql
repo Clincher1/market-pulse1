@@ -13,7 +13,7 @@ UPDATE public.asset_instruments_v2 SET enabled = false, is_primary = false, upda
 WHERE id IN ('gold_twelve_xauusd_daily','gold_twelve_xauusd_quote');
 INSERT INTO public.asset_instruments_v2
  (id,asset_key,provider,provider_symbol,display_name,instrument_type,currency,unit,frequency,is_primary,enabled,notes)
-VALUES ('gold_api_xau_observed_daily','gold','gold-api.com','XAU',
+VALUES ('gold_api_xau_observed_daily','gold','gold','XAU',
  'Gold spot: last observed quote per UTC day (not official close)',
  'commodity_spot','USD','usd_per_troy_ounce','daily',true,true,
  'New series only. Last successfully received gold-api.com observation per UTC day; gaps stay missing. No Twelve Data backfill.');

@@ -42,7 +42,7 @@ try {
       };
     }
 
-    for (const width of [360, 1280]) {
+    for (const width of [360, 768, 1280]) {
       const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: round === 'A' ? 'reduce' : 'no-preference' });
       // Fail closed if a future UI refactor attempts a write during this audit.
       await context.route('**/*', (route) => {
@@ -55,7 +55,11 @@ try {
           result.failures.push('Withdrawn forecast archive was queried');
           return route.abort();
         }
-        if (request.url().includes('/rest/v1/daily_snapshots')) {
+        if (request.url().includes('/rest/v1/daily_snapshots?')) {
+          result.failures.push('Raw snapshot archive was queried');
+          return route.abort();
+        }
+        if (request.url().includes('/rest/v1/daily_snapshots_public_v1')) {
           assert.ok(new URL(request.url()).searchParams.get('date')?.startsWith('eq.'), 'Historical passport fetch is still public');
         }
         return route.continue();
@@ -137,8 +141,14 @@ try {
           body: document.querySelector('main').innerText,
         }));
         assert.deepEqual(extra.brokenImages, [], 'Broken images');
-        if (round === 'A' && !path.includes('#') && !path.startsWith('/memory')) {
+        assert.equal(extra.canonical, origin + new URL(page.url()).pathname, 'Canonical does not match route');
+        if (!path.includes('#') && !path.startsWith('/memory')) {
+          const raw = await response.text();
+          assert.ok(raw.includes(`rel="canonical" href="${origin + new URL(page.url()).pathname}"`), 'Canonical absent in raw HTML');
+        }
+        if (!path.includes('#') && !path.startsWith('/memory')) {
           const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+          if (axe.violations.length) result.failures.push(`Accessibility ${width} ${path}: ${axe.violations.map(v=>v.id).join(', ')}`);
           result.accessibility.push({ path, width, violations: axe.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.map(n => ({ target: n.target, html: n.html, failureSummary: n.failureSummary })) })) });
         }
         result.pages.push({ path, width, ...metrics, ...extra });
@@ -172,6 +182,14 @@ try {
     result.healthObserved = (await readPublic('site_health?select=checked_at,ok,trigger,checks&order=checked_at.desc&limit=1'))[0];
     result.assets = await readPublic('cached_assets?select=id,name,price,change,as_of,updated_at,spark_dates,sparkline');
     result.healthIsIndependentRun = false;
+    const gold = result.assets.find(a => a.id === 'gold');
+    assert.ok(gold, 'Gold quote is missing');
+    assert.equal(gold.sparkline.length, gold.spark_dates.length);
+    if (!gold.sparkline.length) assert.equal(gold.change, null, 'Missing history fabricated a percent');
+    result.goldAccumulation = { points: gold.sparkline.length, change: gold.change };
+    for (const error of result.httpErrors) result.failures.push(`Browser HTTP ${error.status} ${error.path}`);
+    for (const error of result.consoleErrors) result.failures.push(`Console: ${error}`);
+    for (const error of result.requestFailures) result.failures.push(`Request: ${error.path} ${error.error}`);
     if (round === 'A') await pause(65000);
     result.finished = new Date().toISOString();
     await fs.writeFile(`${output}/round-${round}.json`, JSON.stringify(result, null, 2));
