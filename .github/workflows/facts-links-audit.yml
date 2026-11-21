@@ -71,6 +71,9 @@ jobs:
               cp ".local/production-audit/technical-$round/technical.json" "docs/audit-evidence/technical-readiness/technical-$round.json"
             fi
           done
+          if [ -f .local/production-audit/technical-B/technical.json ]; then
+            cp .local/production-audit/technical-B/technical.json docs/audit-evidence/technical-readiness/technical.json
+          fi
           for name in home world russia news passport brief guide about; do
             if [ -f ".local/facts-links-audit/B/$name.png" ]; then
               cp ".local/facts-links-audit/B/$name.png" docs/audit-evidence/facts-links/B/

@@ -214,7 +214,14 @@ for (const [id, secid, market] of [['imoex','IMOEX','stock/markets/index'], ['rg
 await source('MOEX original yield curve', 'https://iss.moex.com/iss/engines/stock/zcyc.json?iss.meta=off', text => {
   const payload = JSON.parse(text), block = payload.yearyields;
   const rows = block.data.map(row => Object.fromEntries(block.columns.map((c,i) => [c,row[i]])));
-  return { site: russia.markets.find(m => m.id === 'ofz-10y'), original: rows };
+  const market = russia.markets.find(m => m.id === 'ofz-10y');
+  const comparisons = [];
+  for (const point of market?.curve || []) {
+    const original = rows.find(row => row.period === point.period && `${row.tradedate} ${row.tradetime}` === market.curveAsOf);
+    // The public ISS observation may advance between independent requests.
+    if (original) comparisons.push(compare(`OFZ curve ${point.period} years`, market.curveAsOf, point.value, original.value, 0.00501));
+  }
+  return { site: market, original: rows, comparisons, note: 'Compare only identical observation instants; site rounds yields to two decimal places.' };
 });
 
 // Independent DOM extraction of the already configured official HTML table.
