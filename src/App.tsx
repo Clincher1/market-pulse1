@@ -13,7 +13,7 @@ import PulseOrbit from '@/components/PulseOrbit';
 import PageSignalIntro from '@/components/PageSignalIntro';
 const BusinessMoney = lazy(() => import('@/components/BusinessMoney'));
 const WhatChanged = lazy(() => import('@/components/WhatChanged'));
-import MarketDesk from '@/components/MarketDesk';
+const MarketDesk = lazy(() => import('@/components/MarketDesk'));
 import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
 import { SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
@@ -151,7 +151,11 @@ function DashboardPage() {
         </motion.div>
       </section>
 
-      <SectionBoundary title="Обзор и мои ориентиры"><MarketDesk summary /></SectionBoundary>
+      <SectionBoundary title="Обзор и мои ориентиры">
+        <Suspense fallback={<SectionFallback title="Главное за минуту" minHeightClass="min-h-[520px]" />}>
+          <MarketDesk summary />
+        </Suspense>
+      </SectionBoundary>
 
       <section aria-labelledby="page-links-title" className="overview-topics mb-10 lg:mb-14">
         <div className="overview-topics__heading">
@@ -243,7 +247,11 @@ function SectionPage({ view }: { view: SectionPageView }) {
         <>
           <PageSignalIntro page={page} />
           <MarketTicker />
-          <SectionBoundary title="Мои ориентиры и сравнение"><MarketDesk /></SectionBoundary>
+          <SectionBoundary title="Мои ориентиры и сравнение">
+            <Suspense fallback={<SectionFallback title="Мои ориентиры и сравнение" minHeightClass="min-h-[600px]" />}>
+              <MarketDesk />
+            </Suspense>
+          </SectionBoundary>
           <section
             id="global-economy"
             aria-labelledby="global-economy-title"
