@@ -1,0 +1,2184 @@
+{
+  "scope": "Initial HTML, JavaScript-off/failure recovery, bootstrap and visual equivalence; data requests blocked",
+  "origin": "https://market-pulse1-eta.vercel.app",
+  "expected": "index-ChzyMUIF.js",
+  "cases": [
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/passport",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/russia",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/world",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/brief",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/news",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/guide",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/about",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/status",
+      "mode": "no-js",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/passport",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/passport"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/russia",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/russia"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/world",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/world"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/brief",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/brief"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/news",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/news"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/guide",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/guide"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/about",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/about"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/status",
+      "mode": "failed-entry",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 1,
+      "active": "/status"
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/passport",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/russia",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/world",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/brief",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/news",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/guide",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/about",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/status",
+      "mode": "interactive",
+      "overflow": false,
+      "policyErrors": [],
+      "fallbackCount": 0,
+      "active": null
+    }
+  ],
+  "equivalence": [
+    {
+      "width": 360,
+      "finalDomEqual": true
+    },
+    {
+      "width": 768,
+      "finalDomEqual": true
+    },
+    {
+      "width": 1024,
+      "finalDomEqual": true
+    },
+    {
+      "width": 1440,
+      "finalDomEqual": true
+    }
+  ],
+  "failures": [
+    {
+      "round": "A",
+      "width": 360,
+      "path": "",
+      "mode": "no-js",
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok(html.includes(`data-initial-document=\"${entry.key}\"`))\n"
+    }
+  ]
+}
