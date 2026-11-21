@@ -17,7 +17,7 @@ const STEPS = [
     icon: Database,
     title: 'Забираем',
     text:
-      'Yahoo Finance (Brent, S&P 500), Европейский центральный банк (USD/EUR), gold-api.com (котировка золота) и Twelve Data (его дневная история), Kraken (BTC), ЦБ РФ и Мосбиржа для рубля, индексов и ОФЗ. Новости — из открытых RSS-лент.',
+      'Yahoo Finance (Brent, S&P 500), Европейский центральный банк (USD/EUR), gold-api.com (котировка золота и ряд сохранённых наблюдений этого же источника), Kraken (BTC), ЦБ РФ и Мосбиржа для рубля, индексов и ОФЗ. Новости — из открытых RSS-лент.',
     href: '/guide#guide-overview',
     link: 'Источники',
   },
