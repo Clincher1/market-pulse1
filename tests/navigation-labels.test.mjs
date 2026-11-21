@@ -9,5 +9,9 @@ test('mobile menu accessible name includes its visible label and brand does not 
 
 test('orbit links reset old opposing absolute edges before new positions', () => {
   const css = readFileSync('src/brand-refresh.css', 'utf8');
-  assert.match(css, /\.pulse-orbit__link \{[^}]*inset: auto;[^}]*width: min\(43%, 245px\)/);
+  const link = css.match(/\.pulse-orbit__link \{([^}]+)\}/)?.[1];
+  assert.ok(link);
+  assert.match(link, /inset: auto;/);
+  const width = Number(link.match(/width: min\((\d+)%, 245px\)/)?.[1]);
+  assert.ok(width > 0 && width < 50, 'Both cards need a gap, not a hard-coded historical percentage');
 });
