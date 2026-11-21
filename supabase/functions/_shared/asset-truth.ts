@@ -111,12 +111,12 @@ export function checkChangeAgainstSeries(row: AssetRowLike): ChangeVerdict {
     }
   }
   const values = seriesValues(row);
-  if (values.length < 2) {
-    return { checked: false, ok: true, reason: "в ряду меньше двух точек" };
+  if (!values.length) {
+    return { checked: false, ok: true, reason: "в ряду нет точек" };
   }
   const last = values[values.length - 1];
   const previous = values[values.length - 2];
-  if (!(previous > 0) || !(last > 0)) {
+  if ((values.length > 1 && !(previous > 0)) || !(last > 0)) {
     return { checked: false, ok: true, reason: "в ряду нулевые значения" };
   }
 
@@ -177,6 +177,7 @@ export function checkChangeAgainstSeries(row: AssetRowLike): ChangeVerdict {
     };
   }
 
+  if (values.length < 2) return { checked: false, ok: true, reason: "в ряду меньше двух закрытий" };
   const expected = ((last - previous) / previous) * 100;
 
   // Сравниваем именно числа, а не строки: у цены в кэше есть знак валюты

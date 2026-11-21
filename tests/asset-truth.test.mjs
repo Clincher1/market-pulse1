@@ -293,3 +293,10 @@ test('gold/BTC are verified from quote to dated last close; wrong base cannot pa
     assert.equal(checkChangeAgainstSeries({ ...row, spark_dates: null }).checked, false);
   }
 });
+
+test('one completed observation is sufficient for a later gold quote comparison', () => {
+ const row={id:'gold',price:'$3,500.0',change:-2.7778,sparkline:[3600],spark_dates:['2026-10-27'],as_of:'2026-10-28T12:00:00Z'};
+ const verdict=checkChangeAgainstSeries(row);
+ assert.equal(verdict.checked,true);assert.equal(verdict.ok,true);assert.equal(verdict.basis,'quote');
+ assert.equal(checkChangeAgainstSeries({...row,change:0}).ok,false);
+});

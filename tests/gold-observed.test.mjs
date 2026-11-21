@@ -37,3 +37,14 @@ test('expanded panel and current row use the same new gold instrument', () => {
  assert.match(panel,/gold: 'gold_api_xau_observed_daily'/);
  assert.doesNotMatch(panel,/gold: 'gold_twelve/);
 });
+
+test('monitoring distinguishes bounded gold accumulation from missing/broken data', async()=>{
+ const {goldAccumulating,GOLD_OBSERVED_LABEL}=await import('../supabase/functions/_shared/gold-observed.ts');
+ const row={id:'gold',source_label:GOLD_OBSERVED_LABEL,change:null,sparkline:[],spark_dates:[],as_of:now};
+ assert.equal(goldAccumulating(row,now,now),true);
+ assert.equal(goldAccumulating({...row,change:0},now,now),false);
+ assert.equal(goldAccumulating({...row,source_label:'Twelve Data'},now,now),false);
+ assert.equal(goldAccumulating({...row,spark_dates:['2026-10-27']},now,now),false);
+ assert.equal(goldAccumulating(row,'2026-10-24T00:00:00Z',now),false);
+ assert.equal(goldAccumulating(row,'2026-10-29T00:00:00Z',now),false);
+});

@@ -1,4 +1,5 @@
 // Self-check for the whole public contour.
+import { goldAccumulating, GOLD_OBSERVED_INSTRUMENT } from "../_shared/gold-observed.ts";
 import { serveWithErrorReporting, verifyDsn } from "../_shared/observability.ts";
 import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared/asset-truth.ts";
 import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
@@ -809,9 +810,12 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     //     −1,26 %, потому что предыдущая точка бралась та же, что и цена.
     check('asset_change_truth', async () => {
       const rows = (await restJson(
-        'cached_assets?select=id,name,price,change,sparkline,spark_dates,as_of',
+        'cached_assets?select=id,name,price,change,sparkline,spark_dates,as_of,source_label',
       )) as AnyRecord[];
       if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
+      const goldRegistry = await restJson(`asset_instruments_v2?select=created_at&id=eq.${GOLD_OBSERVED_INSTRUMENT}`) as AnyRecord[];
+      const accumulating = rows.filter(row => goldAccumulating(row, String(goldRegistry[0]?.created_at ?? ''), new Date().toISOString()));
+      const accumulatingIds = new Set(accumulating.map(row => String(row.id)));
       const verdicts = rows.map((row) => ({
         id: String(row.id ?? ''),
         verdict: checkChangeAgainstSeries({
@@ -831,8 +835,8 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         }),
       }));
       const failed = verdicts.filter((item) => item.verdict.checked && !item.verdict.ok);
-      const skipped = verdicts.filter((item) => !item.verdict.checked).map((item) => item.id);
-      const checked = verdicts.length - skipped.length;
+      const skipped = verdicts.filter((item) => !item.verdict.checked && !accumulatingIds.has(item.id)).map((item) => item.id);
+      const checked = verdicts.filter(item => item.verdict.checked).length;
       if (failed.length) {
         return {
           ok: false,
@@ -858,7 +862,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       }
       return {
         ok: skipped.length === 0 && ['brent', 'sp500', 'usd-eur', 'gold', 'btc'].every((id) => verdicts.some((item) => item.id === id)),
-        detail: `сходится у ${checked} из ${verdicts.length} рядов${
+        detail: `сходится у ${checked} из ${verdicts.length} рядов${accumulating.length ? '; gold: новый ряд накапливается, процент отсутствует (первые 72 часа)' : ''}${
           skipped.length ? `; база не проверена: ${skipped.join(', ')}` : ''
         }`,
       };
@@ -1189,19 +1193,25 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     //     расхождение никто не заметит.
     check('asset_history_panel', async () => {
       const rows = (await restJson(
-        'asset_price_history_v1?select=frontend_asset_id,observation_date&order=observation_date.desc&limit=400',
+        'asset_price_history_v1?select=frontend_asset_id,instrument_id,observation_date&order=observation_date.desc&limit=400',
       )) as AnyRecord[];
       const latest = new Map<string, string>();
       for (const row of rows) {
         const id = String(row.frontend_asset_id ?? '');
         const date = String(row.observation_date ?? '').slice(0, 10);
-        if (!id || !date) continue;
+        if (!id || !date || row.instrument_id !== contractFor(id)?.historyInstrumentId) continue;
         const seen = latest.get(id);
         if (!seen || date > seen) latest.set(id, date);
       }
+      const [goldCache, goldRegistry] = await Promise.all([
+        restJson('cached_assets?select=id,source_label,change,sparkline,spark_dates,as_of&id=eq.gold'),
+        restJson(`asset_instruments_v2?select=created_at&id=eq.${GOLD_OBSERVED_INSTRUMENT}`),
+      ]) as [AnyRecord[], AnyRecord[]];
+      const accumulating = !latest.has('gold') && goldAccumulating(goldCache[0] ?? {}, String(goldRegistry[0]?.created_at ?? ''), new Date().toISOString());
       const expected = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'];
       const today = Date.now();
       const stale = expected.filter((id) => {
+        if (id === 'gold' && accumulating) return false;
         const date = latest.get(id);
         if (!date) return true;
         const ageDays = (today - Date.parse(`${date}T00:00:00Z`)) / 86_400_000;
@@ -1211,7 +1221,8 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         ok: stale.length === 0,
         detail: stale.length
           ? `нет свежих датированных точек: ${stale.map((id) => `${id}${latest.get(id) ? ` (${latest.get(id)})` : ' (нет строк)'}`).join(', ')}`
-          : `по всем ${expected.length} активам есть точки не старше ${ASSET_HISTORY_MAX_AGE_DAYS} дн`,
+          : `свежие точки выбранных источников не старше ${ASSET_HISTORY_MAX_AGE_DAYS} дн${accumulating ? '; gold: новый ряд накапливается (первые 72 часа), чужая история не подставляется' : ''}`,
+
       };
     }),
 

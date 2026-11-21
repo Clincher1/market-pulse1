@@ -28,3 +28,14 @@ export function goldHistory(rows: unknown, asOf: string, fetchedAt: string) {
   }
   return [...dates].sort(([a], [b]) => a.localeCompare(b)).slice(-30).map(([date, value]) => ({date, value}));
 }
+
+/** Limited bootstrap state, not an indefinite exemption for missing history. */
+export function goldAccumulating(row: Record<string, unknown>, createdAt: string, now: string): boolean {
+  const age = Date.parse(now) - Date.parse(createdAt);
+  const quoteAge = Date.parse(now) - Date.parse(String(row.as_of ?? ''));
+  return row.id === 'gold' && row.source_label === GOLD_OBSERVED_LABEL && row.change === null &&
+    Array.isArray(row.sparkline) && row.sparkline.length === 0 &&
+    Array.isArray(row.spark_dates) && row.spark_dates.length === 0 &&
+    Number.isFinite(age) && age >= 0 && age <= 3 * 86400_000 &&
+    Number.isFinite(quoteAge) && quoteAge >= -120_000 && quoteAge <= 3 * 86400_000;
+}
