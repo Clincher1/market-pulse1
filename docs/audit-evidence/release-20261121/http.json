@@ -1,0 +1,1086 @@
+{
+  "started": "2026-11-21T06:46:40.581Z",
+  "endpoints": [
+    {
+      "path": "/",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/",
+      "ms": 185,
+      "bytes": 4099,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "HIT"
+      }
+    },
+    {
+      "path": "/world",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/world",
+      "ms": 27,
+      "bytes": 3991,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "HIT"
+      }
+    },
+    {
+      "path": "/status",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/status",
+      "ms": 36,
+      "bytes": 4017,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "HIT"
+      }
+    },
+    {
+      "path": "/memory/",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/",
+      "ms": 185,
+      "bytes": 4099,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "HIT"
+      }
+    },
+    {
+      "path": "/robots.txt",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/robots.txt",
+      "ms": 61,
+      "bytes": 130,
+      "headers": {
+        "content-type": "text/plain; charset=utf-8",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "MISS"
+      }
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/sitemap.xml",
+      "ms": 46,
+      "bytes": 712,
+      "headers": {
+        "content-type": "application/xml",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "MISS"
+      }
+    },
+    {
+      "path": "/favicon.svg",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/favicon.svg",
+      "ms": 56,
+      "bytes": 1476,
+      "headers": {
+        "content-type": "image/svg+xml",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "MISS"
+      }
+    },
+    {
+      "path": "/icon-192.png",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/icon-192.png",
+      "ms": 52,
+      "bytes": 18682,
+      "headers": {
+        "content-type": "image/png",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "MISS"
+      }
+    },
+    {
+      "path": "/apple-touch-icon.png",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/apple-touch-icon.png",
+      "ms": 57,
+      "bytes": 17372,
+      "headers": {
+        "content-type": "image/png",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-vercel-cache": "MISS"
+      }
+    },
+    {
+      "path": "/api/russia-insights",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/api/russia-insights",
+      "ms": 38,
+      "bytes": 13907,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "no-store",
+        "x-vercel-cache": "HIT"
+      },
+      "summary": {
+        "generatedAt": "2026-11-21T06:46:33.368Z",
+        "elapsed_ms": 1503,
+        "markets": [
+          {
+            "id": "usd-rub",
+            "value": 82.1911,
+            "asOf": "2026-11-21",
+            "previousDate": "2026-11-20",
+            "changePct": 0.32
+          },
+          {
+            "id": "eur-rub",
+            "value": 90.3445,
+            "asOf": "2026-11-21",
+            "previousDate": "2026-11-20",
+            "changePct": 0.54
+          },
+          {
+            "id": "cny-rub-cbr",
+            "value": 12.2759,
+            "asOf": "2026-11-21",
+            "previousDate": "2026-11-20",
+            "changePct": 0.174
+          },
+          {
+            "id": "imoex",
+            "value": 2354.4,
+            "asOf": "2026-11-20 23:50:02",
+            "previousDate": "2026-11-20",
+            "changePct": 0
+          },
+          {
+            "id": "rgbi",
+            "value": 110.89,
+            "asOf": "2026-11-20 23:50:03",
+            "previousDate": "2026-11-20",
+            "changePct": 0
+          },
+          {
+            "id": "cny-rub-moex",
+            "value": 12.147,
+            "asOf": "2026-11-20 23:50:02",
+            "previousDate": "2026-11-19",
+            "changePct": -0.549
+          },
+          {
+            "id": "key-rate",
+            "value": 14,
+            "asOf": "2026-07-27",
+            "previousDate": "2026-07-24",
+            "changePct": null
+          },
+          {
+            "id": "ruonia",
+            "value": 14,
+            "asOf": "2026-11-19",
+            "previousDate": "2026-11-18",
+            "changePct": null
+          },
+          {
+            "id": "reserves",
+            "value": 718.9,
+            "asOf": "2026-11-13",
+            "previousDate": "2026-11-06",
+            "changePct": null
+          },
+          {
+            "id": "ofz-10y",
+            "value": 17.05,
+            "asOf": "2026-11-20 18:54:59",
+            "previousDate": null,
+            "changePct": null
+          },
+          {
+            "id": "gold-moex",
+            "value": 9472,
+            "asOf": "2026-11-20 23:50:02",
+            "previousDate": "2026-11-19",
+            "changePct": -3.115
+          },
+          {
+            "id": "inflation",
+            "value": 6.35,
+            "asOf": "2026-09-30",
+            "previousDate": "2026-08-31",
+            "changePct": null
+          }
+        ],
+        "headlines": 18,
+        "errors": []
+      }
+    },
+    {
+      "path": "/api/russia-history",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/api/russia-history",
+      "ms": 29,
+      "bytes": 13915,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "no-store",
+        "x-vercel-cache": "HIT"
+      },
+      "summary": {
+        "generatedAt": "2026-11-21T06:41:33.865Z",
+        "errors": [],
+        "series": [
+          {
+            "id": "imoex",
+            "points": 65,
+            "first": {
+              "date": "2026-08-21",
+              "value": 2134.97
+            },
+            "last": {
+              "date": "2026-11-20",
+              "value": 2354.4
+            },
+            "truncated": false
+          },
+          {
+            "id": "rgbi",
+            "points": 65,
+            "first": {
+              "date": "2026-08-21",
+              "value": 113.88
+            },
+            "last": {
+              "date": "2026-11-20",
+              "value": 110.89
+            },
+            "truncated": false
+          },
+          {
+            "id": "usd-rub",
+            "points": 66,
+            "first": {
+              "date": "2026-08-21",
+              "value": 83.355
+            },
+            "last": {
+              "date": "2026-11-21",
+              "value": 82.1911
+            },
+            "truncated": false
+          },
+          {
+            "id": "ruonia",
+            "points": 64,
+            "first": {
+              "date": "2026-08-21",
+              "value": 13.87
+            },
+            "last": {
+              "date": "2026-11-19",
+              "value": 14
+            },
+            "truncated": false
+          },
+          {
+            "id": "reserves",
+            "points": 13,
+            "first": {
+              "date": "2026-08-21",
+              "value": 761.2
+            },
+            "last": {
+              "date": "2026-11-13",
+              "value": 718.9
+            },
+            "truncated": false
+          },
+          {
+            "id": "key-rate",
+            "points": 1,
+            "first": {
+              "date": "2026-08-21",
+              "value": 14,
+              "since": "2026-07-27"
+            },
+            "last": {
+              "date": "2026-08-21",
+              "value": 14,
+              "since": "2026-07-27"
+            },
+            "truncated": false
+          }
+        ]
+      }
+    },
+    {
+      "path": "/api/brief-image",
+      "status": 200,
+      "url": "https://market-pulse1-eta.vercel.app/api/brief-image",
+      "ms": 2594,
+      "bytes": 270597,
+      "headers": {
+        "content-type": "image/png",
+        "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "cache-control": "no-store",
+        "x-vercel-cache": "MISS"
+      },
+      "png": {
+        "validSignature": true,
+        "width": 1080,
+        "height": 999
+      }
+    }
+  ],
+  "publicApi": [
+    {
+      "path": "/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
+      "status": 401,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
+      "ms": 185,
+      "bytes": 109,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "permission denied for view market_memory_forecasts_v1"
+      }
+    },
+    {
+      "path": "/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
+      "status": 401,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
+      "ms": 139,
+      "bytes": 210,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.forecast_outcomes_v2 TO anon;",
+        "message": "permission denied for table forecast_outcomes_v2"
+      }
+    },
+    {
+      "path": "/rest/v1/source_preferences?select=*&limit=1",
+      "status": 401,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/source_preferences?select=*&limit=1",
+      "ms": 132,
+      "bytes": 206,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.source_preferences TO anon;",
+        "message": "permission denied for table source_preferences"
+      }
+    },
+    {
+      "path": "/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
+      "status": 200,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
+      "ms": 131,
+      "bytes": 152,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": [
+        {
+          "checked_at": "2026-11-21T06:25:03.882+00:00",
+          "ok": true,
+          "trigger": "cron"
+        },
+        {
+          "checked_at": "2026-11-21T05:25:04.039+00:00",
+          "ok": true,
+          "trigger": "cron"
+        }
+      ]
+    },
+    {
+      "path": "/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
+      "status": 401,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
+      "ms": 150,
+      "bytes": 105,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "permission denied for view market_memory_stats_v1"
+      }
+    },
+    {
+      "path": "/rest/v1/daily_snapshots?select=date,assets&limit=1",
+      "status": 401,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots?select=date,assets&limit=1",
+      "ms": 121,
+      "bytes": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.daily_snapshots TO anon;",
+        "message": "permission denied for table daily_snapshots"
+      }
+    },
+    {
+      "path": "/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
+      "status": 401,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
+      "ms": 125,
+      "bytes": 222,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.legacy_gold_cache_20261121 TO anon;",
+        "message": "permission denied for table legacy_gold_cache_20261121"
+      }
+    },
+    {
+      "path": "/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
+      "status": 200,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
+      "ms": 295,
+      "bytes": 2,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": []
+    },
+    {
+      "path": "/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
+      "status": 200,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
+      "ms": 192,
+      "bytes": 1860,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": [
+        {
+          "date": "2026-10-27",
+          "captured_at": "2026-10-27T14:44:35.814+00:00",
+          "assets": [
+            {
+              "id": "btc",
+              "last": 80155.6,
+              "name": "BTC",
+              "price": "$80,156",
+              "change": 0.1921,
+              "updated_at": "2026-10-27T14:30:02.913+00:00"
+            },
+            {
+              "id": "usd-eur",
+              "last": 0.8938148,
+              "name": "USD/EUR",
+              "price": "0.8938",
+              "change": 0.0447,
+              "updated_at": "2026-10-27T14:30:02.913+00:00"
+            },
+            {
+              "id": "sp500",
+              "last": 7623.68,
+              "name": "S&P 500",
+              "price": "7,624",
+              "change": -0.5187,
+              "updated_at": "2026-10-27T14:30:02.913+00:00"
+            },
+            {
+              "id": "brent",
+              "last": 115.22,
+              "name": "Brent",
+              "price": "$115.22",
+              "change": -3.0298,
+              "updated_at": "2026-10-27T14:30:02.913+00:00"
+            }
+          ],
+          "russia": {
+            "markets": [
+              {
+                "id": "usd-rub",
+                "asOf": "2026-10-27",
+                "name": "USD/RUB",
+                "unit": "₽",
+                "label": "Доллар США",
+                "value": 80.4909,
+                "provider": "Банк России",
+                "changePct": -0.059
+              },
+              {
+                "id": "eur-rub",
+                "asOf": "2026-10-27",
+                "name": "EUR/RUB",
+                "unit": "₽",
+                "label": "Евро",
+                "value": 90.0935,
+                "provider": "Банк России",
+                "changePct": -0.166
+              },
+              {
+                "id": "cny-rub-cbr",
+                "asOf": "2026-10-27",
+                "name": "CNY/RUB",
+                "unit": "₽",
+                "label": "Китайский юань",
+                "value": 12.068,
+                "provider": "Банк России",
+                "changePct": 0.102
+              },
+              {
+                "id": "imoex",
+                "asOf": "2026-10-27 17:44:34",
+                "name": "IMOEX",
+                "unit": "пункта",
+                "label": "Индекс МосБиржи",
+                "value": 2528.03,
+                "provider": "Мосбиржа ISS",
+                "changePct": 1.467
+              },
+              {
+                "id": "rgbi",
+                "asOf": "2026-10-27 17:44:31",
+                "name": "RGBI",
+                "unit": "пункта",
+                "label": "Индекс гособлигаций",
+                "value": 112.28,
+                "provider": "Мосбиржа ISS",
+                "changePct": 0.331
+              },
+              {
+                "id": "cny-rub-moex",
+                "asOf": "2026-10-27 17:44:37",
+                "name": "CNY/RUB",
+                "unit": "₽",
+                "label": "Юань на Мосбирже",
+                "value": 12.06,
+                "provider": "Мосбиржа ISS",
+                "changePct": -0.211
+              }
+            ],
+            "generated_at": "2026-10-27T14:44:37.515Z"
+          }
+        }
+      ]
+    },
+    {
+      "path": "/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
+      "status": 200,
+      "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
+      "ms": 130,
+      "bytes": 4051,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-security-policy": null,
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": null,
+        "referrer-policy": null,
+        "permissions-policy": null,
+        "cache-control": null,
+        "x-vercel-cache": null
+      },
+      "json": [
+        {
+          "id": "usd-eur",
+          "name": "USD/EUR",
+          "price": "0.9099",
+          "change": 0.0182,
+          "as_of": "2026-11-20T00:00:00+00:00",
+          "spark_dates": [
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-19",
+            "2026-10-20",
+            "2026-10-21",
+            "2026-10-22",
+            "2026-10-23",
+            "2026-10-26",
+            "2026-10-27",
+            "2026-10-28",
+            "2026-10-29",
+            "2026-10-30",
+            "2026-11-02",
+            "2026-11-03",
+            "2026-11-04",
+            "2026-11-05",
+            "2026-11-06",
+            "2026-11-09",
+            "2026-11-10",
+            "2026-11-11",
+            "2026-11-12",
+            "2026-11-13",
+            "2026-11-16",
+            "2026-11-17",
+            "2026-11-18",
+            "2026-11-19",
+            "2026-11-20"
+          ],
+          "sparkline": [
+            0.89437439,
+            0.8938148,
+            0.89325592,
+            0.89221984,
+            0.88865192,
+            0.8908686,
+            0.89166295,
+            0.89015489,
+            0.89245872,
+            0.89341553,
+            0.8938148,
+            0.89686099,
+            0.89823049,
+            0.8984726,
+            0.89509488,
+            0.89158345,
+            0.89453439,
+            0.88754771,
+            0.89094797,
+            0.89565607,
+            0.89341553,
+            0.89174246,
+            0.89871484,
+            0.90244563,
+            0.90481361,
+            0.90793536,
+            0.91000091,
+            0.91174325,
+            0.90975255,
+            0.90991811
+          ],
+          "source_label": "ECB"
+        },
+        {
+          "id": "gold",
+          "name": "Gold",
+          "price": "$3,539.0",
+          "change": null,
+          "as_of": "2026-11-21T06:29:37+00:00",
+          "spark_dates": [],
+          "sparkline": [],
+          "source_label": "gold-api.com · последние наблюдения UTC, не официальный close"
+        },
+        {
+          "id": "sp500",
+          "name": "S&P 500",
+          "price": "6,910",
+          "change": -3.6991,
+          "as_of": "2026-11-20T00:00:00+00:00",
+          "spark_dates": [
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-19",
+            "2026-10-20",
+            "2026-10-21",
+            "2026-10-22",
+            "2026-10-23",
+            "2026-10-26",
+            "2026-10-27",
+            "2026-10-28",
+            "2026-10-29",
+            "2026-10-30",
+            "2026-11-02",
+            "2026-11-03",
+            "2026-11-04",
+            "2026-11-05",
+            "2026-11-06",
+            "2026-11-09",
+            "2026-11-10",
+            "2026-11-11",
+            "2026-11-12",
+            "2026-11-13",
+            "2026-11-16",
+            "2026-11-17",
+            "2026-11-18",
+            "2026-11-19",
+            "2026-11-20"
+          ],
+          "sparkline": [
+            7807.24023438,
+            7805.45019531,
+            7718.93994141,
+            7744.06005859,
+            7659.43994141,
+            7690.72998047,
+            7712.56982422,
+            7757.16992188,
+            7663.43017578,
+            7623.68017578,
+            7676.77001953,
+            7722.60009766,
+            7743.97998047,
+            7720.39013672,
+            7580.06982422,
+            7541.39990234,
+            7568.91992188,
+            7688.62011719,
+            7353.72998047,
+            7376.85986328,
+            7549.93994141,
+            7520.93017578,
+            7619.37988281,
+            7592.39990234,
+            7561.66992188,
+            7416.58984375,
+            7340.52978516,
+            7323.62988281,
+            7175.83007813,
+            6910.39013672
+          ],
+          "source_label": "Yahoo Finance"
+        },
+        {
+          "id": "brent",
+          "name": "Brent (фьючерс)",
+          "price": "$92.57",
+          "change": 0.6414,
+          "as_of": "2026-11-20T00:00:00+00:00",
+          "spark_dates": [
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-19",
+            "2026-10-20",
+            "2026-10-21",
+            "2026-10-22",
+            "2026-10-23",
+            "2026-10-26",
+            "2026-10-27",
+            "2026-10-28",
+            "2026-10-29",
+            "2026-10-30",
+            "2026-11-02",
+            "2026-11-03",
+            "2026-11-04",
+            "2026-11-05",
+            "2026-11-06",
+            "2026-11-09",
+            "2026-11-10",
+            "2026-11-11",
+            "2026-11-12",
+            "2026-11-13",
+            "2026-11-16",
+            "2026-11-17",
+            "2026-11-18",
+            "2026-11-19",
+            "2026-11-20"
+          ],
+          "sparkline": [
+            106.65000153,
+            105.69000244,
+            106.05999756,
+            105.91999817,
+            109.86000061,
+            109.55000305,
+            108.79000092,
+            108.81999969,
+            113.16999817,
+            116.72000122,
+            115.80999756,
+            113.87999725,
+            115.31999969,
+            114.87999725,
+            117.63999939,
+            104.76999664,
+            103.59999847,
+            94.62000275,
+            98.29000092,
+            98.31999969,
+            92.56999969,
+            91.48999786,
+            92.76000214,
+            95.81999969,
+            95.83999634,
+            92.44000244,
+            93.13999939,
+            91.94999695,
+            91.98000336,
+            92.56999969
+          ],
+          "source_label": "Yahoo Finance"
+        },
+        {
+          "id": "btc",
+          "name": "BTC",
+          "price": "$56,573",
+          "change": -3.7977,
+          "as_of": "2026-11-21T06:40:04.033+00:00",
+          "spark_dates": [
+            "2026-10-22",
+            "2026-10-23",
+            "2026-10-24",
+            "2026-10-25",
+            "2026-10-26",
+            "2026-10-27",
+            "2026-10-28",
+            "2026-10-29",
+            "2026-10-30",
+            "2026-10-31",
+            "2026-11-01",
+            "2026-11-02",
+            "2026-11-03",
+            "2026-11-04",
+            "2026-11-05",
+            "2026-11-06",
+            "2026-11-07",
+            "2026-11-08",
+            "2026-11-09",
+            "2026-11-10",
+            "2026-11-11",
+            "2026-11-12",
+            "2026-11-13",
+            "2026-11-14",
+            "2026-11-15",
+            "2026-11-16",
+            "2026-11-17",
+            "2026-11-18",
+            "2026-11-19",
+            "2026-11-20"
+          ],
+          "sparkline": [
+            81315.9,
+            81086.2,
+            80771.9,
+            80048.5,
+            80001.9,
+            80800.9,
+            81287.1,
+            77800,
+            77204.3,
+            77437,
+            78239.2,
+            76675.8,
+            77331.7,
+            80440.8,
+            75979.9,
+            75741.6,
+            75753.9,
+            74737.9,
+            75253.1,
+            73700.3,
+            73928.4,
+            71370.7,
+            68235.9,
+            64115.1,
+            65314.6,
+            64810.6,
+            64877,
+            62984.6,
+            61913.5,
+            58806.3
+          ],
+          "source_label": "Kraken"
+        }
+      ]
+    }
+  ],
+  "findings": [],
+  "math": [
+    {
+      "id": "usd-eur",
+      "checked": true,
+      "ok": true,
+      "expected": 0.01819835514613386,
+      "stored": 0.0182,
+      "priceMismatch": null,
+      "basis": "series"
+    },
+    {
+      "id": "gold",
+      "checked": false,
+      "ok": true,
+      "reason": "база кавычки не проверена: отсутствуют согласованные даты"
+    },
+    {
+      "id": "sp500",
+      "checked": true,
+      "ok": true,
+      "expected": -3.699083430347526,
+      "stored": -3.6991,
+      "priceMismatch": null,
+      "basis": "series"
+    },
+    {
+      "id": "brent",
+      "checked": true,
+      "ok": true,
+      "expected": 0.6414397786993137,
+      "stored": 0.6414,
+      "priceMismatch": null,
+      "basis": "series"
+    },
+    {
+      "id": "btc",
+      "checked": true,
+      "ok": true,
+      "expected": -3.797722352877163,
+      "stored": -3.7977,
+      "priceMismatch": null,
+      "basis": "quote"
+    }
+  ],
+  "finished": "2026-11-21T06:46:45.578Z"
+}
