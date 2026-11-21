@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 test('withdrawn API views revoke per-column privileges as well as table privileges',()=>{
- const s=readFileSync('supabase/migrations/20261121064000_close_withdrawn_archive.sql','utf8');
+ const s=readFileSync('supabase/migrations/20261121063759_close_withdrawn_archive.sql','utf8');
  assert.match(s,/market_memory_forecasts_v1/);assert.match(s,/market_memory_stats_v1/);
  assert.match(s,/REVOKE SELECT \(%s\)/);assert.match(s,/PUBLIC, anon, authenticated/);
  assert.doesNotMatch(s,/\b(?:DROP|DELETE|TRUNCATE)\b/i);

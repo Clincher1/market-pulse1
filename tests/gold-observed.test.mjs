@@ -24,7 +24,7 @@ test('gold history respects quote date even when fetched on a later day', () => 
   '2026-10-28T21:00:00Z','2026-10-29T01:00:00Z'),[]);
 });
 test('gold migration preserves old data, closes legacy snapshots and records monotonic observations', () => {
- const sql=readFileSync('supabase/migrations/20261121064100_gold_observed_series.sql','utf8');
+ const sql=readFileSync('supabase/migrations/20261121063921_gold_observed_series.sql','utf8');
  assert.match(sql,/CREATE TABLE public\.legacy_gold_cache/);
  assert.doesNotMatch(sql,/DELETE FROM|TRUNCATE/i);
  assert.match(sql,/old\.price_timestamp < EXCLUDED\.price_timestamp/);
