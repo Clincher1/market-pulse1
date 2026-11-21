@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { chromium } from '../.local/production-browser/node_modules/playwright/index.mjs';
 const origin = 'https://market-pulse1-eta.vercel.app';
 import AxeBuilder from '../.local/production-browser/node_modules/@axe-core/playwright/dist/index.mjs';
@@ -25,13 +26,13 @@ try {
   for (const round of ['A', 'B']) {
     const result = { round, started: new Date().toISOString(), pages: [], failures: [], accessibility: [], consoleErrors: [], httpErrors: [], requestFailures: [] };
     rounds.push(result);
-    const htmlResponse = await fetch(origin);
+    const htmlResponse = await fetch(origin, { signal: AbortSignal.timeout(30000) });
     assert.ok(htmlResponse.ok);
     const html = await htmlResponse.text();
     assert.ok(html.includes('public-facts-1'), 'Old social metadata is deployed');
     assert.doesNotMatch(html, /паспорт дня и архив/);
     for (const path of ['site.webmanifest', 'og-image.svg', 'logo.svg', 'og-image.png']) {
-      const response = await fetch(`${origin}/${path}?acceptance=${round}`);
+      const response = await fetch(`${origin}/${path}?acceptance=${round}`, { signal: AbortSignal.timeout(30000) });
       assert.equal(response.status, 200, path);
       const bytes = Buffer.from(await response.arrayBuffer());
       assert.ok(bytes.equals(await fs.readFile(`public/${path}`)), `Stale or unexpected public asset: ${path}`);
@@ -65,8 +66,33 @@ try {
         return route.continue();
       });
       const page = await context.newPage();
+      async function checkHistoryTable() {
+        const region = page.getByRole('region', { name: /^Таблица наблюдений / }).first();
+        await region.waitFor();
+        assert.equal(await region.getAttribute('tabindex'), '0');
+        await region.focus();
+        await region.evaluate(n => { n.scrollTop = 0; });
+        if (await region.evaluate(n => n.scrollHeight > n.clientHeight)) {
+          await region.press('ArrowDown');
+          await page.waitForTimeout(300);
+          assert.ok(await region.evaluate(n => n.scrollTop > 0), 'History table did not scroll from keyboard');
+        }
+        const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+        result.accessibility.push({ path: new URL(page.url()).pathname + ':expanded-history', width, violations: axe.violations });
+        assert.deepEqual(axe.violations.map(v => v.id), [], 'Expanded table accessibility');
+      }
+      let navigationInProgress = false;
+      async function navigate(url, options) {
+        navigationInProgress = true;
+        try { return await page.goto(url, options); }
+        finally { navigationInProgress = false; }
+      }
       page.on('console', (message) => { if (message.type() === 'error') result.consoleErrors.push(message.text().slice(0, 600)); });
-      page.on('requestfailed', (request) => result.requestFailures.push({ path: new URL(request.url()).pathname, error: request.failure()?.errorText }));
+      page.on('requestfailed', (request) => {
+        const error = request.failure()?.errorText;
+        result.requestFailures.push({ path: new URL(request.url()).pathname, error,
+          expectedNavigationAbort: error === 'net::ERR_ABORTED' && navigationInProgress });
+      });
       page.on('pageerror', (error) => result.failures.push(error.message));
       page.on('response', (response) => {
         if (response.status() >= 400) result.httpErrors.push({ status: response.status(), path: new URL(response.url()).pathname });
@@ -79,9 +105,10 @@ try {
         target.searchParams.set('acceptance', `${round}-${width}`);
         // A bookmark is a fresh document load. Hash-only navigation from the previous
         // redirected root can legitimately return null instead of an HTTP response.
-        await page.goto('about:blank');
-        const response = await page.goto(target.href, { waitUntil: 'networkidle', timeout: 90000 });
+        await navigate('about:blank');
+        const response = await navigate(target.href, { waitUntil: 'networkidle', timeout: 90000 });
         assert.equal(response.status(), 200, path);
+        const rawHtml = await response.text();
         await page.locator('main').waitFor();
         await page.waitForTimeout(1200);
         const metrics = await page.evaluate(() => ({
@@ -117,14 +144,45 @@ try {
             if (count) assert.match(text, /На экране 4 из/);
           }
         }
+        if (path === '/russia') {
+          await page.locator('summary').filter({ hasText: /^Все \d+ значений ряда$/ }).click();
+          await checkHistoryTable();
+        }
         if (path === '/world') {
           const favorite = page.getByRole('group', { name: 'Выбрать избранные инструменты' }).getByRole('button', { name: 'Gold', exact: true });
           if (await favorite.getAttribute('aria-pressed') !== 'true') await favorite.click();
+          navigationInProgress = true;
           await page.reload({ waitUntil: 'networkidle' });
+          navigationInProgress = false;
           assert.equal(await favorite.getAttribute('aria-pressed'), 'true', 'Favorite did not persist');
           await page.locator('.desk-controls select').nth(1).selectOption('100');
           assert.ok((await page.locator('.desk-table').innerText()).includes('Индекс в конце'));
           await page.locator('.desk-controls select').nth(0).selectOption('500');
+          const region = page.getByRole('region', { name: 'Результаты сравнения инструментов — прокручиваемая таблица' });
+          assert.equal(await region.getAttribute('tabindex'), '0');
+          await region.focus();
+          if (await region.evaluate(n => n.scrollWidth > n.clientWidth)) {
+            await region.press('ArrowRight');
+            await page.waitForTimeout(300);
+            assert.ok(await region.evaluate(n => n.scrollLeft > 0), 'Keyboard did not scroll comparison table');
+          }
+          const goldTile = page.locator('#heat-tile-gold');
+          assert.ok(!(await goldTile.innerText()).includes('нет свежей цены'), 'Valid gold quote was hidden for missing history');
+          await goldTile.click();
+          const goldPanel = page.getByRole('region', { name: 'Подробно об активе Gold' });
+          await goldPanel.waitFor();
+          assert.ok((await goldPanel.innerText()).includes('gold-api.com'), 'Gold provider missing from details');
+          assert.ok(!(await goldPanel.innerText()).includes('Twelve Data'), 'Restricted fallback leaked into gold details');
+          if (width === 360) {
+            await goldPanel.scrollIntoViewIfNeeded();
+            await page.screenshot({ path: `${output}/${round}-${width}-gold.png`, fullPage: false });
+          }
+          await page.getByRole('button', { name: 'Свернуть панель актива' }).click();
+          await page.locator('#heat-tile-sp500').click();
+          await page.locator('summary').filter({ hasText: 'Проверить данные' }).click();
+          await checkHistoryTable();
+          await page.getByRole('button', { name: 'Свернуть панель актива' }).click();
+          await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
         }
         if (['/passport', '/memory', '/brief', '/world', '/russia'].includes(path)) {
           await page.screenshot({ path: `${output}/${round}-${width}-${path.slice(1)}.png`, fullPage: false });
@@ -143,8 +201,7 @@ try {
         assert.deepEqual(extra.brokenImages, [], 'Broken images');
         assert.equal(extra.canonical, origin + new URL(page.url()).pathname, 'Canonical does not match route');
         if (!path.includes('#') && !path.startsWith('/memory')) {
-          const raw = await response.text();
-          assert.ok(raw.includes(`rel="canonical" href="${origin + new URL(page.url()).pathname}"`), 'Canonical absent in raw HTML');
+          assert.ok(rawHtml.includes(`rel="canonical" href="${origin + new URL(page.url()).pathname}"`), 'Canonical absent in raw HTML');
         }
         if (!path.includes('#') && !path.startsWith('/memory')) {
           const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
@@ -158,7 +215,7 @@ try {
         }
       }
       if (width === 360) {
-        await page.goto(origin + '/world', { waitUntil: 'networkidle' });
+        await navigate(origin + '/world', { waitUntil: 'networkidle' });
         const active = page.locator('.mobile-quick-nav__link[aria-current="page"]');
         const animation = await active.evaluate((node) => getComputedStyle(node).animationName);
         assert.ok(round === 'A' ? animation === 'none' : animation.includes('mobile-quick-route-pulse'), `Wrong reduced-motion pulse: ${animation}`);
@@ -171,11 +228,15 @@ try {
         await page.waitForTimeout(400);
         await page.getByRole('button', { name: 'Открыть меню', exact: true }).click();
         const nav = page.getByRole('navigation', { name: 'Мобильная навигация' });
+        navigationInProgress = true;
         await nav.locator('a[href="/news"]').click();
         await page.waitForURL('**/news');
+        await page.waitForLoadState('networkidle');
+        navigationInProgress = false;
         assert.equal(await nav.count(), 0);
         assert.ok(await page.locator('a[aria-current="page"]:visible').count() > 0);
       }
+      navigationInProgress = true;
       await context.close();
     }
     // Observe existing scheduled evidence only. selfcheck can heal/write despite GET.
@@ -189,7 +250,14 @@ try {
     result.goldAccumulation = { points: gold.sparkline.length, change: gold.change };
     for (const error of result.httpErrors) result.failures.push(`Browser HTTP ${error.status} ${error.path}`);
     for (const error of result.consoleErrors) result.failures.push(`Console: ${error}`);
-    for (const error of result.requestFailures) result.failures.push(`Request: ${error.path} ${error.error}`);
+    for (const error of result.requestFailures.filter(e => !e.expectedNavigationAbort)) result.failures.push(`Request: ${error.path} ${error.error}`);
+    try {
+      execFileSync(process.execPath, ['scripts/audit-http.mjs'], {
+        stdio: 'inherit', timeout: 240000,
+        env: { ...process.env, AUDIT_HTTP_OUTPUT: `${output}/http-${round}.json` },
+      });
+      result.httpAudit = JSON.parse(await fs.readFile(`${output}/http-${round}.json`, 'utf8'));
+    } catch (error) { result.failures.push(`HTTP/rights/math audit failed: ${error.message}`); }
     if (round === 'A') await pause(65000);
     result.finished = new Date().toISOString();
     await fs.writeFile(`${output}/round-${round}.json`, JSON.stringify(result, null, 2));
