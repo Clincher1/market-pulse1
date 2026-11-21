@@ -102,7 +102,8 @@ export function securityHeaders(origin) {
       "base-uri 'self'",
       "frame-ancestors 'none'",
       "object-src 'none'",
-      "script-src 'self'",
+      // Exact hash of the build-time WebSite JSON-LD; executable inline JS stays blocked.
+      "script-src 'self' 'sha256-mPRvFtvocZwUS+bJkgPQTLUVPMssKjqDe7cN2piY4qc='",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
       "img-src 'self' data: blob:",

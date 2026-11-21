@@ -1,0 +1,60 @@
+name: Initial document verification
+on:
+  push:
+    branches: ['arena/2c9c21a4-market-pulse1']
+    paths: ['.github/workflows/initial-document.yml']
+permissions:
+  contents: read
+concurrency:
+  group: initial-document-verification
+  cancel-in-progress: false
+jobs:
+  document:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix .local/feature-browser playwright@1.65.1 @sparticuz/chromium@153.0.0
+          .local/feature-browser/node_modules/.bin/playwright install-deps chromium
+      - name: Wait for the expected initial document release
+        env:
+          DOCUMENT_ORIGIN: https://market-pulse1-eta.vercel.app
+          DOCUMENT_EXPECTED_ENTRY: index-ChzyMUIF.js
+        run: |
+          node --input-type=module <<'JS'
+          let ready = false;
+          for (let attempt = 0; attempt < 60; attempt++) {
+            const response = await fetch(process.env.DOCUMENT_ORIGIN, {cache:'no-store', signal:AbortSignal.timeout(15000)});
+            const html = await response.text();
+            if (response.ok && html.includes(process.env.DOCUMENT_EXPECTED_ENTRY) && html.includes('data-initial-document="dashboard"')) { ready = true; break; }
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          if (!ready) throw new Error('Expected initial document release is not yet published');
+          JS
+      - name: Check all routes, breakpoints and bootstrap modes twice
+        env:
+          DOCUMENT_ORIGIN: https://market-pulse1-eta.vercel.app
+          DOCUMENT_EXPECTED_ENTRY: index-ChzyMUIF.js
+          DOCUMENT_OUTPUT: .local/initial-document-published
+        run: node scripts/check-initial-document.mjs
+      - name: Check existing header navigation twice
+        env:
+          NAV_ORIGIN: https://market-pulse1-eta.vercel.app
+          NAV_EXPECTED_ENTRY: index-ChzyMUIF.js
+          NAV_OUTPUT: .local/initial-document-navigation
+        run: node scripts/check-brief-navigation.mjs
+      - name: Preserve browser measurements
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: initial-document-verification
+          path: |
+            .local/initial-document-published
+            .local/initial-document-navigation
+          include-hidden-files: true
+          retention-days: 14

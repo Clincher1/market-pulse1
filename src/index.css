@@ -1424,3 +1424,33 @@
 }
 
 :where(main) p { max-width: 72ch; }
+
+/* Initial HTML only: React replaces this entire subtree on its first commit.
+   Keep it readable with JS disabled or a failed module download. No hiding or
+   user-agent detection: visitors and crawlers receive the same document. */
+.initial-document {
+  max-width: 76rem;
+  margin-inline: auto;
+  padding: 1.5rem;
+  color: #0f172a;
+}
+.initial-document header,
+.initial-document main,
+.initial-document footer { padding-block: 1rem; }
+.initial-document__brand { font-size: 1.5rem; font-weight: 800; }
+.initial-document nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.initial-document nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+}
+.initial-document h1 { font-size: clamp(1.75rem, 5vw, 3rem); font-weight: 800; line-height: 1.2; }
+.initial-document h2 { margin-top: 1.5rem; font-size: 1.25rem; font-weight: 700; }
+.initial-document p { margin-block: 0.75rem; line-height: 1.65; }
+.initial-document a { color: #1d4ed8; text-decoration: underline; text-underline-offset: 0.2em; }
+.initial-document a:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 3px; }
+.initial-document [aria-current="page"] { font-weight: 800; background: #eff6ff; }
+.initial-document__skip { display: inline-block; padding-block: 0.75rem; }
