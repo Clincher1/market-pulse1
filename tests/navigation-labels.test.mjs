@@ -6,3 +6,8 @@ test('mobile menu accessible name includes its visible label and brand does not 
   assert.match(header, /'Разделы — открыть меню'/);
   assert.doesNotMatch(header, /aria-label="Market Pulse — обзор"/);
 });
+
+test('orbit links reset old opposing absolute edges before new positions', () => {
+  const css = readFileSync('src/brand-refresh.css', 'utf8');
+  assert.match(css, /\.pulse-orbit__link \{[^}]*inset: auto;[^}]*width: min\(43%, 245px\)/);
+});
