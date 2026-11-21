@@ -2,7 +2,6 @@
 // Source-date comparisons are exact; different-time quotes are observations, not errors.
 import fs from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
-import { parseInflationTable } from '../api/_shared/cbrInflation.js';
 import { chromium } from '../.local/production-browser/node_modules/playwright/index.mjs';
 const origin = 'https://market-pulse1-eta.vercel.app';
 const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
@@ -45,6 +44,12 @@ function compare(name, date, actual, expected, tolerance = 0.00001) {
   const entry = { name, date, site: actual, source: expected, tolerance, agrees };
   if (!agrees) report.findings.push({ type: 'same-date-value-mismatch', ...entry });
   return entry;
+}
+if (process.env.AUDIT_VERIFY_LOCAL_BUILD === '1') {
+  const expected = (await fs.readFile('dist/index.html', 'utf8')).match(/src="([^"]+\/index-[^"]+\.js)"/)?.[1];
+  const html = await (await get(origin)).text();
+  report.artifact = { expectedBundle: expected, matchesProduction: !!expected && html.includes(expected) };
+  if (!report.artifact.matchesProduction) report.findings.push({ type: 'unexpected-production-bundle', ...report.artifact });
 }
 const assets = await json(sb + '/rest/v1/cached_assets?select=id,name,price,change,as_of,updated_at,source_label,sparkline,spark_dates', true);
 const news = await json(sb + '/rest/v1/cached_news?select=id,source,title,url,published_at&order=published_at.desc.nullslast&limit=80', true);
@@ -201,14 +206,17 @@ await source('MOEX original yield curve', 'https://iss.moex.com/iss/engines/stoc
   return { site: russia.markets.find(m => m.id === 'ofz-10y'), original: rows };
 });
 
-// Re-read the already configured official inflation table export. Reuses the
-// existing table parser; this is a direct-source check, not an independent parser.
-await source('CBR configured inflation table export', 'https://www.cbr.ru/Queries/UniDbQuery/DownloadExcel/132934', text => {
-  const rows = parseInflationTable(text);
+// Independent DOM extraction of the already configured official HTML table.
+// Do not pass a binary XLSX export to the application's HTML parser.
+await source('CBR original monthly inflation table', 'https://www.cbr.ru/hd_base/infl/', text => {
+  const doc = new window.DOMParser().parseFromString(text, 'text/html');
   const m = russia.markets.find(m => m.id === 'inflation');
-  const original = rows.find(r => r.month === m?.asOf?.slice(0, 7));
-  if (!original) throw new Error('Observation month not found in configured export; not independently verified');
-  return compare('inflation year over year', original.month, m.value, original.inflation, 0.00001);
+  const month = m?.asOf?.slice(0, 7);
+  const expectedLabel = month ? month.slice(5) + '.' + month.slice(0, 4) : null;
+  const rows = [...doc.querySelectorAll('tr')].map(row => [...row.querySelectorAll('td')].map(cell => cell.textContent.trim()));
+  const row = rows.find(cells => cells[0] === expectedLabel);
+  if (!row) throw new Error('Observation month not found in original table; not independently verified');
+  return compare('inflation year over year', month, m.value, Number(row[2].replace(',', '.')), 0.00001);
 });
 
 // Public publisher RSS only; do not scrape article bodies or bypass paywalls.

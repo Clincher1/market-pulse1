@@ -21,17 +21,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build
       - name: Install isolated browser tooling
         run: |
           npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0
           .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
       - name: Original sources and every link, round A
         env:
+          AUDIT_VERIFY_LOCAL_BUILD: '1'
           FACTS_LINKS_OUTPUT: .local/facts-links-audit/A
         run: node scripts/facts-links-check.mjs
       - name: Original sources and every link, independent round B
         if: ${{ !cancelled() }}
         env:
+          AUDIT_VERIFY_LOCAL_BUILD: '1'
           FACTS_LINKS_OUTPUT: .local/facts-links-audit/B
         run: node scripts/facts-links-check.mjs
       - name: Two independent live interaction, accessibility, math and rights rounds
