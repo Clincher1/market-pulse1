@@ -23,12 +23,12 @@ jobs:
           .local/feature-browser/node_modules/.bin/playwright install-deps chromium
       - name: Verify published UI twice consecutively
         env:
-          UI_EXPECTED_ENTRY: index-MYoXepLA.js
-          UI_PRODUCT_SHA: 9f49eefabf9e7b7fb2cfac667fa5e24bc45405fa
+          UI_EXPECTED_ENTRY: index-DrOtEUfZ.js
+          UI_PRODUCT_SHA: fba6986887cb03e34717e1243c40b5b536a332ef
         run: |
           set -euo pipefail
-          UI_OUTPUT=docs/audit-evidence/ui-ux-after/pass-1 node scripts/ui-ux-audit.mjs
-          UI_OUTPUT=docs/audit-evidence/ui-ux-after/pass-2 node scripts/ui-ux-audit.mjs
+          UI_OUTPUT=docs/audit-evidence/ui-ux-final/pass-1 node scripts/ui-ux-audit.mjs
+          UI_OUTPUT=docs/audit-evidence/ui-ux-final/pass-2 node scripts/ui-ux-audit.mjs
       - name: Preserve evidence on this branch
         if: always()
         run: |
@@ -38,6 +38,6 @@ jobs:
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/audit-evidence/ui-ux-after
+          git add docs/audit-evidence/ui-ux-final
           git diff --cached --quiet || git commit -m 'docs: preserve two consecutive published UI verification passes'
           git push origin "HEAD:$GITHUB_REF_NAME"

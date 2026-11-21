@@ -107,6 +107,7 @@ if (report.cases.length !== paths.length * 4) failures.push('Incomplete viewport
 for (const c of report.cases) {
   if (c.overflow) failures.push(`${c.path}@${c.width}: page overflow`);
   if (c.smallTargets.length) failures.push(`${c.path}@${c.width}: independent target smaller than 44px`);
+  if (c.smallText.length) failures.push(`${c.path}@${c.width}: explanatory text smaller than 12px`);
   if (c.accessibility.length) failures.push(`${c.path}@${c.width}: selected axe rules`);
   if (c.imagesMissingAlt.length) failures.push(`${c.path}@${c.width}: image without alt`);
   if (c.mobileEscape && (!c.mobileEscape.closes || !c.mobileEscape.restoresFocus)) failures.push(`${c.path}@${c.width}: mobile Escape/focus`);
