@@ -27,7 +27,14 @@ jobs:
         run: |
           npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0 lighthouse@13.6.0
           .local/production-browser/node_modules/.bin/playwright install --with-deps chromium firefox webkit
-      - name: Cross-browser data consistency privacy and Lighthouse lab audit
+      - name: Expanded technical audit A (data, three engines, privacy, Lighthouse)
+        env:
+          TECHNICAL_AUDIT_OUTPUT: .local/production-audit/technical-A
+        run: node scripts/technical-audit.mjs
+      - name: Expanded technical audit B (same gates, independent measurements)
+        if: ${{ !cancelled() }}
+        env:
+          TECHNICAL_AUDIT_OUTPUT: .local/production-audit/technical-B
         run: node scripts/technical-audit.mjs
       - name: Two live browser rounds and observed health (no selfcheck invocation)
         if: ${{ !cancelled() }}
@@ -43,7 +50,15 @@ jobs:
           git fetch origin "$GITHUB_REF_NAME"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           mkdir -p docs/audit-evidence/technical-readiness
-          for file in summary.json technical.json http-A.json http-B.json; do
+          for round in A B; do
+            if [ -f ".local/production-audit/technical-$round/technical.json" ]; then
+              cp ".local/production-audit/technical-$round/technical.json" "docs/audit-evidence/technical-readiness/technical-$round.json"
+            fi
+          done
+          if [ -f ".local/production-audit/technical-B/technical.json" ]; then
+            cp .local/production-audit/technical-B/technical.json docs/audit-evidence/technical-readiness/technical.json
+          fi
+          for file in summary.json http-A.json http-B.json; do
             if [ -f ".local/production-audit/$file" ]; then
               cp ".local/production-audit/$file" docs/audit-evidence/technical-readiness/
             fi

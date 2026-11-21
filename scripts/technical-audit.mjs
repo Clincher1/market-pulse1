@@ -8,7 +8,7 @@ import { launch } from '../.local/production-browser/node_modules/chrome-launche
 const origin = 'https://market-pulse1-eta.vercel.app';
 const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const key = (await fs.readFile('src/lib/supabase.ts', 'utf8')).match(/'(sb_publishable_[^']+)'/)[1];
-const output = '.local/production-audit';
+const output = process.env.TECHNICAL_AUDIT_OUTPUT || '.local/production-audit';
 await fs.mkdir(output, { recursive: true });
 const report = { started: new Date().toISOString(), data: [], browsers: [], lighthouse: [], failures: [] };
 async function check(name, run) {
