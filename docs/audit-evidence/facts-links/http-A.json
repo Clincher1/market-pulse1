@@ -1,11 +1,11 @@
 {
-  "started": "2026-11-21T14:02:50.723Z",
+  "started": "2026-11-21T14:15:37.244Z",
   "endpoints": [
     {
       "path": "/",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/",
-      "ms": 122,
+      "ms": 186,
       "bytes": 4186,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -23,7 +23,7 @@
       "path": "/world",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/world",
-      "ms": 31,
+      "ms": 37,
       "bytes": 4078,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -41,7 +41,7 @@
       "path": "/status",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/status",
-      "ms": 32,
+      "ms": 33,
       "bytes": 4104,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -59,7 +59,7 @@
       "path": "/memory/",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/",
-      "ms": 226,
+      "ms": 229,
       "bytes": 4186,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -77,7 +77,7 @@
       "path": "/robots.txt",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/robots.txt",
-      "ms": 124,
+      "ms": 87,
       "bytes": 130,
       "headers": {
         "content-type": "text/plain; charset=utf-8",
@@ -95,7 +95,7 @@
       "path": "/sitemap.xml",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/sitemap.xml",
-      "ms": 122,
+      "ms": 104,
       "bytes": 712,
       "headers": {
         "content-type": "application/xml",
@@ -113,7 +113,7 @@
       "path": "/favicon.svg",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/favicon.svg",
-      "ms": 416,
+      "ms": 80,
       "bytes": 1476,
       "headers": {
         "content-type": "image/svg+xml",
@@ -131,7 +131,7 @@
       "path": "/icon-192.png",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/icon-192.png",
-      "ms": 131,
+      "ms": 70,
       "bytes": 18682,
       "headers": {
         "content-type": "image/png",
@@ -149,7 +149,7 @@
       "path": "/apple-touch-icon.png",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/apple-touch-icon.png",
-      "ms": 121,
+      "ms": 80,
       "bytes": 17372,
       "headers": {
         "content-type": "image/png",
@@ -167,8 +167,8 @@
       "path": "/api/russia-insights",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/russia-insights",
-      "ms": 26,
-      "bytes": 14000,
+      "ms": 80,
+      "bytes": 14001,
       "headers": {
         "content-type": "application/json; charset=utf-8",
         "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
@@ -181,8 +181,8 @@
         "x-vercel-cache": "HIT"
       },
       "summary": {
-        "generatedAt": "2026-11-21T14:02:31.816Z",
-        "elapsed_ms": 1388,
+        "generatedAt": "2026-11-21T14:14:06.500Z",
+        "elapsed_ms": 1684,
         "markets": [
           {
             "id": "usd-rub",
@@ -207,17 +207,17 @@
           },
           {
             "id": "imoex",
-            "value": 2329.6,
-            "asOf": "2026-11-21 17:02:28",
+            "value": 2327.05,
+            "asOf": "2026-11-21 17:14:04",
             "previousDate": "2026-11-20",
-            "changePct": -1.053
+            "changePct": -1.162
           },
           {
             "id": "rgbi",
-            "value": 110.86,
-            "asOf": "2026-11-21 17:02:16",
+            "value": 110.87,
+            "asOf": "2026-11-21 17:14:02",
             "previousDate": "2026-11-20",
-            "changePct": -0.027
+            "changePct": -0.018
           },
           {
             "id": "cny-rub-moex",
@@ -277,7 +277,7 @@
       "path": "/api/russia-history",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/russia-history",
-      "ms": 24,
+      "ms": 38,
       "bytes": 13915,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -291,7 +291,7 @@
         "x-vercel-cache": "HIT"
       },
       "summary": {
-        "generatedAt": "2026-11-21T13:56:34.428Z",
+        "generatedAt": "2026-11-21T14:10:21.594Z",
         "errors": [],
         "series": [
           {
@@ -381,8 +381,8 @@
       "path": "/api/brief-image",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/brief-image",
-      "ms": 1068,
-      "bytes": 349722,
+      "ms": 996,
+      "bytes": 348323,
       "headers": {
         "content-type": "image/png",
         "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
@@ -406,7 +406,7 @@
       "path": "/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
-      "ms": 300,
+      "ms": 216,
       "bytes": 109,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -430,7 +430,7 @@
       "path": "/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
-      "ms": 223,
+      "ms": 174,
       "bytes": 210,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -454,7 +454,7 @@
       "path": "/rest/v1/source_preferences?select=*&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/source_preferences?select=*&limit=1",
-      "ms": 177,
+      "ms": 170,
       "bytes": 206,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -478,7 +478,7 @@
       "path": "/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
-      "ms": 177,
+      "ms": 164,
       "bytes": 152,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -508,7 +508,7 @@
       "path": "/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
-      "ms": 202,
+      "ms": 154,
       "bytes": 105,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -532,7 +532,7 @@
       "path": "/rest/v1/daily_snapshots?select=date,assets&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots?select=date,assets&limit=1",
-      "ms": 200,
+      "ms": 144,
       "bytes": 200,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -556,7 +556,7 @@
       "path": "/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
-      "ms": 201,
+      "ms": 149,
       "bytes": 222,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -580,7 +580,7 @@
       "path": "/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
-      "ms": 339,
+      "ms": 226,
       "bytes": 2,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -599,7 +599,7 @@
       "path": "/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
-      "ms": 209,
+      "ms": 177,
       "bytes": 1860,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -722,7 +722,7 @@
       "path": "/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
-      "ms": 186,
+      "ms": 163,
       "bytes": 4050,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -885,7 +885,7 @@
           "name": "Gold",
           "price": "$3,539.0",
           "change": null,
-          "as_of": "2026-11-21T13:54:38+00:00",
+          "as_of": "2026-11-21T14:04:38+00:00",
           "spark_dates": [],
           "sparkline": [],
           "source_label": "gold-api.com · последние наблюдения UTC, не официальный close"
@@ -893,9 +893,9 @@
         {
           "id": "btc",
           "name": "BTC",
-          "price": "$60,432",
-          "change": 2.7645,
-          "as_of": "2026-11-21T13:55:04.055+00:00",
+          "price": "$60,479",
+          "change": 2.8451,
+          "as_of": "2026-11-21T14:05:04.094+00:00",
           "spark_dates": [
             "2026-10-22",
             "2026-10-23",
@@ -1067,8 +1067,8 @@
       "id": "btc",
       "checked": true,
       "ok": true,
-      "expected": 2.7644997219685594,
-      "stored": 2.7645,
+      "expected": 2.8444231315352217,
+      "stored": 2.8451,
       "priceMismatch": null,
       "basis": "quote"
     },
@@ -1082,5 +1082,5 @@
       "basis": "series"
     }
   ],
-  "finished": "2026-11-21T14:02:55.398Z"
+  "finished": "2026-11-21T14:15:41.017Z"
 }
