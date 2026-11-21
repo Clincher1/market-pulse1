@@ -21,7 +21,10 @@ test('active route gradients, including both ends and intermediate stops, meet A
     const variable = key => block.match(new RegExp(`--${key}:\\s*(#[0-9a-f]{6})`))?.[1];
     checkGradient(variable('nav-main'),variable('nav-alt'),variable('nav-active-ink')||'#ffffff',id);
   }
-  checkGradient('#6d28d9','#7e22ce','#ffffff','More menu hover');
+  const more = css.match(/\.desktop-navigation__more\[open\] > \.desktop-navigation__more-trigger\s*\{([^}]+)\}/)?.[1];
+  const stops = more?.match(/linear-gradient\(120deg,\s*(#[0-9a-f]{6}),\s*(#[0-9a-f]{6})\)/);
+  assert.ok(stops, 'More hover/open gradient must be included in contrast checks');
+  checkGradient(stops[1],stops[2],'#ffffff','More menu hover');
   assert.match(css,/\.desktop-navigation__link\.is-active\s*\{\s*color: var\(--nav-active-ink, #fff\)/);
 });
 test('small path label uses a readable neutral on white and page background', () => {
