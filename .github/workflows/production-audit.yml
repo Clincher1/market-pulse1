@@ -1,12 +1,6 @@
 name: Read-only production acceptance audit
 
 on:
-  # Audit-only pushes are made after the pinned release is READY and promoted.
-  push:
-    branches: ['arena/0b3e4807-market-pulse1']
-    paths:
-      - 'scripts/production-audit.mjs'
-      - '.github/workflows/production-audit.yml'
   workflow_dispatch:
 
 permissions:
@@ -32,6 +26,9 @@ jobs:
           .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
       - name: Two live browser rounds and observed health (no selfcheck invocation)
         run: node scripts/production-audit.mjs
+      - name: Read-only HTTP, rights and math audit
+        if: always()
+        run: node scripts/audit-http.mjs
       - name: Save compact evidence on this same audit branch
         if: always()
         run: |
@@ -39,14 +36,14 @@ jobs:
           test "$GITHUB_REF_NAME" = "arena/0b3e4807-market-pulse1"
           git fetch origin "$GITHUB_REF_NAME"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          mkdir -p docs/audit-evidence/full-audit
-          cp .local/production-audit/summary.json docs/audit-evidence/full-audit/
+          mkdir -p docs/audit-evidence/release-20261121
+          cp .local/production-audit/summary.json docs/audit-evidence/release-20261121/
           for page in passport memory russia world brief; do
-            cp ".local/production-audit/B-360-$page.png" docs/audit-evidence/full-audit/
+            cp ".local/production-audit/B-360-$page.png" docs/audit-evidence/release-20261121/
           done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/audit-evidence/full-audit
+          git add docs/audit-evidence/release-20261121
           git commit -m "docs: save current full production audit evidence"
           git push origin "HEAD:$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v7

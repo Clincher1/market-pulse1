@@ -1,11 +1,13 @@
 // Read-only supplementary production audit. No Edge Functions or writer calls.
 import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { checkChangeAgainstSeries } from '../supabase/functions/_shared/asset-truth.ts';
 const origin = 'https://market-pulse1-eta.vercel.app';
 const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const source = await fs.readFile('src/lib/supabase.ts', 'utf8');
 const apikey = source.match(/'(sb_publishable_[^']+)'/)[1];
 const report = { started: new Date().toISOString(), endpoints: [], publicApi: [], findings: [] };
-const output = 'docs/audit-evidence/full-audit/http.json';
+const output = 'docs/audit-evidence/release-20261121/http.json';
 async function probe(base, path, api = false) {
   const start = performance.now();
   try {
@@ -35,7 +37,37 @@ await probe(sb, '/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_ke
 await probe(sb, '/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1', true);
 await probe(sb, '/rest/v1/source_preferences?select=*&limit=1', true);
 await probe(sb, '/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2', true);
+await probe(sb, '/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1', true);
+await probe(sb, '/rest/v1/daily_snapshots?select=date,assets&limit=1', true);
+await probe(sb, '/rest/v1/legacy_gold_cache_20261121?select=id&limit=1', true);
+const history = await probe(sb, '/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1', true);
+const sanitized = await probe(sb, '/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1', true);
+const assets = await probe(sb, '/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label', true);
+report.math = [];
+try {
+  for (const e of report.endpoints) {
+    assert.equal(e.status, 200, e.path + ': ' + (e.error || e.status));
+    assert.ok(e.headers['x-content-type-options'], e.path + ': security headers');
+    if (e.summary?.errors) assert.deepEqual(e.summary.errors, [], e.path + ': source errors');
+  }
+  for (const e of report.publicApi.filter(e => /market_memory_|forecast_outcomes_v2|source_preferences|daily_snapshots\?|legacy_gold_cache/.test(e.path))) {
+    assert.ok([401,403].includes(e.status), e.path + ': must be inaccessible');
+  }
+  assert.deepEqual(history.json, [], 'Restricted history is still public');
+  assert.equal(sanitized.status, 200);
+  assert.ok(sanitized.json.every(s => s.assets.every(a => a.id !== 'gold')), 'Restricted gold leaked via snapshots');
+  assert.equal(assets.status, 200);
+  for (const asset of assets.json) {
+    const verdict = checkChangeAgainstSeries(asset);
+    if (asset.id === 'gold' && !asset.sparkline.length) {
+      assert.equal(asset.change, null); assert.match(asset.source_label, /^gold-api\.com/);
+    } else assert.ok(verdict.ok, asset.id + ': ' + JSON.stringify(verdict));
+    report.math.push({id:asset.id, ...verdict});
+  }
+  const image = report.endpoints.find(e => e.path === '/api/brief-image');
+  assert.equal(image.png?.validSignature, true);
+} catch (error) { report.findings.push(error.message); process.exitCode = 1; }
 report.finished = new Date().toISOString();
-await fs.mkdir('docs/audit-evidence/full-audit', { recursive: true });
+await fs.mkdir('docs/audit-evidence/release-20261121', { recursive: true });
 await fs.writeFile(output, JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify({ endpoints: report.endpoints.map(e => ({ path: e.path, status: e.status, error: e.error, ms: e.ms })), api: report.publicApi.map(e => ({ path: e.path.split('?')[0], status: e.status, rows: Array.isArray(e.json) ? e.json.length : null })) }, null, 2));

@@ -1,8 +1,6 @@
 name: Read-only HTTP and API audit
 on:
-  push:
-    branches: ['arena/0b3e4807-market-pulse1']
-    paths: ['scripts/audit-http.mjs', '.github/workflows/audit-http.yml']
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -25,6 +23,6 @@ jobs:
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/audit-evidence/full-audit/http.json
+          git add docs/audit-evidence/release-20261121/http.json
           git commit -m "docs: save read-only HTTP and public API evidence"
           git push origin "HEAD:$GITHUB_REF_NAME"
