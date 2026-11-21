@@ -498,7 +498,7 @@ export default function RussiaHistory() {
             <summary className="min-h-6 cursor-pointer select-none py-1 font-semibold text-text-secondary">
               Все {series.points.length} значений ряда
             </summary>
-            <div className="mt-2 max-h-64 overflow-auto">
+            <div className="mt-2 max-h-64 overflow-auto focus-visible:outline-2 focus-visible:outline-cyan-600" tabIndex={0} role="region" aria-label={`Таблица наблюдений ${series.name}`}>
               <table className="w-full text-left tabular-nums">
                 <thead>
                   <tr className="text-text-secondary">
