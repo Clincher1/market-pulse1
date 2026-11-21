@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { chromium, firefox, webkit } from '../.local/production-browser/node_modules/playwright/index.mjs';
 import lighthouse from '../.local/production-browser/node_modules/lighthouse/core/index.js';
+import desktopConfig from '../.local/production-browser/node_modules/lighthouse/core/config/desktop-config.js';
 import { launch } from '../.local/production-browser/node_modules/chrome-launcher/dist/index.js';
 const origin = 'https://market-pulse1-eta.vercel.app';
 const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
@@ -111,7 +112,7 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
                 assert.equal(result.cookie, ''); assert.deepEqual(await context.cookies(), []);
                 assert.deepEqual(result.unsafeLinks, []);
                 assert.deepEqual(result.hosts.filter(h => ![locationHost(origin), locationHost(sb)].includes(h)), []);
-                assert.deepEqual(result.storage.filter(k => k !== 'market-pulse-favorites-v1'), []);
+                assert.deepEqual(result.storage.filter(k => !['market-pulse-favorites-v1', 'market-pulse-heatmap-palette'].includes(k)), []);
                 assert.deepEqual(errors, []);
                 if (path === '/world') {
                   const strip = page.locator('section[aria-labelledby="market-strip-title"] li');
@@ -137,16 +138,18 @@ for (const path of ['/', '/world']) {
     await check(`Lighthouse ${mode} ${path}`, async () => {
       const chrome = await launch({ chromePath: chromium.executablePath(), chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'] });
       try {
-        const config = mode === 'desktop' ? { extends: 'lighthouse:default', settings: { formFactor: 'desktop', screenEmulation: { mobile: false, width: 1280, height: 900, deviceScaleFactor: 1, disabled: false } } } : undefined;
+        const config = mode === 'desktop' ? desktopConfig : undefined;
         const { lhr } = await lighthouse(origin + path, { port: chrome.port, logLevel: 'error', output: 'json', onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'] }, config);
         const entry = { path, mode, scores: Object.fromEntries(Object.entries(lhr.categories).map(([k, v]) => [k, v.score])),
           lcpMs: lhr.audits['largest-contentful-paint'].numericValue,
           cls: lhr.audits['cumulative-layout-shift'].numericValue,
           tbtMs: lhr.audits['total-blocking-time'].numericValue,
+          diagnostics: Object.fromEntries(['label-content-name-mismatch', 'target-size', 'lcp-breakdown-insight', 'largest-contentful-paint-element', 'render-blocking-insight'].filter(k => lhr.audits[k]).map(k => [k, lhr.audits[k].details])),
           findings: Object.values(lhr.audits).filter(a => a.score !== null && a.score < 0.9).map(a => ({ id: a.id, score: a.score, title: a.title, displayValue: a.displayValue })),
         };
         report.lighthouse.push(entry);
         await fs.writeFile(`${output}/lighthouse-${mode}-${path === '/' ? 'home' : 'world'}.json`, JSON.stringify(lhr));
+        assert.notEqual(lhr.audits['label-content-name-mismatch']?.score, 0, 'visible and accessible names disagree');
         assert.ok(!lhr.runtimeError, lhr.runtimeError?.message);
         assert.ok(entry.scores.performance >= 0.9, `performance ${entry.scores.performance}`);
         assert.ok(entry.lcpMs <= 2500, `LCP ${entry.lcpMs}ms`);
@@ -160,4 +163,6 @@ for (const path of ['/', '/world']) {
 report.finished = new Date().toISOString();
 await fs.writeFile(`${output}/technical.json`, JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
+for (const failure of report.failures) console.error(`::error::${failure.replaceAll('%', '%25').replaceAll('\n', '%0A').replaceAll('\r', '%0D')}`);
+for (const result of report.lighthouse) console.log(`::notice::${JSON.stringify(result).replaceAll('%', '%25')}`);
 if (report.failures.length) process.exitCode = 1;

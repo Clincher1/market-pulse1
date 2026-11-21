@@ -1,0 +1,393 @@
+{
+  "started": "2026-11-21T07:20:17.521Z",
+  "data": [
+    {
+      "id": "usd-eur",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "brent",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "btc",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "sp500",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "imoex",
+      "points": 65,
+      "current": 2345.37,
+      "asOf": "2026-11-21 10:20:18",
+      "changeExpected": -0.38353720693170557,
+      "changeStored": -0.384
+    },
+    {
+      "id": "rgbi",
+      "points": 65,
+      "current": 110.92,
+      "asOf": "2026-11-21 10:20:16",
+      "changeExpected": 0.027053837135904146,
+      "changeStored": 0.027
+    },
+    {
+      "id": "usd-rub",
+      "points": 66,
+      "current": 82.1911,
+      "asOf": "2026-11-21",
+      "sameDateValueAgrees": true,
+      "changeExpected": 0.31991114257468034,
+      "changeStored": 0.32
+    },
+    {
+      "id": "ruonia",
+      "points": 64,
+      "current": 14,
+      "asOf": "2026-11-19",
+      "sameDateValueAgrees": true
+    },
+    {
+      "id": "reserves",
+      "points": 13,
+      "current": 718.9,
+      "asOf": "2026-11-13",
+      "sameDateValueAgrees": true
+    },
+    {
+      "id": "key-rate",
+      "points": 1,
+      "current": 14,
+      "asOf": "2026-07-27",
+      "stepValueAgrees": true
+    }
+  ],
+  "browsers": [
+    {
+      "name": "chromium",
+      "width": 390,
+      "path": "/",
+      "overflow": false,
+      "text": 1916,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 1280,
+      "path": "/",
+      "overflow": false,
+      "text": 2375,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 390,
+      "path": "/",
+      "overflow": false,
+      "text": 1916,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 1280,
+      "path": "/",
+      "overflow": false,
+      "text": 2375,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 390,
+      "path": "/",
+      "overflow": false,
+      "text": 1916,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 1280,
+      "path": "/",
+      "overflow": false,
+      "text": 2375,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    }
+  ],
+  "lighthouse": [
+    {
+      "path": "/",
+      "mode": "mobile",
+      "scores": {
+        "performance": 0.93,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 3032.1565,
+      "cls": 0,
+      "tbtMs": 133,
+      "findings": [
+        {
+          "id": "largest-contentful-paint",
+          "score": 0.77,
+          "title": "Largest Contentful Paint",
+          "displayValue": "3.0 s"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.2 s"
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "score": 0,
+          "title": "Elements with visible text labels do not have matching accessible names."
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 125 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0,
+          "title": "Render-blocking requests",
+          "displayValue": "Est savings of 140 ms"
+        }
+      ]
+    },
+    {
+      "path": "/",
+      "mode": "desktop",
+      "scores": {
+        "performance": 0.77,
+        "accessibility": 0.96,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 3043.5655,
+      "cls": 0,
+      "tbtMs": 148,
+      "findings": [
+        {
+          "id": "largest-contentful-paint",
+          "score": 0.33,
+          "title": "Largest Contentful Paint",
+          "displayValue": "3.0 s"
+        },
+        {
+          "id": "speed-index",
+          "score": 0.81,
+          "title": "Speed Index",
+          "displayValue": "1.6 s"
+        },
+        {
+          "id": "interactive",
+          "score": 0.79,
+          "title": "Time to Interactive",
+          "displayValue": "3.0 s"
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "score": 0,
+          "title": "Elements with visible text labels do not have matching accessible names."
+        },
+        {
+          "id": "target-size",
+          "score": 0,
+          "title": "Touch targets do not have sufficient size or spacing."
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 125 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0,
+          "title": "Render-blocking requests",
+          "displayValue": "Est savings of 150 ms"
+        }
+      ]
+    },
+    {
+      "path": "/world",
+      "mode": "mobile",
+      "scores": {
+        "performance": 0.93,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 3025.268,
+      "cls": 0.001502679277614253,
+      "tbtMs": 139,
+      "findings": [
+        {
+          "id": "largest-contentful-paint",
+          "score": 0.77,
+          "title": "Largest Contentful Paint",
+          "displayValue": "3.0 s"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.1 s"
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "score": 0,
+          "title": "Elements with visible text labels do not have matching accessible names."
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 120 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0,
+          "title": "Render-blocking requests",
+          "displayValue": "Est savings of 120 ms"
+        }
+      ]
+    },
+    {
+      "path": "/world",
+      "mode": "desktop",
+      "scores": {
+        "performance": 0.79,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 3161.175,
+      "cls": 0.001911495822636053,
+      "tbtMs": 117,
+      "findings": [
+        {
+          "id": "largest-contentful-paint",
+          "score": 0.3,
+          "title": "Largest Contentful Paint",
+          "displayValue": "3.2 s"
+        },
+        {
+          "id": "interactive",
+          "score": 0.77,
+          "title": "Time to Interactive",
+          "displayValue": "3.2 s"
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "score": 0,
+          "title": "Elements with visible text labels do not have matching accessible names."
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 120 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0,
+          "title": "Render-blocking requests",
+          "displayValue": "Est savings of 150 ms"
+        }
+      ]
+    }
+  ],
+  "failures": [
+    "chromium 390 /world: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "chromium 390 /russia: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "chromium 390 /news: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "chromium 1280 /world: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "chromium 1280 /russia: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "chromium 1280 /news: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "firefox 390 /world: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "firefox 390 /russia: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "firefox 390 /news: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "firefox 1280 /world: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "firefox 1280 /russia: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "firefox 1280 /news: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "webkit 390 /world: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "webkit 390 /russia: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "webkit 390 /news: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "webkit 1280 /world: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "webkit 1280 /russia: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "webkit 1280 /news: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   'market-pulse-heatmap-palette'\n+ ]\n- []\n",
+    "Lighthouse mobile /: LCP 3032.1565ms",
+    "Lighthouse desktop /: performance 0.77",
+    "Lighthouse mobile /world: LCP 3025.268ms",
+    "Lighthouse desktop /world: performance 0.79"
+  ],
+  "finished": "2026-11-21T07:22:03.301Z"
+}
