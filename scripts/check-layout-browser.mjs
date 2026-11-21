@@ -46,7 +46,13 @@ for (const round of ['A', 'B']) {
             let node;
             while ((node = walk.nextNode())) {
               const text = node.textContent.trim();
-              if (!text || node.parentElement.closest('[aria-hidden="true"],svg,script,style,[hidden]')) continue;
+              if (!text || node.parentElement.closest('[aria-hidden="true"],svg,script,style,[hidden],.sr-only')) continue;
+              // Screen-reader-only content and collapsed disclosure bodies are
+              // intentionally not painted. Their layout boxes can still exist
+              // in Chromium; that is not clipped visible text.
+              const closedDetails = node.parentElement.closest('details:not([open])');
+              if (closedDetails && !closedDetails.querySelector(':scope > summary')?.contains(node)) continue;
+              if (!node.parentElement.checkVisibility({ visibilityProperty: true, contentVisibilityAuto: true })) continue;
               const range = document.createRange(); range.selectNodeContents(node);
               for (const r of range.getClientRects()) {
                 if (r.width < 1 || r.height < 1) continue;

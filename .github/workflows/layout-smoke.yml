@@ -21,12 +21,16 @@ jobs:
         run: |
           npm install --prefix .local/feature-browser playwright@1.65.1 @sparticuz/chromium@153.0.0
           .local/feature-browser/node_modules/.bin/playwright install-deps chromium
-      - name: Two live layout rounds across all pages and eight widths
+      # The full 144-case run is preserved separately. Recheck only pages
+      # containing sr-only text/collapsed tables after correcting the scanner;
+      # do not repeat unrelated pages or change their product code.
+      - name: Recheck visible text, not screen-reader-only or collapsed content
         env:
           LAYOUT_ORIGIN: https://market-pulse1-eta.vercel.app
           LAYOUT_LIVE: '1'
           LAYOUT_EXPECTED_ENTRY: index-D-qzxOnO.js
-          LAYOUT_OUTPUT: docs/audit-evidence/responsive-layout
+          LAYOUT_PATHS: /russia,/world
+          LAYOUT_OUTPUT: docs/audit-evidence/responsive-layout-followup
         run: node scripts/check-layout-browser.mjs
       - name: Preserve compact evidence on this branch
         if: always()
@@ -37,6 +41,6 @@ jobs:
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/audit-evidence/responsive-layout
+          git add docs/audit-evidence/responsive-layout-followup
           git diff --cached --quiet || git commit -m 'docs: preserve live responsive layout evidence'
           git push origin "HEAD:$GITHUB_REF_NAME"
