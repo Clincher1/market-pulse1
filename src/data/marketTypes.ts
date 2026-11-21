@@ -9,7 +9,7 @@ export interface AssetData {
   id: string;
   name: string;
   price: string;
-  change: number;
+  change: number | null;
   sparkline: number[];
   /**
    * Даты наблюдений, по одной на значение sparkline. `null` — даты не

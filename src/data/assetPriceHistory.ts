@@ -28,7 +28,7 @@ export interface AssetPriceHistory {
  * shadow primary flags belong to Market Memory evaluation, while the public
  * tiles use Yahoo Finance for S&P 500 and Brent (с 01.11.2026, когда CSV у
  * FRED стал требовать ключ и отвечал 404 всплесками), ECB for the FX tile,
- * Kraken for BTC and Twelve spot for gold. In particular, the FRED/Nasdaq gold
+ * Kraken for BTC and our observed gold-api.com spot quotes for gold. In particular, the FRED/Nasdaq gold
  * index must never be presented as the XAU/USD spot series, and спот Brent не
  * подменяется фьючерсом внутри одной линии.
  */
@@ -36,7 +36,7 @@ const HISTORY_INSTRUMENT_BY_ASSET: Record<string, string> = {
   'usd-eur': 'eurusd_ecb_daily',
   sp500: 'sp500_yahoo_gspc',
   brent: 'brent_yahoo_bzf',
-  gold: 'gold_twelve_xauusd_daily',
+  gold: 'gold_api_xau_observed_daily',
   btc: 'btc_kraken_xbtusd_daily',
 };
 

@@ -4,7 +4,7 @@ import { fetchLiveAssets } from '@/data/liveAssets';
 import { startPolling } from '@/lib/polling';
 
 function isUsableLiveAsset(asset: AssetData | undefined): asset is AssetData {
-  return Boolean(asset && asset.price !== '—' && asset.sparkline?.length);
+  return Boolean(asset && asset.price !== '—' && (asset.id === 'gold' || asset.sparkline?.length));
 }
 
 /**

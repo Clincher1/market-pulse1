@@ -214,7 +214,7 @@ export async function buildBriefCard() {
             fetchSupabase('cached_assets?select=id,name,price,change,sparkline,spark_dates,as_of,source_label,updated_at&limit=20'),
         ]).then((items) => items[0]),
         Promise.allSettled([
-            fetchSupabase(`daily_snapshots?select=date,captured_at,assets,russia&date=eq.${today}&limit=1`),
+            fetchSupabase(`daily_snapshots_public_v1?select=date,captured_at,assets,russia&date=eq.${today}&limit=1`),
         ]).then((items) => items[0]),
         fetchRussia(),
     ]);
@@ -252,7 +252,7 @@ export async function buildBriefCard() {
     if (strongestGlobal) {
         const { asset, move } = strongestGlobal;
         facts.push(
-            `Наибольшее по модулю изменение двух последних закрытий среди загруженных мировых рядов: ${stringValue(asset.name)} ${formatPct(move.change)}; закрытия ${formatSeriesValue(move.previousValue, asset.price)} → ${formatSeriesValue(move.value, asset.price)}; ${formatDateOnly(move.previousDate)} → ${formatDateOnly(move.date)}. Формула: (последнее / предыдущее − 1) × 100 %. Периоды активов могут различаться.${asset.source_label ? ` Источник: ${stringValue(asset.source_label)}.` : ''}`,
+            `Наибольшее по модулю изменение двух последних наблюдений среди загруженных мировых рядов: ${stringValue(asset.name)} ${formatPct(move.change)}; наблюдения ${formatSeriesValue(move.previousValue, asset.price)} → ${formatSeriesValue(move.value, asset.price)}; ${formatDateOnly(move.previousDate)} → ${formatDateOnly(move.date)}. Формула: (последнее / предыдущее − 1) × 100 %. Периоды активов могут различаться.${asset.source_label ? ` Источник: ${stringValue(asset.source_label)}.` : ''}`,
         );
     }
     const strongestRussia = [...russiaCandidates].sort(

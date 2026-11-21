@@ -16,7 +16,7 @@ async function loadWriter(name) {
   });
   return import(output.href);
 }
-const { makeAsset } = await loadWriter('update-assets');
+const { makeAsset, fetchGold } = await loadWriter('update-assets');
 const handler = globalThis.__assetWriterHandler;
 delete globalThis.__assetWriterHandler;
 const points = Array.from({ length: 8 }, (_, i) => ({ date: `2026-11-${12 + i}`, value: 3900 - i * 20 }));
@@ -82,3 +82,37 @@ test('handler: all gated sources are an explained no-op, not an empty 502', asyn
 });
 
 after(() => rm(directory, { recursive: true, force: true }));
+
+
+test('new gold writer: valid live quote works with zero history, no fake percent or Twelve request', async (t) => {
+  const previousDeno = globalThis.Deno;
+  globalThis.Deno = { env: { get: key => key === 'SUPABASE_SERVICE_ROLE_KEY' ? 'fixture-service' : undefined } };
+  t.after(() => { globalThis.Deno = previousDeno; });
+  const calls=[];
+  t.mock.method(globalThis,'fetch',async (url,init={})=> {
+    calls.push([String(url),init.method || 'GET']);
+    if(String(url).includes('/price/XAU')) return Response.json({symbol:'XAU',currency:'USD',price:3500,updatedAt:'2026-10-28T12:00:00Z'});
+    if(String(url).includes('/rpc/')) return new Response(null,{status:204});
+    return Response.json([]);
+  });
+  const result=await fetchGold('2026-10-28T12:00:01Z',{publish:true});
+  assert.equal(result.row.change,null);
+  assert.deepEqual(result.row.sparkline,[]);
+  assert.deepEqual(result.row.spark_dates,[]);
+  assert.equal(result.row.price,'$3,500.0');
+  assert.ok(calls.some(([url,method])=>url.includes('record_gold_observation')&&method==='POST'));
+  assert.ok(calls.every(([url])=>!url.includes('twelvedata')));
+});
+test('new gold shadow reads only; it never records observations', async (t) => {
+  const previousDeno=globalThis.Deno;
+  globalThis.Deno={env:{get:()=> 'fixture-service'}};
+  t.after(()=>{globalThis.Deno=previousDeno;});
+  t.mock.method(globalThis,'fetch',async (url,init={})=> {
+    assert.notEqual(init.method,'POST');
+    if(String(url).includes('/price/XAU')) return Response.json({symbol:'XAU',price:3500,updatedAt:'2026-10-28T12:00:00Z'});
+    return Response.json([{instrument_id:'gold_api_xau_observed_daily',observation_date:'2026-10-27',price:3600}]);
+  });
+  const result=await fetchGold('2026-10-28T12:00:01Z',{publish:false});
+  assert.equal(result.row.change,-2.7778);
+  assert.deepEqual(result.row.spark_dates,['2026-10-27']);
+});

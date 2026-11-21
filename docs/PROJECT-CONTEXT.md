@@ -115,6 +115,13 @@ Only the five existing global instruments are offered; provider/instrument selec
 and database policies are unchanged. Favorites are a validated list of instrument IDs
 in localStorage, not a user identifier. Storage denial falls back to tab-only state.
 
+Gold now uses gold-api.com only. Its new history is the last successfully received quote
+per completed UTC day, not an official provider close; it starts without backfilled days.
+Missing change remains null until a comparable observation exists. Twelve Data records are
+preserved internally but disabled in the public history view, and legacy snapshots are
+served through a view excluding gold. Raw daily snapshots and withdrawn forecast views
+are not browser-readable. No new forecast issuance or manual morning snapshot is enabled.
+
 Summary selection is deterministic: the largest absolute available percentage move
 within each contour. The Russian candidates are IMOEX, RGBI and USD/RUB; global moves
 are recalculated from the last two dated cached observations. Comparison periods can

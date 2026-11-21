@@ -46,8 +46,8 @@ test('квоты: ЕЦБ не спрашивают каждые 15 минут, T
   // а привычкой.
   assert.equal(sourceSpec('ecb').minIntervalMinutes, 120);
   assert.equal(sourceSpec('ecb').dailyBudget, 24);
-  assert.equal(sourceSpec('twelve').minIntervalMinutes, 60);
-  assert.equal(sourceSpec('twelve').dailyBudget, 100);
+  assert.equal(sourceSpec('twelve'), null);
+  assert.equal(sourceSpec('gold-api').minIntervalMinutes, 5);
 });
 
 test('шлюз: первый запрос всегда разрешён', () => {
@@ -144,8 +144,8 @@ test('попытка: Retry-After источника длиннее нашей �
 });
 
 test('попытка: новый день начинает счётчик квоты заново', () => {
-  const twelve = sourceSpec('twelve');
-  const yesterday = { ...emptyState('twelve'), day: '2026-11-10', requests_today: 99, consecutive_failures: 1 };
+  const twelve = sourceSpec('gold-api');
+  const yesterday = { ...emptyState('gold-api'), day: '2026-11-10', requests_today: 99, consecutive_failures: 1 };
   const next = afterAttempt(twelve, yesterday, now, { ok: true, status: 200 });
   assert.equal(next.requests_today, 1);
   assert.equal(next.consecutive_failures, 0);
@@ -230,18 +230,18 @@ const state = (id, extra = {}) => ({
 
 test('расход в пределах квот называется числом, а не обещанием', () => {
   const verdict = politenessVerdict(
-    [state('yahoo', { requests_today: 96 }), state('twelve', { requests_today: 12 }), state('ecb', { requests_today: 6 })],
+    [state('yahoo', { requests_today: 96 }), state('gold-api', { requests_today: 12 }), state('ecb', { requests_today: 6 })],
     NOW,
   );
   assert.equal(verdict.ok, true);
   assert.match(verdict.detail, /yahoo 96\/300/);
-  assert.match(verdict.detail, /twelve 12\/100/);
+  assert.match(verdict.detail, /gold-api 12\/300/);
 });
 
 test('перерасход квоты — отказ: это и есть путь в бан', () => {
-  const verdict = politenessVerdict([state('twelve', { requests_today: 192 })], NOW);
+  const verdict = politenessVerdict([state('gold-api', { requests_today: 392 })], NOW);
   assert.equal(verdict.ok, false);
-  assert.match(verdict.detail, /перерасход квоты: twelve: 192 из 100/);
+  assert.match(verdict.detail, /перерасход квоты: gold-api: 392 из 300/);
 });
 
 test('источник вне реестра — отказ: у него нет ни квоты, ни паузы', () => {

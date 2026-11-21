@@ -647,7 +647,8 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         'asset_source_state?select=source_id,requests_today,paused_until,consecutive_failures,last_status,last_ok_at,last_error',
       )) as AnyRecord[];
       const verdict = politenessVerdict(
-        rows.map((row) => ({
+        // Retired Twelve state remains internal evidence, not an active polling source.
+        rows.filter((row) => row.source_id !== 'twelve').map((row) => ({
           source_id: String(row.source_id ?? ''),
           requests_today: row.requests_today === null || row.requests_today === undefined ? null : Number(row.requests_today),
           paused_until: row.paused_until ? String(row.paused_until) : null,
@@ -733,7 +734,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         .filter((row) => {
           const values = Array.isArray(row.sparkline) ? row.sparkline : [];
           const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
-          return values.length !== dates.length || values.length === 0;
+          return values.length !== dates.length || (values.length === 0 && row.id !== 'gold');
         })
         .map((row) => String(row.id ?? ''));
       if (undescribed.length) return { ok: false, detail: `ряды без контракта: ${undescribed.join(', ')}` };
@@ -741,7 +742,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       if (undated.length) return { ok: false, detail: `у ряда нет дат на каждое значение: ${undated.join(', ')}` };
       return {
         ok: true,
-        detail: `все ${rows.length} рядов описаны контрактом, подписи совпадают, даты на месте`,
+        detail: `все ${rows.length} рядов описаны контрактом; даты согласованы; новая история золота накапливается отдельно`,
       };
     }),
 
@@ -764,7 +765,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       const broken = rows.filter((row) => {
         const values = Array.isArray(row.sparkline) ? row.sparkline : [];
         const dates = Array.isArray(row.spark_dates) ? row.spark_dates : [];
-        if (dates.length !== values.length || dates.length === 0) return true;
+        if (dates.length !== values.length || (dates.length === 0 && row.id !== 'gold')) return true;
         const iso = /^\d{4}-\d{2}-\d{2}/;
         let previous = '';
         return dates.some((date) => {
@@ -797,7 +798,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
           ? `даты не сохранены или не совпадают со значениями: ${broken
               .map((row) => String(row.id ?? ''))
               .join(', ')}`
-          : `даты есть у всех ${rows.length} рядов, последняя — ${newest}`,
+          : `даты согласованы у ${rows.length} рядов (новая история золота может накапливаться с нуля), последняя — ${newest}`,
       };
     }),
 

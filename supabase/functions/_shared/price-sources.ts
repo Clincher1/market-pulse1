@@ -101,24 +101,8 @@ export const PRICE_SOURCES: PriceSourceSpec[] = [
     minIntervalMinutes: 5,
     pauseAfterFailures: 3,
     pauseMinutes: 30,
-    onFailure: 'цена золота падает на закрытие Twelve Data и подписывается им; проверка назовёт отставание',
-    fallback: 'Twelve Data quote (закрытие сессии) — честная, но менее свежая цена',
-  },
-  {
-    id: 'twelve',
-    host: 'api.twelvedata.com',
-    tier: 'commercial-api',
-    assets: ['gold'],
-    endpoint: 'time_series?symbol=XAU%2FUSD',
-    // Бесплатный тариф: 8 запросов в минуту и 800 в сутки, и этот же ключ
-    // используют теневые писатели. Раз в час — 24 запроса в сутки, то есть
-    // 3 % лимита: запас на повтор и на ручную диагностику.
-    dailyBudget: 100,
-    minIntervalMinutes: 60,
-    pauseAfterFailures: 3,
-    pauseMinutes: 120,
-    onFailure: 'история золота не обновляется; цена на плитке остаётся живой из gold-api',
-    fallback: 'нет бесплатной замены дневных закрытий XAU/USD; ряд честно помечается отставшим',
+    onFailure: 'прежняя котировка остаётся со своей датой; чужое закрытие не подставляется',
+    fallback: 'нет: инструмент и методика не подменяются',
   },
   {
     id: 'coinbase',

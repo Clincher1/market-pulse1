@@ -67,7 +67,7 @@ function MinuteSummary({ assets }: { assets: AssetData[] }) {
 }
 
 function Comparison({ assets }: { assets: AssetData[] }) {
-  const [selected, setSelected] = useState(['sp500', 'gold', 'btc']);
+  const [selected, setSelected] = useState(['sp500', 'brent', 'btc']);
   const chartRef = useRef<HTMLElement>(null);
   const [width, setWidth] = useState(680);
   useEffect(() => {
