@@ -1106,7 +1106,7 @@ function AssetPanel({
           type="button"
           onClick={onClose}
           aria-label="Свернуть панель актива"
-          className="ml-auto inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-extrabold text-cyan-900 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+          className="ml-auto inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-extrabold text-cyan-900 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
         >
           Свернуть
           <X className="h-4 w-4" aria-hidden="true" />
@@ -1164,7 +1164,7 @@ function AssetPanel({
                     type="button"
                     aria-pressed={historyRangeDays === days}
                     onClick={() => setHistoryRangeDays(days)}
-                    className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+                    className={`min-h-11 rounded-full px-3 py-1.5 text-xs font-extrabold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
                       historyRangeDays === days
                         ? "bg-cyan-300 text-[#071120]"
                         : "text-text-secondary hover:bg-slate-100 hover:text-text-primary"
@@ -1311,7 +1311,7 @@ function AssetPanel({
 
       {history && visibleHistoryPoints.length > 0 && (
         <details className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+          <summary className="min-h-11 cursor-pointer py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Проверить данные · {visibleHistoryPoints.length}{" "}
             {observationsWord(visibleHistoryPoints.length)}
           </summary>
@@ -1594,7 +1594,7 @@ export default function MarketHeatmap({
               disabled={loading}
               aria-pressed={horizonId === option.id}
               onClick={() => setHorizonId(option.id)}
-              className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
+              className={`min-h-11 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
                 horizonId === option.id
                   ? "bg-cyan-300 text-[#071120]"
                   : "text-text-secondary hover:bg-slate-100 hover:text-text-primary"
@@ -1619,7 +1619,7 @@ export default function MarketHeatmap({
               previous === "colorblind" ? "standard" : "colorblind",
             )
           }
-          className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
+          className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
             paletteId === "colorblind"
               ? "border-sky-200 bg-sky-50 text-sky-900"
               : "border-slate-200 bg-white text-text-secondary hover:bg-slate-100 hover:text-text-primary"

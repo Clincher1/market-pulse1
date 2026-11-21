@@ -87,7 +87,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
       {marker}
       <a
         href={item.href}
-        className="group flex min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+        className="group flex min-h-11 min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
       >
         <span className="min-w-0 flex-1">{item.body}</span>
         <ArrowRight
@@ -100,7 +100,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex basis-full items-center gap-1 pl-6 text-[11px] sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="inline-flex min-h-11 basis-full items-center gap-1 pl-6 text-[11px] sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
           aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
         >
           {item.sourceLabel ?? 'Источник'}

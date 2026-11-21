@@ -161,7 +161,7 @@ export default function SystemStatus() {
             <button
               type="button"
               onClick={() => void load()}
-              className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-100"
+              className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-100"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Обновить

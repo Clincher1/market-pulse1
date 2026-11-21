@@ -293,7 +293,7 @@ export default function DailyPassport() {
 
       {archive.length > 0 ? (
         <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+          <summary className="min-h-11 cursor-pointer py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Архив · {archive.length} {movingWord(archive.length)} до сегодня
           </summary>
           <div className="mt-2 overflow-x-auto">

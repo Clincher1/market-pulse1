@@ -185,7 +185,7 @@ export function ErrorNotice({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-extrabold text-red-800 transition-colors hover:bg-red-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-extrabold text-red-800 transition-colors hover:bg-red-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500"
             >
               <RotateCcw className="h-4 w-4" />
               {actionLabel}

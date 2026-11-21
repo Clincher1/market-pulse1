@@ -61,7 +61,7 @@ function NewsCard({ item, index }: { item: NewsHeadline; index: number }) {
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group block min-h-8 py-1"
+          className="group block min-h-11 py-1"
         >
           <h3 className="text-base font-bold leading-snug text-text-primary transition-colors group-hover:text-amber-900 lg:text-lg">
             {item.title || 'Заголовок не указан'}
@@ -147,7 +147,7 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
                     onChange(option);
                     setOpen(false);
                   }}
-                  className={`flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent/50 ${
+                  className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent/50 ${
                     selected ? 'bg-accent-strong text-white' : 'text-text-primary hover:bg-slate-100 hover:text-text-primary'
                   }`}
                 >
@@ -275,7 +275,7 @@ export default function NewsFeed() {
               type="button"
               onClick={resetFilters}
               disabled={activeFilterCount === 0}
-              className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-extrabold text-text-primary transition-colors hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
+              className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-extrabold text-text-primary transition-colors hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
               Сбросить фильтр
@@ -320,7 +320,7 @@ export default function NewsFeed() {
             type="button"
             onClick={() => void refresh()}
             disabled={isRefreshing}
-            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
           >
             <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
             {isRefreshing ? 'Проверяем…' : 'Повторить'}

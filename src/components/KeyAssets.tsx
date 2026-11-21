@@ -77,7 +77,7 @@ export default function KeyAssets() {
                 type="button"
                 onClick={() => void refresh()}
                 disabled={isRefreshing}
-                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
               >
                 <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? 'Проверяем…' : 'Повторить'}
