@@ -138,7 +138,6 @@ export default function Header({ activeView }: HeaderProps) {
             href={PAGE_PATHS.dashboard}
             onClick={() => setMenuOpen(false)}
             className="site-brand group flex shrink-0 items-center gap-2.5 rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
-            aria-label="Market Pulse — обзор"
             aria-current={activeView === 'dashboard' ? 'page' : undefined}
           >
             <BrandMark className="site-brand__mark h-11 w-11" />
@@ -246,7 +245,7 @@ export default function Header({ activeView }: HeaderProps) {
             type="button"
             className="site-header__mobile-toggle inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full px-3.5 py-2 text-sm font-extrabold shadow-sm transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] lg:hidden"
             onClick={() => setMenuOpen((open) => !open)}
-            aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
+            aria-label={menuOpen ? 'Закрыть меню' : 'Разделы — открыть меню'}
             aria-expanded={menuOpen}
             aria-controls="mobile-navigation"
           >
