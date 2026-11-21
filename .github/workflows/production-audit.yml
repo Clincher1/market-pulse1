@@ -1,6 +1,9 @@
 name: Read-only production acceptance audit
 
 on:
+  push:
+    branches: ['arena/0b3e4807-market-pulse1']
+    paths: ['scripts/production-audit.mjs', '.github/workflows/production-audit.yml']
   workflow_dispatch:
 
 permissions:
