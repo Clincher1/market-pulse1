@@ -48,7 +48,7 @@ jobs:
               cp ".local/production-audit/$file" docs/audit-evidence/technical-readiness/
             fi
           done
-          for page in passport memory russia world brief gold; do
+          for page in home passport memory russia world brief gold; do
             if [ -f ".local/production-audit/B-360-$page.png" ]; then
               cp ".local/production-audit/B-360-$page.png" docs/audit-evidence/technical-readiness/
             fi

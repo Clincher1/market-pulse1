@@ -125,6 +125,15 @@ try {
           assert.ok(!body.includes(text), `Withdrawn content visible: ${text}`);
         }
         assert.equal(await page.locator('#market-memory, #daily-passport').count(), 0, 'A retired public block remains');
+        if (path === '/') {
+          const boxes = await page.locator('.pulse-orbit__link').evaluateAll(nodes => nodes.map(n => {
+            const r = n.getBoundingClientRect(); return { href: n.getAttribute('href'), x: r.x, y: r.y, right: r.right, bottom: r.bottom };
+          }));
+          for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+            const a = boxes[i], b = boxes[j];
+            assert.ok(!(Math.min(a.right, b.right) - Math.max(a.x, b.x) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y) > 1), `Orbit targets overlap: ${a.href} and ${b.href}`);
+          }
+        }
         if (path === '/passport') {
           assert.ok(body.includes('Сводка дня') && body.includes('Деньги бизнеса'), 'Verified replacement summary missing');
         }
@@ -184,8 +193,8 @@ try {
           await page.getByRole('button', { name: 'Свернуть панель актива' }).click();
           await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
         }
-        if (['/passport', '/memory', '/brief', '/world', '/russia'].includes(path)) {
-          await page.screenshot({ path: `${output}/${round}-${width}-${path.slice(1)}.png`, fullPage: false });
+        if (['/', '/passport', '/memory', '/brief', '/world', '/russia'].includes(path)) {
+          await page.screenshot({ path: `${output}/${round}-${width}-${path === '/' ? 'home' : path.slice(1)}.png`, fullPage: false });
         }
         const extra = await page.evaluate(() => ({
           title: document.title,
