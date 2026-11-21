@@ -116,10 +116,18 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
                 assert.deepEqual(errors, []);
                 if (path === '/world') {
                   const strip = page.locator('section[aria-labelledby="market-strip-title"] li');
+                  result.quoteComparisons = [];
                   for (const [i, id] of ['usd-eur', 'sp500', 'brent', 'gold', 'btc'].entries()) {
                     const value = await strip.nth(i).locator(':scope > div').nth(1).innerText();
                     assert.notEqual(value, '—', `${id}: live value missing`);
-                    assert.ok((await page.locator(`#heat-tile-${id}`).innerText()).includes(value), `${id}: ticker and tile disagree`);
+                    const tile = page.locator(`#heat-tile-${id}`);
+                    // Native content-visibility can omit off-screen innerText.
+                    // Compare what a reader actually sees after revealing the tile,
+                    // never treat an unpainted subtree as a different quote.
+                    await tile.scrollIntoViewIfNeeded();
+                    const tilePrice = await tile.locator(':scope > div').nth(1).innerText();
+                    result.quoteComparisons.push({ id, ticker: value, tile: tilePrice });
+                    assert.equal(tilePrice, value, `${id}: ticker ${value} and revealed tile ${tilePrice} disagree`);
                   }
                 }
                 report.browsers.push({ name, width, path, ...result, errors });
