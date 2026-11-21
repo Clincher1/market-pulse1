@@ -108,7 +108,7 @@ function toneOf(value: number | null | undefined): 'up' | 'down' | 'flat' {
  * молчание читалось бы как «цена сегодняшняя».
  */
 function brentFact(
-  asset: { price: string; change: number; asOf: string | null } | null,
+  asset: { price: string; change: number | null; asOf: string | null } | null,
 ): Fact {
   const observed = asset?.asOf ? shortDate(asset.asOf.slice(0, 10)) : null;
   return {
@@ -118,7 +118,7 @@ function brentFact(
     value: asset ? formatPriceText(asset.price) : null,
     unit: 'Brent (фьючерс), $ за баррель',
     secondary: null,
-    change: asset ? pctText(asset.change) : null,
+    change: typeof asset?.change === 'number' && Number.isFinite(asset.change) ? pctText(asset.change) : null,
     changeTone: toneOf(asset?.change),
     asOf: observed ?? (asset ? 'дата наблюдения не сохранена' : null),
     provider: 'Yahoo Finance · фьючерс BZ=F',
@@ -129,7 +129,7 @@ function brentFact(
 
 function factsFrom(
   markets: RussiaMarketIndicator[],
-  brent: { price: string; change: number; asOf: string | null } | null,
+  brent: { price: string; change: number | null; asOf: string | null } | null,
 ): Fact[] {
   const byId = new Map(markets.map((market) => [market.id, market]));
   const usd = byId.get('usd-rub') ?? null;
@@ -252,7 +252,7 @@ export default function BusinessMoney() {
     // Резервная заглушка («—», change 0) не является котировкой: показывать
     // её как «0,00 %» — значит утверждать, что цена не изменилась.
     if (!asset || fallbackAssetIds.includes('brent') || asset.price === '—') return null;
-    return { price: asset.price, change: asset.change ?? 0, asOf: asset.asOf ?? null };
+    return { price: asset.price, change: asset.change, asOf: asset.asOf ?? null };
   }, [assets, fallbackAssetIds]);
 
   const facts = useMemo(() => factsFrom(markets, brent), [markets, brent]);
