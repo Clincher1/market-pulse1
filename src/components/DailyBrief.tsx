@@ -181,7 +181,7 @@ export default function DailyBrief() {
         href: '/world',
         body: (
           <>
-            Наибольшее по модулю изменение двух последних закрытий среди загруженных мировых рядов:{' '}
+            Наибольшее по модулю изменение двух последних наблюдений среди загруженных мировых рядов:{' '}
             <strong className="text-text-primary">
               {asset.name} {formatPct(move.change)}
             </strong>

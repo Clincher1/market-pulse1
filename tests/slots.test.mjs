@@ -49,7 +49,7 @@ test('выбор предлагается только там, где источ
   // или получит его без причины, тест скажет об этом.
   assert.deepEqual(
     choosable.map((slot) => slot.number),
-    [3, 4, 5, 24],
+    [3, 5, 24],
     'набор слотов с выбором источника изменился',
   );
   for (const slot of choosable) {
@@ -192,7 +192,7 @@ test('сторож: писатель цен берёт источник слот
 test('BTC, золото и USD/EUR умеют переключаться на описанный источник', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
-  for (const marker of ['fetchBtcCoinbase', 'fetchBtcBinance', 'fetchUsdEurFrankfurter', 'priceSource']) {
+  for (const marker of ['fetchBtcCoinbase', 'fetchBtcBinance', 'fetchUsdEurFrankfurter']) {
     assert.ok(source.includes(marker), `нет пути выбора: ${marker}`);
   }
   // Подпись обязана меняться вместе с источником: цена Coinbase — не цена Kraken.

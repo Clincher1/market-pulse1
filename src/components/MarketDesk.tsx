@@ -67,7 +67,7 @@ function MinuteSummary({ assets }: { assets: AssetData[] }) {
 }
 
 function Comparison({ assets }: { assets: AssetData[] }) {
-  const [selected, setSelected] = useState(['sp500', 'gold', 'btc']);
+  const [selected, setSelected] = useState(['sp500', 'brent', 'btc']);
   const chartRef = useRef<HTMLElement>(null);
   const [width, setWidth] = useState(680);
   useEffect(() => {
@@ -127,7 +127,7 @@ function Comparison({ assets }: { assets: AssetData[] }) {
         <text x="65" y="236" fill="#475569" fontSize="12">{dateLabel(comparison.dates[0])}</text>
         <text x={width - 25} y="236" textAnchor="end" fill="#475569" fontSize="12">{dateLabel(comparison.dates[comparison.dates.length - 1])}</text>
       </svg>
-      <div className="desk-table-wrap"><table className="desk-table">
+      <div className="desk-table-wrap" tabIndex={0} role="region" aria-label="Результаты сравнения инструментов — прокручиваемая таблица"><table className="desk-table">
         <caption>Результаты за общий период · {base100 ? 'начало = 100' : 'изменение в %'}</caption>
         <thead><tr><th scope="col">Инструмент / линия</th><th scope="col">{base100 ? 'Индекс в конце' : 'Изменение'}</th><th scope="col">Начало → конец, исходные единицы</th><th scope="col">Источник</th></tr></thead>
         <tbody>{comparison.lines.map((line, index) => <tr key={line.id}><th scope="row"><svg width="28" height="10" aria-hidden="true"><line x1="0" x2="28" y1="5" y2="5" stroke={COLORS[index]} strokeWidth="3" strokeDasharray={DASHES[index]} /></svg> {line.name}</th>

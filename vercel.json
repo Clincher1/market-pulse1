@@ -15,39 +15,35 @@
   "rewrites": [
     {
       "source": "/passport",
-      "destination": "/"
+      "destination": "/passport.html"
     },
     {
       "source": "/russia",
-      "destination": "/"
+      "destination": "/russia.html"
     },
     {
       "source": "/world",
-      "destination": "/"
+      "destination": "/world.html"
     },
     {
       "source": "/brief",
-      "destination": "/"
+      "destination": "/brief.html"
     },
     {
       "source": "/news",
-      "destination": "/"
-    },
-    {
-      "source": "/memory",
-      "destination": "/"
+      "destination": "/news.html"
     },
     {
       "source": "/guide",
-      "destination": "/"
+      "destination": "/guide.html"
     },
     {
       "source": "/about",
-      "destination": "/"
+      "destination": "/about.html"
     },
     {
       "source": "/status",
-      "destination": "/"
+      "destination": "/status.html"
     }
   ],
   "headers": [

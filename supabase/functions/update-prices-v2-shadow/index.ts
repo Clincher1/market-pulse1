@@ -289,87 +289,6 @@ async function fetchKrakenDaily() {
   return rows;
 }
 
-async function fetchTwelveGoldQuote() {
-  const key = Deno.env.get("TWELVE_KEY") ?? Deno.env.get("TWELVEDATA_API_KEY") ?? Deno.env.get("Twelve API_KEY");
-  if (!key) throw new Error("TWELVE_KEY secret not found");
-  const url = "https://api.twelvedata.com/quote?symbol=XAU%2FUSD";
-  const payload = JSON.parse(await fetchText(url, { Authorization: `apikey ${key}` })) as unknown;
-  if (!isRecord(payload)) throw new Error("Twelve Data returned a non-object response");
-  if (payload.status === "error") throw new Error(String(payload.message ?? "Twelve Data error").slice(0, 300));
-
-  const close = finiteNumber(payload.close);
-  const previous = finiteNumber(payload.previous_close);
-  const timestampSeconds = finiteNumber(payload.timestamp);
-  const priceTimestamp = timestampSeconds ? new Date(timestampSeconds * 1000).toISOString() : null;
-  if (!close || !priceTimestamp) throw new Error("Twelve Data gold quote lacked close/timestamp");
-
-  return [{
-    instrument_id: "gold_twelve_xauusd_quote",
-    asset_key: "gold",
-    observation_date: null,
-    price_timestamp: priceTimestamp,
-    snapshot_key: snapshotKey("gold_twelve_xauusd_quote", null, priceTimestamp),
-    price: close,
-    open: finiteNumber(payload.open),
-    high: finiteNumber(payload.high),
-    low: finiteNumber(payload.low),
-    close,
-    previous_price: previous,
-    change_abs: finiteNumber(payload.change) ?? (previous ? close - previous : null),
-    change_pct: finiteNumber(payload.percent_change),
-    is_market_open: typeof payload.is_market_open === "boolean" ? payload.is_market_open : null,
-    source_url: "https://api.twelvedata.com/quote?symbol=XAU%2FUSD",
-    raw: {
-      provider: "Twelve Data",
-      symbol: payload.symbol ?? "XAU/USD",
-      name: payload.name ?? null,
-      exchange: payload.exchange ?? null,
-      currency: payload.currency ?? "USD",
-      datetime: payload.datetime ?? null,
-      timestamp: payload.timestamp ?? null,
-    },
-    updated_at: new Date().toISOString(),
-  }];
-}
-
-async function fetchTwelveGoldDaily() {
-  const key = Deno.env.get("TWELVE_KEY") ?? Deno.env.get("TWELVEDATA_API_KEY") ?? Deno.env.get("Twelve API_KEY");
-  if (!key) throw new Error("TWELVE_KEY secret not found");
-  const url =
-    `https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=1day&outputsize=${HISTORY_BACKFILL_ROWS}&order=asc&timezone=UTC`;
-  const payload = JSON.parse(await fetchText(url, { Authorization: `apikey ${key}` })) as unknown;
-  if (!isRecord(payload)) throw new Error("Twelve Data returned a non-object response");
-  if (payload.status === "error") {
-    throw new Error(`Twelve Data time_series: ${String(payload.message ?? "error").slice(0, 300)}`);
-  }
-  const values = Array.isArray(payload.values) ? payload.values : [];
-  // Sort by the full provider datetime before slicing to a date. If Twelve
-  // emits two bars for one UTC date, dailyRows then keeps the later one.
-  const sortedValues = [...values].sort((a, b) => {
-    const left = isRecord(a) ? String(a.datetime ?? "") : "";
-    const right = isRecord(b) ? String(b.datetime ?? "") : "";
-    return left.localeCompare(right);
-  });
-  const observations = sortedValues.map((raw) => {
-    const row = isRecord(raw) ? raw : {};
-    const close = finiteNumber(row.close) ?? Number.NaN;
-    return {
-      date: String(row.datetime ?? "").slice(0, 10),
-      value: close,
-      open: finiteNumber(row.open),
-      high: finiteNumber(row.high),
-      low: finiteNumber(row.low),
-    };
-  }).filter((row) => row.date && Number.isFinite(row.value) && row.value > 0);
-  if (!observations.length) throw new Error("Twelve Data gold time_series returned no valid daily closes");
-
-  return dailyRows("gold_twelve_xauusd_daily", "gold", observations, url, {
-    provider: "Twelve Data",
-    symbol: "XAU/USD",
-    interval: "1day",
-    timezone: "UTC",
-  }, HISTORY_BACKFILL_ROWS);
-}
 
 function clampInteger(value: number, min: number, max: number, fallback: number): number {
   if (!Number.isFinite(value)) return fallback;
@@ -427,8 +346,6 @@ serveWithErrorReporting("update-prices-v2-shadow", async (request) => {
       })),
       { instrumentId: "eurusd_ecb_daily", load: fetchEcb },
       { instrumentId: "btc_kraken_xbtusd_daily", load: fetchKrakenDaily },
-      { instrumentId: "gold_twelve_xauusd_quote", load: fetchTwelveGoldQuote },
-      { instrumentId: "gold_twelve_xauusd_daily", load: fetchTwelveGoldDaily },
     ];
 
     const allRows: AnyRecord[] = [];

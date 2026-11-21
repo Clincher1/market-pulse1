@@ -187,7 +187,7 @@ function readInitialPalette(): PaletteId {
   }
 }
 
-function formatChange(change: number): string {
+function formatChange(change: number | null): string {
   return formatPercent(change);
 }
 
@@ -277,10 +277,10 @@ const ASSET_SOURCE_META: Record<string, AssetSourceMeta> = {
     note: "Это фьючерс ближайшего месяца на Brent (NYMEX), а не спот EIA. Спот и фьючерс расходятся на несколько долларов, поэтому плитка называет инструмент, а не только сорт нефти.",
   },
   gold: {
-    provider: "Twelve Data",
-    series: "XAU/USD — спот золота",
-    url: "https://twelvedata.com",
-    note: "Дневные значения спот-рынка золота.",
+    provider: "gold-api.com",
+    series: "XAU/USD — спот золота, наши дневные наблюдения",
+    url: "https://gold-api.com",
+    note: "История накапливается: последнее полученное нами наблюдение за завершённые UTC-сутки, не официальный close. Пропуски и прошлые дни не восстанавливаются.",
   },
   btc: {
     provider: "Kraken",
@@ -380,7 +380,7 @@ function HeatTile({
     // Если нет — только время записи в кэш, и тогда «обновлено», а не «на».
     (observed ? `, цена ${observed}` : asOf ? `, обновлено ${asOf} МСК` : "") +
     `, изменение за горизонт «${horizon.label}» ` +
-    `(${horizon.id === "day" ? "цена к предыдущему закрытию; не ход между двумя точками графика" : `${intervals} ${observationsWord(intervals)} источника`}): ` +
+    `(${horizon.id === "day" ? (asset.id === 'gold' ? "к последнему нашему наблюдению завершённых UTC-суток" : "цена к предыдущему закрытию; не ход между двумя точками графика") : `${intervals} ${observationsWord(intervals)} источника`}): ` +
     `${horizonChangeValue === null ? "недостаточно данных" : formatChange(change)}. ` +
     `Насыщенность цвета нормирована к шкале ±${formatCap(cap)} для этого актива и горизонта. ` +
     "Белая мини-линия показывает форму последних сохранённых значений без оси цены и времени: точки стоят на равном расстоянии, поэтому пропуски в датах на ней не видны. " +
@@ -675,7 +675,7 @@ function AssetChart({
         )}
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
-        Дневные закрытия · последние {points.length} {daysWord(points.length)} ·
+        Дневные наблюдения · последние {points.length} {daysWord(points.length)} ·
         наведите курсор или коснитесь графика, чтобы увидеть значения.
         {highlight && highlightLabel
           ? ` Пунктир — начало выбранного горизонта (${highlightLabel}).`
@@ -909,7 +909,7 @@ function DatedAssetChart({
       </div>
 
       <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
-        Дневные закрытия · {points.length} {observationsWord(points.length)} ·{" "}
+        Дневные наблюдения · {points.length} {observationsWord(points.length)} ·{" "}
         {formatDateLong(first.date)} — {formatDateLong(last.date)}. Ось X
         линейна по календарным датам источника; наведите курсор или коснитесь
         графика, чтобы увидеть точную дату и значение.
@@ -966,7 +966,15 @@ function AssetPanel({
     let cancelled = false;
     setHistoryRangeDays(90);
     setHistoryState({ assetId: asset.id, status: "loading", history: null });
-    fetchAssetPriceHistory(asset.id).then((history) => {
+    // Gold uses exactly the tile's new-source cache; never a second, divergent history.
+    const goldPoints = (asset.sparkDates ?? []).map((date, index) => ({ date, value: asset.sparkline[index] }));
+    const request = asset.id === 'gold'
+      ? Promise.resolve(goldPoints.length >= 2 ? {
+          assetId: asset.id, instrumentId: 'gold_api_xau_observed_daily', provider: 'gold-api.com · наши наблюдения UTC',
+          providerSymbol: 'XAU', points: goldPoints, unfinishedDayExcluded: true,
+        } : null)
+      : fetchAssetPriceHistory(asset.id);
+    request.then((history) => {
       if (cancelled) return;
       setHistoryState({
         assetId: asset.id,
@@ -977,7 +985,7 @@ function AssetPanel({
     return () => {
       cancelled = true;
     };
-  }, [asset.id]);
+  }, [asset.id, asset.sparkDates, asset.sparkline]);
 
   const history =
     historyState.assetId === asset.id && historyState.status === "ready"
@@ -1083,12 +1091,13 @@ function AssetPanel({
             )}
             {" · "}
             <span
-              className={`font-extrabold tabular-nums ${directionalTextClass(asset.change ?? 0, paletteId)}`}
+              className={`font-extrabold tabular-nums ${asset.change === null ? 'text-text-secondary' : directionalTextClass(asset.change, paletteId)}`}
             >
-              {isFallback ? "—" : formatChange(asset.change ?? 0)}
+              {isFallback ? "—" : formatChange(asset.change)}
             </span>{" "}
-            за день
+            {asset.id === 'gold' ? 'к последнему наблюдению завершённых UTC-суток' : 'за день'}
           </p>
+          {asset.id === 'gold' && <p className="mt-1 text-xs text-text-secondary">{ASSET_SOURCE_META.gold.note}</p>}
         </div>
         <button
           type="button"
@@ -1175,7 +1184,7 @@ function AssetPanel({
             {history.unfinishedDayExcluded && (
               <p className="mt-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] leading-relaxed text-cyan-900">
                 Сегодняшний день ещё не закрыт, поэтому последняя точка графика
-                — закрытие {formatDateLong(lastHistoryPoint.date)}. Текущая цена
+                — наблюдение за {formatDateLong(lastHistoryPoint.date)}. Текущая цена
                 дня показана на плитке выше и меняется в течение суток; на
                 график она не подмешивается, чтобы закрытый и незакрытый день не
                 сравнивались как одно и то же.
@@ -1192,6 +1201,8 @@ function AssetPanel({
               </p>
             )}
           </div>
+        ) : asset.id === 'gold' ? (
+          <p className="text-sm text-text-secondary">История gold-api.com накапливается с момента перехода. Для линии нужны два завершённых UTC-дня; прошлые значения не подставляются.</p>
         ) : (
           <AssetChart
             values={points}
@@ -1281,7 +1292,7 @@ function AssetPanel({
             </div>
             <div>
               <dt className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-                Последнее закрытие
+                Последнее дневное наблюдение
               </dt>
               <dd className="mt-0.5 text-base font-extrabold tabular-nums text-text-primary">
                 {formatValue(last)}

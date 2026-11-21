@@ -1,0 +1,222 @@
+{
+  "rounds": [
+    {
+      "round": "A",
+      "started": "2026-11-20T20:05:07.103Z",
+      "finished": "2026-11-20T20:07:36.677Z",
+      "pages": 28,
+      "failures": 0,
+      "jsErrors": 0,
+      "httpErrors": 0,
+      "requestFailures": 0,
+      "observedHealth": "2026-11-20T19:25:02.436+00:00",
+      "healthNotNewAuditRun": true,
+      "math": [
+        {
+          "id": "usd-eur",
+          "shown": 0.9099,
+          "change": 0.0182,
+          "baseDate": "2026-11-19",
+          "base": 0.90975255,
+          "impliedPrice": 0.9099181249641,
+          "absDifference": 0.00001812496409991926,
+          "tolerance": 0.000050454876275,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "sp500",
+          "shown": 6964,
+          "change": -2.9546,
+          "baseDate": "2026-11-19",
+          "base": 7175.83007813,
+          "impliedPrice": 6963.813002641572,
+          "absDifference": 0.18699735842801601,
+          "tolerance": 0.503587915039065,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "brent",
+          "shown": 89.62,
+          "change": -2.5658,
+          "baseDate": "2026-11-19",
+          "base": 91.98000336,
+          "impliedPrice": 89.61998043378912,
+          "absDifference": 0.000019566210880839208,
+          "tolerance": 0.00504599000168,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "gold",
+          "shown": 3516,
+          "change": -4.1144,
+          "baseDate": "2026-11-19",
+          "base": 3666.8714,
+          "impliedPrice": 3516.0016431184004,
+          "absDifference": 0.0016431184003522503,
+          "tolerance": 0.0518334357,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "btc",
+          "shown": 58422,
+          "change": -5.6388,
+          "baseDate": "2026-11-19",
+          "base": 61913.5,
+          "impliedPrice": 58422.321562,
+          "absDifference": 0.3215619999973569,
+          "tolerance": 0.53095675,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        }
+      ]
+    },
+    {
+      "round": "B",
+      "started": "2026-11-20T20:07:36.680Z",
+      "finished": "2026-11-20T20:08:48.327Z",
+      "pages": 28,
+      "failures": 0,
+      "jsErrors": 0,
+      "httpErrors": 0,
+      "requestFailures": 0,
+      "observedHealth": "2026-11-20T19:25:02.436+00:00",
+      "healthNotNewAuditRun": true,
+      "math": [
+        {
+          "id": "usd-eur",
+          "shown": 0.9099,
+          "change": 0.0182,
+          "baseDate": "2026-11-19",
+          "base": 0.90975255,
+          "impliedPrice": 0.9099181249641,
+          "absDifference": 0.00001812496409991926,
+          "tolerance": 0.000050454876275,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "sp500",
+          "shown": 6964,
+          "change": -2.9546,
+          "baseDate": "2026-11-19",
+          "base": 7175.83007813,
+          "impliedPrice": 6963.813002641572,
+          "absDifference": 0.18699735842801601,
+          "tolerance": 0.503587915039065,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "brent",
+          "shown": 89.62,
+          "change": -2.5658,
+          "baseDate": "2026-11-19",
+          "base": 91.98000336,
+          "impliedPrice": 89.61998043378912,
+          "absDifference": 0.000019566210880839208,
+          "tolerance": 0.00504599000168,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "gold",
+          "shown": 3516,
+          "change": -4.1144,
+          "baseDate": "2026-11-19",
+          "base": 3666.8714,
+          "impliedPrice": 3516.0016431184004,
+          "absDifference": 0.0016431184003522503,
+          "tolerance": 0.0518334357,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        },
+        {
+          "id": "btc",
+          "shown": 58422,
+          "change": -5.6388,
+          "baseDate": "2026-11-19",
+          "base": 61913.5,
+          "impliedPrice": 58422.321562,
+          "absDifference": 0.3215619999973569,
+          "tolerance": 0.53095675,
+          "consistentWithinRounding": true,
+          "datesOrdered": true
+        }
+      ]
+    }
+  ],
+  "accessibility": [
+    {
+      "path": "/world",
+      "width": 360,
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "help": "Scrollable region must have keyboard access",
+      "nodes": [
+        {
+          "target": [
+            ".desk-table-wrap"
+          ],
+          "html": "<div class=\"desk-table-wrap\">",
+          "failureSummary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+        }
+      ]
+    }
+  ],
+  "canonicalIssues": [
+    {
+      "path": "/passport",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    },
+    {
+      "path": "/russia",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    },
+    {
+      "path": "/world",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    },
+    {
+      "path": "/brief",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    },
+    {
+      "path": "/news",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    },
+    {
+      "path": "/guide",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    },
+    {
+      "path": "/about",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    },
+    {
+      "path": "/status",
+      "canonical": "https://market-pulse1-eta.vercel.app/"
+    }
+  ],
+  "timing": [
+    {
+      "round": "A",
+      "kind": "unthrottled CI navigation TTFB, not field Core Web Vitals",
+      "min": 14,
+      "median": 14.5,
+      "p95": 32.09999999997672,
+      "max": 52.90000000002328
+    },
+    {
+      "round": "B",
+      "kind": "unthrottled CI navigation TTFB, not field Core Web Vitals",
+      "min": 13.799999999988358,
+      "median": 14.199999999953434,
+      "p95": 15.099999999976717,
+      "max": 20.29999999998836
+    }
+  ]
+}

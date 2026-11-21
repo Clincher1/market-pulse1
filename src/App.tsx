@@ -349,6 +349,9 @@ function App() {
 
   useEffect(() => {
     document.title = `${VIEW_TITLES[view]} — Market Pulse`;
+    const canonical = `https://market-pulse1-eta.vercel.app${PAGE_PATHS[view]}`;
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonical);
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
   }, [view]);
 
   useEffect(() => {

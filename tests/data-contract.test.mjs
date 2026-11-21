@@ -353,18 +353,12 @@ test('сторож: selfcheck применяет обе проверки — с�
   assert.match(source, /quoteLagVerdict\(/);
 });
 
-test('золото: живая котировка gold-api, закрытия — Twelve Data раз в час', async () => {
+test('gold uses only gold-api quotes and a distinct observed series', async () => {
   const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
-  // Одиннадцать часов отставания на бесплатном тарифе Twelve — это не
-  // расписание, а отсутствие текущей котировки. Живая котировка проверена из
-  // платформы 11.11.2026 07:24 UTC: 200 и updatedAt «сейчас».
-  assert.match(source, /api\.gold-api\.com\/price\/XAU/, 'живая котировка золота не запрашивается');
-  assert.match(source, /api\.twelvedata\.com\/time_series/, 'история золота не запрашивается');
-  // Кавычку Twelve больше не спрашиваем: она и была источником одиннадцати
-  // часов отставания, заменив её — незачем тратить квоту.
-  assert.equal(/api\.twelvedata\.com\/quote/.test(source), false, 'вернулся запрос кавычки Twelve');
-  assert.match(source, /current_price_source: live \? "gold-api" : "twelve-close"/, 'источник цены золота не пишется в журнал');
-  assert.match(source, /storedGoldHistory/, 'нет пути без запроса к Twelve между обновлениями истории');
+  assert.match(source, /api\.gold-api\.com\/price\/XAU/);
+  assert.doesNotMatch(source, /api\.twelvedata\.com/);
+  assert.match(source, /rpc\/record_gold_observation/);
+  assert.match(source, /GOLD_OBSERVED_INSTRUMENT/);
 });
 
 test('подписи: часы печатаются с десятичной запятой', () => {
@@ -390,7 +384,7 @@ test('контракт: у каждого ряда назван ряд, кото
     sp500: ['sp500_yahoo_gspc', 'index_points'],
     'usd-eur': ['eurusd_ecb_daily', 'usd_per_eur'],
     btc: ['btc_kraken_xbtusd_daily', 'usd_per_btc'],
-    gold: ['gold_twelve_xauusd_daily', 'usd_per_troy_ounce'],
+    gold: ['gold_api_xau_observed_daily', 'usd_per_troy_ounce'],
   };
   for (const [id, [instrument, unit]] of Object.entries(expected)) {
     const contract = contractFor(id);
@@ -451,15 +445,8 @@ test('сторож: писатель спрашивает шлюз до запр
   assert.match(source, /состояние шлюза не записано/);
 });
 
-test('золото: не спрашивали Twelve — это не его отказ', async () => {
-  const { readFile } = await import('node:fs/promises');
+test('gold history failure does not force a restricted fallback', async () => {
   const source = await readFile(new URL('../supabase/functions/update-assets/index.ts', import.meta.url), 'utf8');
-  // Дефект, пойманный в проде 11.11 18:40 UTC: при historyDue = false Twelve
-  // Data записывался как «отказавший», хотя его не спрашивали. Серия отказов
-  // набиралась на нашем собственном расписании и через три запуска давала
-  // паузу источнику, который работал.
-  assert.doesNotMatch(source, /outcomes\["twelve"\] = historySource === "twelve" \? "ok" : "fail"/);
-  // И отказ истории не имеет права убивать живую цену: график берёт
-  // опубликованные закрытия, цена остаётся из gold-api.
-  assert.match(source, /история из Twelve Data не пришла, беру опубликованные закрытия/);
+  assert.match(source, /live price valid; observed history unavailable/);
+  assert.doesNotMatch(source, /storedGoldHistory|fetchGoldSeries/);
 });

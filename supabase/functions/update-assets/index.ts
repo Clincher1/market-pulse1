@@ -1,4 +1,5 @@
 // Public cached_assets updater.
+import { GOLD_OBSERVED_INSTRUMENT, GOLD_OBSERVED_LABEL, goldQuote, goldHistory } from "../_shared/gold-observed.ts";
 import { closedHistory, previousClosedValue } from "../_shared/asset-history.ts";
 import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
@@ -23,8 +24,7 @@ import {
 } from "../_shared/price-sources.ts";
 //
 // Security/provenance notes:
-// - Twelve Data is read only from the TWELVE_KEY Edge Function secret.
-//   There is deliberately no hardcoded fallback key.
+// - Gold uses only the keyless gold-api.com endpoint; no restricted history fallback.
 // - The shadow slug (update-assets-v2-shadow) never writes cached_assets.
 // - The production slug (update-assets) publishes every row that passed
 //   validation; a partial failure leaves the failed row untouched instead of
@@ -35,7 +35,7 @@ import {
 //           фьючерс: это не спот EIA, и одно слово «Brent» их не примиряет;
 //   USD/EUR = inverse of the ECB EUR/USD reference rate;
 //   BTC = Kraken XBT/USD daily candles (latest UTC candle may be partial);
-//   Gold = Twelve Data XAU/USD spot.
+//   Gold = gold-api.com XAU/USD spot; our last observation per completed UTC day.
 // - Один упавший источник больше не замораживает остальные: строки, которые
 //   прошли проверку, публикуются, упавшая остаётся прежней со своей старой
 //   датой наблюдения. Раньше ответ 502 от FRED останавливал запись всего кэша,
@@ -53,7 +53,7 @@ type AssetResult = {
     id: string;
     name: string;
     price: string;
-    change: number;
+    change: number | null;
     sparkline: number[];
     /**
      * ISO-даты наблюдений, по одной на значение sparkline. Без них ряд нельзя
@@ -106,7 +106,7 @@ async function restJson(path: string, init: RequestInit = {}): Promise<unknown> 
   headers.set("Authorization", `Bearer ${key}`);
   headers.set("Accept", "application/json");
   if (init.body) headers.set("Content-Type", "application/json");
-  const response = await fetch(`${supabaseUrl()}/rest/v1/${path}`, { ...init, headers });
+  const response = await fetch(`${supabaseUrl()}/rest/v1/${path}`, { signal: AbortSignal.timeout(30000), ...init, headers });
   const text = await response.text();
   if (!response.ok) throw new Error(`Supabase REST ${response.status}: ${text.slice(0, 900)}`);
   return text ? JSON.parse(text) as unknown : null;
@@ -664,153 +664,40 @@ async function fetchBtc(updatedAt: string): Promise<AssetResult> {
   });
 }
 
-/**
- * Живая котировка золота (спот XAU/USD) из gold-api.com.
- *
- * Зачем: Twelve Data на бесплатном тарифе отдаёт по XAU/USD последнюю
- * котировку сессии. Замер 11.11.2026 06:50 UTC: на плитке стояла цена с
- * 10.11 20:00 — одиннадцать часов отставания при кроне писателя раз в пять
- * минут. Подписать такое «на 23:00 МСК» честно, но бесполезно.
- *
- * Чем проверено, а не «кажется рабочим». Запрос сделан из самой платформы
- * (pg_net) 11.11.2026 в 07:24 UTC:
- *   `https://api.gold-api.com/price/XAU` → 200,
- *   {"symbol":"XAU","price":4064.0,"updatedAt":"2026-11-11T07:23:59Z"} —
- *   тот же инструмент, что написан на плитке (спот, доллар за унцию).
- * Там же проверен и отброшен вариант с Yahoo: `XAUUSD=X` → 404
- * «No data found, symbol may be delisted», то есть спота в чарте Yahoo нет.
- *
- * Ошибка или неожиданная форма ответа — `null`: ряд не пропадает, цена
- * остаётся из Twelve Data, и в журнале запуска видно, откуда она взялась.
- */
-async function fetchGoldSpotQuote(): Promise<{ price: number; at: string } | null> {
+/** Live gold and our own observed history share one source, unit and UTC calendar. */
+export async function fetchGold(updatedAt: string, options: { publish: boolean }): Promise<AssetResult> {
+  // No fallback to restricted data. On failure the old *new-source* cache stays dated.
+  const live = goldQuote(await fetchJson("https://api.gold-api.com/price/XAU"), updatedAt);
+  let points: Point[] = [];
+  let historyError: string | null = null;
   try {
-    const payload = await fetchJson("https://api.gold-api.com/price/XAU");
-    if (!isRecord(payload)) return null;
-    const price = positiveNumber(payload.price);
-    const at = typeof payload.updatedAt === "string" ? payload.updatedAt : null;
-    if (!price || !at || !Number.isFinite(Date.parse(at))) return null;
-    return { price, at: new Date(at).toISOString() };
-  } catch (error) {
-    console.error("gold: gold-api.com недоступен, котировка остаётся из Twelve Data", error);
-    return null;
-  }
-}
-
-/**
- * Дневные закрытия XAU/USD из Twelve Data.
- *
- * Только `time_series`: кавычку у этого провайдера мы больше не спрашиваем.
- * На бесплатном тарифе quote отдаёт последнюю котировку сессии (11.11 в
- * 06:50 UTC это была цена с 20:00 предыдущего дня), а живая цена теперь
- * приходит из gold-api.com. Два запроса на запуск превращались в 192 запроса
- * в сутки при лимите 800 — теперь один, и не чаще раза в час.
- */
-async function fetchGoldSeries(): Promise<{ points: Point[]; lastTwelveDate: string | null }> {
-  const key = Deno.env.get("TWELVE_KEY");
-  if (!key) throw new Error("Missing TWELVE_KEY secret");
-  const payload = await fetchJson(
-    "https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=1day&outputsize=30&order=asc&timezone=UTC",
-    { Authorization: `apikey ${key}` },
-  );
-  if (!isRecord(payload)) throw new Error("Twelve Data time_series returned a non-object response");
-  if (payload.status === "error") throw new Error(`Twelve Data time_series: ${String(payload.message ?? "error").slice(0, 300)}`);
-  const values = Array.isArray(payload.values) ? payload.values : [];
-  const points = sortedPoints(values.map((raw) => {
-    const row = isRecord(raw) ? raw : {};
-    return {
-      date: String(row.datetime ?? "").slice(0, 10),
-      value: positiveNumber(row.close) ?? Number.NaN,
-    };
-  }));
-  if (points.length < 8) throw new Error(`Twelve Data XAU/USD: only ${points.length} daily closes`);
-  return { points, lastTwelveDate: points.at(-1)?.date ?? null };
-}
-
-/**
- * История, уже опубликованная на сайте, для запусков между запросами к
- * Twelve Data. Это не заглушка и не «вчерашнее число под сегодняшним»:
- * точки — те же закрытия с теми же датами, что видит человек в графике.
- * Берётся только когда источник истории ещё не «пора спрашивать» по шлюзу.
- */
-async function storedGoldHistory(): Promise<Point[]> {
-  const rows = (await restJson("cached_assets?select=id,sparkline,spark_dates&id=eq.gold")) as AnyRecord[];
-  const row = rows[0];
-  const values = Array.isArray(row?.sparkline) ? row!.sparkline as unknown[] : [];
-  const dates = Array.isArray(row?.spark_dates) ? row!.spark_dates as unknown[] : [];
-  const points = values
-    .map((value, index) => ({ date: String(dates[index] ?? "").slice(0, 10), value: Number(value) }))
-    .filter((point) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value) && point.value > 0);
-  if (points.length < 8) throw new Error(`золото: в кэше ${points.length} dated points, нужна история`);
-  return points;
-}
-
-/**
- * Золото: живая котировка от gold-api.com, закрытия — от Twelve Data.
- *
- * Два источника у одного ряда — не роскошь, а разделение обязанностей:
- * на «сейчас» нужна котировка, на график — закрытия. Шлюз спрашивает каждого
- * по его собственному расписанию, поэтому Twelve Data не дёргают каждые
- * пятнадцать минут ради ряда, который меняется раз в сутки.
- */
-async function fetchGold(updatedAt: string, options: { historyDue: boolean; priceSource: string }): Promise<AssetResult> {
-  // Источник цены выбирает владелец. По умолчанию — живая котировка
-  // gold-api.com; Twelve Data отдаёт закрытие сессии, и это честная, но менее
-  // свежая цена: если её выбрали, подпись прямо говорит, что цена не текущая.
-  const live = options.priceSource === "gold-api" ? await fetchGoldSpotQuote() : null;
-  const outcomes: Record<string, "ok" | "fail"> = {};
-  if (options.priceSource === "gold-api") outcomes["gold-api"] = live ? "ok" : "fail";
-
-  let points: Point[];
-  let historySource: string;
-  if (options.historyDue || options.priceSource === "twelve") {
-    // История — не обязательный источник. Если Twelve Data отказал, цена
-    // всё равно публикуется: график берёт уже опубликованные закрытия, а
-    // провал честно записывается за источником истории.
-    try {
-      points = (await fetchGoldSeries()).points;
-      historySource = "twelve";
-      outcomes["twelve"] = "ok";
-    } catch (error) {
-      console.warn("золото: история из Twelve Data не пришла, беру опубликованные закрытия", error);
-      points = await storedGoldHistory();
-      historySource = "cache";
-      outcomes["twelve"] = "fail";
+    if (options.publish) {
+      await restJson("rpc/record_gold_observation", {
+        method: "POST", body: JSON.stringify({ p_price: live.price, p_at: live.at }),
+      });
     }
-  } else {
-    points = await storedGoldHistory();
-    historySource = "cache";
-    // Twelve Data в этом запуске не спрашивали вовсе: это наше расписание, а
-    // не отказ источника. Записывать ему «fail» нельзя — серия отказов
-    // набиралась бы на ровном месте и через три запуска давала паузу.
+    points = goldHistory(await restJson(
+      `asset_price_snapshots_v2?select=instrument_id,observation_date,price&instrument_id=eq.${GOLD_OBSERVED_INSTRUMENT}&observation_date=lt.${live.at.slice(0, 10)}&order=observation_date.desc&limit=30`,
+    ), live.at, updatedAt);
+  } catch (error) {
+    historyError = error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300);
+    console.warn("gold: live price valid; observed history unavailable", historyError);
   }
-
-  // Дневной бар текущих суток с живой ценой — незакрытый бар: в историю его
-  // не пускаем, иначе график покажет сегодняшнюю цену как закрытие дня.
-  const liveDay = live ? live.at.slice(0, 10) : null;
-  const price = live ? live.price : points.at(-1)!.value;
-  const asOf = live ? live.at : points.at(-1)!.date;
-
-  return makeAsset({
-    id: "gold",
-    name: EXPECTED_NAMES.gold,
-    instrument: live
-      ? "Gold spot / US Dollar (gold-api.com XAU; история — закрытия Twelve Data)"
-      : "Gold spot / US Dollar (Twelve Data XAU/USD)",
-    provider: live ? "gold-api.com + Twelve Data" : "Twelve Data (закрытие сессии)",
-    points,
-    formingBarDate: liveDay,
-    currentPrice: price,
-    asOf,
-    format: formatUsd1,
-    updatedAt,
-    extraMeta: {
-      unit: "USD/troy ounce",
-      current_price_source: live ? "gold-api" : "twelve-close",
-      history_source: historySource,
-      source_outcomes: outcomes,
-    },
-  });
+  const previous = points.at(-1)?.value ?? null;
+  const change = previous ? round((live.price / previous - 1) * 100, 4) : null;
+  if (change !== null && Math.abs(change) > LIMITS.gold.maxAbsChangePct) {
+    throw new Error("gold: observed change outside plausibility range");
+  }
+  return {
+    row: { id: "gold", name: EXPECTED_NAMES.gold, price: formatUsd1(live.price), change,
+      sparkline: points.map(p => round(p.value, 8)), spark_dates: points.map(p => p.date),
+      as_of: live.at, updated_at: updatedAt },
+    meta: { id: "gold", provider: GOLD_OBSERVED_LABEL, instrument: GOLD_OBSERVED_INSTRUMENT,
+      latest_price: live.price, previous_price: previous, change_pct: change, as_of: live.at,
+      points: points.length, history_last_date: points.at(-1)?.date ?? null,
+      history_method: "last_received_quote_per_completed_utc_day", history_error: historyError,
+      source_outcomes: { "gold-api": "ok" } },
+  };
 }
 
 // Колонки as_of (миграция 20261030120000) и spark_dates (20261031193000)
@@ -1032,15 +919,7 @@ serveWithErrorReporting("update-assets", async (request) => {
       { slotId: "price.brent", load: () => fetchBrent(updatedAt) },
       {
         slotId: "price.gold",
-        // История золота нужна раз в сутки, поэтому Twelve Data спрашивают,
-        // только когда шлюз разрешил, а в промежутках берут уже опубликованные
-        // закрытия. Источник истории не «обязательный»: его пауза не
-        // останавливает живую цену.
-        load: (sourceId) =>
-          fetchGold(updatedAt, {
-            historyDue: decisions.get("twelve")?.allowed ?? false,
-            priceSource: sourceId,
-          }),
+        load: () => fetchGold(updatedAt, { publish }),
       },
       { slotId: "price.btc", load: (sourceId) => fetchBtcBySource(sourceId, updatedAt) },
     ];

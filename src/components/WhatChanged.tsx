@@ -173,7 +173,7 @@ export default function WhatChanged() {
         name: asset.name,
         unit: '',
         unitLabel: WORLD_UNITS[asset.id],
-        provider: 'кэш мировых котировок',
+        provider: asset.sourceLabel || 'кэш мировых котировок',
         dateKind: dated.dateKind,
         digits: WORLD_DIGITS[asset.id] ?? 2,
         points: dated.points,

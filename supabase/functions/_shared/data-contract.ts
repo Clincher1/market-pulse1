@@ -241,10 +241,10 @@ export const ASSET_CONTRACTS: AssetContract[] = [
   {
     id: 'gold',
     label: 'Gold',
-    instrument: 'Золото, спот XAU/USD, доллары за тройскую унцию (котировка — gold-api.com, история — Twelve Data)',
-    provider: 'gold-api.com (котировка), Twelve Data (закрытия)',
+    instrument: 'Золото, спот XAU/USD, доллары за тройскую унцию; история — последнее наше наблюдение за завершённые UTC-сутки',
+    provider: 'gold-api.com (котировка и наши дневные наблюдения)',
     tier: 'undocumented-api',
-    endpoint: 'https://api.gold-api.com/price/XAU (котировка) + api.twelvedata.com/time_series (закрытия)',
+    endpoint: 'https://api.gold-api.com/price/XAU',
     asOfKind: 'quote',
     cadenceMinutes: 5,
     // Золото торгуется почти круглосуточно, но с паузой 21:00–22:00 UTC и
@@ -254,9 +254,9 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     // XAU/USD отдавал последнюю котировку сессии, и в 06:50 UTC плитка
     // показывала цену одиннадцатичасовой давности. Допуск трое суток — это
     // выходные и пауза, а не разрешение отставать: каденция пять минут.
-    historyInstrumentId: 'gold_twelve_xauusd_daily',
+    historyInstrumentId: 'gold_api_xau_observed_daily',
     displayUnit: 'usd_per_troy_ounce',
-    rationale: 'тот же инструмент, что на плитке (спот XAU/USD); выходные и часовая пауза дают до трёх суток; при отказе live-котировки цена честно уходит на закрытие Twelve Data',
+    rationale: 'единый источник спот XAU/USD; история накапливается как наши наблюдения, не официальный close; при отказе сохраняется прежняя дата',
     quoteLagMinutes: 180,
     trading: { closeDay: 5, closeHourUtc: 21, openDay: 0, openHourUtc: 22 },
     crossCheck: null,

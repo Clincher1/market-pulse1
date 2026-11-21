@@ -48,7 +48,7 @@ test('нет колонки — null, а не пустой массив', () => 
 test('пустые значения не превращаются в NaN и не ломают плитку', () => {
   const asset = mapAssetCacheRow(row({ sparkline: undefined, change: undefined, as_of: undefined }));
   assert.deepEqual(asset.sparkline, []);
-  assert.equal(asset.change, 0);
+  assert.equal(asset.change, null);
   assert.equal(asset.asOf, null);
   assert.equal(asset.sparkDates, null);
 });

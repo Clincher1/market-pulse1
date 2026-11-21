@@ -1,0 +1,11 @@
+{
+  "scope": "offline structural validation of transcribed fetched sample; not independent accuracy or freshness",
+  "bars": 21,
+  "closed": 20,
+  "open": 1,
+  "uniqueDates": true,
+  "positiveFiniteOHLC": true,
+  "validOHLCBounds": true,
+  "latestCloseRoundsToPricesResponse": true,
+  "productionChanged": false
+}

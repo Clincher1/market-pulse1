@@ -46,7 +46,7 @@ test('каждая тематическая страница отрисовыв�
 test('прямые адреса страниц переписываются Vercel на SPA entry point', () => {
   const rewrites = new Map((VERCEL.rewrites ?? []).map(({ source, destination }) => [source, destination]));
   for (const path of pagePaths.values()) {
-    if (path === '/') continue;
-    assert.equal(rewrites.get(path), '/', `${path} должен открываться напрямую после перезагрузки`);
+    if (path === '/' || path === '/memory') continue;
+    assert.equal(rewrites.get(path), `${path}.html`, `${path} должен открываться напрямую после перезагрузки`);
   }
 });

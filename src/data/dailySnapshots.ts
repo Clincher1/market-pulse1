@@ -106,7 +106,7 @@ export function moscowDateKey(date = new Date()): string {
 export async function fetchTodaySnapshot(): Promise<DailySnapshotResult> {
   try {
     const { data, error } = await supabase
-      .from('daily_snapshots')
+      .from('daily_snapshots_public_v1')
       .select('date, captured_at, assets, russia')
       .eq('date', moscowDateKey())
       .limit(1);

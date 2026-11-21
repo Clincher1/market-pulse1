@@ -21,7 +21,7 @@ export function mapAssetCacheRow(row: AssetCacheRow): AssetData {
     : null;
   return {
     ...row,
-    change: row.change ?? 0,
+    change: row.change ?? null,
     sparkline: Array.isArray(row.sparkline) ? row.sparkline : [],
     updatedAt: row.updated_at ?? null,
     asOf: row.as_of ?? null,
