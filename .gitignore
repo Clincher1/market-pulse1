@@ -24,3 +24,10 @@ dist-ssr
 
 # Python-кэш сборки пакета для проверки
 __pycache__/
+
+# Recovery keys, plaintext dumps and isolated backup test tools must never enter Git.
+/.local/
+/.venv/
+*.dump
+*.mpbackup
+*.partial
