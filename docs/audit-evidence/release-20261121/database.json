@@ -1,0 +1,20 @@
+{
+  "method": "Read-only Supabase connector SELECTs and health metadata; no manual selfcheck, morning snapshot, or writer invocation",
+  "observed_database_times": ["2026-11-21T06:32:25.285689+00:00", "2026-11-21T06:39:21.320783+00:00", "2026-11-21T06:41:14.888337+00:00", "2026-11-21T06:48:46.02102+00:00"],
+  "clock_note": "Database/provider timestamps are recorded verbatim, not asserted to match the system date; no clocks or historical dates were changed",
+  "counts": {"forecasts":150,"daily_snapshots":26,"retained_twelve_price_rows":371,"legacy_gold_cache_backup":1},
+  "public_twelve_history_rows":0,
+  "public_snapshot_gold_rows":0,
+  "raw_objects_without_anon_table_or_column_select":["asset_price_snapshots_v2","daily_snapshots","forecast_outcomes_v2","legacy_gold_cache_20261121","market_memory_forecasts_v1","market_memory_stats_v1","source_preferences"],
+  "anon_table_writes":[],
+  "anon_executable_public_security_definer_functions":[],
+  "anon_can_execute_record_gold_observation":false,
+  "public_read_surfaces":["cached_news","cached_assets","asset_price_history_v1","news_source_health","site_health","site_health_check_stats_7d","source_politeness_view","slot_sources_view","daily_snapshots_public_v1"],
+  "migrations_applied_once":[{"version":"20261121063759","name":"close_withdrawn_archive"},{"version":"20261121063921","name":"gold_observed_series"},{"version":"20261121063935","name":"gold_observation_provider_label"}],
+  "services":{"db":"healthy","rest":"healthy","auth":"healthy","storage":"healthy","realtime":{"provider_reports_healthy":true,"db_connected":false,"replication_connected":false,"frontend_uses_realtime":false}},
+  "last_observed_scheduled_health_before_final_code":{"checked_at":"2026-11-21T06:25:03.882+00:00","ok":true,"runs24h":41,"failed24h":0,"is_post_release_evidence":false},
+  "news":{"total":12977,"last24h":441,"newest":"2026-11-21T06:02:03+00:00"},
+  "transient_deployment_window":{"writer_at":"2026-11-21T06:40:00.21746+00:00","status":207,"reason":"Old writer could not reuse the deliberately cleared restricted gold cache; other assets published. New deployment finished at 06:40:20. This is retained, not represented as uninterrupted success."},
+  "gold_first_scheduled_observation_verified":false,
+  "note":"A later evidence file must record the scheduled new gold writer result before claiming end-to-end accumulation works. This initial DB audit does not certify extended uptime or market accuracy."
+}
