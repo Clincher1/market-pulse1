@@ -14,6 +14,7 @@ import { formatCapPercent, formatPercent } from "@/lib/percent";
 import { formatPriceText } from "@/lib/price";
 import { AssetData } from "@/data/marketTypes";
 import ExpandHint from "./ExpandHint";
+import CopyQuoteButton from './CopyQuoteButton';
 import {
   fetchAssetPriceHistory,
   type AssetHistoryPoint,
@@ -1098,6 +1099,7 @@ function AssetPanel({
             {asset.id === 'gold' ? 'к последнему наблюдению завершённых UTC-суток' : 'за день'}
           </p>
           {asset.id === 'gold' && <p className="mt-1 text-xs text-text-secondary">{ASSET_SOURCE_META.gold.note}</p>}
+          <CopyQuoteButton key={asset.id} asset={asset} sourceUrl={meta?.url ?? ''} unavailable={isFallback} />
         </div>
         <button
           type="button"
