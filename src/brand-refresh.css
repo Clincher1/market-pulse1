@@ -766,6 +766,9 @@
 }
 
 .pulse-orbit__link {
+  /* Reset the old layout's opposite edges before applying this orbit layout.
+     Otherwise top + bottom stretch the world link across the Russia target. */
+  inset: auto;
   width: min(43%, 245px);
   min-height: 68px;
   gap: 0.66rem;

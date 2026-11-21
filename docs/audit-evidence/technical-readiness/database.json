@@ -1,0 +1,26 @@
+{
+  "method": "Connected Supabase read-only SELECTs and service health, no production writer or selfcheck was manually invoked",
+  "external_database_observation_time": "2026-11-21T07:18:57.202051+00:00",
+  "raw_objects_with_anon_table_or_column_read": [],
+  "anon_table_insert_update_delete_grants": [],
+  "anon_column_insert_update_grants": [],
+  "anon_executable_public_security_definer_functions": [],
+  "retained_twelve_gold_rows": 371,
+  "cron_sql_job_failures_last24h": [],
+  "services_observed_healthy": ["db", "rest", "auth", "storage"],
+  "new_scheduled_health": {
+    "checked_at": "2026-11-21T07:25:03.471+00:00",
+    "trigger": "cron",
+    "ok": true,
+    "world_arithmetic": "4 of 5 series checked; gold explicitly accumulating in its bounded initial 72-hour period, no percentage fabricated",
+    "gold_primary_instrument": "gold_api_xau_observed_daily",
+    "history_panel": "fresh selected-source observations within 7 days; gold bootstrap explicitly distinguished from completed daily history"
+  },
+  "clock_note": "External timestamps are retained verbatim, not a correction or assertion of equality with the session clock",
+  "limitations": [
+    "A cron SQL job's success does not by itself certify every upstream HTTP provider call.",
+    "A healthy service and a successful scheduled check are finite observations, not proof of uninterrupted availability.",
+    "Gold has a valid spot quote and an accumulating own-observation series, not reconstructed official historical closes.",
+    "Backup run 43861824473 skipped both dump and artifact upload and had zero artifacts. Recovery is unverified; tracked in issue 132. No sensitive raw history was exported in this audit."
+  ]
+}

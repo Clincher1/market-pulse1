@@ -1,18 +1,18 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, BookOpen, HeartPulse, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
-import DailyBrief from '@/components/DailyBrief';
-import RussiaBusiness from '@/components/RussiaBusiness';
-import KeyAssets from '@/components/KeyAssets';
+const DailyBrief = lazy(() => import('@/components/DailyBrief'));
+const RussiaBusiness = lazy(() => import('@/components/RussiaBusiness'));
+const KeyAssets = lazy(() => import('@/components/KeyAssets'));
 import Footer from '@/components/Footer';
 import MarketTicker from '@/components/MarketTicker';
 import TrustStrip from '@/components/TrustStrip';
 import HowWeKnow from '@/components/HowWeKnow';
 import PulseOrbit from '@/components/PulseOrbit';
 import PageSignalIntro from '@/components/PageSignalIntro';
-import BusinessMoney from '@/components/BusinessMoney';
-import WhatChanged from '@/components/WhatChanged';
+const BusinessMoney = lazy(() => import('@/components/BusinessMoney'));
+const WhatChanged = lazy(() => import('@/components/WhatChanged'));
 import MarketDesk from '@/components/MarketDesk';
 import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
 import { SectionFallback } from '@/components/SectionFallback';
@@ -118,7 +118,7 @@ function DashboardPage() {
             <span className="overview-hero__eyebrow-subtitle">картина без лишнего шума</span>
           </motion.div>
 
-          <motion.h1 className="overview-hero__title" {...appear(0.1)}>
+          <motion.h1 className="overview-hero__title" initial={false}>
             Рынки в движении.
             <br />
             <span>Факты — на виду.</span>
@@ -227,15 +227,15 @@ function SectionPage({ view }: { view: SectionPageView }) {
       return (
         <>
           <PageSignalIntro page={page} />
-          <SectionBoundary title="Деньги бизнеса сегодня"><BusinessMoney /></SectionBoundary>
-          <SectionBoundary title="Что меняется"><WhatChanged /></SectionBoundary>
+          <SectionBoundary title="Деньги бизнеса сегодня"><Suspense fallback={<SectionFallback title="Деньги бизнеса сегодня" />}><BusinessMoney /></Suspense></SectionBoundary>
+          <SectionBoundary title="Что меняется"><Suspense fallback={<SectionFallback title="Что меняется" />}><WhatChanged /></Suspense></SectionBoundary>
         </>
       );
     case 'russia':
       return (
         <>
           <PageSignalIntro page={page} />
-          <SectionBoundary title="Россия и бизнес"><RussiaBusiness /></SectionBoundary>
+          <SectionBoundary title="Россия и бизнес"><Suspense fallback={<SectionFallback title="Россия и бизнес" />}><RussiaBusiness /></Suspense></SectionBoundary>
         </>
       );
     case 'global':
@@ -257,7 +257,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
                 Мировые котировки и графики с датами наблюдений. Рубль и Мосбиржа находятся на отдельной странице российского контура.
               </p>
             </div>
-            <SectionBoundary title="Мировые рынки"><KeyAssets /></SectionBoundary>
+            <SectionBoundary title="Мировые рынки"><Suspense fallback={<SectionFallback title="Мировые рынки" />}><KeyAssets /></Suspense></SectionBoundary>
           </section>
         </>
       );
@@ -265,7 +265,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
       return (
         <>
           <PageSignalIntro page={page} />
-          <SectionBoundary title="Бриф"><DailyBrief /></SectionBoundary>
+          <SectionBoundary title="Бриф"><Suspense fallback={<SectionFallback title="Бриф" />}><DailyBrief /></Suspense></SectionBoundary>
         </>
       );
     case 'news':
@@ -321,6 +321,8 @@ function SectionPage({ view }: { view: SectionPageView }) {
 }
 
 function App() {
+  const firstView = useRef(true);
+  useEffect(() => { firstView.current = false; }, []);
   const reduceMotion = useReducedMotion();
   const [view, setView] = useState<AppView>(() =>
     typeof window === 'undefined' ? 'dashboard' : viewFromLocation(window.location.pathname, window.location.hash),
@@ -460,7 +462,7 @@ function App() {
       >
         <motion.div
           key={view}
-          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          initial={reduceMotion || firstView.current ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={reduceMotion ? { duration: 0 } : { duration: 0.34, ease: 'easeOut' }}
         >
