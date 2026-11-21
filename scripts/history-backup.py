@@ -28,6 +28,12 @@ REQUIRED = {'news_articles_shadow', 'news_events_shadow', 'news_event_articles_s
 
 def run(args, **kwargs):
     # No DSNs or raw subprocess errors in public workflow logs.
+    if args[0] in ('pg_dump', 'pg_restore') and os.environ.get('BACKUP_PG_IMAGE'):
+        directory = os.environ['BACKUP_PRIVATE_TEMP']
+        env = kwargs.get('env', os.environ)
+        forwarded = [part for key in env if key.startswith('PG') for part in ('--env', key)]
+        args = ['docker', 'run', '--rm', '--network', 'host', '--user', f'{os.getuid()}:{os.getgid()}',
+                '--volume', f'{directory}:{directory}', *forwarded, os.environ['BACKUP_PG_IMAGE'], *args]
     result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=600, **kwargs)
     if result.returncode:
         raise RuntimeError(f'{Path(args[0]).name} failed (details withheld; may contain private database data)')
@@ -92,6 +98,7 @@ def main():
     # the artifact directory, Git or command output.
     with tempfile.TemporaryDirectory(prefix='mp-backup-') as temporary:
         temp = Path(temporary)
+        os.environ['BACKUP_PRIVATE_TEMP'] = str(temp)
         dump = temp / 'public.dump'
         manifest = {'format': 1, 'scope': 'all public base tables plus full public schema dump',
                     'verification_scope': 'table data restored into isolated local PostgreSQL, not complete Supabase service recovery',

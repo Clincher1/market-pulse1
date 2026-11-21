@@ -18,6 +18,8 @@ concurrency:
 jobs:
   backup:
     runs-on: ubuntu-24.04
+    env:
+      BACKUP_PG_IMAGE: postgres:17
     timeout-minutes: 20
     services:
       restore:
@@ -48,10 +50,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Install matching PostgreSQL client and transport
+      - name: Install database transport (PostgreSQL tools use pinned major Docker image)
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-17
           python -m pip install 'psycopg[binary]==3.2.13'
       - name: Consistent read-only dump, isolated data restore, checksums, encryption
         env:

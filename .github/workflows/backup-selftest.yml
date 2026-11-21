@@ -14,6 +14,8 @@ permissions:
 jobs:
   isolated-recovery:
     runs-on: ubuntu-24.04
+    env:
+      BACKUP_PG_IMAGE: postgres:17
     timeout-minutes: 10
     services:
       postgres:
@@ -34,8 +36,6 @@ jobs:
         with:
           python-version: '3.12'
       - run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-17
           python -m pip install 'psycopg[binary]==3.2.13'
       - name: Encryption authentication and safety regressions
         run: node --test tests/backup-envelope.test.mjs tests/backup-safety.test.mjs
