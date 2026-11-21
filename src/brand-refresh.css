@@ -1322,6 +1322,7 @@
 .page-signal-intro__content {
   position: relative;
   z-index: 2;
+  min-width: 0;
   width: 100%;
   max-width: 760px;
 }
@@ -1329,6 +1330,7 @@
 .page-signal-intro__eyebrow {
   display: flex;
   min-height: 24px;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.58rem;
   color: #54657d;
@@ -1436,26 +1438,32 @@
   outline-offset: 4px;
 }
 
+/* Keep artwork and its caption in the grid's normal flow. An absolutely
+   positioned, vertically centered SVG used to push the caption below the
+   clipped header on short pages. Mask only the drawing, never its text. */
 .page-signal-intro__art {
-  position: absolute;
-  top: 50%;
-  right: -1.5%;
+  position: relative;
   z-index: 1;
-  width: min(46%, 540px);
-  aspect-ratio: 1.6;
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  max-width: 320px;
+  justify-self: end;
+  gap: 0.5rem;
+  padding-block: 0.5rem;
   color: var(--signal-a);
-  opacity: 0.82;
   pointer-events: none;
-  transform: translateY(-50%);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 84%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 84%, transparent);
 }
 
 .page-signal-intro__art svg {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 1.6;
   overflow: visible;
+  opacity: 0.82;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 84%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 84%, transparent);
 }
 
 .page-signal-intro__orbit {
@@ -1524,14 +1532,16 @@
 }
 
 .page-signal-intro__art-caption {
-  position: absolute;
-  right: 12%;
-  bottom: 8%;
+  justify-self: center;
+  max-width: 100%;
+  padding-inline: 0.5rem;
   color: var(--signal-ink);
-  font-size: 0.53rem;
+  font-size: 0.6rem;
   font-weight: 850;
   letter-spacing: 0.16em;
-  white-space: nowrap;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 @media (max-width: 900px) {
@@ -1550,9 +1560,9 @@
   }
 
   .page-signal-intro__art {
-    right: -2%;
-    width: min(48%, 440px);
-    opacity: 0.55;
+    width: min(100%, 280px);
+    margin-top: 0.75rem;
+    justify-self: center;
   }
 }
 
@@ -1605,15 +1615,8 @@
   }
 
   .page-signal-intro__art {
-    top: -0.4rem;
-    right: -8%;
-    width: min(62%, 300px);
-    opacity: 0.2;
-    transform: none;
-  }
-
-  .page-signal-intro__art-caption {
-    display: none;
+    width: min(100%, 220px);
+    margin-top: 0.5rem;
   }
 }
 
