@@ -17,6 +17,7 @@ const MarketDesk = lazy(() => import('@/components/MarketDesk'));
 import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
 import { SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
+import PAGE_DESCRIPTIONS from '@/lib/pageDescriptions.json';
 import { PAGE_PATHS, pathFromLegacyHash, viewFromLocation, type AppView } from '@/lib/routes';
 
 const NewsFeed = lazy(() => import('@/components/NewsFeed'));
@@ -50,47 +51,47 @@ const PAGE_INFO: Record<InnerPageView, PageInfo> = {
   passport: {
     themeId: 'passport',
     title: 'Сводка дня',
-    description: 'Денежные ориентиры с источниками и датами, наблюдаемая динамика рынков.',
+    description: PAGE_DESCRIPTIONS.passport,
   },
   russia: {
     themeId: 'russia',
     title: 'Россия и бизнес',
-    description: 'Курсы, Московская биржа и российские деловые заголовки — каждый блок со своим источником.',
+    description: PAGE_DESCRIPTIONS.russia,
   },
   global: {
     themeId: 'global',
     title: 'Мировые рынки',
-    description: 'Внешние рыночные ориентиры и история наблюдений, отделённые от российского контура.',
+    description: PAGE_DESCRIPTIONS.global,
   },
   brief: {
     themeId: 'brief',
     title: 'Коротко о рынке',
-    description: 'Сжатый обзор фактов из текущего снимка данных — без прогнозов и рекомендаций.',
+    description: PAGE_DESCRIPTIONS.brief,
   },
   news: {
     themeId: 'news',
     title: 'Лента публикаций',
-    description: 'Исходные заголовки и ссылки на публикации; заголовок сам по себе не подтверждает событие или его причину.',
+    description: PAGE_DESCRIPTIONS.news,
   },
   memory: {
     themeId: 'memory',
     title: 'Архив и оценки',
-    description: 'Исторические прогнозные записи и рассчитанные исходы сохранены для проверки; новые прогнозы не выпускаются.',
+    description: PAGE_DESCRIPTIONS.memory,
   },
   guide: {
     themeId: 'guide',
     title: 'Методология Market Pulse',
-    description: 'Как читать факты и расчёты, проверять источники и понимать ограничения данных.',
+    description: PAGE_DESCRIPTIONS.guide,
   },
   about: {
     themeId: 'about',
     title: 'О проекте',
-    description: 'Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.',
+    description: PAGE_DESCRIPTIONS.about,
   },
   status: {
     themeId: 'status',
     title: 'Состояние системы',
-    description: 'Свежесть источников, котировок и публикаций; результаты почасовой самопроверки.',
+    description: PAGE_DESCRIPTIONS.status,
   },
 };
 
@@ -359,6 +360,11 @@ function App() {
 
   useEffect(() => {
     document.title = `${VIEW_TITLES[view]} — Market Pulse`;
+    const description = PAGE_DESCRIPTIONS[view];
+    document.querySelectorAll('meta[name="description"], meta[property="og:description"], meta[name="twitter:description"]')
+      .forEach(meta => meta.setAttribute('content', description));
+    document.querySelectorAll('meta[property="og:title"], meta[name="twitter:title"]')
+      .forEach(meta => meta.setAttribute('content', document.title));
     const canonical = `https://market-pulse1-eta.vercel.app${PAGE_PATHS[view]}`;
     document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonical);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
