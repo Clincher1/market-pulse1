@@ -137,7 +137,7 @@ function factsFrom(
   // дате. Биржевое значение юаня на этой дате могло быть предыдущим закрытием
   // («сделок сегодня в потоке нет»), и на карточке «курс для расчётов» это
   // выглядело бы как текущая котировка.
-  const cny = byId.get('cny-rub-cbr') ?? byId.get('cny-rub-moex') ?? null;
+  const cny = byId.get('cny-rub-cbr') ?? null;
   const keyRate = byId.get('key-rate') ?? null;
   const ruonia = byId.get('ruonia') ?? null;
   const reserves = byId.get('reserves') ?? null;

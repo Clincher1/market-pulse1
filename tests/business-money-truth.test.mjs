@@ -52,3 +52,17 @@ test('an actual zero Brent change is still displayed as zero', async () => {
   await mount(0);
   assert.match(fact('Нефть').textContent, /0,00\s*%/);
 });
+
+
+test('official calculation card never substitutes a MOEX yuan quote for the CBR rate', async () => {
+  await mount(0);
+  const fx = fact('Курс для расчётов');
+  assert.doesNotMatch(fx.textContent, /CNY\/RUB|12,147/);
+});
+test('the official yuan reference is displayed when CBR actually supplies it', async () => {
+  await mount(0, [...markets, { id: 'cny-rub-cbr', value: 12.2759, asOf: '2026-11-21' }]);
+  const fx = fact('Курс для расчётов');
+  assert.match(fx.textContent, /CNY\/RUB/);
+  assert.match(fx.textContent, /12,2759/);
+  assert.doesNotMatch(fx.textContent, /12,147/);
+});
