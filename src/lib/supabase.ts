@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { PostgrestClient } from '@supabase/postgrest-js';
+import { FunctionsClient } from '@supabase/functions-js';
 
 /**
  * Единый клиент базы для всего приложения.
@@ -50,16 +51,15 @@ const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   'sb_publishable_FPAh2Z30aCCKpbfDdDrM_g_urRwk8r-';
 
-// Сайт только читает публичные данные и не авторизует пользователей,
-// поэтому клиент полностью отключён от браузерного хранилища:
-// ни cookies, ни localStorage для сессий не используются.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
-  },
-});
+// Use the same official query/invoke implementations without shipping Auth,
+// Realtime or Storage. There are no user sessions, cookies or browser storage.
+// Preserve the public headers used by supabase-js (including legacy anon JWTs).
+const headers = { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` };
+const rest = new PostgrestClient(`${supabaseUrl.replace(/\/$/, '')}/rest/v1`, { headers });
+export const supabase = {
+  from: rest.from.bind(rest),
+  functions: new FunctionsClient(`${supabaseUrl.replace(/\/$/, '')}/functions/v1`, { headers }),
+};
 
 /**
  * Куда именно ходит браузер — видно в сборке и в отладке. Не секрет:

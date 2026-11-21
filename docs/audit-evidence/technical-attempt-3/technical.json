@@ -1,0 +1,1054 @@
+{
+  "started": "2026-11-21T07:43:24.777Z",
+  "data": [
+    {
+      "id": "usd-eur",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "brent",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "btc",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "sp500",
+      "cachedAndExpandedPointsCompared": 30
+    },
+    {
+      "id": "imoex",
+      "points": 65,
+      "current": 2339.16,
+      "asOf": "2026-11-21 10:43:24",
+      "changeExpected": -0.647298674821617,
+      "changeStored": -0.647
+    },
+    {
+      "id": "rgbi",
+      "points": 65,
+      "current": 110.91,
+      "asOf": "2026-11-21 10:43:15",
+      "changeExpected": 0.018035891423928696,
+      "changeStored": 0.018
+    },
+    {
+      "id": "usd-rub",
+      "points": 66,
+      "current": 82.1911,
+      "asOf": "2026-11-21",
+      "sameDateValueAgrees": true,
+      "changeExpected": 0.31991114257468034,
+      "changeStored": 0.32
+    },
+    {
+      "id": "ruonia",
+      "points": 64,
+      "current": 14,
+      "asOf": "2026-11-19",
+      "sameDateValueAgrees": true
+    },
+    {
+      "id": "reserves",
+      "points": 13,
+      "current": 718.9,
+      "asOf": "2026-11-13",
+      "sameDateValueAgrees": true
+    },
+    {
+      "id": "key-rate",
+      "points": 1,
+      "current": 14,
+      "asOf": "2026-07-27",
+      "stepValueAgrees": true
+    }
+  ],
+  "browsers": [
+    {
+      "name": "chromium",
+      "width": 390,
+      "path": "/",
+      "overflow": false,
+      "text": 1916,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 390,
+      "path": "/world",
+      "overflow": false,
+      "text": 6901,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 390,
+      "path": "/russia",
+      "overflow": false,
+      "text": 8634,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 390,
+      "path": "/news",
+      "overflow": false,
+      "text": 1049,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 1280,
+      "path": "/",
+      "overflow": false,
+      "text": 2375,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 1280,
+      "path": "/world",
+      "overflow": false,
+      "text": 6927,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 1280,
+      "path": "/russia",
+      "overflow": false,
+      "text": 8659,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "chromium",
+      "width": 1280,
+      "path": "/news",
+      "overflow": false,
+      "text": 1107,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 390,
+      "path": "/",
+      "overflow": false,
+      "text": 1916,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 390,
+      "path": "/world",
+      "overflow": false,
+      "text": 6805,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 390,
+      "path": "/russia",
+      "overflow": false,
+      "text": 8609,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 390,
+      "path": "/news",
+      "overflow": false,
+      "text": 1049,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 1280,
+      "path": "/",
+      "overflow": false,
+      "text": 2375,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 1280,
+      "path": "/world",
+      "overflow": false,
+      "text": 6831,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 1280,
+      "path": "/russia",
+      "overflow": false,
+      "text": 8634,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "firefox",
+      "width": 1280,
+      "path": "/news",
+      "overflow": false,
+      "text": 1107,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 390,
+      "path": "/",
+      "overflow": false,
+      "text": 1916,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 390,
+      "path": "/world",
+      "overflow": false,
+      "text": 6809,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 390,
+      "path": "/russia",
+      "overflow": false,
+      "text": 8633,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 390,
+      "path": "/news",
+      "overflow": false,
+      "text": 1049,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 1280,
+      "path": "/",
+      "overflow": false,
+      "text": 2375,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 1280,
+      "path": "/world",
+      "overflow": false,
+      "text": 6835,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 1280,
+      "path": "/russia",
+      "overflow": false,
+      "text": 8659,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    },
+    {
+      "name": "webkit",
+      "width": 1280,
+      "path": "/news",
+      "overflow": false,
+      "text": 1107,
+      "cookie": "",
+      "hosts": [
+        "market-pulse1-eta.vercel.app",
+        "hekzplfftannlzwvgwwm.supabase.co"
+      ],
+      "unsafeLinks": [],
+      "storage": [
+        "market-pulse-heatmap-palette"
+      ],
+      "errors": []
+    }
+  ],
+  "lighthouse": [
+    {
+      "path": "/",
+      "mode": "mobile",
+      "scores": {
+        "performance": 0.96,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 913.876,
+      "cls": 0,
+      "tbtMs": 233,
+      "diagnostics": {
+        "label-content-name-mismatch": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "target-size": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "lcp-breakdown-insight": {
+          "type": "list",
+          "items": [
+            {
+              "type": "table",
+              "headings": [
+                {
+                  "key": "label",
+                  "valueType": "text",
+                  "label": "Subpart"
+                },
+                {
+                  "key": "duration",
+                  "valueType": "ms",
+                  "label": "Duration"
+                }
+              ],
+              "items": [
+                {
+                  "subpart": "timeToFirstByte",
+                  "label": "Time to first byte",
+                  "duration": 47.758
+                },
+                {
+                  "subpart": "elementRenderDelay",
+                  "label": "Element render delay",
+                  "duration": 351.497
+                }
+              ]
+            },
+            {
+              "type": "node",
+              "lhId": "page-0-SPAN",
+              "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,0,SECTION,1,DIV,1,H1,2,SPAN",
+              "selector": "section#dashboard > div.overview-hero__copy > h1.overview-hero__title > span",
+              "boundingRect": {
+                "top": 266,
+                "bottom": 367,
+                "left": 35,
+                "right": 275,
+                "width": 241,
+                "height": 101
+              },
+              "snippet": "<span>",
+              "nodeLabel": "Факты — на виду."
+            }
+          ]
+        },
+        "render-blocking-insight": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "url",
+              "valueType": "url",
+              "label": "URL"
+            },
+            {
+              "key": "totalBytes",
+              "valueType": "bytes",
+              "label": "Transfer Size"
+            },
+            {
+              "key": "wastedMs",
+              "valueType": "timespanMs",
+              "label": "Duration"
+            }
+          ],
+          "items": [
+            {
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27133,
+              "wastedMs": 156
+            }
+          ]
+        }
+      },
+      "findings": [
+        {
+          "id": "total-blocking-time",
+          "score": 0.86,
+          "title": "Total Blocking Time",
+          "displayValue": "230 ms"
+        },
+        {
+          "id": "max-potential-fid",
+          "score": 0.79,
+          "title": "Max Potential First Input Delay",
+          "displayValue": "160 ms"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.3 s"
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0.5,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 94 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0,
+          "title": "Render-blocking requests",
+          "displayValue": "Est savings of 140 ms"
+        }
+      ]
+    },
+    {
+      "path": "/",
+      "mode": "desktop",
+      "scores": {
+        "performance": 1,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 248.868,
+      "cls": 0,
+      "tbtMs": 0,
+      "diagnostics": {
+        "label-content-name-mismatch": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "target-size": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "lcp-breakdown-insight": {
+          "type": "list",
+          "items": [
+            {
+              "type": "table",
+              "headings": [
+                {
+                  "key": "label",
+                  "valueType": "text",
+                  "label": "Subpart"
+                },
+                {
+                  "key": "duration",
+                  "valueType": "ms",
+                  "label": "Duration"
+                }
+              ],
+              "items": [
+                {
+                  "subpart": "timeToFirstByte",
+                  "label": "Time to first byte",
+                  "duration": 46.043
+                },
+                {
+                  "subpart": "elementRenderDelay",
+                  "label": "Element render delay",
+                  "duration": 412.923
+                }
+              ]
+            },
+            {
+              "type": "node",
+              "lhId": "page-0-SPAN",
+              "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,0,SECTION,1,DIV,1,H1,2,SPAN",
+              "selector": "section#dashboard > div.overview-hero__copy > h1.overview-hero__title > span",
+              "boundingRect": {
+                "top": 364,
+                "bottom": 522,
+                "left": 688,
+                "right": 1072,
+                "width": 384,
+                "height": 158
+              },
+              "snippet": "<span>",
+              "nodeLabel": "Факты — на виду."
+            }
+          ]
+        },
+        "render-blocking-insight": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "url",
+              "valueType": "url",
+              "label": "URL"
+            },
+            {
+              "key": "totalBytes",
+              "valueType": "bytes",
+              "label": "Transfer Size"
+            },
+            {
+              "key": "wastedMs",
+              "valueType": "timespanMs",
+              "label": "Duration"
+            }
+          ],
+          "items": [
+            {
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27730
+            }
+          ]
+        }
+      },
+      "findings": [
+        {
+          "id": "unused-javascript",
+          "score": 0.5,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 94 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0.5,
+          "title": "Render-blocking requests"
+        }
+      ]
+    },
+    {
+      "path": "/world",
+      "mode": "mobile",
+      "scores": {
+        "performance": 0.93,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 908.313,
+      "cls": 0.001502679277614253,
+      "tbtMs": 315,
+      "diagnostics": {
+        "label-content-name-mismatch": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "target-size": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "lcp-breakdown-insight": {
+          "type": "list",
+          "items": [
+            {
+              "type": "table",
+              "headings": [
+                {
+                  "key": "label",
+                  "valueType": "text",
+                  "label": "Subpart"
+                },
+                {
+                  "key": "duration",
+                  "valueType": "ms",
+                  "label": "Duration"
+                }
+              ],
+              "items": [
+                {
+                  "subpart": "timeToFirstByte",
+                  "label": "Time to first byte",
+                  "duration": 29.804999999970196
+                },
+                {
+                  "subpart": "elementRenderDelay",
+                  "label": "Element render delay",
+                  "duration": 307.2820000000298
+                }
+              ]
+            },
+            {
+              "type": "node",
+              "lhId": "page-0-P",
+              "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,1,SECTION,0,DIV,1,P",
+              "selector": "div > section.mb-8 > div.flex > p.text-[11px]",
+              "boundingRect": {
+                "top": 355,
+                "bottom": 421,
+                "left": 16,
+                "right": 396,
+                "width": 380,
+                "height": 66
+              },
+              "snippet": "<p class=\"text-[11px] text-text-secondary\">",
+              "nodeLabel": "Цена и доступное изменение к предыдущему дневному наблюдению. Подпись под значе…"
+            }
+          ]
+        },
+        "render-blocking-insight": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "url",
+              "valueType": "url",
+              "label": "URL"
+            },
+            {
+              "key": "totalBytes",
+              "valueType": "bytes",
+              "label": "Transfer Size"
+            },
+            {
+              "key": "wastedMs",
+              "valueType": "timespanMs",
+              "label": "Duration"
+            }
+          ],
+          "items": [
+            {
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27126,
+              "wastedMs": 156
+            }
+          ]
+        }
+      },
+      "findings": [
+        {
+          "id": "total-blocking-time",
+          "score": 0.77,
+          "title": "Total Blocking Time",
+          "displayValue": "320 ms"
+        },
+        {
+          "id": "max-potential-fid",
+          "score": 0.79,
+          "title": "Max Potential First Input Delay",
+          "displayValue": "160 ms"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.6 s"
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0.5,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 70 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0,
+          "title": "Render-blocking requests",
+          "displayValue": "Est savings of 140 ms"
+        }
+      ]
+    },
+    {
+      "path": "/world",
+      "mode": "desktop",
+      "scores": {
+        "performance": 1,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "lcpMs": 256.8155,
+      "cls": 0.002455451222966272,
+      "tbtMs": 0,
+      "diagnostics": {
+        "label-content-name-mismatch": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "target-size": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "node",
+              "valueType": "node",
+              "subItemsHeading": {
+                "key": "relatedNode",
+                "valueType": "node"
+              },
+              "label": "Failing Elements"
+            }
+          ],
+          "items": []
+        },
+        "lcp-breakdown-insight": {
+          "type": "list",
+          "items": [
+            {
+              "type": "table",
+              "headings": [
+                {
+                  "key": "label",
+                  "valueType": "text",
+                  "label": "Subpart"
+                },
+                {
+                  "key": "duration",
+                  "valueType": "ms",
+                  "label": "Duration"
+                }
+              ],
+              "items": [
+                {
+                  "subpart": "timeToFirstByte",
+                  "label": "Time to first byte",
+                  "duration": 91.1760000000596
+                },
+                {
+                  "subpart": "elementRenderDelay",
+                  "label": "Element render delay",
+                  "duration": 347.02899999994037
+                }
+              ]
+            },
+            {
+              "type": "node",
+              "lhId": "page-0-P",
+              "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,2,DIV,0,SECTION,1,P",
+              "selector": "div > div.market-desk-stack > section.market-desk > p.market-desk__muted",
+              "boundingRect": {
+                "top": 678,
+                "bottom": 719,
+                "left": 69,
+                "right": 1266,
+                "width": 1197,
+                "height": 41
+              },
+              "snippet": "<p class=\"market-desk__muted\">",
+              "nodeLabel": "Отметьте мировые инструменты. Выбор хранится только в этом браузере, без регист…"
+            }
+          ]
+        },
+        "render-blocking-insight": {
+          "type": "table",
+          "headings": [
+            {
+              "key": "url",
+              "valueType": "url",
+              "label": "URL"
+            },
+            {
+              "key": "totalBytes",
+              "valueType": "bytes",
+              "label": "Transfer Size"
+            },
+            {
+              "key": "wastedMs",
+              "valueType": "timespanMs",
+              "label": "Duration"
+            }
+          ],
+          "items": [
+            {
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27153
+            }
+          ]
+        }
+      },
+      "findings": [
+        {
+          "id": "unused-javascript",
+          "score": 0.5,
+          "title": "Reduce unused JavaScript",
+          "displayValue": "Est savings of 70 KiB"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0.5,
+          "title": "Render-blocking requests"
+        }
+      ]
+    }
+  ],
+  "failures": [
+    "Lighthouse mobile /: TBT 233ms",
+    "Lighthouse mobile /world: TBT 315ms"
+  ],
+  "finished": "2026-11-21T07:45:10.061Z"
+}

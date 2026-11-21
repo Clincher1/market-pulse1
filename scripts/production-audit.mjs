@@ -77,7 +77,7 @@ try {
           await page.waitForTimeout(300);
           assert.ok(await region.evaluate(n => n.scrollTop > 0), 'History table did not scroll from keyboard');
         }
-        const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+        const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
         result.accessibility.push({ path: new URL(page.url()).pathname + ':expanded-history', width, violations: axe.violations });
         assert.deepEqual(axe.violations.map(v => v.id), [], 'Expanded table accessibility');
       }
@@ -125,6 +125,15 @@ try {
           assert.ok(!body.includes(text), `Withdrawn content visible: ${text}`);
         }
         assert.equal(await page.locator('#market-memory, #daily-passport').count(), 0, 'A retired public block remains');
+        if (path === '/') {
+          const boxes = await page.locator('.pulse-orbit__link').evaluateAll(nodes => nodes.map(n => {
+            const r = n.getBoundingClientRect(); return { href: n.getAttribute('href'), x: r.x, y: r.y, right: r.right, bottom: r.bottom };
+          }));
+          for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+            const a = boxes[i], b = boxes[j];
+            assert.ok(!(Math.min(a.right, b.right) - Math.max(a.x, b.x) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y) > 1), `Orbit targets overlap: ${a.href} and ${b.href}`);
+          }
+        }
         if (path === '/passport') {
           assert.ok(body.includes('Сводка дня') && body.includes('Деньги бизнеса'), 'Verified replacement summary missing');
         }
@@ -184,8 +193,8 @@ try {
           await page.getByRole('button', { name: 'Свернуть панель актива' }).click();
           await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
         }
-        if (['/passport', '/memory', '/brief', '/world', '/russia'].includes(path)) {
-          await page.screenshot({ path: `${output}/${round}-${width}-${path.slice(1)}.png`, fullPage: false });
+        if (['/', '/passport', '/memory', '/brief', '/world', '/russia'].includes(path)) {
+          await page.screenshot({ path: `${output}/${round}-${width}-${path === '/' ? 'home' : path.slice(1)}.png`, fullPage: false });
         }
         const extra = await page.evaluate(() => ({
           title: document.title,
@@ -204,7 +213,7 @@ try {
           assert.ok(rawHtml.includes(`rel="canonical" href="${origin + new URL(page.url()).pathname}"`), 'Canonical absent in raw HTML');
         }
         if (!path.includes('#') && !path.startsWith('/memory')) {
-          const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+          const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
           if (axe.violations.length) result.failures.push(`Accessibility ${width} ${path}: ${axe.violations.map(v=>v.id).join(', ')}`);
           result.accessibility.push({ path, width, violations: axe.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.map(n => ({ target: n.target, html: n.html, failureSummary: n.failureSummary })) })) });
         }
@@ -226,7 +235,7 @@ try {
         assert.ok((await active.evaluate((node) => getComputedStyle(node).filter)).includes('brightness(1.17)'), 'Tap does not brighten');
         await page.mouse.up();
         await page.waitForTimeout(400);
-        await page.getByRole('button', { name: 'Открыть меню', exact: true }).click();
+        await page.getByRole('button', { name: 'Разделы — открыть меню', exact: true }).click();
         const nav = page.getByRole('navigation', { name: 'Мобильная навигация' });
         navigationInProgress = true;
         await nav.locator('a[href="/news"]').click();

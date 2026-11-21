@@ -1,81 +1,75 @@
-name: Weekly history backup
-
-# Зачем: на бесплатном тарифе Supabase автоматических копий нет. Если таблицу
-# испортит миграция или ошибка в функции, восстанавливать нечего. Ленты отдают
-# только последние дни, поэтому потерянные новости заново не собрать.
-#
-# Что делает: раз в неделю выгружает только таблицы истории (не всю базу),
-# пакует в gzip и кладёт артефактом workflow. Артефакт хранится 90 дней,
-# так что это «катящаяся» копия: аварию, замеченную в течение трёх месяцев,
-# можно откатить.
-#
-# Что нужно один раз: добавить в Settings → Secrets and variables → Actions
-# секрет SUPABASE_DB_URL — строка подключения из панели Supabase
-# (Project Settings → Database → Connection string → URI, с паролем базы).
-# Пока секрета нет, workflow завершается успешно и пишет, чего не хватает:
-# красный крест каждую неделю ничего не сообщает, а только приучает его
-# игнорировать.
+name: Verified encrypted history backup
 
 on:
   schedule:
-    - cron: '30 3 * * 1' # понедельник, 03:30 UTC — после ночных чисток
+    - cron: '30 3 * * *'
   workflow_dispatch:
+  push:
+    branches: ['arena/398deb1c-market-pulse1']
+    paths: ['.github/workflows/backup-history.yml', 'scripts/history-backup.py', 'scripts/backup-envelope.mjs', 'config/backup-recipient.pem']
 
 permissions:
   contents: read
 
+concurrency:
+  group: encrypted-production-history-backup
+  cancel-in-progress: false
+
 jobs:
   backup:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    env:
+      BACKUP_PG_IMAGE: postgres:17
+    timeout-minutes: 20
+    services:
+      restore:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          # Disposable local test DB only. Never used for production access.
+          POSTGRES_PASSWORD: local-restore-only
+          POSTGRES_DB: market_pulse_restore
+        ports: ['127.0.0.1:5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Check connection string
-        id: check
+      - uses: actions/checkout@v7
+      - name: Require secure source connection (never a skipped success)
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "SUPABASE_DB_URL не задан: бэкап не сделан. Добавьте секрет, см. docs/BACKUP.md."
-          else
-            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Backup not created: secure database connection is not configured."
+            echo "No production backup was created. Restore is not certified." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
-
-      - name: Install PostgreSQL client
-        if: steps.check.outputs.present == 'true'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-
-      - name: Dump history tables
-        if: steps.check.outputs.present == 'true'
-        env:
-          # Строка подключения не печатается: pg_dump берёт её из окружения,
-          # а в лог попадает только имя файла и размер.
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install database transport (PostgreSQL tools use pinned major Docker image)
         run: |
-          set -euo pipefail
-          mkdir -p backup
-          day="$(date -u +%Y-%m-%d)"
-          pg_dump "$SUPABASE_DB_URL" \
-            --no-owner --no-privileges --data-only --format=plain \
-            --table=public.news_articles_shadow \
-            --table=public.news_events_shadow \
-            --table=public.news_event_articles_shadow \
-            --table=public.news_event_classifications_shadow \
-            --table=public.event_price_impacts_v2 \
-            --table=public.market_forecasts_v2 \
-            --table=public.forecast_outcomes_v2 \
-            --table=public.daily_snapshots \
-            --table=public.asset_price_snapshots_v2 \
-            | gzip -9 > "backup/history-${day}.sql.gz"
-          ls -lh backup/
-
-      - name: Keep the backup
-        if: steps.check.outputs.present == 'true'
+          python -m pip install 'psycopg[binary]==3.2.13'
+      - name: Consistent read-only dump, isolated data restore, checksums, encryption
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_RESTORE_URL: postgresql://postgres:local-restore-only@127.0.0.1:5432/market_pulse_restore
+          BACKUP_OUTPUT: ${{ runner.temp }}/sealed-history
+        run: python scripts/history-backup.py
+      - name: Store ONLY authenticated ciphertext off the production database
         uses: actions/upload-artifact@v7
         with:
-          name: history-backup-${{ github.run_id }}
-          path: backup/*.sql.gz
-          retention-days: 90
+          name: encrypted-history-${{ github.run_id }}
+          path: ${{ runner.temp }}/sealed-history/*.mpbackup
+          retention-days: 14
           if-no-files-found: error
+      - name: Record bounded result
+        run: |
+          echo "Encrypted public-schema backup created; table data restored and content checksums verified in a disposable local PostgreSQL." >> "$GITHUB_STEP_SUMMARY"
+          echo "This does not certify full Supabase/Auth/Storage/cron recovery or a long-term SLA." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove runner files
+        if: always()
+        run: rm -rf -- "$RUNNER_TEMP/sealed-history"

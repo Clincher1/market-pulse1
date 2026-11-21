@@ -1,0 +1,54 @@
+name: Encrypted backup recovery regression
+
+on:
+  push:
+    branches: ['arena/398deb1c-market-pulse1', main]
+    paths: ['scripts/*backup*', 'tests/backup-*', '.github/workflows/backup-*.yml', 'config/backup-recipient.pem']
+  pull_request:
+    paths: ['scripts/*backup*', 'tests/backup-*', '.github/workflows/backup-*.yml', 'config/backup-recipient.pem']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-recovery:
+    runs-on: ubuntu-24.04
+    env:
+      BACKUP_PG_IMAGE: postgres:17
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: fixture-only
+        ports: ['127.0.0.1:5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install 'psycopg[binary]==3.2.13'
+      - name: Encryption authentication and safety regressions
+        run: node --test tests/backup-envelope.test.mjs tests/backup-safety.test.mjs
+      - name: Restore actual synthetic PostgreSQL dump (NO production credentials)
+        env:
+          BACKUP_FIXTURE_ADMIN_URL: postgresql://postgres:fixture-only@127.0.0.1:5432/postgres
+          SUPABASE_DB_URL: postgresql://postgres:fixture-only@127.0.0.1:5432/market_pulse_source
+          BACKUP_RESTORE_URL: postgresql://postgres:fixture-only@127.0.0.1:5432/market_pulse_restore
+          BACKUP_FIXTURE: '1'
+          BACKUP_OUTPUT: ${{ runner.temp }}/fixture-encrypted
+        run: |
+          python tests/backup-fixture.py
+          python scripts/history-backup.py
+      - name: Remove synthetic encrypted files
+        if: always()
+        run: rm -rf -- "$RUNNER_TEMP/fixture-encrypted"
