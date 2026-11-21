@@ -7,7 +7,7 @@ const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const source = await fs.readFile('src/lib/supabase.ts', 'utf8');
 const apikey = source.match(/'(sb_publishable_[^']+)'/)[1];
 const report = { started: new Date().toISOString(), endpoints: [], publicApi: [], findings: [] };
-const output = 'docs/audit-evidence/release-20261121/http.json';
+const output = process.env.AUDIT_HTTP_OUTPUT || 'docs/audit-evidence/release-20261121/http.json';
 async function probe(base, path, api = false) {
   const start = performance.now();
   try {

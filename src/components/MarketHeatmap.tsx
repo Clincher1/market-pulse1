@@ -1317,7 +1317,7 @@ function AssetPanel({
             строку можно сверить с первоисточником по дате. Сегодняшний
             незакрытый день в список не входит.
           </p>
-          <div className="mt-2 max-h-56 overflow-auto">
+          <div className="mt-2 max-h-56 overflow-auto focus-visible:outline-2 focus-visible:outline-cyan-600" tabIndex={0} role="region" aria-label={`Таблица наблюдений ${asset.name}`}>
             <table className="w-full text-left text-[11px] tabular-nums">
               <thead className="sticky top-0 bg-slate-50 text-text-secondary">
                 <tr>
@@ -1325,7 +1325,7 @@ function AssetPanel({
                     Дата
                   </th>
                   <th scope="col" className="py-1 pr-2 font-bold">
-                    Закрытие
+                    Наблюдение
                   </th>
                   <th scope="col" className="py-1 font-bold">
                     К предыдущему
