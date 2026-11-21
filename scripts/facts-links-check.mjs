@@ -91,6 +91,14 @@ try {
         window.scrollTo({ top: 0, behavior: 'instant' });
       });
       await page.waitForTimeout(500);
+      // Exercise native off-screen containment as a reader would: every deferred
+      // section must become renderable on scroll, not just exist in the DOM.
+      for (const section of await page.locator('.deferred-market-layout').all()) {
+        await section.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(150);
+        const revealed = await section.evaluate(node => !node.checkVisibility || node.checkVisibility({ contentVisibilityAuto: true }));
+        if (!revealed) report.findings.push({ type: 'offscreen-section-not-revealed', path });
+      }
       if (path === '/world') {
         // Page-level overflow misses labels clipped by an overflow-hidden ancestor.
         for (const width of [360, 390, 768, 1280]) {
