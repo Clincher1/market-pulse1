@@ -9,12 +9,9 @@ name: Weekly history backup
 # так что это «катящаяся» копия: аварию, замеченную в течение трёх месяцев,
 # можно откатить.
 #
-# Что нужно один раз: добавить в Settings → Secrets and variables → Actions
-# секрет SUPABASE_DB_URL — строка подключения из панели Supabase
-# (Project Settings → Database → Connection string → URI, с паролем базы).
-# Пока секрета нет, workflow завершается успешно и пишет, чего не хватает:
-# красный крест каждую неделю ничего не сообщает, а только приучает его
-# игнорировать.
+# A run without a configured database connection is a failure, not a backup.
+# Never add raw internal history artifacts to a public repository: the export
+# must be encrypted and its restore procedure verified before enabling it.
 
 on:
   schedule:
@@ -38,9 +35,21 @@ jobs:
         run: |
           if [ -z "$SUPABASE_DB_URL" ]; then
             echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "SUPABASE_DB_URL не задан: бэкап не сделан. Добавьте секрет, см. docs/BACKUP.md."
+            echo "::error::Backup not created: database connection is not configured. See docs/BACKUP.md."
+            echo "No backup was created. Recovery is not verified." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           else
             echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require private artifact storage
+        if: steps.check.outputs.present == 'true'
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          if [ "$REPOSITORY_PRIVATE" != "true" ]; then
+            echo "::error::Unencrypted internal history must not be uploaded to public-repository artifacts. Configure encrypted private storage first."
+            exit 1
           fi
 
       - name: Install PostgreSQL client
