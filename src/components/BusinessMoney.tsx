@@ -174,7 +174,7 @@ function factsFrom(
       changeTone: 'flat',
       asOf: keyRate ? `с ${shortDate(keyRate.asOf)}` : shortDate(ruonia?.asOf),
       provider: 'Банк России',
-      sourceUrl: ruonia?.sourceUrl ?? keyRate?.sourceUrl ?? 'https://www.cbr.ru/hd_base/KeyRate/',
+      sourceUrl: keyRate?.sourceUrl ?? ruonia?.sourceUrl ?? 'https://www.cbr.ru/hd_base/KeyRate/',
       check: 'если ставка в вашем кредите плавающая, она привязана к одной из этих двух',
     },
 

@@ -66,3 +66,13 @@ test('the official yuan reference is displayed when CBR actually supplies it', a
   assert.match(fx.textContent, /12,2759/);
   assert.doesNotMatch(fx.textContent, /12,147/);
 });
+
+
+test('money card source follows its main key-rate value, not the secondary RUONIA', async () => {
+  await mount();
+  assert.equal(fact('Стоимость денег').getAttribute('href'), 'https://www.cbr.ru/hd_base/KeyRate/');
+});
+test('money card uses RUONIA source only when RUONIA is the main available value', async () => {
+  await mount(0, markets.filter(m => m.id !== 'key-rate'));
+  assert.equal(fact('Стоимость денег').getAttribute('href'), 'https://www.cbr.ru/hd_base/ruonia/');
+});
