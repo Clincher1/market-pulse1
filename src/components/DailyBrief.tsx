@@ -459,7 +459,7 @@ export default function DailyBrief() {
           download="market-pulse-brief.png"
           title="Серверная PNG-карточка с актуальными цифрами, без параметров отслеживания"
           aria-label="Снимок для Telegram — скачать PNG брифа"
-          className="ml-auto inline-flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-800 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-800 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
           Снимок для Telegram

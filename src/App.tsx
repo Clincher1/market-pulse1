@@ -317,7 +317,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
             <SectionBoundary title="О проекте"><AboutProject /></SectionBoundary>
           </Suspense>
           <details className="mb-10 rounded-2xl border border-border-subtle bg-bg-card p-4 shadow-sm lg:mb-12">
-            <summary className="cursor-pointer text-sm font-extrabold text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent">
+            <summary className="min-h-11 cursor-pointer py-3 text-sm font-extrabold text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent">
               Как собираем и проверяем данные
             </summary>
             <div className="mt-4">
