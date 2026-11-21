@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-21T07:43:24.777Z",
+  "started": "2026-11-21T07:57:08.935Z",
   "data": [
     {
       "id": "usd-eur",
@@ -20,18 +20,18 @@
     {
       "id": "imoex",
       "points": 65,
-      "current": 2339.16,
-      "asOf": "2026-11-21 10:43:24",
-      "changeExpected": -0.647298674821617,
-      "changeStored": -0.647
+      "current": 2330.71,
+      "asOf": "2026-11-21 10:55:34",
+      "changeExpected": -1.0062011552837258,
+      "changeStored": -1.006
     },
     {
       "id": "rgbi",
       "points": 65,
-      "current": 110.91,
-      "asOf": "2026-11-21 10:43:15",
-      "changeExpected": 0.018035891423928696,
-      "changeStored": 0.018
+      "current": 110.9,
+      "asOf": "2026-11-21 10:55:32",
+      "changeExpected": 0.00901794571197545,
+      "changeStored": 0.009
     },
     {
       "id": "usd-rub",
@@ -102,7 +102,7 @@
       "width": 390,
       "path": "/russia",
       "overflow": false,
-      "text": 8634,
+      "text": 8593,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -167,7 +167,7 @@
       "width": 1280,
       "path": "/russia",
       "overflow": false,
-      "text": 8659,
+      "text": 8618,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -232,7 +232,7 @@
       "width": 390,
       "path": "/russia",
       "overflow": false,
-      "text": 8609,
+      "text": 8568,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -297,7 +297,7 @@
       "width": 1280,
       "path": "/russia",
       "overflow": false,
-      "text": 8634,
+      "text": 8593,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -362,7 +362,7 @@
       "width": 390,
       "path": "/russia",
       "overflow": false,
-      "text": 8633,
+      "text": 8592,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -427,7 +427,7 @@
       "width": 1280,
       "path": "/russia",
       "overflow": false,
-      "text": 8659,
+      "text": 8618,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -461,14 +461,14 @@
       "path": "/",
       "mode": "mobile",
       "scores": {
-        "performance": 0.96,
+        "performance": 0.99,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 913.876,
+      "lcpMs": 1226.338,
       "cls": 0,
-      "tbtMs": 233,
+      "tbtMs": 92,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -521,12 +521,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 47.758
+                  "duration": 10.333
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 351.497
+                  "duration": 211.122
                 }
               ]
             },
@@ -570,7 +570,7 @@
           "items": [
             {
               "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27133,
+              "totalBytes": 27127,
               "wastedMs": 156
             }
           ]
@@ -578,28 +578,10 @@
       },
       "findings": [
         {
-          "id": "total-blocking-time",
-          "score": 0.86,
-          "title": "Total Blocking Time",
-          "displayValue": "230 ms"
-        },
-        {
-          "id": "max-potential-fid",
-          "score": 0.79,
-          "title": "Max Potential First Input Delay",
-          "displayValue": "160 ms"
-        },
-        {
-          "id": "mainthread-work-breakdown",
-          "score": 0,
-          "title": "Minimize main-thread work",
-          "displayValue": "2.3 s"
-        },
-        {
           "id": "unused-javascript",
-          "score": 0.5,
+          "score": 0,
           "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 94 KiB"
+          "displayValue": "Est savings of 51 KiB"
         },
         {
           "id": "network-dependency-tree-insight",
@@ -610,7 +592,7 @@
           "id": "render-blocking-insight",
           "score": 0,
           "title": "Render-blocking requests",
-          "displayValue": "Est savings of 140 ms"
+          "displayValue": "Est savings of 110 ms"
         }
       ]
     },
@@ -623,7 +605,7 @@
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 248.868,
+      "lcpMs": 249.797,
       "cls": 0,
       "tbtMs": 0,
       "diagnostics": {
@@ -678,12 +660,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 46.043
+                  "duration": 11.436
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 412.923
+                  "duration": 287.52
                 }
               ]
             },
@@ -727,7 +709,7 @@
           "items": [
             {
               "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27730
+              "totalBytes": 27752
             }
           ]
         }
@@ -737,7 +719,7 @@
           "id": "unused-javascript",
           "score": 0.5,
           "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 94 KiB"
+          "displayValue": "Est savings of 52 KiB"
         },
         {
           "id": "network-dependency-tree-insight",
@@ -755,14 +737,14 @@
       "path": "/world",
       "mode": "mobile",
       "scores": {
-        "performance": 0.93,
+        "performance": 1,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 908.313,
+      "lcpMs": 906.974,
       "cls": 0.001502679277614253,
-      "tbtMs": 315,
+      "tbtMs": 81.5,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -815,12 +797,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 29.804999999970196
+                  "duration": 9.431999999940395
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 307.2820000000298
+                  "duration": 194.96200000005962
                 }
               ]
             },
@@ -864,36 +846,18 @@
           "items": [
             {
               "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27126,
-              "wastedMs": 156
+              "totalBytes": 27127,
+              "wastedMs": 154
             }
           ]
         }
       },
       "findings": [
         {
-          "id": "total-blocking-time",
-          "score": 0.77,
-          "title": "Total Blocking Time",
-          "displayValue": "320 ms"
-        },
-        {
-          "id": "max-potential-fid",
-          "score": 0.79,
-          "title": "Max Potential First Input Delay",
-          "displayValue": "160 ms"
-        },
-        {
-          "id": "mainthread-work-breakdown",
-          "score": 0,
-          "title": "Minimize main-thread work",
-          "displayValue": "2.6 s"
-        },
-        {
           "id": "unused-javascript",
           "score": 0.5,
           "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 70 KiB"
+          "displayValue": "Est savings of 28 KiB"
         },
         {
           "id": "network-dependency-tree-insight",
@@ -912,14 +876,11 @@
       "path": "/world",
       "mode": "desktop",
       "scores": {
-        "performance": 1,
+        "performance": null,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 256.8155,
-      "cls": 0.002455451222966272,
-      "tbtMs": 0,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -950,105 +911,13 @@
             }
           ],
           "items": []
-        },
-        "lcp-breakdown-insight": {
-          "type": "list",
-          "items": [
-            {
-              "type": "table",
-              "headings": [
-                {
-                  "key": "label",
-                  "valueType": "text",
-                  "label": "Subpart"
-                },
-                {
-                  "key": "duration",
-                  "valueType": "ms",
-                  "label": "Duration"
-                }
-              ],
-              "items": [
-                {
-                  "subpart": "timeToFirstByte",
-                  "label": "Time to first byte",
-                  "duration": 91.1760000000596
-                },
-                {
-                  "subpart": "elementRenderDelay",
-                  "label": "Element render delay",
-                  "duration": 347.02899999994037
-                }
-              ]
-            },
-            {
-              "type": "node",
-              "lhId": "page-0-P",
-              "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,2,DIV,0,SECTION,1,P",
-              "selector": "div > div.market-desk-stack > section.market-desk > p.market-desk__muted",
-              "boundingRect": {
-                "top": 678,
-                "bottom": 719,
-                "left": 69,
-                "right": 1266,
-                "width": 1197,
-                "height": 41
-              },
-              "snippet": "<p class=\"market-desk__muted\">",
-              "nodeLabel": "Отметьте мировые инструменты. Выбор хранится только в этом браузере, без регист…"
-            }
-          ]
-        },
-        "render-blocking-insight": {
-          "type": "table",
-          "headings": [
-            {
-              "key": "url",
-              "valueType": "url",
-              "label": "URL"
-            },
-            {
-              "key": "totalBytes",
-              "valueType": "bytes",
-              "label": "Transfer Size"
-            },
-            {
-              "key": "wastedMs",
-              "valueType": "timespanMs",
-              "label": "Duration"
-            }
-          ],
-          "items": [
-            {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27153
-            }
-          ]
         }
       },
-      "findings": [
-        {
-          "id": "unused-javascript",
-          "score": 0.5,
-          "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 70 KiB"
-        },
-        {
-          "id": "network-dependency-tree-insight",
-          "score": 0,
-          "title": "Network dependency tree"
-        },
-        {
-          "id": "render-blocking-insight",
-          "score": 0.5,
-          "title": "Render-blocking requests"
-        }
-      ]
+      "findings": []
     }
   ],
   "failures": [
-    "Lighthouse mobile /: TBT 233ms",
-    "Lighthouse mobile /world: TBT 315ms"
+    "Lighthouse desktop /world: Something went wrong with recording the trace over your page load. Please run Lighthouse again. (NO_NAVSTART)"
   ],
-  "finished": "2026-11-21T07:45:10.061Z"
+  "finished": "2026-11-21T07:58:32.968Z"
 }
