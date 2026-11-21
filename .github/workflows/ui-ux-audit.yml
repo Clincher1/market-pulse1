@@ -23,8 +23,8 @@ jobs:
           .local/feature-browser/node_modules/.bin/playwright install-deps chromium
       - name: Verify published UI twice consecutively
         env:
-          UI_EXPECTED_ENTRY: index-DrOtEUfZ.js
-          UI_PRODUCT_SHA: fba6986887cb03e34717e1243c40b5b536a332ef
+          UI_EXPECTED_ENTRY: index-BR1P7r5M.js
+          UI_PRODUCT_SHA: 110b6ce628c9b231a02ba6b3fa93c25e7a8fb371
         run: |
           set -euo pipefail
           UI_OUTPUT=docs/audit-evidence/ui-ux-final/pass-1 node scripts/ui-ux-audit.mjs
