@@ -112,6 +112,7 @@ try {
       }
       const data = await page.evaluate(() => ({
         title: document.title, finalUrl: location.href,
+        entryBundle: [...document.querySelectorAll('script[type="module"][src]')].map(node => new URL(node.src).pathname).find(path => /\/index-[^/]+\.js$/.test(path)),
         text: document.querySelector('main').innerText,
         links: [...document.querySelectorAll('a[href]')].map(a => ({ url: a.href, text: a.innerText })),
         buttons: [...document.querySelectorAll('main button')].map(b => ({ name: b.innerText || b.getAttribute('aria-label'), disabled: b.disabled })),
@@ -119,6 +120,7 @@ try {
         overflow: document.documentElement.scrollWidth > innerWidth + 1,
       }));
       report.pages.push({ path, status: response.status(), ...data, errors });
+      if (report.artifact && data.entryBundle !== report.artifact.expectedBundle) report.findings.push({ type: 'page-build-mismatch', path, expected: report.artifact.expectedBundle, actual: data.entryBundle });
       if (response.status() !== 200 || errors.length || data.brokenImages.length || data.overflow) report.findings.push({ type: 'page', path, status: response.status(), errors, brokenImages: data.brokenImages, overflow: data.overflow });
       for (const a of data.links) addLink(a.url, path);
       await page.screenshot({ path: `${output}/${path.replaceAll('/', '') || 'home'}.png`, fullPage: true });
