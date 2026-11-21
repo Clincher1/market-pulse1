@@ -136,7 +136,7 @@
 }
 
 .desktop-navigation__link {
-  min-height: 42px;
+  min-height: 44px;
   gap: 0.42rem;
   padding: 0.55rem 0.82rem;
   border: 1px solid var(--nav-border, transparent);
@@ -221,7 +221,7 @@
 }
 
 .desktop-navigation__more-trigger {
-  min-height: 42px;
+  min-height: 44px;
   padding-inline: 0.86rem;
   border: 1px solid #e1d6ff;
   border-radius: 14px;
@@ -878,7 +878,7 @@
   }
 
   .site-header__mobile-toggle {
-    min-height: 43px;
+    min-height: 44px;
   }
 
   .overview-hero {
@@ -918,8 +918,8 @@
   }
 
   .site-brand__mark {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
   }
 
   .overview-hero {
@@ -1024,7 +1024,7 @@
 
   .pulse-orbit__link {
     width: auto;
-    min-height: 0;
+    min-height: 44px;
     gap: 0.42rem;
     padding: 0.2rem 0;
     border: 0;
@@ -1420,7 +1420,7 @@
 
 .page-signal-intro__link {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 44px;
   align-items: center;
   gap: 0.42rem;
   color: var(--signal-ink);

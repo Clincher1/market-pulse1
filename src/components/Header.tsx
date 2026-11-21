@@ -403,7 +403,7 @@ export default function Header({ activeView }: HeaderProps) {
               data-theme={link.theme?.id ?? 'dashboard'}
               onClick={() => setMenuOpen(false)}
               aria-current={isActive ? 'page' : undefined}
-              className={`mobile-quick-nav__link flex min-h-10 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`mobile-quick-nav__link flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive
                   ? link.theme?.activeClass ?? 'border-accent-strong bg-accent-strong text-white shadow-sm'
                   : link.theme

@@ -465,7 +465,7 @@ export default function RussiaBusiness() {
                           Последняя точка поэтому всегда за прошлую пятницу.
                         </p>
                         <details className="mt-2 rounded-lg border border-slate-200 bg-bg-card px-2.5 py-1.5">
-                          <summary className="min-h-6 cursor-pointer select-none py-1 text-[11px] font-bold text-text-secondary transition-colors hover:text-slate-700">
+                          <summary className="min-h-11 cursor-pointer select-none py-3 text-[11px] font-bold text-text-secondary transition-colors hover:text-slate-700">
                             Почему в млрд $, а не в процентах
                           </summary>
                           <p className="mt-1.5 text-[11px] leading-relaxed text-text-secondary">

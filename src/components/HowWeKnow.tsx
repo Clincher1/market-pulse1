@@ -74,7 +74,7 @@ export default function HowWeKnow() {
             <p className="mt-2 flex-1 text-[11px] leading-relaxed text-text-secondary">{step.text}</p>
             <a
               href={step.href}
-              className="mt-2 inline-flex min-h-6 w-fit items-center gap-1 text-[11px] font-bold text-accent underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+              className="mt-2 inline-flex min-h-11 w-fit items-center gap-1 text-[11px] font-bold text-accent underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
             >
               {step.link}
               <ArrowRight className="h-3 w-3" aria-hidden="true" />

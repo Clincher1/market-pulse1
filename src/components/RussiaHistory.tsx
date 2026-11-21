@@ -420,7 +420,7 @@ export default function RussiaHistory() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setSelectedId(item.id)}
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                  className={`min-h-11 rounded-full border px-3 py-2 text-xs font-semibold transition-colors ${
                     active
                       ? 'border-blue-300 bg-blue-50 text-blue-800'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
@@ -462,7 +462,7 @@ export default function RussiaHistory() {
                   href={series.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-6 items-center text-blue-800 underline-offset-2 hover:underline"
+                  className="inline-flex min-h-11 items-center text-blue-800 underline-offset-2 hover:underline"
                 >
                   открыть источник
                 </a>
@@ -479,7 +479,7 @@ export default function RussiaHistory() {
             ))}
             {data.notes.length > 1 && (
               <details className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
-                <summary className="min-h-6 cursor-pointer select-none py-1 font-bold text-text-secondary transition-colors hover:text-text-primary">
+                <summary className="min-h-11 cursor-pointer select-none py-3 font-bold text-text-secondary transition-colors hover:text-text-primary">
                   Как читать график
                 </summary>
                 <div className="mt-1.5 flex flex-col gap-1.5">
@@ -495,7 +495,7 @@ export default function RussiaHistory() {
           </div>
 
           <details className="mt-2 text-[11px] text-text-secondary">
-            <summary className="min-h-6 cursor-pointer select-none py-1 font-semibold text-text-secondary">
+            <summary className="min-h-11 cursor-pointer select-none py-3 font-semibold text-text-secondary">
               Все {series.points.length} значений ряда
             </summary>
             <div className="mt-2 max-h-64 overflow-auto focus-visible:outline-2 focus-visible:outline-cyan-600" tabIndex={0} role="region" aria-label={`Таблица наблюдений ${series.name}`}>
