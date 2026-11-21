@@ -15,6 +15,7 @@ import { formatPriceText } from "@/lib/price";
 import { AssetData } from "@/data/marketTypes";
 import ExpandHint from "./ExpandHint";
 import CopyQuoteButton from './CopyQuoteButton';
+import DownloadChartCsvButton from './DownloadChartCsvButton';
 import {
   fetchAssetPriceHistory,
   type AssetHistoryPoint,
@@ -1182,6 +1183,10 @@ function AssetPanel({
               domainEndMs={historyDomainEndMs}
               paletteId={paletteId}
             />
+            <DownloadChartCsvButton key={`${asset.id}-${historyRangeDays}`} input={{
+              assetId: asset.id, assetName: asset.name, sourceUrl: meta?.url ?? '',
+              history, points: visibleHistoryPoints,
+            }} />
 
             {history.unfinishedDayExcluded && (
               <p className="mt-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] leading-relaxed text-cyan-900">
