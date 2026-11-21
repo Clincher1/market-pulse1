@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-21T07:55:32.433Z",
+  "started": "2026-11-21T08:06:13.792Z",
   "data": [
     {
       "id": "usd-eur",
@@ -20,16 +20,16 @@
     {
       "id": "imoex",
       "points": 65,
-      "current": 2330.71,
-      "asOf": "2026-11-21 10:55:34",
-      "changeExpected": -1.0062011552837258,
-      "changeStored": -1.006
+      "current": 2327.12,
+      "asOf": "2026-11-21 11:00:34",
+      "changeExpected": -1.158681617397217,
+      "changeStored": -1.159
     },
     {
       "id": "rgbi",
       "points": 65,
       "current": 110.9,
-      "asOf": "2026-11-21 10:55:32",
+      "asOf": "2026-11-21 11:00:30",
       "changeExpected": 0.00901794571197545,
       "changeStored": 0.009
     },
@@ -118,7 +118,7 @@
       "width": 390,
       "path": "/news",
       "overflow": false,
-      "text": 1049,
+      "text": 1098,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -183,7 +183,7 @@
       "width": 1280,
       "path": "/news",
       "overflow": false,
-      "text": 1107,
+      "text": 1156,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -248,7 +248,7 @@
       "width": 390,
       "path": "/news",
       "overflow": false,
-      "text": 1049,
+      "text": 1098,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -313,7 +313,7 @@
       "width": 1280,
       "path": "/news",
       "overflow": false,
-      "text": 1107,
+      "text": 1156,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -378,7 +378,7 @@
       "width": 390,
       "path": "/news",
       "overflow": false,
-      "text": 1049,
+      "text": 1098,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -443,7 +443,7 @@
       "width": 1280,
       "path": "/news",
       "overflow": false,
-      "text": 1107,
+      "text": 1156,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -466,9 +466,9 @@
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 913.728,
+      "lcpMs": 914.44,
       "cls": 0,
-      "tbtMs": 101,
+      "tbtMs": 110,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -521,12 +521,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 9.519999999970198
+                  "duration": 14.019
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 286.8460000000298
+                  "duration": 229.66
                 }
               ]
             },
@@ -570,8 +570,8 @@
           "items": [
             {
               "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27127,
-              "wastedMs": 155
+              "totalBytes": 27133,
+              "wastedMs": 150
             }
           ]
         }
@@ -592,7 +592,7 @@
           "id": "render-blocking-insight",
           "score": 0,
           "title": "Render-blocking requests",
-          "displayValue": "Est savings of 150 ms"
+          "displayValue": "Est savings of 140 ms"
         }
       ]
     },
@@ -605,7 +605,7 @@
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 250.372,
+      "lcpMs": 250.742,
       "cls": 0,
       "tbtMs": 0,
       "diagnostics": {
@@ -660,12 +660,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 10.715
+                  "duration": 11.147
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 286.611
+                  "duration": 316.308
                 }
               ]
             },
@@ -709,7 +709,7 @@
           "items": [
             {
               "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27127
+              "totalBytes": 27754
             }
           ]
         }
@@ -737,14 +737,14 @@
       "path": "/world",
       "mode": "mobile",
       "scores": {
-        "performance": 0.98,
+        "performance": 0.99,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 907.9765,
+      "lcpMs": 908.1835,
       "cls": 0.001502679277614253,
-      "tbtMs": 150,
+      "tbtMs": 122,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -797,12 +797,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 11.776
+                  "duration": 13.65
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 220.131
+                  "duration": 208.594
                 }
               ]
             },
@@ -846,19 +846,13 @@
           "items": [
             {
               "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27127,
-              "wastedMs": 156
+              "totalBytes": 27727,
+              "wastedMs": 150
             }
           ]
         }
       },
       "findings": [
-        {
-          "id": "max-potential-fid",
-          "score": 0.88,
-          "title": "Max Potential First Input Delay",
-          "displayValue": "140 ms"
-        },
         {
           "id": "unused-javascript",
           "score": 0.5,
@@ -887,7 +881,7 @@
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 248.7335,
+      "lcpMs": 249.8185,
       "cls": 0.002455451222966272,
       "tbtMs": 0,
       "diagnostics": {
@@ -942,12 +936,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 13.16
+                  "duration": 11.674000000119209
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 212.218
+                  "duration": 206.1849999998808
                 }
               ]
             },
@@ -1016,6 +1010,7 @@
       ]
     }
   ],
+  "instrumentationRetries": [],
   "failures": [],
-  "finished": "2026-11-21T07:57:05.705Z"
+  "finished": "2026-11-21T08:07:48.199Z"
 }
