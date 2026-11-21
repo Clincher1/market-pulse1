@@ -24,9 +24,21 @@ jobs:
       - run: npm run build
       - name: Install isolated browser tooling
         run: |
-          npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0
-          .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
+          npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0 lighthouse@13.6.0
+          .local/production-browser/node_modules/.bin/playwright install --with-deps chromium firefox webkit
+      - name: Wait for the exact explicitly deployed frontend before starting measurements
+        run: node scripts/wait-production-artifact.mjs
+      - name: Full technical round A (three engines, privacy and unchanged Lighthouse gates)
+        env:
+          TECHNICAL_AUDIT_OUTPUT: .local/production-audit/technical-A
+        run: node scripts/technical-audit.mjs
+      - name: Full technical round B (independent, no retry of valid bad metrics)
+        if: ${{ !cancelled() }}
+        env:
+          TECHNICAL_AUDIT_OUTPUT: .local/production-audit/technical-B
+        run: node scripts/technical-audit.mjs
       - name: Original sources and every link, round A
+        if: ${{ !cancelled() }}
         env:
           AUDIT_VERIFY_LOCAL_BUILD: '1'
           FACTS_LINKS_OUTPUT: .local/facts-links-audit/A
@@ -53,6 +65,12 @@ jobs:
               cp ".local/facts-links-audit/$round/report.json" "docs/audit-evidence/facts-links/$round/"
             fi
           done
+          mkdir -p docs/audit-evidence/technical-readiness
+          for round in A B; do
+            if [ -f ".local/production-audit/technical-$round/technical.json" ]; then
+              cp ".local/production-audit/technical-$round/technical.json" "docs/audit-evidence/technical-readiness/technical-$round.json"
+            fi
+          done
           for name in home world russia news passport brief guide about; do
             if [ -f ".local/facts-links-audit/B/$name.png" ]; then
               cp ".local/facts-links-audit/B/$name.png" docs/audit-evidence/facts-links/B/
@@ -65,7 +83,7 @@ jobs:
           done
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/audit-evidence/facts-links
+          git add docs/audit-evidence/facts-links docs/audit-evidence/technical-readiness
           git commit -m 'docs: save both post-fix fact, link and interaction audits'
           git push origin "HEAD:$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v7

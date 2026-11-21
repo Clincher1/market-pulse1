@@ -92,6 +92,17 @@ try {
       });
       await page.waitForTimeout(500);
       if (path === '/world') {
+        // Page-level overflow misses labels clipped by an overflow-hidden ancestor.
+        for (const width of [360, 390, 768, 1280]) {
+          await page.setViewportSize({ width, height: 900 });
+          const clipped = await page.locator('[data-testid="heat-tile-change-scale"] > span').evaluateAll(nodes => nodes.filter(node => {
+            const tile = node.closest('button').getBoundingClientRect();
+            const label = node.getBoundingClientRect();
+            return label.left < tile.left || label.right > tile.right || node.scrollWidth > node.clientWidth + 1;
+          }).map(node => ({ tile: node.closest('button').id, text: node.textContent })));
+          if (clipped.length) report.findings.push({ type: 'clipped-heatmap-label', width, clipped });
+        }
+        await page.setViewportSize({ width: 390, height: 900 });
         for (const id of ['usd-eur', 'sp500', 'brent', 'gold', 'btc']) {
           await page.locator(`#heat-tile-${id}`).click();
           await page.getByRole('region', { name: /^Подробно об активе / }).waitFor();
