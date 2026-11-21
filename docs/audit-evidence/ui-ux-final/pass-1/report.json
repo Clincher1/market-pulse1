@@ -3,8 +3,404 @@
   "origin": "https://market-pulse1-eta.vercel.app",
   "expectedEntry": "index-BR1P7r5M.js",
   "productSHA": "110b6ce628c9b231a02ba6b3fa93c25e7a8fb371",
-  "startedAt": "2026-11-21T18:21:46.954Z",
+  "startedAt": "2026-11-21T18:25:55.968Z",
   "cases": [
+    {
+      "path": "/",
+      "width": 360,
+      "title": "Обзор рынка — Market Pulse",
+      "description": "Обзор российских и мировых рынков: котировки, даты наблюдений, источники и исходные заголовки публикаций — без прогнозов и рекомендаций.",
+      "h1": [
+        "Рынки в движении.Факты — на виду."
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 3322.34375
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": {
+        "x": 34.59375,
+        "width": 195.71875,
+        "height": 46
+      },
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        },
+        {
+          "text": "Смотреть сводку дня",
+          "outline": "rgb(121, 231, 223) solid 3px",
+          "shadow": "rgba(44, 183, 227, 0.25) 0px 12px 32px 0px, rgba(255, 255, 255, 0.72) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/passport",
+      "width": 360,
+      "title": "Сводка дня — Market Pulse",
+      "description": "Денежные ориентиры с источниками и датами, наблюдаемая динамика рынков.",
+      "h1": [
+        "Сводка дня"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 4431.625
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/russia",
+      "width": 360,
+      "title": "Россия и бизнес — Market Pulse",
+      "description": "Курсы, Московская биржа и российские деловые заголовки — каждый блок со своим источником.",
+      "h1": [
+        "Россия и бизнес"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 9576.140625
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(16, 16, 16) none 1px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/world",
+      "width": 360,
+      "title": "Мировые рынки — Market Pulse",
+      "description": "Внешние рыночные ориентиры и история наблюдений, отделённые от российского контура.",
+      "h1": [
+        "Мировые рынки"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 5740.4375
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/brief",
+      "width": 360,
+      "title": "Коротко о рынке — Market Pulse",
+      "description": "Сжатый обзор фактов из текущего снимка данных — без прогнозов и рекомендаций.",
+      "h1": [
+        "Коротко о рынке"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 2396.78125
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/news",
+      "width": 360,
+      "title": "Новости — Market Pulse",
+      "description": "Исходные заголовки и ссылки на публикации; заголовок сам по себе не подтверждает событие или его причину.",
+      "h1": [
+        "Лента публикаций"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 2055.328125
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/guide",
+      "width": 360,
+      "title": "Как читать сайт — Market Pulse",
+      "description": "Как читать факты и расчёты, проверять источники и понимать ограничения данных.",
+      "h1": [
+        "Методология Market Pulse"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 12116.875
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/about",
+      "width": 360,
+      "title": "О проекте — Market Pulse",
+      "description": "Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.",
+      "h1": [
+        "О проекте"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 4692.515625
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(16, 16, 16) none 1px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/status",
+      "width": 360,
+      "title": "Состояние системы — Market Pulse",
+      "description": "Свежесть источников, котировок и публикаций; результаты почасовой самопроверки.",
+      "h1": [
+        "Состояние системы"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 360,
+        "height": 68
+      },
+      "main": {
+        "x": 0,
+        "width": 360,
+        "height": 11042.5
+      },
+      "footer": {
+        "x": 16,
+        "width": 328,
+        "height": 572.28125
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
     {
       "path": "/",
       "width": 768,
@@ -177,7 +573,7 @@
       "focus": [
         {
           "text": "Разделы",
-          "outline": "rgb(16, 16, 16) none 1px",
+          "outline": "rgb(32, 76, 195) none 3px",
           "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
         }
       ],
@@ -263,7 +659,7 @@
       "focus": [
         {
           "text": "Разделы",
-          "outline": "rgb(16, 16, 16) none 1px",
+          "outline": "rgb(32, 76, 195) none 3px",
           "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
         }
       ],
@@ -306,7 +702,7 @@
       "focus": [
         {
           "text": "Разделы",
-          "outline": "rgb(32, 76, 195) none 3px",
+          "outline": "rgb(16, 16, 16) none 1px",
           "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
         }
       ],
@@ -349,7 +745,7 @@
       "focus": [
         {
           "text": "Разделы",
-          "outline": "rgb(32, 76, 195) none 3px",
+          "outline": "rgb(16, 16, 16) none 1px",
           "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
         }
       ],
@@ -1034,53 +1430,7 @@
       "mobileEscape": null
     }
   ],
-  "errors": [
-    {
-      "path": "/",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/passport",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/russia",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/world",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/brief",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/news",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/guide",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/about",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    },
-    {
-      "path": "/status",
-      "width": 360,
-      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
-    }
-  ],
+  "errors": [],
   "links": [
     {
       "href": "/#main",
@@ -1223,8 +1573,6 @@
       "fragmentExists": true
     }
   ],
-  "finishedAt": "2026-11-21T18:24:43.268Z",
-  "failures": [
-    "Incomplete viewport matrix"
-  ]
+  "finishedAt": "2026-11-21T18:30:04.299Z",
+  "failures": []
 }
