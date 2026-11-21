@@ -1383,3 +1383,14 @@
 }
 
 .desk-table-wrap:focus-visible { outline: 2px solid #0891b2; outline-offset: 3px; }
+
+/* Native off-screen rendering containment, not delayed data or hidden content.
+   The mobile profile showed more style/layout and rendering work than script
+   evaluation. Keep charts, controls and source labels in the DOM/accessibility
+   tree; let the browser render off-screen market sections as the reader nears
+   them. The remembered natural size replaces the estimate after first render.
+   Browsers without support simply render the full sections as before. */
+.deferred-market-layout {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1500px;
+}

@@ -255,7 +255,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
           <section
             id="global-economy"
             aria-labelledby="global-economy-title"
-            className="mb-10 scroll-mt-24 rounded-[28px] border border-cyan-200/80 bg-linear-to-br from-cyan-50/80 via-white to-blue-50/70 p-3 shadow-sm sm:p-5 lg:mb-12 lg:p-6"
+            className="deferred-market-layout mb-10 scroll-mt-24 rounded-[28px] border border-cyan-200/80 bg-linear-to-br from-cyan-50/80 via-white to-blue-50/70 p-3 shadow-sm sm:p-5 lg:mb-12 lg:p-6"
           >
             <div className="mb-6 px-1 pt-1 sm:px-2">
               <h2 id="global-economy-title" className="text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">

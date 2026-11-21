@@ -173,6 +173,18 @@ test('chart adapts its coordinate system to a narrow mobile content width', asyn
   await cleanup();
 });
 
+test('off-screen comparison containment retains its data, controls and accessible table', async () => {
+  await mount();
+  const section = container.querySelector('section.deferred-market-layout');
+  assert.ok(section);
+  assert.match(section.textContent, /Сравнить динамику/);
+  assert.ok(section.querySelectorAll('input[type="checkbox"]').length >= 2);
+  assert.ok(section.querySelector('table tbody tr'));
+  assert.equal(section.hasAttribute('hidden'), false);
+  assert.equal(section.hasAttribute('inert'), false);
+  assert.notEqual(section.getAttribute('aria-hidden'), 'true');
+});
+
 test('comparison table region is keyboard focusable and named', async () => {
   await mount();
   const region = container.querySelector('.desk-table-wrap');

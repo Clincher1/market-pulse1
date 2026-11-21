@@ -97,7 +97,7 @@ function Comparison({ assets }: { assets: AssetData[] }) {
     const times = comparison.dates.map((date) => Date.parse(`${date}T00:00:00Z`));
     return 65 + (times[index] - times[0]) / (times[times.length - 1] - times[0]) * (width - 90);
   };
-  return <section ref={chartRef} className="market-desk" aria-labelledby={titleId}>
+  return <section ref={chartRef} className="market-desk deferred-market-layout" aria-labelledby={titleId}>
     <div className="market-desk__heading"><div><p className="market-desk__eyebrow">Одна база · разные рынки</p><h2 id={titleId}>Сравнить динамику</h2></div></div>
     <p className="market-desk__muted">Выберите от двух инструментов. Сравниваем только общие даты из сохранённого окна котировок — без заполнения пропусков. Это не доходность портфеля: валюты, дивиденды и издержки не пересчитываются.</p>
     <fieldset className="desk-choices"><legend>Инструменты для сравнения</legend>
