@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { AssetData, assetPlaceholders as fallbackAssets } from '@/data/marketTypes';
 import { fetchLiveAssets } from '@/data/liveAssets';
 import { startPolling } from '@/lib/polling';
@@ -36,80 +36,81 @@ function mergeWithFallback(live: AssetData[]): {
   return { assets: [...merged, ...extras], fallbackAssetIds };
 }
 
-export function useLiveAssets(): {
+interface AssetSnapshot {
   assets: AssetData[];
   loading: boolean;
   error: string | null;
   hasLiveData: boolean;
   fallbackAssetIds: string[];
-  refresh: () => Promise<void>;
   isRefreshing: boolean;
-} {
-  const [assets, setAssets] = useState<AssetData[]>(fallbackAssets);
-  const [fallbackAssetIds, setFallbackAssetIds] = useState<string[]>(
-    fallbackAssets.map((asset) => asset.id),
-  );
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasLiveData, setHasLiveData] = useState(false);
-  const isMounted = useRef(true);
-  const hasLiveDataRef = useRef(false);
+}
 
-  const load = useCallback(async () => {
-    if (hasLiveDataRef.current) setIsRefreshing(true);
+const initialSnapshot: AssetSnapshot = {
+  assets: fallbackAssets,
+  loading: true,
+  error: null,
+  hasLiveData: false,
+  fallbackAssetIds: fallbackAssets.map(asset => asset.id),
+  isRefreshing: false,
+};
+let snapshot = initialSnapshot;
+const listeners = new Set<() => void>();
+let pending: Promise<void> | null = null;
+let stopPolling: (() => void) | null = null;
+let generation = 0;
 
+function publish(next: AssetSnapshot): void {
+  snapshot = next;
+  for (const listener of listeners) listener();
+}
+
+/** One in-flight read and one published snapshot for ticker, tiles, desk and brief. */
+function refresh(): Promise<void> {
+  if (pending) return pending;
+  const requestGeneration = generation;
+  const force = snapshot.hasLiveData;
+  publish({ ...snapshot, isRefreshing: force });
+  pending = (async () => {
     try {
-      // force при повторной загрузке: «обновить» не должен отдавать данные
-      // из 15-секундной памяти запроса.
-      const live = await fetchLiveAssets({ force: hasLiveDataRef.current });
-      if (!isMounted.current) return;
-
-      if (live.length === 0) {
-        // Не затираем уже показанные значения. UI различает два случая:
-        // живых данных ещё не было (fallback) и обновление не удалось
-        // после успешной загрузки (устаревший живой снимок).
-        setError('Не удалось загрузить живые цены');
-        return;
-      }
-
-      const merged = mergeWithFallback(live);
-      hasLiveDataRef.current = true;
-      setHasLiveData(true);
-      setAssets(merged.assets);
-      setFallbackAssetIds(merged.fallbackAssetIds);
-      setError(null);
-    } catch (e) {
-      if (!isMounted.current) return;
-      setError(e instanceof Error ? e.message : 'Failed to load live assets');
+      const live = await fetchLiveAssets({ force });
+      if (requestGeneration !== generation) return;
+      if (!live.length) throw new Error('Не удалось загрузить живые цены');
+      publish({ ...mergeWithFallback(live), loading: false, isRefreshing: false,
+        hasLiveData: true, error: null });
+    } catch (error) {
+      if (requestGeneration !== generation) return;
+      // Keep the same last successful snapshot in every block; never fabricate values.
+      publish({ ...snapshot, loading: false, isRefreshing: false,
+        error: error instanceof Error ? error.message : 'Не удалось загрузить живые цены' });
     } finally {
-      if (isMounted.current) {
-        setLoading(false);
-        setIsRefreshing(false);
-      }
+      if (requestGeneration === generation) pending = null;
     }
-  }, []);
+  })();
+  return pending;
+}
 
-  useEffect(() => {
-    isMounted.current = true;
-    void load();
-
-    // Обновление раз в 5 минут — стабильно, без лимитов.
-    const stopPolling = startPolling(() => void load());
-
-    return () => {
-      isMounted.current = false;
-      stopPolling();
-    };
-  }, [load]);
-
-  return {
-    assets,
-    loading,
-    error,
-    hasLiveData,
-    fallbackAssetIds,
-    refresh: load,
-    isRefreshing,
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  if (listeners.size === 1) {
+    stopPolling = startPolling(() => void refresh());
+    void refresh();
+  }
+  return () => {
+    listeners.delete(listener);
+    if (!listeners.size) {
+      stopPolling?.();
+      stopPolling = null;
+      // An unmounted page's response must not overwrite a later page's read.
+      generation++;
+      pending = null;
+      snapshot = initialSnapshot;
+    }
   };
+}
+const getSnapshot = () => snapshot;
+const getServerSnapshot = () => initialSnapshot;
+
+export function useLiveAssets(): AssetSnapshot & { refresh: () => Promise<void> } {
+  const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return { ...current, refresh };
 }
