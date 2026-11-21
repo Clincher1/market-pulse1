@@ -1,0 +1,40 @@
+name: Read-only facts and every-link audit
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['scripts/facts-links-check.mjs', '.github/workflows/facts-links-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: facts-links-audit
+  cancel-in-progress: false
+jobs:
+  audit:
+    if: github.repository == 'Clincher1/market-pulse1' && startsWith(github.ref, 'refs/heads/arena/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install isolated browser tooling
+        run: |
+          npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0
+          .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Original sources, all pages, fragments, publisher feeds and every discovered link
+        run: node scripts/facts-links-check.mjs
+      - name: Two independent live interaction, accessibility, math and rights rounds
+        if: ${{ !cancelled() }}
+        run: node scripts/production-audit.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: facts-links-evidence
+          path: |
+            .local/facts-links-audit/
+            .local/production-audit/
+          retention-days: 7
