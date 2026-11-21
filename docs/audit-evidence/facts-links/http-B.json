@@ -1,11 +1,11 @@
 {
-  "started": "2026-11-21T14:06:30.265Z",
+  "started": "2026-11-21T14:19:16.419Z",
   "endpoints": [
     {
       "path": "/",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/",
-      "ms": 124,
+      "ms": 195,
       "bytes": 4186,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -23,7 +23,7 @@
       "path": "/world",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/world",
-      "ms": 26,
+      "ms": 32,
       "bytes": 4078,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -41,7 +41,7 @@
       "path": "/status",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/status",
-      "ms": 24,
+      "ms": 32,
       "bytes": 4104,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -59,7 +59,7 @@
       "path": "/memory/",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/",
-      "ms": 135,
+      "ms": 244,
       "bytes": 4186,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -77,7 +77,7 @@
       "path": "/robots.txt",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/robots.txt",
-      "ms": 19,
+      "ms": 36,
       "bytes": 130,
       "headers": {
         "content-type": "text/plain; charset=utf-8",
@@ -95,7 +95,7 @@
       "path": "/sitemap.xml",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/sitemap.xml",
-      "ms": 22,
+      "ms": 36,
       "bytes": 712,
       "headers": {
         "content-type": "application/xml",
@@ -113,7 +113,7 @@
       "path": "/favicon.svg",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/favicon.svg",
-      "ms": 27,
+      "ms": 34,
       "bytes": 1476,
       "headers": {
         "content-type": "image/svg+xml",
@@ -131,7 +131,7 @@
       "path": "/icon-192.png",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/icon-192.png",
-      "ms": 19,
+      "ms": 35,
       "bytes": 18682,
       "headers": {
         "content-type": "image/png",
@@ -149,7 +149,7 @@
       "path": "/apple-touch-icon.png",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/apple-touch-icon.png",
-      "ms": 21,
+      "ms": 36,
       "bytes": 17372,
       "headers": {
         "content-type": "image/png",
@@ -167,8 +167,8 @@
       "path": "/api/russia-insights",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/russia-insights",
-      "ms": 27,
-      "bytes": 14000,
+      "ms": 33,
+      "bytes": 14035,
       "headers": {
         "content-type": "application/json; charset=utf-8",
         "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
@@ -181,8 +181,8 @@
         "x-vercel-cache": "HIT"
       },
       "summary": {
-        "generatedAt": "2026-11-21T14:02:31.816Z",
-        "elapsed_ms": 1388,
+        "generatedAt": "2026-11-21T14:19:09.188Z",
+        "elapsed_ms": 1544,
         "markets": [
           {
             "id": "usd-rub",
@@ -207,17 +207,17 @@
           },
           {
             "id": "imoex",
-            "value": 2329.6,
-            "asOf": "2026-11-21 17:02:28",
+            "value": 2325.11,
+            "asOf": "2026-11-21 17:19:04",
             "previousDate": "2026-11-20",
-            "changePct": -1.053
+            "changePct": -1.244
           },
           {
             "id": "rgbi",
-            "value": 110.86,
-            "asOf": "2026-11-21 17:02:16",
+            "value": 110.87,
+            "asOf": "2026-11-21 17:19:01",
             "previousDate": "2026-11-20",
-            "changePct": -0.027
+            "changePct": -0.018
           },
           {
             "id": "cny-rub-moex",
@@ -277,7 +277,7 @@
       "path": "/api/russia-history",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/russia-history",
-      "ms": 22,
+      "ms": 39,
       "bytes": 13915,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -291,7 +291,7 @@
         "x-vercel-cache": "HIT"
       },
       "summary": {
-        "generatedAt": "2026-11-21T13:56:34.428Z",
+        "generatedAt": "2026-11-21T14:10:21.594Z",
         "errors": [],
         "series": [
           {
@@ -381,8 +381,8 @@
       "path": "/api/brief-image",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/brief-image",
-      "ms": 45,
-      "bytes": 349722,
+      "ms": 105,
+      "bytes": 348323,
       "headers": {
         "content-type": "image/png",
         "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
@@ -406,7 +406,7 @@
       "path": "/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
-      "ms": 259,
+      "ms": 213,
       "bytes": 109,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -430,7 +430,7 @@
       "path": "/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
-      "ms": 199,
+      "ms": 154,
       "bytes": 210,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -454,7 +454,7 @@
       "path": "/rest/v1/source_preferences?select=*&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/source_preferences?select=*&limit=1",
-      "ms": 188,
+      "ms": 147,
       "bytes": 206,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -478,7 +478,7 @@
       "path": "/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
-      "ms": 179,
+      "ms": 151,
       "bytes": 152,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -508,7 +508,7 @@
       "path": "/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
-      "ms": 192,
+      "ms": 151,
       "bytes": 105,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -532,7 +532,7 @@
       "path": "/rest/v1/daily_snapshots?select=date,assets&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots?select=date,assets&limit=1",
-      "ms": 179,
+      "ms": 135,
       "bytes": 200,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -556,7 +556,7 @@
       "path": "/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
-      "ms": 169,
+      "ms": 145,
       "bytes": 222,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -580,7 +580,7 @@
       "path": "/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
-      "ms": 176,
+      "ms": 209,
       "bytes": 2,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -599,7 +599,7 @@
       "path": "/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
-      "ms": 267,
+      "ms": 237,
       "bytes": 1860,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -722,7 +722,7 @@
       "path": "/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
-      "ms": 170,
+      "ms": 160,
       "bytes": 4050,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -1082,5 +1082,5 @@
       "basis": "series"
     }
   ],
-  "finished": "2026-11-21T14:06:32.772Z"
+  "finished": "2026-11-21T14:19:18.997Z"
 }
