@@ -94,6 +94,7 @@ export default function Header({ activeView }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDetailsElement>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -122,8 +123,76 @@ export default function Header({ activeView }: HeaderProps) {
     };
   }, []);
 
+  // Non-modal disclosure: keep normal Tab order; Escape restores the opener.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setMenuOpen(false);
+      mobileToggleRef.current?.focus();
+    };
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (!(event.target instanceof Element)) return;
+      if (!event.target.closest('#mobile-navigation, .site-header__mobile-toggle')) setMenuOpen(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('pointerdown', closeOnOutsidePress);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('pointerdown', closeOnOutsidePress);
+    };
+  }, [menuOpen]);
+
   const isActiveLink = (themeId: SectionThemeId) => activeView === themeId;
   const visibleMobileLinks = mobileLinksForView(activeView);
+
+  const renderMobileLink = (link: (typeof navLinks)[number]) => {
+    const Icon = link.icon;
+    const isActive = isActiveLink(link.themeId);
+    return (
+      <a
+        key={link.href}
+        href={link.href}
+        data-theme={link.theme.id}
+        onClick={() => setMenuOpen(false)}
+        aria-current={isActive ? 'page' : undefined}
+        className={`mobile-navigation__link group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.99] ${
+          isActive
+            ? link.theme.activeClass
+            : `${link.theme.cardClass} text-text-primary`
+        }`}
+      >
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
+            isActive
+              ? 'border-white/25 bg-white/15 text-current'
+              : `border-transparent ${link.theme.iconClass}`
+          }`}
+        >
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-base font-extrabold leading-tight text-current">
+            {link.theme.order} · {link.fullLabel}
+          </span>
+          <span
+            className={`mt-0.5 text-xs leading-snug ${
+              isActive ? 'text-current opacity-85' : 'text-text-secondary'
+            }`}
+          >
+            {link.description}
+          </span>
+        </span>
+        <ChevronRight
+          className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${
+            isActive ? 'text-current' : link.theme.textClass
+          }`}
+          aria-hidden="true"
+        />
+      </a>
+    );
+  };
 
   return (
     <>
@@ -240,6 +309,7 @@ export default function Header({ activeView }: HeaderProps) {
 
           <button
             type="button"
+            ref={mobileToggleRef}
             className="site-header__mobile-toggle inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full px-3.5 py-2 text-sm font-extrabold shadow-sm transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.97] lg:hidden"
             onClick={() => setMenuOpen((open) => !open)}
             aria-label={menuOpen ? 'Закрыть меню' : 'Разделы — открыть меню'}
@@ -273,52 +343,12 @@ export default function Header({ activeView }: HeaderProps) {
               </div>
 
               <div className="flex flex-col gap-2.5">
-                {navLinks.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = isActiveLink(link.themeId);
-                  return (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      data-theme={link.theme.id}
-                      onClick={() => setMenuOpen(false)}
-                      aria-current={isActive ? 'page' : undefined}
-                      className={`mobile-navigation__link group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.99] ${
-                        isActive
-                          ? link.theme.activeClass
-                          : `${link.theme.cardClass} text-text-primary`
-                      }`}
-                    >
-                      <span
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
-                          isActive
-                            ? 'border-white/25 bg-white/15 text-current'
-                            : `border-transparent ${link.theme.iconClass}`
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" aria-hidden="true" />
-                      </span>
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="text-base font-extrabold leading-tight text-current">
-                          {link.theme.order} · {link.fullLabel}
-                        </span>
-                        <span
-                          className={`mt-0.5 text-xs leading-snug ${
-                            isActive ? 'text-current opacity-85' : 'text-text-secondary'
-                          }`}
-                        >
-                          {link.description}
-                        </span>
-                      </span>
-                      <ChevronRight
-                        className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${
-                          isActive ? 'text-current' : link.theme.textClass
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </a>
-                  );
-                })}
+                <div role="group" aria-label="Рынки и публикации" className="flex flex-col gap-2.5">
+                  {navLinks.slice(0, 5).map(renderMobileLink)}
+                </div>
+                <div role="group" aria-label="О сайте" className="mt-2 flex flex-col gap-2.5 border-t border-slate-200 pt-4">
+                  <h3 className="px-1 text-xs font-bold text-text-secondary">О сайте</h3>
+                  {navLinks.slice(5).map(renderMobileLink)}
                 <a
                   href={PAGE_PATHS.status}
                   data-theme={SECTION_THEMES.status.id}
@@ -350,6 +380,7 @@ export default function Header({ activeView }: HeaderProps) {
                     aria-hidden="true"
                   />
                 </a>
+                </div>
               </div>
             </div>
           </motion.nav>
