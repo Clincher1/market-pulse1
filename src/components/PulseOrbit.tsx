@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, Globe2, Landmark, Newspaper } from 'lucide-react';
 import { PAGE_PATHS } from '@/lib/routes';
 import BrandMark from './BrandMark';

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, ChevronDown, ChevronRight, HeartPulse, LayoutDashboard, Menu, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import {
@@ -165,13 +165,10 @@ export default function Header({ activeView }: HeaderProps) {
                 >
                   {isActive && (
                     <motion.span
-                      layoutId="desktop-navigation-active"
                       className="desktop-navigation__active-bg"
-                      transition={
-                        reduceMotion
-                          ? { duration: 0 }
-                          : { type: 'spring', stiffness: 460, damping: 36 }
-                      }
+                      initial={reduceMotion ? false : { opacity: 0.4, scale: 0.94 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.2 }}
                       aria-hidden="true"
                     />
                   )}

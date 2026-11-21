@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, BookOpen, HeartPulse, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 const DailyBrief = lazy(() => import('@/components/DailyBrief'));

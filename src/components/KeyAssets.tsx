@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { AlertTriangle, Globe, RotateCcw } from 'lucide-react';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import MarketHeatmap from './MarketHeatmap';
