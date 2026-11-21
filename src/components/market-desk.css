@@ -1,4 +1,4 @@
-.market-desk-stack { display: grid; gap: 1.25rem; margin: 1.5rem 0 2rem; }
+.market-desk-stack { display: grid; gap: 1.5rem; margin: 1.5rem 0 3rem; }
 .market-desk { min-width: 0; border: 1px solid #cbd5e1; border-radius: 24px; background: #fff; padding: clamp(1rem, 3vw, 1.75rem); color: #0f172a; }
 .market-desk h2 { margin: .15rem 0; font-size: clamp(1.3rem, 3vw, 1.65rem); font-weight: 800; letter-spacing: -.025em; }
 .market-desk h3 { font-size: 1rem; font-weight: 750; }
@@ -41,3 +41,5 @@
 .desk-table svg { display: inline-block; }
 .desk-table td { font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .minute-grid { grid-template-columns: 1fr; } .desk-controls { display: grid; } .desk-chart { min-height: 170px; } }
+
+@media (min-width: 1024px) { .market-desk-stack { margin-bottom: 4rem; } }

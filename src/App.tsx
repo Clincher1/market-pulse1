@@ -106,7 +106,7 @@ function DashboardPage() {
 
   return (
     <>
-      <section id="dashboard" className="overview-hero mb-8 scroll-mt-24 lg:mb-12">
+      <section id="dashboard" className="overview-hero mb-12 scroll-mt-24 lg:mb-16">
         <div className="overview-hero__backdrop" aria-hidden="true" />
         <div className="overview-hero__copy">
           <motion.div className="overview-hero__eyebrow" {...appear(0.04)}>
