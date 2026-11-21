@@ -1,0 +1,32 @@
+{
+  "provenance": "Transcribed from the actual fetch_page JSON response, not documentation examples. Dates are provider-returned dates; no local or database clock was changed.",
+  "request": "https://api.goldprice.dev/v1/bars?symbol=XAU-USD-SPOT&interval=1d&from=2026-10-24&to=2026-11-21&limit=30",
+  "authentication_sent": false,
+  "symbol": "XAU-USD-SPOT",
+  "interval": "1d",
+  "meta": {"tier":"free_2026","count":21,"source_id":"live_xau_canonical"},
+  "next_cursor": null,
+  "bars": [
+    {"bar_start":"2026-11-20T00:00:00Z","open":"3606.5185","high":"3626.6438","low":"3502.905","close":"3539.3718","volume":null,"is_closed":false},
+    {"bar_start":"2026-11-19T00:00:00Z","open":"3739.1748","high":"3758.0382","low":"3590.6439","close":"3606.7685","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-18T00:00:00Z","open":"3848.8975","high":"3849.4025","low":"3719.625","close":"3739.4248","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-17T00:00:00Z","open":"3862.8875","high":"3891.0235","low":"3836.9435","close":"3848.8425","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-16T00:00:00Z","open":"3900.332","high":"3900.4625","low":"3832.476","close":"3862.868","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-15T00:00:00Z","open":"3882.9453","high":"3901.342","low":"3866.025","close":"3900.352","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-13T00:00:00Z","open":"3881.5355","high":"3923.215","low":"3867.7935","close":"3883.88","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-12T00:00:00Z","open":"3980.4164","high":"4000.0","low":"3853.2676","close":"3881.5355","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-11T00:00:00Z","open":"4038.785","high":"4066.5284","low":"3978.516","close":"3980.8917","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-10T00:00:00Z","open":"4139.065","high":"4141.495","low":"4013.83","close":"4038.485","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-09T00:00:00Z","open":"4056.225","high":"4148.82","low":"4055.325","close":"4139.005","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-06T00:00:00Z","open":"4085.695","high":"4107.165","low":"4027.23","close":"4070.585","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-05T00:00:00Z","open":"4064.7102","high":"4147.295","low":"4061.39","close":"4086.01","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-04T00:00:00Z","open":"3938.82","high":"4071.795","low":"3919.975","close":"4064.7102","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-03T00:00:00Z","open":"3947.8879","high":"3971.13","low":"3895.42","close":"3938.72","volume":null,"is_closed":true},
+    {"bar_start":"2026-11-02T00:00:00Z","open":"3899.095","high":"3970.415","low":"3891.235","close":"3947.8879","volume":null,"is_closed":true},
+    {"bar_start":"2026-10-30T00:00:00Z","open":"4008.18","high":"4019.42","low":"3870.225","close":"3875.245","volume":null,"is_closed":true},
+    {"bar_start":"2026-10-29T00:00:00Z","open":"4054.475","high":"4069.12","low":"4005.055","close":"4007.8554","volume":null,"is_closed":true},
+    {"bar_start":"2026-10-28T00:00:00Z","open":"4062.5","high":"4083.17","low":"4025.085","close":"4055.8079","volume":null,"is_closed":true},
+    {"bar_start":"2026-10-27T00:00:00Z","open":"4005.755","high":"4065.77","low":"3989.1495","close":"4063.2238","volume":null,"is_closed":true},
+    {"bar_start":"2026-10-26T00:00:00Z","open":"3997.205","high":"4029.53","low":"3978.17","close":"4006.2498","volume":null,"is_closed":true}
+  ]
+}
