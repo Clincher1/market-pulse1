@@ -2,7 +2,7 @@ name: Read-only facts and every-link audit
 on:
   push:
     branches: ['arena/**']
-    paths: ['scripts/facts-links-check.mjs', '.github/workflows/facts-links-audit.yml']
+    paths: ['scripts/*audit.mjs', 'scripts/facts-links-check.mjs', 'scripts/wait-production-artifact.mjs', '.github/workflows/facts-links-audit.yml', '.github/workflows/production-audit.yml']
   workflow_dispatch:
 permissions:
   contents: write

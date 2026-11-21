@@ -1,9 +1,8 @@
 name: Read-only production acceptance audit
 
 on:
-  push:
-    branches: ['arena/**']
-    paths: ['scripts/*audit.mjs', '.github/workflows/production-audit.yml']
+  # Automatic full technical/source/interaction coverage lives together in
+  # facts-links-audit.yml, avoiding concurrent evidence commits on one branch.
   workflow_dispatch:
 
 permissions:
