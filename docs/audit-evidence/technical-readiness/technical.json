@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-21T07:32:49.769Z",
+  "started": "2026-11-21T07:43:24.777Z",
   "data": [
     {
       "id": "usd-eur",
@@ -20,18 +20,18 @@
     {
       "id": "imoex",
       "points": 65,
-      "current": 2341.92,
-      "asOf": "2026-11-21 10:32:49",
-      "changeExpected": -0.5300713557594317,
-      "changeStored": -0.53
+      "current": 2339.16,
+      "asOf": "2026-11-21 10:43:24",
+      "changeExpected": -0.647298674821617,
+      "changeStored": -0.647
     },
     {
       "id": "rgbi",
       "points": 65,
-      "current": 110.92,
-      "asOf": "2026-11-21 10:32:47",
-      "changeExpected": 0.027053837135904146,
-      "changeStored": 0.027
+      "current": 110.91,
+      "asOf": "2026-11-21 10:43:15",
+      "changeExpected": 0.018035891423928696,
+      "changeStored": 0.018
     },
     {
       "id": "usd-rub",
@@ -461,14 +461,14 @@
       "path": "/",
       "mode": "mobile",
       "scores": {
-        "performance": 0.99,
+        "performance": 0.96,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 924.422,
+      "lcpMs": 913.876,
       "cls": 0,
-      "tbtMs": 114,
+      "tbtMs": 233,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -521,12 +521,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 81.034
+                  "duration": 47.758
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 262.835
+                  "duration": 351.497
                 }
               ]
             },
@@ -569,14 +569,32 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-DXQew1ZF.css",
-              "totalBytes": 27110,
-              "wastedMs": 152
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27133,
+              "wastedMs": 156
             }
           ]
         }
       },
       "findings": [
+        {
+          "id": "total-blocking-time",
+          "score": 0.86,
+          "title": "Total Blocking Time",
+          "displayValue": "230 ms"
+        },
+        {
+          "id": "max-potential-fid",
+          "score": 0.79,
+          "title": "Max Potential First Input Delay",
+          "displayValue": "160 ms"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.3 s"
+        },
         {
           "id": "unused-javascript",
           "score": 0.5,
@@ -601,11 +619,11 @@
       "mode": "desktop",
       "scores": {
         "performance": 1,
-        "accessibility": 0.96,
+        "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 268.26800000000003,
+      "lcpMs": 248.868,
       "cls": 0,
       "tbtMs": 0,
       "diagnostics": {
@@ -637,61 +655,7 @@
               "label": "Failing Elements"
             }
           ],
-          "items": [
-            {
-              "node": {
-                "type": "node",
-                "lhId": "1-0-A",
-                "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,0,SECTION,2,DIV,0,NAV,7,A",
-                "selector": "section#dashboard > div.overview-hero__visual > nav.pulse-orbit > a.pulse-orbit__link",
-                "boundingRect": {
-                  "top": 293,
-                  "bottom": 361,
-                  "left": 101,
-                  "right": 338,
-                  "width": 237,
-                  "height": 68
-                },
-                "snippet": "<a href=\"/russia\" class=\"pulse-orbit__link pulse-orbit__link--russia\" tabindex=\"0\" style=\"opacity: 1; transform: none;\">",
-                "nodeLabel": "Россия\nрынки и бизнес",
-                "explanation": "Fix any of the following:\n  Target has insufficient size because it is partially obscured (smallest space is 237.5px by 20.5px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 5.6px instead of at least 24px."
-              },
-              "subItems": {
-                "type": "subitems",
-                "items": [
-                  {
-                    "relatedNode": {
-                      "type": "node",
-                      "lhId": "1-1-A",
-                      "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,0,SECTION,2,DIV,0,NAV,8,A",
-                      "selector": "section#dashboard > div.overview-hero__visual > nav.pulse-orbit > a.pulse-orbit__link",
-                      "boundingRect": {
-                        "top": 314,
-                        "bottom": 651,
-                        "left": 95,
-                        "right": 332,
-                        "width": 237,
-                        "height": 337
-                      },
-                      "snippet": "<a href=\"/world\" class=\"pulse-orbit__link pulse-orbit__link--world\" tabindex=\"0\" style=\"opacity: 1; transform: none;\">",
-                      "nodeLabel": "Мир\nмировые ориентиры"
-                    }
-                  }
-                ]
-              }
-            }
-          ],
-          "debugData": {
-            "type": "debugdata",
-            "impact": "serious",
-            "tags": [
-              "cat.sensory-and-visual-cues",
-              "wcag22aa",
-              "wcag258",
-              "EN-301-549v4",
-              "EN-9.2.5.8"
-            ]
-          }
+          "items": []
         },
         "lcp-breakdown-insight": {
           "type": "list",
@@ -714,12 +678,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 68.173
+                  "duration": 46.043
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 365.549
+                  "duration": 412.923
                 }
               ]
             },
@@ -762,18 +726,13 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-DXQew1ZF.css",
-              "totalBytes": 27116
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27730
             }
           ]
         }
       },
       "findings": [
-        {
-          "id": "target-size",
-          "score": 0,
-          "title": "Touch targets do not have sufficient size or spacing."
-        },
         {
           "id": "unused-javascript",
           "score": 0.5,
@@ -796,14 +755,14 @@
       "path": "/world",
       "mode": "mobile",
       "scores": {
-        "performance": 0.98,
+        "performance": 0.93,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 925.114,
+      "lcpMs": 908.313,
       "cls": 0.001502679277614253,
-      "tbtMs": 152,
+      "tbtMs": 315,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -856,12 +815,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 70.644
+                  "duration": 29.804999999970196
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 264.449
+                  "duration": 307.2820000000298
                 }
               ]
             },
@@ -904,14 +863,32 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-DXQew1ZF.css",
-              "totalBytes": 27110,
-              "wastedMs": 151
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27126,
+              "wastedMs": 156
             }
           ]
         }
       },
       "findings": [
+        {
+          "id": "total-blocking-time",
+          "score": 0.77,
+          "title": "Total Blocking Time",
+          "displayValue": "320 ms"
+        },
+        {
+          "id": "max-potential-fid",
+          "score": 0.79,
+          "title": "Max Potential First Input Delay",
+          "displayValue": "160 ms"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.6 s"
+        },
         {
           "id": "unused-javascript",
           "score": 0.5,
@@ -940,7 +917,7 @@
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 265.78700000000003,
+      "lcpMs": 256.8155,
       "cls": 0.002455451222966272,
       "tbtMs": 0,
       "diagnostics": {
@@ -995,12 +972,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 81.653
+                  "duration": 91.1760000000596
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 285.319
+                  "duration": 347.02899999994037
                 }
               ]
             },
@@ -1043,8 +1020,8 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-DXQew1ZF.css",
-              "totalBytes": 27536
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
+              "totalBytes": 27153
             }
           ]
         }
@@ -1070,7 +1047,8 @@
     }
   ],
   "failures": [
-    "Lighthouse desktop /: accessibility\n\n0.96 !== 1\n"
+    "Lighthouse mobile /: TBT 233ms",
+    "Lighthouse mobile /world: TBT 315ms"
   ],
-  "finished": "2026-11-21T07:34:40.259Z"
+  "finished": "2026-11-21T07:45:10.061Z"
 }
