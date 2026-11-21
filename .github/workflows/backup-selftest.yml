@@ -38,7 +38,9 @@ jobs:
       - run: |
           python -m pip install 'psycopg[binary]==3.2.13'
       - name: Encryption authentication and safety regressions
-        run: node --test tests/backup-envelope.test.mjs tests/backup-safety.test.mjs
+        run: |
+          node --test tests/backup-envelope.test.mjs tests/backup-safety.test.mjs
+          python tests/backup-diagnostics.py
       - name: Restore actual synthetic PostgreSQL dump (NO production credentials)
         env:
           BACKUP_FIXTURE_ADMIN_URL: postgresql://postgres:fixture-only@127.0.0.1:5432/postgres
