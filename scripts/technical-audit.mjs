@@ -10,7 +10,7 @@ const sb = 'https://hekzplfftannlzwvgwwm.supabase.co';
 const key = (await fs.readFile('src/lib/supabase.ts', 'utf8')).match(/'(sb_publishable_[^']+)'/)[1];
 const output = process.env.TECHNICAL_AUDIT_OUTPUT || '.local/production-audit';
 await fs.mkdir(output, { recursive: true });
-const report = { started: new Date().toISOString(), data: [], browsers: [], lighthouse: [], failures: [] };
+const report = { started: new Date().toISOString(), data: [], browsers: [], lighthouse: [], instrumentationRetries: [], failures: [] };
 async function check(name, run) {
   try { await run(); } catch (e) { report.failures.push(`${name}: ${e.message}`); }
 }
@@ -136,10 +136,21 @@ function locationHost(url) { return new URL(url).hostname; }
 for (const path of ['/', '/world']) {
   for (const mode of ['mobile', 'desktop']) {
     await check(`Lighthouse ${mode} ${path}`, async () => {
-      const chrome = await launch({ chromePath: chromium.executablePath(), chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'] });
-      try {
-        const config = mode === 'desktop' ? desktopConfig : undefined;
-        const { lhr } = await lighthouse(origin + path, { port: chrome.port, logLevel: 'error', output: 'json', onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'] }, config);
+      let lhr;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const chrome = await launch({ chromePath: chromium.executablePath(), chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'] });
+        try {
+          const config = mode === 'desktop' ? desktopConfig : undefined;
+          ({ lhr } = await lighthouse(origin + path, { port: chrome.port, logLevel: 'error', output: 'json', onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'] }, config));
+        } finally { await chrome.kill(); }
+        // NO_NAVSTART contains no usable trace; never retry a valid bad metric.
+        if (attempt === 0 && lhr.runtimeError?.code === 'NO_NAVSTART') {
+          await fs.writeFile(`${output}/lighthouse-${mode}-${path === '/' ? 'home' : 'world'}-NO_NAVSTART.json`, JSON.stringify(lhr));
+          report.instrumentationRetries.push({ path, mode, reason: 'NO_NAVSTART', attempt: 1 });
+          continue;
+        }
+        break;
+      }
         const entry = { path, mode, scores: Object.fromEntries(Object.entries(lhr.categories).map(([k, v]) => [k, v.score])),
           lcpMs: lhr.audits['largest-contentful-paint'].numericValue,
           cls: lhr.audits['cumulative-layout-shift'].numericValue,
@@ -156,7 +167,6 @@ for (const path of ['/', '/world']) {
         assert.ok(entry.cls <= 0.1, `CLS ${entry.cls}`);
         assert.ok(entry.tbtMs <= 200, `TBT ${entry.tbtMs}ms`);
         for (const category of ['accessibility', 'best-practices', 'seo']) assert.equal(entry.scores[category], 1, category);
-      } finally { await chrome.kill(); }
     });
   }
 }
