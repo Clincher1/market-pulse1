@@ -1,11 +1,11 @@
 {
-  "started": "2026-11-21T14:48:53.873Z",
+  "started": "2026-11-21T15:07:47.342Z",
   "endpoints": [
     {
       "path": "/",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/",
-      "ms": 165,
+      "ms": 141,
       "bytes": 4186,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -23,7 +23,7 @@
       "path": "/world",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/world",
-      "ms": 31,
+      "ms": 21,
       "bytes": 4078,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -41,7 +41,7 @@
       "path": "/status",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/status",
-      "ms": 38,
+      "ms": 17,
       "bytes": 4104,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -59,7 +59,7 @@
       "path": "/memory/",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/",
-      "ms": 207,
+      "ms": 91,
       "bytes": 4186,
       "headers": {
         "content-type": "text/html; charset=utf-8",
@@ -77,7 +77,7 @@
       "path": "/robots.txt",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/robots.txt",
-      "ms": 30,
+      "ms": 18,
       "bytes": 130,
       "headers": {
         "content-type": "text/plain; charset=utf-8",
@@ -95,7 +95,7 @@
       "path": "/sitemap.xml",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/sitemap.xml",
-      "ms": 45,
+      "ms": 28,
       "bytes": 712,
       "headers": {
         "content-type": "application/xml",
@@ -113,7 +113,7 @@
       "path": "/favicon.svg",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/favicon.svg",
-      "ms": 29,
+      "ms": 16,
       "bytes": 1476,
       "headers": {
         "content-type": "image/svg+xml",
@@ -131,7 +131,7 @@
       "path": "/icon-192.png",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/icon-192.png",
-      "ms": 29,
+      "ms": 11,
       "bytes": 18682,
       "headers": {
         "content-type": "image/png",
@@ -149,7 +149,7 @@
       "path": "/apple-touch-icon.png",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/apple-touch-icon.png",
-      "ms": 25,
+      "ms": 21,
       "bytes": 17372,
       "headers": {
         "content-type": "image/png",
@@ -167,7 +167,7 @@
       "path": "/api/russia-insights",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/russia-insights",
-      "ms": 33,
+      "ms": 31,
       "bytes": 14035,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -181,8 +181,8 @@
         "x-vercel-cache": "HIT"
       },
       "summary": {
-        "generatedAt": "2026-11-21T14:46:30.823Z",
-        "elapsed_ms": 3573,
+        "generatedAt": "2026-11-21T15:05:17.904Z",
+        "elapsed_ms": 1942,
         "markets": [
           {
             "id": "usd-rub",
@@ -207,15 +207,15 @@
           },
           {
             "id": "imoex",
-            "value": 2324.66,
-            "asOf": "2026-11-21 17:46:25",
+            "value": 2325.09,
+            "asOf": "2026-11-21 18:05:15",
             "previousDate": "2026-11-20",
-            "changePct": -1.263
+            "changePct": -1.245
           },
           {
             "id": "rgbi",
             "value": 110.86,
-            "asOf": "2026-11-21 17:46:16",
+            "asOf": "2026-11-21 18:05:15",
             "previousDate": "2026-11-20",
             "changePct": -0.027
           },
@@ -277,7 +277,7 @@
       "path": "/api/russia-history",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/russia-history",
-      "ms": 28,
+      "ms": 35,
       "bytes": 13915,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -291,7 +291,7 @@
         "x-vercel-cache": "HIT"
       },
       "summary": {
-        "generatedAt": "2026-11-21T14:36:04.254Z",
+        "generatedAt": "2026-11-21T14:54:30.650Z",
         "errors": [],
         "series": [
           {
@@ -381,8 +381,8 @@
       "path": "/api/brief-image",
       "status": 200,
       "url": "https://market-pulse1-eta.vercel.app/api/brief-image",
-      "ms": 176,
-      "bytes": 348725,
+      "ms": 76,
+      "bytes": 349634,
       "headers": {
         "content-type": "image/png",
         "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests",
@@ -406,7 +406,7 @@
       "path": "/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_forecasts_v1?select=forecast_id,asset_key,issued_at,outcome_status,return_pct,direction_hit&limit=2",
-      "ms": 193,
+      "ms": 424,
       "bytes": 109,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -430,7 +430,7 @@
       "path": "/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/forecast_outcomes_v2?select=forecast_id&limit=1",
-      "ms": 135,
+      "ms": 139,
       "bytes": 210,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -454,7 +454,7 @@
       "path": "/rest/v1/source_preferences?select=*&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/source_preferences?select=*&limit=1",
-      "ms": 148,
+      "ms": 329,
       "bytes": 206,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -478,7 +478,7 @@
       "path": "/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/site_health?select=checked_at,ok,trigger&order=checked_at.desc&limit=2",
-      "ms": 137,
+      "ms": 327,
       "bytes": 150,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -508,7 +508,7 @@
       "path": "/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/market_memory_stats_v1?select=evaluated_forecasts&limit=1",
-      "ms": 134,
+      "ms": 349,
       "bytes": 105,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -532,7 +532,7 @@
       "path": "/rest/v1/daily_snapshots?select=date,assets&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots?select=date,assets&limit=1",
-      "ms": 161,
+      "ms": 324,
       "bytes": 200,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -556,7 +556,7 @@
       "path": "/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
       "status": 401,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/legacy_gold_cache_20261121?select=id&limit=1",
-      "ms": 153,
+      "ms": 147,
       "bytes": 222,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -580,7 +580,7 @@
       "path": "/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/asset_price_history_v1?select=instrument_id&instrument_id=like.gold_twelve*&limit=1",
-      "ms": 156,
+      "ms": 482,
       "bytes": 2,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -599,7 +599,7 @@
       "path": "/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/daily_snapshots_public_v1?select=date,captured_at,assets,russia&limit=1",
-      "ms": 168,
+      "ms": 171,
       "bytes": 1860,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -722,7 +722,7 @@
       "path": "/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
       "status": 200,
       "url": "https://hekzplfftannlzwvgwwm.supabase.co/rest/v1/cached_assets?select=id,name,price,change,as_of,spark_dates,sparkline,source_label",
-      "ms": 127,
+      "ms": 320,
       "bytes": 4050,
       "headers": {
         "content-type": "application/json; charset=utf-8",
@@ -809,88 +809,6 @@
           "source_label": "ECB"
         },
         {
-          "id": "gold",
-          "name": "Gold",
-          "price": "$3,539.0",
-          "change": null,
-          "as_of": "2026-11-21T14:39:38+00:00",
-          "spark_dates": [],
-          "sparkline": [],
-          "source_label": "gold-api.com · последние наблюдения UTC, не официальный close"
-        },
-        {
-          "id": "btc",
-          "name": "BTC",
-          "price": "$60,143",
-          "change": 2.2722,
-          "as_of": "2026-11-21T14:40:04.498+00:00",
-          "spark_dates": [
-            "2026-10-22",
-            "2026-10-23",
-            "2026-10-24",
-            "2026-10-25",
-            "2026-10-26",
-            "2026-10-27",
-            "2026-10-28",
-            "2026-10-29",
-            "2026-10-30",
-            "2026-10-31",
-            "2026-11-01",
-            "2026-11-02",
-            "2026-11-03",
-            "2026-11-04",
-            "2026-11-05",
-            "2026-11-06",
-            "2026-11-07",
-            "2026-11-08",
-            "2026-11-09",
-            "2026-11-10",
-            "2026-11-11",
-            "2026-11-12",
-            "2026-11-13",
-            "2026-11-14",
-            "2026-11-15",
-            "2026-11-16",
-            "2026-11-17",
-            "2026-11-18",
-            "2026-11-19",
-            "2026-11-20"
-          ],
-          "sparkline": [
-            81315.9,
-            81086.2,
-            80771.9,
-            80048.5,
-            80001.9,
-            80800.9,
-            81287.1,
-            77800,
-            77204.3,
-            77437,
-            78239.2,
-            76675.8,
-            77331.7,
-            80440.8,
-            75979.9,
-            75741.6,
-            75753.9,
-            74737.9,
-            75253.1,
-            73700.3,
-            73928.4,
-            71370.7,
-            68235.9,
-            64115.1,
-            65314.6,
-            64810.6,
-            64877,
-            62984.6,
-            61913.5,
-            58806.3
-          ],
-          "source_label": "Kraken"
-        },
-        {
           "id": "brent",
           "name": "Brent (фьючерс)",
           "price": "$92.57",
@@ -961,6 +879,88 @@
             92.56999969
           ],
           "source_label": "Yahoo Finance"
+        },
+        {
+          "id": "gold",
+          "name": "Gold",
+          "price": "$3,539.0",
+          "change": null,
+          "as_of": "2026-11-21T15:04:38+00:00",
+          "spark_dates": [],
+          "sparkline": [],
+          "source_label": "gold-api.com · последние наблюдения UTC, не официальный close"
+        },
+        {
+          "id": "btc",
+          "name": "BTC",
+          "price": "$60,247",
+          "change": 2.4491,
+          "as_of": "2026-11-21T15:05:02.673+00:00",
+          "spark_dates": [
+            "2026-10-22",
+            "2026-10-23",
+            "2026-10-24",
+            "2026-10-25",
+            "2026-10-26",
+            "2026-10-27",
+            "2026-10-28",
+            "2026-10-29",
+            "2026-10-30",
+            "2026-10-31",
+            "2026-11-01",
+            "2026-11-02",
+            "2026-11-03",
+            "2026-11-04",
+            "2026-11-05",
+            "2026-11-06",
+            "2026-11-07",
+            "2026-11-08",
+            "2026-11-09",
+            "2026-11-10",
+            "2026-11-11",
+            "2026-11-12",
+            "2026-11-13",
+            "2026-11-14",
+            "2026-11-15",
+            "2026-11-16",
+            "2026-11-17",
+            "2026-11-18",
+            "2026-11-19",
+            "2026-11-20"
+          ],
+          "sparkline": [
+            81315.9,
+            81086.2,
+            80771.9,
+            80048.5,
+            80001.9,
+            80800.9,
+            81287.1,
+            77800,
+            77204.3,
+            77437,
+            78239.2,
+            76675.8,
+            77331.7,
+            80440.8,
+            75979.9,
+            75741.6,
+            75753.9,
+            74737.9,
+            75253.1,
+            73700.3,
+            73928.4,
+            71370.7,
+            68235.9,
+            64115.1,
+            65314.6,
+            64810.6,
+            64877,
+            62984.6,
+            61913.5,
+            58806.3
+          ],
+          "source_label": "Kraken"
         },
         {
           "id": "sp500",
@@ -1049,6 +1049,15 @@
       "basis": "series"
     },
     {
+      "id": "brent",
+      "checked": true,
+      "ok": true,
+      "expected": 0.6414397786993137,
+      "stored": 0.6414,
+      "priceMismatch": null,
+      "basis": "series"
+    },
+    {
       "id": "gold",
       "checked": false,
       "ok": true,
@@ -1058,19 +1067,10 @@
       "id": "btc",
       "checked": true,
       "ok": true,
-      "expected": 2.273055778037382,
-      "stored": 2.2722,
+      "expected": 2.4499075779295705,
+      "stored": 2.4491,
       "priceMismatch": null,
       "basis": "quote"
-    },
-    {
-      "id": "brent",
-      "checked": true,
-      "ok": true,
-      "expected": 0.6414397786993137,
-      "stored": 0.6414,
-      "priceMismatch": null,
-      "basis": "series"
     },
     {
       "id": "sp500",
@@ -1082,5 +1082,5 @@
       "basis": "series"
     }
   ],
-  "finished": "2026-11-21T14:48:56.238Z"
+  "finished": "2026-11-21T15:07:50.880Z"
 }
