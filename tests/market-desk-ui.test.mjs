@@ -172,3 +172,14 @@ test('chart adapts its coordinate system to a narrow mobile content width', asyn
   assert.doesNotMatch(svg.outerHTML, /NaN|Infinity/);
   await cleanup();
 });
+
+test('comparison table region is keyboard focusable and named', async () => {
+  await mount();
+  const region = container.querySelector('.desk-table-wrap');
+  assert.ok(region);
+  assert.equal(region.getAttribute('tabindex'), '0');
+  assert.equal(region.getAttribute('role'), 'region');
+  assert.match(region.getAttribute('aria-label'), /Результаты сравнения/);
+  region.focus();
+  assert.equal(document.activeElement, region);
+});
