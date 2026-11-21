@@ -22,7 +22,7 @@ const navLinks = DASHBOARD_THEME_ORDER.map((themeId) => {
   };
 });
 
-const desktopPrimaryThemeIds: SectionThemeId[] = ['passport', 'russia', 'global', 'news'];
+const desktopPrimaryThemeIds: SectionThemeId[] = ['brief', 'passport', 'russia', 'global', 'news'];
 const desktopPrimaryLinks = [
   {
     label: 'Обзор',
@@ -32,7 +32,7 @@ const desktopPrimaryLinks = [
     themeId: null,
   },
   ...desktopPrimaryThemeIds.map((themeId) => ({
-    label: SECTION_THEMES[themeId].navLabel,
+    label: themeId === 'brief' ? SECTION_THEMES.brief.label : SECTION_THEMES[themeId].navLabel,
     href: SECTION_THEMES[themeId].href,
     icon: SECTION_THEMES[themeId].icon,
     page: themeId as AppView,
@@ -43,7 +43,7 @@ const desktopMoreLinks = navLinks.filter((link) => !desktopPrimaryThemeIds.inclu
 
 // The bottom bar keeps the most-used destinations one tap away. Less frequent
 // pages remain available from the full menu and the overview page.
-const mobileThemeIds: SectionThemeId[] = ['passport', 'russia', 'global', 'news'];
+const mobileThemeIds: SectionThemeId[] = ['brief', 'passport', 'russia', 'global', 'news'];
 
 const mobileQuickLinks = [
   {
@@ -70,7 +70,7 @@ function mobileLinksForView(activeView: AppView) {
     return mobileQuickLinks;
   }
 
-  // Keep the five-slot bar useful on every route: for a page outside the pinned
+  // Keep the six-slot bar useful on every route: for a page outside the pinned
   // set, replace News with the current page instead of leaving every tab idle.
   const theme = SECTION_THEMES[activeView];
   return [
@@ -401,6 +401,8 @@ export default function Header({ activeView }: HeaderProps) {
               key={link.href}
               href={link.href}
               data-theme={link.theme?.id ?? 'dashboard'}
+              aria-label={link.page === 'brief' ? SECTION_THEMES.brief.label : undefined}
+              title={link.page === 'brief' ? SECTION_THEMES.brief.label : undefined}
               onClick={() => setMenuOpen(false)}
               aria-current={isActive ? 'page' : undefined}
               className={`mobile-quick-nav__link flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 text-[10px] font-extrabold leading-none transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${

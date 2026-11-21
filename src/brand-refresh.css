@@ -156,6 +156,14 @@
   --nav-border: #d8e4ff;
 }
 
+.desktop-navigation__link[data-theme='brief'] {
+  --nav-color: #5b21b6;
+  --nav-main: #6d28d9;
+  --nav-alt: #5b21b6;
+  --nav-tint: #f5f3ff;
+  --nav-border: #ddd6fe;
+}
+
 .desktop-navigation__link[data-theme='passport'] {
   --nav-color: #065f46;
   --nav-main: #047857;

@@ -15,7 +15,7 @@ function checkGradient(from, to, ink, label) {
   }
 }
 test('active route gradients, including both ends and intermediate stops, meet AA for small text', () => {
-  for (const id of ['dashboard','passport','russia','global','news']) {
+  for (const id of ['dashboard','brief','passport','russia','global','news']) {
     const block=css.match(new RegExp(`\\.desktop-navigation__link\\[data-theme='${id}'\\] \\{([^}]+)\\}`))?.[1];
     assert.ok(block);
     const variable = key => block.match(new RegExp(`--${key}:\\s*(#[0-9a-f]{6})`))?.[1];

@@ -34,6 +34,16 @@ test('mobile disclosure closes with Escape, outside press and link click; Escape
   const root=createRoot(document.getElementById('root'));
   try {
     await act(async()=>root.render(React.createElement(Header,{activeView:'dashboard'})));
+    const desktop=document.querySelector('.desktop-navigation');
+    const primary=[...desktop.querySelectorAll(':scope > a')];
+    assert.equal(primary[0].getAttribute('href'),'/');
+    assert.equal(primary[1].getAttribute('href'),'/brief');
+    assert.equal(primary[1].textContent.trim(),'Бриф за 60 секунд');
+    assert.equal(desktop.querySelector('details a[href="/brief"]'),null,'Brief must not be hidden in More');
+    const quick=document.querySelector('.mobile-quick-nav');
+    assert.equal(quick.children.length,6);
+    assert.equal(quick.children[1].getAttribute('href'),'/brief');
+    assert.equal(quick.children[1].getAttribute('aria-label'),'Бриф за 60 секунд');
     const opener=document.querySelector('.site-header__mobile-toggle');
     await act(async()=>opener.click());
     assert.equal(opener.getAttribute('aria-expanded'),'true');
