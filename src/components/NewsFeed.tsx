@@ -230,7 +230,7 @@ export default function NewsFeed() {
           </span>
         )}
       </div>
-      <p className="mb-5 max-w-3xl text-sm leading-relaxed text-text-secondary">
+      <p className="mb-5 max-w-[72ch] text-sm leading-relaxed text-text-secondary">
         Показаны исходные заголовки, источник, время публикации и ссылка. Лента не
         ранжирует публикации по модельной важности или тональности и не приписывает
         им предполагаемое влияние на цены. Заголовок сам по себе не подтверждает

@@ -90,7 +90,7 @@ function NoteCard({ note }: { note: ChangeNote }) {
         <DirectionBadge direction={note.direction} />
       </div>
       <p className="mt-2 text-sm leading-relaxed text-text-secondary">{note.detail}</p>
-      <p className="mt-2 text-[11px] text-text-secondary">
+      <p className="mt-2 text-xs text-text-secondary">
         {note.provider}
         {note.lastDate ? ` · данные на ${shortDate(note.lastDate)}` : ' · даты наблюдений источник не передаёт'}
       </p>
@@ -205,7 +205,7 @@ export default function WhatChanged() {
       <h2 id="what-changed-title" className="mt-3 text-2xl font-extrabold tracking-tight text-text-primary">
         Что меняется
       </h2>
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
+      <p className="mt-2 max-w-[72ch] text-sm leading-relaxed text-text-secondary">
         Здесь только то, что уже произошло: сколько дней подряд ряд движется в одну сторону, где
         последнее значение относительно всего окна, насколько узок диапазон последних дней. Считается
         по закрытиям торговых дней за три месяца у российских рядов и по 30 последним закрытиям
@@ -242,7 +242,7 @@ export default function WhatChanged() {
           <h3 className="text-sm font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Неделя к неделе
           </h3>
-          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-secondary">
+          <p className="mt-1 max-w-[72ch] text-xs leading-relaxed text-text-secondary">
             Одно и то же сравнение для всех рядов: насколько значение сдвинулось за последние
             семь переходов между точками и насколько — за семь предыдущих переходов. Никаких выводов «хорошо/плохо»:
             только два факта и их разница в процентных пунктах.
@@ -272,7 +272,7 @@ export default function WhatChanged() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-2 text-xs leading-relaxed text-text-secondary">
             «Последние 7» — семь переходов между восемью наблюдениями; для двух смежных окон нужны
             15 точек. Это не обязательно календарные недели. У ставок и доходностей изменения подписаны в
             процентных пунктах: процент от процента сайт не считает. «Где в окне» — доля значений
@@ -282,7 +282,7 @@ export default function WhatChanged() {
         </div>
       )}
 
-      <p className="mt-4 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-4 text-xs leading-relaxed text-text-secondary">
         У каждого ряда подписана дата последнего наблюдения. Если источник не отдал дату, ряд
         остаётся без неё целиком: строки говорят о позиции значения в окне, а не о числе дней.
         Пропущенные дни не достраиваются — на графиках видно только то, что отдал источник.

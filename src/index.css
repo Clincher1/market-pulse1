@@ -659,7 +659,7 @@
 .overview-section-kicker {
   margin: 0 0 0.35rem;
   color: #2563eb;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.16em;
 }
@@ -1400,3 +1400,5 @@
   max-width: 72ch;
   line-height: 1.6;
 }
+
+:where(main) p { max-width: 72ch; }

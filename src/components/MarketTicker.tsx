@@ -29,7 +29,7 @@ export default function MarketTicker() {
         >
           Пять ориентиров
         </h2>
-        <p className="text-[11px] text-text-secondary">
+        <p className="text-xs text-text-secondary">
           Цена и доступное изменение к предыдущему дневному наблюдению. Подпись под значением указывает его момент. История золота накапливается отдельно из gold-api.com; пока нет базы сравнения, процент не показывается.
         </p>
       </div>
