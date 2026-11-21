@@ -115,6 +115,10 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
                 assert.deepEqual(result.storage.filter(k => !['market-pulse-favorites-v1', 'market-pulse-heatmap-palette'].includes(k)), []);
                 assert.deepEqual(errors, []);
                 if (path === '/world') {
+                  // Reveal the containing section before measuring descendants:
+                  // its remembered off-screen size is not their painted layout.
+                  await page.locator('#global-economy').scrollIntoViewIfNeeded();
+                  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
                   const strip = page.locator('section[aria-labelledby="market-strip-title"] li');
                   result.quoteComparisons = [];
                   for (const [i, id] of ['usd-eur', 'sp500', 'brent', 'gold', 'btc'].entries()) {
@@ -125,7 +129,12 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
                     // Compare what a reader actually sees after revealing the tile,
                     // never treat an unpainted subtree as a different quote.
                     await tile.scrollIntoViewIfNeeded();
-                    const tilePrice = await tile.locator(':scope > div').nth(1).innerText();
+                    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+                    const quoteField = tile.locator(':scope > div').nth(1);
+                    // Wait only for non-empty rendering, never for equality with
+                    // the expected quote. A wrong value must fail on first read.
+                    await page.waitForFunction(node => node.innerText.trim().length > 0, await quoteField.elementHandle(), { timeout: 5000 });
+                    const tilePrice = await quoteField.innerText();
                     result.quoteComparisons.push({ id, ticker: value, tile: tilePrice });
                     assert.equal(tilePrice, value, `${id}: ticker ${value} and revealed tile ${tilePrice} disagree`);
                   }
