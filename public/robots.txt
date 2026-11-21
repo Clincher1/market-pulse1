@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /sb/
+Disallow: /memory
+Sitemap: https://market-pulse1-eta.vercel.app/sitemap.xml

@@ -145,6 +145,10 @@ export function resolveStaticPath(rawUrl, rootDir) {
 
   // Без расширения — это адрес клиентской страницы (/russia, /guide), а не
   // файл: отдаём index.html, иначе прямой переход или перезагрузка даст 404.
+  const route = pathname.replace(/\/+$/, '');
+  if (['/passport', '/russia', '/world', '/brief', '/news', '/guide', '/about', '/status'].includes(route)) {
+    return join(root, `${route.slice(1)}.html`);
+  }
   return isFileRequest ? candidate : join(root, 'index.html');
 }
 
