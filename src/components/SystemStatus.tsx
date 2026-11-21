@@ -241,7 +241,7 @@ export default function SystemStatus() {
               <div className="mb-1 text-xs font-bold uppercase tracking-widest text-text-secondary">
                 Сбои за последние {history.length} проверок
               </div>
-              <p className="mb-3 text-[11px] leading-relaxed text-text-secondary">
+              <p className="mb-3 text-xs leading-relaxed text-text-secondary">
                 Подряд идущие красные проверки считаются одним сбоем: восемь часов
                 простоя — это одна строка, а не восемь.
               </p>
@@ -290,7 +290,7 @@ export default function SystemStatus() {
           )}
 
           {/* Все проверки */}
-          <p className="mb-3 flex items-start gap-2 rounded-xl border border-border-subtle bg-slate-50 px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mb-3 flex items-start gap-2 rounded-xl border border-border-subtle bg-slate-50 px-3.5 py-2.5 text-xs leading-relaxed text-text-secondary">
             <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
               Зелёный — данные пришли в пределах своего расписания, оно подписано у каждой
@@ -300,7 +300,7 @@ export default function SystemStatus() {
             </span>
           </p>
           {weekStats.samples > 0 && (
-            <p className="mb-3 rounded-xl border border-border-subtle bg-slate-50 px-3.5 py-2.5 text-[11px] leading-relaxed text-text-secondary">
+            <p className="mb-3 rounded-xl border border-border-subtle bg-slate-50 px-3.5 py-2.5 text-xs leading-relaxed text-text-secondary">
               <span className="font-bold text-text-primary">{weekStats.headline}</span>{' '}
               Свежий прогон отвечает, что происходит сейчас; окно за неделю показывает, насколько
               это часто. Источник, не ответивший в один час, — задержка, а не поломка: следующий
@@ -414,7 +414,7 @@ export default function SystemStatus() {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+              <p className="mt-3 text-xs leading-relaxed text-text-secondary">
                 Лента, молчащая больше суток, — кандидат на замену. Именно так
                 два года незаметно молчала лента WSJ: материалы из неё читались,
                 но база их отбрасывала, и никто об этом не знал.

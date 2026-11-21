@@ -676,7 +676,7 @@ function AssetChart({
           </>
         )}
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-2 text-xs leading-relaxed text-text-secondary">
         Дневные наблюдения · последние {points.length} {daysWord(points.length)} ·
         наведите курсор или коснитесь графика, чтобы увидеть значения.
         {highlight && highlightLabel
@@ -910,7 +910,7 @@ function DatedAssetChart({
         })}
       </div>
 
-      <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-1 text-xs leading-relaxed text-text-secondary">
         Дневные наблюдения · {points.length} {observationsWord(points.length)} ·{" "}
         {formatDateLong(first.date)} — {formatDateLong(last.date)}. Ось X
         линейна по календарным датам источника; наведите курсор или коснитесь
@@ -1189,7 +1189,7 @@ function AssetPanel({
             }} />
 
             {history.unfinishedDayExcluded && (
-              <p className="mt-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] leading-relaxed text-cyan-900">
+              <p className="mt-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs leading-relaxed text-cyan-900">
                 Сегодняшний день ещё не закрыт, поэтому последняя точка графика
                 — наблюдение за {formatDateLong(lastHistoryPoint.date)}. Текущая цена
                 дня показана на плитке выше и меняется в течение суток; на
@@ -1199,7 +1199,7 @@ function AssetPanel({
             )}
 
             {isHistoryPartial && historyPoints[0] && (
-              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
+              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
                 Доступная датированная история начинается{" "}
                 {formatDateLong(historyPoints[0].date)}, поэтому выбранный
                 диапазон {historyRangeDays} {calendarDaysWord(historyRangeDays)}{" "}
@@ -1315,7 +1315,7 @@ function AssetPanel({
             Проверить данные · {visibleHistoryPoints.length}{" "}
             {observationsWord(visibleHistoryPoints.length)}
           </summary>
-          <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-2 text-xs leading-relaxed text-text-secondary">
             Это ровно те точки, из которых построена линия выше: ряд{" "}
             <span className="font-bold text-text-primary">
               {history.providerSymbol}
@@ -1363,7 +1363,7 @@ function AssetPanel({
             </table>
           </div>
           {visibleHistoryPoints.length > 30 && (
-            <p className="mt-2 text-[11px] text-text-secondary">
+            <p className="mt-2 text-xs text-text-secondary">
               Показаны последние 30 записей из {visibleHistoryPoints.length}:
               весь диапазон целиком на графике, здесь — конец ряда.
             </p>
@@ -1401,7 +1401,7 @@ function AssetPanel({
                   style={{ width: `${windowPositionPct}%` }}
                 />
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+              <p className="mt-2 text-xs leading-relaxed text-text-secondary">
                 Это факт по сохранённым закрытиям: где цена стоит внутри своего
                 окна. Ожиданий и рекомендаций здесь нет — выдача прогнозов
                 остановлена 31 октября 2026 года.
@@ -1451,7 +1451,7 @@ function AssetPanel({
               цен.
             </p>
           )}
-          <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-3 text-xs leading-relaxed text-text-secondary">
             Это дневные закрытия, а не поток котировок в реальном времени.
           </p>
         </section>
@@ -1628,7 +1628,7 @@ export default function MarketHeatmap({
           <PaletteIcon className="h-3.5 w-3.5" aria-hidden="true" />
           Палитра для дальтоников
         </button>
-        <p className="w-full text-[11px] leading-relaxed text-text-secondary sm:w-auto sm:flex-1">
+        <p className="w-full text-xs leading-relaxed text-text-secondary sm:w-auto sm:flex-1">
           День — изменение цены к предыдущему закрытию, а не разность двух точек графика.
           Неделя — пять переходов между сохранёнными закрытиями, месяц — до 29.
           Это наблюдения, а не обязательно календарные дни; текущая цена может отличаться от конца ряда.

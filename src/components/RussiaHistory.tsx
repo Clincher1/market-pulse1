@@ -479,7 +479,7 @@ export default function RussiaHistory() {
             ))}
             {data.notes.length > 1 && (
               <details className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
-                <summary className="min-h-11 cursor-pointer select-none py-3 font-bold text-text-secondary transition-colors hover:text-text-primary">
+                <summary className="text-xs min-h-11 cursor-pointer select-none py-3 font-bold text-text-secondary transition-colors hover:text-text-primary">
                   Как читать график
                 </summary>
                 <div className="mt-1.5 flex flex-col gap-1.5">
@@ -495,7 +495,7 @@ export default function RussiaHistory() {
           </div>
 
           <details className="mt-2 text-[11px] text-text-secondary">
-            <summary className="min-h-11 cursor-pointer select-none py-3 font-semibold text-text-secondary">
+            <summary className="text-xs min-h-11 cursor-pointer select-none py-3 font-semibold text-text-secondary">
               Все {series.points.length} значений ряда
             </summary>
             <div className="mt-2 max-h-64 overflow-auto focus-visible:outline-2 focus-visible:outline-cyan-600" tabIndex={0} role="region" aria-label={`Таблица наблюдений ${series.name}`}>

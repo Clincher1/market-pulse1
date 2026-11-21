@@ -354,7 +354,7 @@ export default function BusinessMoney() {
                 {fact.asOf && <> · {fact.asOf}</>}
               </div>
 
-              <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+              <p className="mt-2 text-xs leading-relaxed text-text-secondary">
                 <span className="font-bold text-slate-700">Что сверить:</span> {fact.check}.
               </p>
             </a>

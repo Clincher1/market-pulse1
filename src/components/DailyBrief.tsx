@@ -100,7 +100,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 basis-full items-center gap-1 pl-6 text-[11px] sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="inline-flex min-h-11 basis-full items-center gap-1 pl-6 text-xs sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
           aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
         >
           {item.sourceLabel ?? 'Источник'}
@@ -420,14 +420,14 @@ export default function DailyBrief() {
       )}
 
       {snapshot && changeView.renamed.length > 0 && (
-        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary">
+        <p className="mt-2 px-1 text-xs leading-relaxed text-text-secondary">
           Для {changeView.renamed.join(', ')} сравнение не выполняется: с момента снимка сменился
           инструмент или источник.
         </p>
       )}
 
       {snapshot && changeView.comparable > 0 && (
-        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary">
+        <p className="mt-2 px-1 text-xs leading-relaxed text-text-secondary">
           Цены и курсы: (текущее значение / значение в снимке − 1) × 100 %.
           Ставки и доходности: текущее значение − значение в снимке, в процентных пунктах.
           Точность — 0,01 % или 0,01 п.п. В каждой группе — до шести наибольших по модулю
@@ -506,7 +506,7 @@ export default function DailyBrief() {
               ))}
             </ol>
             {changesSection}
-            <p className="mt-3.5 text-[11px] leading-relaxed text-text-secondary">
+            <p className="mt-3.5 text-xs leading-relaxed text-text-secondary">
               Сводка показывает загруженные значения и арифметические сравнения с сохранённым
               снимком. Совпадение по времени не объясняет причину изменения; рекомендации не
               выдаются.
