@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 # No write, administration or workflow-dispatch permission is needed for this check.
-# A trusted branch push rechecks configuration after the owner updates App variables.
+# A trusted branch push rechecks configuration after owner variable or installation updates.
 permissions:
   contents: read
 
