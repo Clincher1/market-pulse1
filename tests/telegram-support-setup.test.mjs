@@ -37,13 +37,13 @@ test('GET serves a no-store mobile form and never includes configured secrets', 
   assert.doesNotMatch(res.body, /fake-token-not-real|localGeneratedSecret/);
 });
 
-test('POST rejects missing configuration, a wrong secret and a foreign origin', async () => {
+test('POST rejects missing configuration and a wrong secret regardless of Origin', async () => {
   const calls = [];
   const fetchImpl = async (...args) => { calls.push(args); return { ok: true, json: async () => ({ ok: true }) }; };
   assert.equal((await invoke(createTelegramSupportSetupHandler({ env: {}, fetchImpl }), { method: 'POST', body: { secret } })).statusCode, 503);
   assert.equal((await invoke(createTelegramSupportSetupHandler({ env, fetchImpl }), { method: 'POST', body: { secret: 'wrong' } })).statusCode, 403);
   assert.equal((await invoke(createTelegramSupportSetupHandler({ env, fetchImpl }), {
-    method: 'POST', body: { secret }, headers: { origin: 'https://attacker.example' },
+    method: 'POST', body: { secret: 'wrong' }, headers: { origin: 'https://attacker.example' },
   })).statusCode, 403);
   assert.equal(calls.length, 0);
 });

@@ -71,11 +71,10 @@ export function createTelegramSupportSetupHandler({ env = process.env, fetchImpl
       return html(res, 405, '<!doctype html><html lang="ru"><title>Метод не поддерживается</title><h1>Используйте форму настройки.</h1></html>');
     }
 
-    const origin = req.headers?.origin;
-    if (origin && origin !== 'https://market-pulse1-eta.vercel.app') {
-      return html(res, 403, '<!doctype html><html lang="ru"><title>Запрос отклонён</title><h1>Откройте страницу настройки на сайте Market Pulse.</h1></html>');
-    }
-
+    // Do not rely on Origin headers: mobile browsers and Vercel domain aliases can
+    // send a valid same-site POST with a different origin serialization. The
+    // high-entropy webhook secret below authenticates the action, and the target
+    // webhook URL is fixed (not supplied by the request).
     const token = env.TELEGRAM_BOT_TOKEN;
     const adminId = env.TELEGRAM_SUPPORT_ADMIN_ID;
     const webhookSecret = env.TELEGRAM_WEBHOOK_SECRET;
