@@ -31,11 +31,14 @@ const escape = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
 
 function validDate(value) {
   if (typeof value !== 'string') return false;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const date = new Date(value);
-    return Number.isFinite(date.getTime())
-      && date.toISOString().slice(0, 10) === value;
-  }
+  // Validate the written calendar date before parsing any time-zone offset.
+  // Date.parse normalizes e.g. February 30 in timestamps instead of rejecting it.
+  const calendarDate = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(calendarDate)) return false;
+  const date = new Date(calendarDate);
+  if (!Number.isFinite(date.getTime())
+    || date.toISOString().slice(0, 10) !== calendarDate) return false;
+  if (value === calendarDate) return true;
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
     && Number.isFinite(Date.parse(value));
 }

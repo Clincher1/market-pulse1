@@ -81,6 +81,21 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
       ['source', { name: 'Source', url: 'https://user:password@example.com/' }],
       ['source', null],
     ]) variants.push([`invalid ${field}: ${JSON.stringify(value)}`, { ...snapshot, items: [{ ...snapshot.items[0], [field]: value }, ...snapshot.items.slice(1)] }]);
+    for (const date of [
+      '2026-02-30', '2026-04-31', '2026-02-29', '1900-02-29',
+      '2026-00-15', '2026-13-01', '2026-01-00', '2026-01-32',
+    ]) {
+      for (const suffix of ['', 'T12:00:00Z', 'T00:30:00.123+03:00', 'T23:30:00-05:00']) {
+        const invalidDate = `${date}${suffix}`;
+        variants.push([`nonexistent observation date: ${invalidDate}`, {
+          ...snapshot,
+          items: [{ ...snapshot.items[0], observedAt: invalidDate }, ...snapshot.items.slice(1)],
+        }]);
+        if (suffix) variants.push([`nonexistent export date: ${invalidDate}`, {
+          ...snapshot, exportedAt: invalidDate,
+        }]);
+      }
+    }
     for (const [label, value] of variants) {
       await writeFile(`${dir}/dist/index.html`, originalHtml);
       await rm(`${dir}/data/snapshot.json`, { force: true });
@@ -91,6 +106,22 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
         return true;
       }, label);
       assert.equal(await readFile(`${dir}/dist/index.html`, 'utf8'), originalHtml, `Invalid snapshot must not overwrite the document: ${label}`);
+    }
+    // Leap years, fractional seconds and offsets crossing UTC dates stay valid.
+    for (const observedAt of [
+      '2000-02-29', '2024-02-29', '2026-04-30',
+      '2000-02-29T12:00:00Z', '2024-02-29T00:30:00.123+03:00',
+      '2024-02-29T23:30:00-05:00',
+    ]) {
+      const valid = {
+        ...snapshot,
+        exportedAt: observedAt.includes('T') ? observedAt : snapshot.exportedAt,
+        items: [{ ...snapshot.items[0], observedAt }, ...snapshot.items.slice(1)],
+      };
+      await writeFile(`${dir}/data/snapshot.json`, JSON.stringify(valid));
+      await writeFile(`${dir}/dist/index.html`, originalHtml);
+      await exec(process.execPath, [`${dir}/scripts/build-pages.mjs`], { cwd: dir });
+      assert.ok((await readFile(`${dir}/dist/index.html`, 'utf8')).includes(`datetime="${observedAt}"`));
     }
     const escaped = structuredClone(snapshot);
     escaped.items[0].instrument = '<img src=x onerror=alert(1)> & "test"';
