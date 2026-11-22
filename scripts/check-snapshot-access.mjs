@@ -1,5 +1,8 @@
 // Read-only permission probe. Uses the public site key, never a privileged credential.
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { updateSnapshot } from './update-static-snapshot.mjs';
 
 const source = await readFile(new URL('../src/lib/supabase.ts', import.meta.url), 'utf8');
 const key = source.match(/'(sb_publishable_[^']+)'/)?.[1];
@@ -50,3 +53,15 @@ for (const path of [
   }
 }
 console.log('PASS existing public website reads');
+
+// Exercise the actual updater with live data in a disposable file only.
+const dir = await mkdtemp(join(tmpdir(), 'snapshot-live-candidate-'));
+try {
+  const file = join(dir, 'snapshot.json');
+  await writeFile(file, await readFile(new URL('../data/snapshot.json', import.meta.url)));
+  const candidate = await updateSnapshot({ file, url: base.replace('/rest/v1/', ''), key });
+  if (candidate.items.length !== 3) throw new Error('Live candidate is incomplete');
+  console.log('PASS live updater: validated complete fresh export in temporary file; repository snapshot untouched');
+} finally {
+  await rm(dir, { recursive: true, force: true });
+}

@@ -1,0 +1,73 @@
+name: Update static snapshot
+
+on:
+  schedule:
+    # 03:00 UTC = 06:00 Moscow. GitHub can delay scheduled jobs.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-static-snapshot-main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Check out current main (never force-push or bypass branch protection)
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Record base revision
+        run: echo "SNAPSHOT_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Fetch and atomically validate all three observations
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SNAPSHOT_SUPABASE_READ_KEY: ${{ secrets.SNAPSHOT_SUPABASE_READ_KEY }}
+        run: node scripts/update-static-snapshot.mjs
+      - name: Install locked dependencies
+        run: npm ci
+      # GITHUB_TOKEN commits normally do not trigger other Actions. All quality
+      # checks therefore run here, against the candidate, BEFORE the commit.
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - name: Type-check Supabase Edge Functions
+        working-directory: supabase/functions
+        run: npx -y deno@2 check */index.ts _shared/*.ts
+      - name: Commit only the snapshot and stop if main moved
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/snapshot.json; then
+            echo "Snapshot is unchanged; nothing to commit."
+            exit 0
+          fi
+          test "$(git diff --name-only)" = 'data/snapshot.json'
+          test -z "$(git ls-files --others --exclude-standard)"
+          git fetch origin main
+          if test "$(git rev-parse origin/main)" != "$SNAPSHOT_BASE_SHA"; then
+            echo 'Main changed during validation; stopping without commit or push.'
+            exit 1
+          fi
+          git config user.name 'Clincher1'
+          git config user.email '88886535+Clincher1@users.noreply.github.com'
+          git add -- data/snapshot.json
+          test "$(git diff --cached --name-only)" = 'data/snapshot.json'
+          git commit -m 'Refresh validated static market snapshot'
+          # A concurrent update or branch protection rejects this normal push.
+          # No retry/rebase/force push and no admin bypass.
+          git push origin HEAD:main

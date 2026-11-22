@@ -6,12 +6,14 @@ on:
     paths:
       - 'supabase/migrations/*static_snapshot_rpc.sql'
       - 'scripts/check-snapshot-access.mjs'
+      - 'scripts/update-static-snapshot.mjs'
       - '.github/workflows/snapshot-access.yml'
   pull_request:
     branches: [main]
     paths:
       - 'supabase/migrations/*static_snapshot_rpc.sql'
       - 'scripts/check-snapshot-access.mjs'
+      - 'scripts/update-static-snapshot.mjs'
       - '.github/workflows/snapshot-access.yml'
   workflow_dispatch:
 
