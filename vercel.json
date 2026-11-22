@@ -13,6 +13,9 @@
     },
     "api/telegram-support.js": {
       "maxDuration": 30
+    },
+    "api/telegram-support-setup.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
