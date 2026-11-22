@@ -33,6 +33,7 @@ jobs:
         run: node scripts/check-snapshot-access.mjs
       - name: Verify repository runtime configuration without changing the snapshot
         # Fork/PR events must not receive repository credentials.
+        # A trusted branch push also rechecks configuration after an owner key update.
         if: github.event_name != 'pull_request'
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
