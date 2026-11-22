@@ -18,15 +18,16 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Minimum write permission, scoped only to this job; no admin/bypass rights.
+    # GITHUB_TOKEN is read-only. Only the final push receives an App write token.
     permissions:
-      contents: write
+      contents: read
     steps:
-      - name: Check out current main (never force-push or bypass branch protection)
+      - name: Check out current main without persisted credentials
         uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 1
+          persist-credentials: false
       - name: Record base revision
         run: echo "SNAPSHOT_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v7
@@ -40,8 +41,8 @@ jobs:
         run: node scripts/update-static-snapshot.mjs
       - name: Install locked dependencies
         run: npm ci
-      # GITHUB_TOKEN commits normally do not trigger other Actions. All quality
-      # checks therefore run here, against the candidate, BEFORE the commit.
+      # All checks remain before commit/push, even though App-authenticated pushes
+      # may trigger downstream Actions and the Vercel Git integration.
       - run: npm test
       - run: npm run typecheck
       - run: npm run lint
@@ -140,26 +141,61 @@ jobs:
             exit "$code"
           fi
 
-      - name: Push snapshot commit (no force or bypass)
+      - name: Check approved snapshot App identity
         if: steps.snapshot_changes.outputs.has_changes == 'true'
+        env:
+          SNAPSHOT_APP_ID: ${{ vars.SNAPSHOT_APP_ID }}
         shell: bash
         run: |
           set -euo pipefail
-          echo '### Snapshot: push to main' >> "$GITHUB_STEP_SUMMARY"
+          if test "$SNAPSHOT_APP_ID" != '5872216'; then
+            echo '::error::SNAPSHOT_APP_ID is missing or does not match the owner-approved App. No push.'
+            exit 1
+          fi
+
+      - name: Create short-lived snapshot App write token
+        if: steps.snapshot_changes.outputs.has_changes == 'true'
+        id: snapshot-app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.SNAPSHOT_APP_ID }}
+          private-key: ${{ secrets.SNAPSHOT_APP_PRIVATE_KEY }}
+          owner: Clincher1
+          repositories: market-pulse1
+          permission-contents: write
+          skip-token-revoke: 'false'
+
+      - name: Push snapshot commit (approved App, no force)
+        if: steps.snapshot_changes.outputs.has_changes == 'true'
+        env:
+          SNAPSHOT_APP_TOKEN: ${{ steps.snapshot-app-token.outputs.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '### Snapshot: push to main using approved App 5872216' >> "$GITHUB_STEP_SUMMARY"
+          if test -z "${SNAPSHOT_APP_TOKEN:-}"; then
+            echo '::error::Snapshot App token is missing. No push and no fallback to GITHUB_TOKEN.'
+            exit 1
+          fi
+          # Supply auth only to the git push process, not a URL, file or global config.
+          auth="$(printf 'x-access-token:%s' "$SNAPSHOT_APP_TOKEN" | base64 -w0)"
           # Never print credentials, remote URLs, git config, environment or raw
           # remote output. Classify known refusals without revealing token data.
           push_log="$(mktemp "$RUNNER_TEMP/snapshot-push.XXXXXX")"
           trap 'rm -f "$push_log"' EXIT
-          if git push origin HEAD:main > "$push_log" 2>&1; then
+          if GIT_CONFIG_COUNT=1 \
+            GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+            GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" \
+            git push origin HEAD:main > "$push_log" 2>&1; then
             echo "PASS: snapshot commit $(git rev-parse HEAD) pushed to main." | tee -a "$GITHUB_STEP_SUMMARY"
           else
             code=$?
             if grep -Eiq 'GH006|GH013|protected branch|repository rule|rule violations|required status check|pull request' "$push_log"; then
-              reason='Branch protection or repository rules rejected push. Owner decision required: bot PR or narrowly scoped service exception; no rules were changed.'
+              reason='Branch protection or repository rules rejected the approved App push. Check App identity and owner-configured exception; no fallback, rule changes or retry.'
             elif grep -Eiq 'non-fast-forward|fetch first|stale info|cannot lock ref|failed to update ref' "$push_log"; then
               reason='Main changed after the revision check. No retry, rebase or force push.'
             elif grep -Eiq '403|permission|denied|authentication|not permitted|write access' "$push_log"; then
-              reason='Push authentication/permission rejected. Job already requests contents: write; check effective repository policy without printing credentials.'
+              reason='App push authentication/permission rejected. Check installation contents: write and repository scope; no fallback to GITHUB_TOKEN.'
             else
               reason='Unclassified push failure. Raw remote output withheld to protect credentials; review GitHub policy/network availability before changing anything.'
             fi

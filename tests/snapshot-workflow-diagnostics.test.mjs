@@ -10,7 +10,7 @@ const names = [
   'Check changed files (snapshot only)',
   'Check main is still current',
   'Commit validated snapshot locally',
-  'Push snapshot commit (no force or bypass)',
+  'Push snapshot commit (approved App, no force)',
 ];
 function step(name) {
   const block = workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - name: ')[0];
@@ -39,7 +39,10 @@ else if (command === 'rev-parse HEAD') out(e.MOCK_LOCAL_SHA);
 else if (command === "config user.name Clincher1" || command === 'config user.email 88886535+Clincher1@users.noreply.github.com') {}
 else if (command === 'add -- data/snapshot.json') fs.writeFileSync(e.MOCK_ADDED, 'yes');
 else if (args[0] === 'commit' && args[1] === '-m' && args[2] === 'Refresh validated static market snapshot') process.exit(Number(e.MOCK_COMMIT_EXIT || 0));
-else if (command === 'push origin HEAD:main') { out(e.MOCK_REMOTE_OUTPUT); process.exit(Number(e.MOCK_PUSH_EXIT || 0)); }
+else if (command === 'push origin HEAD:main') {
+  fs.writeFileSync(e.MOCK_AUTH, JSON.stringify({count:e.GIT_CONFIG_COUNT,key:e.GIT_CONFIG_KEY_0,value:e.GIT_CONFIG_VALUE_0}));
+  out(e.MOCK_REMOTE_OUTPUT); process.exit(Number(e.MOCK_PUSH_EXIT || 0));
+}
 else { console.error('unexpected git command'); process.exit(99); }
 `;
 async function fixture(overrides, callback) {
@@ -52,6 +55,7 @@ async function fixture(overrides, callback) {
   const env = { ...process.env, PATH: `${dir}:${process.env.PATH}`,
     RUNNER_TEMP: dir, GITHUB_STEP_SUMMARY: summary, GITHUB_OUTPUT: output,
     SNAPSHOT_BASE_SHA: 'a'.repeat(40), MOCK_REMOTE_SHA: 'a'.repeat(40), MOCK_LOCAL_SHA: 'a'.repeat(40),
+    MOCK_AUTH: join(dir, 'auth.json'), SNAPSHOT_APP_TOKEN: 'FAKE_APP_TOKEN_FOR_UNIT_TEST',
     MOCK_COMMANDS: commands, MOCK_ADDED: join(dir, 'added'), MOCK_CHANGED: 'data/snapshot.json',
     MOCK_STAGED: '', MOCK_STAGED_AFTER_ADD: 'data/snapshot.json', MOCK_UNTRACKED: '',
     MOCK_REMOTE_OUTPUT: '', MOCK_FETCH_EXIT: '0', MOCK_COMMIT_EXIT: '0', MOCK_PUSH_EXIT: '0',
@@ -66,14 +70,14 @@ async function fixture(overrides, callback) {
   try { await callback(run, dir); } finally { await rm(dir, { recursive: true, force: true }); }
 }
 
-test('four ordered stages retain minimum job-only write permission and success gating', () => {
+test('four ordered stages retain read-only GITHUB_TOKEN and success gating', () => {
   let position = -1;
   for (const name of names) {
     const next = workflow.indexOf(`      - name: ${name}\n`);
     assert.ok(next > position); position = next;
   }
   assert.match(workflow, /\npermissions:\n  contents: read\n/);
-  assert.match(workflow, /\n    permissions:\n      contents: write\n    steps:/);
+  assert.match(workflow, /\n    permissions:\n      contents: read\n    steps:/);
   assert.doesNotMatch(workflow, /pull-requests: write|actions: write|write-all|--admin|continue-on-error/);
   assert.match(step(names[0]), /id: snapshot_changes/);
   for (const name of names.slice(1)) {
@@ -172,4 +176,52 @@ test('normal push success reports SHA and cleans up private remote output', asyn
   assert.doesNotMatch(r.stdout + r.stderr + r.summary, /SENSITIVE_SENTINEL/);
   assert.deepEqual(r.commands, [['push', 'origin', 'HEAD:main'], ['rev-parse', 'HEAD']]);
   assert.ok(!(await readdir(dir)).some(name => name.startsWith('snapshot-push.')));
+}));
+
+test('App write token is scoped, pinned, minted after commit and revoked by the action', () => {
+  const token = step('Create short-lived snapshot App write token');
+  const identity = step('Check approved snapshot App identity');
+  assert.ok(workflow.indexOf('      - name: Create short-lived snapshot App write token')
+    > workflow.indexOf('      - name: Commit validated snapshot locally'));
+  assert.match(token, /if: steps.snapshot_changes.outputs.has_changes == 'true'/);
+  assert.match(identity, /if: steps.snapshot_changes.outputs.has_changes == 'true'/);
+  assert.match(token, /uses: actions\/create-github-app-token@[a-f0-9]{40}/);
+  assert.match(token, /app-id: \$\{\{ vars.SNAPSHOT_APP_ID \}\}/);
+  assert.match(token, /private-key: \$\{\{ secrets.SNAPSHOT_APP_PRIVATE_KEY \}\}/);
+  assert.match(token, /owner: Clincher1\n          repositories: market-pulse1/);
+  assert.match(token, /permission-contents: write/);
+  assert.match(token, /skip-token-revoke: 'false'/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(step(names[3]), /SNAPSHOT_APP_TOKEN: \$\{\{ steps.snapshot-app-token.outputs.token \}\}/);
+  assert.doesNotMatch(workflow, /permission-(?:administration|actions|pull-requests):/);
+  for (const name of names.slice(0, 3)) assert.doesNotMatch(step(name), /SNAPSHOT_APP_TOKEN|PRIVATE_KEY/);
+});
+
+test('only approved App ID passes the runtime identity guard', async () => {
+  for (const id of ['', '1234', '5872216']) {
+    await fixture({ SNAPSHOT_APP_ID: id }, async run => {
+      const r = await run('Check approved snapshot App identity');
+      assert.equal(r.status, id === '5872216' ? 0 : 1);
+      assert.deepEqual(r.commands, []);
+    });
+  }
+});
+
+test('missing App token stops before git push; never falls back to GITHUB_TOKEN', async () => fixture({ SNAPSHOT_APP_TOKEN: '' }, async run => {
+  const r = await run(names[3]); assert.equal(r.status, 1);
+  assert.match(r.stdout, /App token is missing/);
+  assert.deepEqual(r.commands, []);
+}));
+
+test('App authentication reaches git only via process-scoped config, not logs or command arguments', async () => fixture({}, async (run, dir) => {
+  const r = await run(names[3]); assert.equal(r.status, 0);
+  const auth = JSON.parse(await readFile(join(dir, 'auth.json'), 'utf8'));
+  assert.equal(auth.count, '1');
+  assert.equal(auth.key, 'http.https://github.com/.extraheader');
+  const basic = Buffer.from('x-access-token:FAKE_APP_TOKEN_FOR_UNIT_TEST').toString('base64');
+  assert.equal(auth.value, `AUTHORIZATION: basic ${basic}`);
+  const visible = r.stdout + r.stderr + r.summary + JSON.stringify(r.commands);
+  assert.ok(!visible.includes('FAKE_APP_TOKEN_FOR_UNIT_TEST'));
+  assert.ok(!visible.includes(basic));
+  assert.deepEqual(r.commands, [['push', 'origin', 'HEAD:main'], ['rev-parse', 'HEAD']]);
 }));
