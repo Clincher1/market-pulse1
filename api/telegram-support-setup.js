@@ -78,14 +78,22 @@ export function createTelegramSupportSetupHandler({ env = process.env, fetchImpl
     const token = env.TELEGRAM_BOT_TOKEN;
     const adminId = env.TELEGRAM_SUPPORT_ADMIN_ID;
     const webhookSecret = env.TELEGRAM_WEBHOOK_SECRET;
-    if (!token || !/^[1-9]\d{4,19}$/.test(adminId ?? '')
-      || !/^[A-Za-z0-9_-]{32,256}$/.test(webhookSecret ?? '')) {
-      return html(res, 503, '<!doctype html><html lang="ru"><title>Настройка не завершена</title><h1>В Vercel ещё не заданы все переменные Telegram-поддержки.</h1></html>');
+    const supplied = submittedSecret(req);
+
+    if (typeof webhookSecret !== 'string' || !webhookSecret) {
+      return html(res, 503, '<!doctype html><html lang="ru"><title>Настройка не завершена</title><h1>В Production в Vercel не задан TELEGRAM_WEBHOOK_SECRET. Сначала добавьте его, сохраните и заново выполните Redeploy.</h1></html>');
+    }
+    if (!supplied || supplied.length > 256 || !safeEqual(supplied, webhookSecret)) {
+      return html(res, 403, '<!doctype html><html lang="ru"><title>Проверка не пройдена</title><h1>Секрет не принят. Введите точное значение TELEGRAM_WEBHOOK_SECRET из Production в Vercel.</h1></html>');
     }
 
-    const supplied = submittedSecret(req);
-    if (!supplied || supplied.length > 256 || !safeEqual(supplied, webhookSecret)) {
-      return html(res, 403, '<!doctype html><html lang="ru"><title>Проверка не пройдена</title><h1>Секрет не принят. Проверьте значение в Vercel и попробуйте снова.</h1></html>');
+    const configurationProblems = [];
+    if (!token || !token.trim()) configurationProblems.push('TELEGRAM_BOT_TOKEN — задайте токен, выданный @BotFather.');
+    if (!/^[1-9]\d{4,19}$/.test(adminId ?? '')) configurationProblems.push('TELEGRAM_SUPPORT_ADMIN_ID — задайте числовой ID Telegram, только цифры, без @.');
+    if (!/^[A-Za-z0-9_-]{32,256}$/.test(webhookSecret)) configurationProblems.push('TELEGRAM_WEBHOOK_SECRET — нужно от 32 до 256 символов: латинские буквы, цифры, _ или -, без пробелов.');
+    if (configurationProblems.length) {
+      const items = configurationProblems.map((problem) => `<li>${problem}</li>`).join('');
+      return html(res, 503, `<!doctype html><html lang="ru"><title>Настройка не завершена</title><h1>Проверьте эти Production-переменные в Vercel:</h1><ul>${items}</ul><p>После исправления сохраните переменные и снова нажмите Redeploy.</p></html>`);
     }
 
     let result;
