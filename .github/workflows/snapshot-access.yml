@@ -1,0 +1,31 @@
+name: Snapshot public access
+
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'supabase/migrations/*static_snapshot_rpc.sql'
+      - 'scripts/check-snapshot-access.mjs'
+      - '.github/workflows/snapshot-access.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/*static_snapshot_rpc.sql'
+      - 'scripts/check-snapshot-access.mjs'
+      - '.github/workflows/snapshot-access.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verify real public-key RPC, denied source access and unchanged site reads
+        run: node scripts/check-snapshot-access.mjs
