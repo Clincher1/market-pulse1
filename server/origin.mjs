@@ -67,6 +67,7 @@ const MIME = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8',
   '.map': 'application/json; charset=utf-8',
 };
 
@@ -144,13 +145,13 @@ export function resolveStaticPath(rawUrl, rootDir) {
   const candidate = normalize(join(root, relative));
   if (candidate !== root && !candidate.startsWith(root + sep)) return null;
 
-  // Без расширения — это адрес клиентской страницы (/russia, /guide), а не
-  // файл: отдаём index.html, иначе прямой переход или перезагрузка даст 404.
+  // Known routes have build-time HTML. Unknown paths must not become soft 404s.
   const route = pathname.replace(/\/+$/, '');
   if (['/passport', '/russia', '/world', '/brief', '/news', '/guide', '/about', '/status'].includes(route)) {
     return join(root, `${route.slice(1)}.html`);
   }
-  return isFileRequest ? candidate : join(root, 'index.html');
+  if (pathname === '/') return join(root, 'index.html');
+  return isFileRequest ? candidate : null;
 }
 
 /** Мини-адаптер к стилю Vercel: `res.status(200).json(...)` и `res.end(buffer)`. */
@@ -191,7 +192,7 @@ async function serveFile(filePath, req, res, headers) {
   // Хэшированные файлы сборки не меняются никогда, HTML — всегда свежий.
   res.setHeader(
     'Cache-Control',
-    filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable',
+    /\.(?:html|xml|txt)$/.test(filePath) ? 'no-cache' : 'public, max-age=31536000, immutable',
   );
   for (const [name, value] of Object.entries(headers)) res.setHeader(name, value);
 
@@ -310,6 +311,13 @@ export function createOriginServer({ rootDir, supabaseUrl, apiDir, log = () => {
         return;
       }
 
+      // Match the existing Vercel compatibility redirect, including old archive links.
+      if (/^\/memory(?:\/|$)/.test(pathname)) {
+        res.writeHead(307, { Location: '/', 'Cache-Control': 'no-store' });
+        res.end();
+        return;
+      }
+
       const file = resolveStaticPath(url, rootDir);
       if (file && (await serveFile(file, req, res, securityHeaders()))) {
         log(`${req.method} ${pathname} ${res.statusCode} ${Date.now() - started}ms`);
@@ -317,6 +325,10 @@ export function createOriginServer({ rootDir, supabaseUrl, apiDir, log = () => {
       }
 
       res.statusCode = 404;
+      if (await serveFile(join(resolve(rootDir), '404.html'), req, res, securityHeaders())) {
+        log(`${req.method} ${pathname} 404 ${Date.now() - started}ms`);
+        return;
+      }
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.end('not found');
       log(`${req.method} ${pathname} 404 ${Date.now() - started}ms`);

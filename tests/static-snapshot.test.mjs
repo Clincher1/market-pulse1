@@ -57,8 +57,8 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
   await mkdir(new URL('.local/', root), { recursive: true });
   const dir = await mkdtemp(new URL('.local/snapshot-test-', root));
   try {
-    for (const path of ['scripts', 'src/lib', 'data', 'dist']) await mkdir(`${dir}/${path}`, { recursive: true });
-    for (const path of ['scripts/static-document.mjs', 'scripts/build-pages.mjs', 'src/lib/pageDescriptions.json']) {
+    for (const path of ['scripts', 'src/lib', 'data', 'dist', 'public']) await mkdir(`${dir}/${path}`, { recursive: true });
+    for (const path of ['scripts/static-document.mjs', 'scripts/build-pages.mjs', 'src/lib/pageDescriptions.json', 'src/lib/methodology.json', 'src/lib/pageTitles.json', 'public/robots.txt']) {
       await copyFile(new URL(path, root), `${dir}/${path}`);
     }
     const originalHtml = await readFile(new URL('index.html', root), 'utf8');
@@ -126,6 +126,8 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
     const escaped = structuredClone(snapshot);
     escaped.items[0].instrument = '<img src=x onerror=alert(1)> & "test"';
     escaped.items[0].basis = '</td><script>alert(1)</script>';
+    escaped.items[0].value = '123.4567890123456789';
+    escaped.exportedAt = '2026-11-23T03:00:01.123456Z';
     await writeFile(`${dir}/data/snapshot.json`, JSON.stringify(escaped));
     await writeFile(`${dir}/dist/index.html`, originalHtml);
     await exec(process.execPath, [`${dir}/scripts/build-pages.mjs`], { cwd: dir });
@@ -134,6 +136,13 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
     assert.equal(doc.querySelectorAll('tbody img, tbody script, [onerror]').length, 0);
     assert.ok(doc.querySelector('tbody').textContent.includes(escaped.items[0].instrument));
     assert.ok(doc.querySelector('tbody').textContent.includes(escaped.items[0].basis));
+    const blocks = [...doc.querySelectorAll('script[type="application/ld+json"]')];
+    assert.equal(blocks.length, 2, 'Provider text must not terminate a JSON-LD data block');
+    const dataset = blocks.map(node => JSON.parse(node.textContent)).find(data => data['@type'] === 'Dataset');
+    assert.equal(dataset.hasPart[0].name, escaped.items[0].instrument);
+    assert.equal(dataset.hasPart[0].description, escaped.items[0].basis);
+    assert.equal(dataset.hasPart[0].variableMeasured.value, escaped.items[0].value);
+    assert.equal(dataset.dateModified, escaped.exportedAt, 'Next snapshot regenerates JSON-LD without editing metadata');
     dom.window.close();
   } finally { await rm(dir, { recursive: true, force: true }); }
 });

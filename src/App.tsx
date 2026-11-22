@@ -6,6 +6,7 @@ const DailyBrief = lazy(() => import('@/components/DailyBrief'));
 const RussiaBusiness = lazy(() => import('@/components/RussiaBusiness'));
 const KeyAssets = lazy(() => import('@/components/KeyAssets'));
 import Footer from '@/components/Footer';
+import PAGE_TITLES from '@/lib/pageTitles.json';
 import MarketTicker from '@/components/MarketTicker';
 import TrustStrip from '@/components/TrustStrip';
 import HowWeKnow from '@/components/HowWeKnow';
@@ -34,18 +35,6 @@ type PageInfo = {
   description: string;
 };
 
-const VIEW_TITLES: Record<AppView, string> = {
-  dashboard: 'Обзор рынка',
-  passport: 'Сводка дня',
-  russia: 'Россия и бизнес',
-  global: 'Мировые рынки',
-  brief: 'Коротко о рынке',
-  news: 'Новости',
-  memory: 'Память рынка',
-  guide: 'Как читать сайт',
-  about: 'О проекте',
-  status: 'Состояние системы',
-};
 
 const PAGE_INFO: Record<InnerPageView, PageInfo> = {
   passport: {
@@ -359,7 +348,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    document.title = `${VIEW_TITLES[view]} — Market Pulse`;
+    document.title = PAGE_TITLES[view];
     const description = PAGE_DESCRIPTIONS[view];
     document.querySelectorAll('meta[name="description"], meta[property="og:description"], meta[name="twitter:description"]')
       .forEach(meta => meta.setAttribute('content', description));
