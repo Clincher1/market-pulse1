@@ -35,7 +35,7 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       assert.equal(doc.querySelectorAll('nav[aria-label]').length, 1);
       assert.equal(doc.querySelector('[data-initial-document]').dataset.initialDocument, entry.key);
       assert.equal(doc.querySelector('nav [aria-current="page"]').getAttribute('href'), `/${route}`);
-      assert.equal(doc.querySelectorAll('h2').length, route === '' ? 3 : 2);
+      assert.equal(doc.querySelectorAll('h2').length, route === '' ? 3 : route === 'about' ? 6 : 2);
       assert.ok(doc.querySelector('main').textContent.trim().length > 500);
       assert.ok(doc.querySelector('main').textContent.includes('не обновляется автоматически'));
       assert.equal(doc.querySelectorAll('.initial-document__snapshot').length, route === '' ? 1 : 0);
@@ -45,7 +45,7 @@ test('built pages expose useful, distinct semantic HTML and working links withou
         else if (href.startsWith('/')) assert.ok(Object.hasOwn(routes, href.slice(1)), `Unknown link: ${href}`);
         else assert.equal(new URL(href).protocol, 'https:');
       }
-      assert.equal(doc.querySelectorAll('script[type="application/ld+json"]').length, 1);
+      assert.equal(doc.querySelectorAll('script[type="application/ld+json"]').length, route === '' ? 2 : 1);
       assert.deepEqual(JSON.parse(doc.querySelector('script[type="application/ld+json"]').textContent), JSON.parse(websiteJsonLd));
       assert.equal(doc.querySelectorAll('script[type="module"][src]').length, 1);
       assert.equal(doc.querySelectorAll('script:not([src]):not([type="application/ld+json"])').length, 0);

@@ -54,7 +54,7 @@ test('из статики отдаётся index.html для маршрутов 
   }
   // Подразделы гида остаются обычными hash-якорями внутри его страницы.
   assert.equal(resolveStaticPath('/guide#guide-memory', root), join(root, 'guide.html'));
-  assert.equal(resolveStaticPath('/guide-memory', root), join(root, 'index.html'));
+  assert.equal(resolveStaticPath('/guide-memory', root), null);
   // Настоящий файл отдаётся как файл.
   assert.equal(resolveStaticPath('/assets/app-abc123.js', root), join(root, 'assets/app-abc123.js'));
   assert.equal(resolveStaticPath('/favicon.svg', root), join(root, 'favicon.svg'));
@@ -81,9 +81,9 @@ test('статик нельзя вытащить за пределы катал�
   assert.equal(resolveStaticPath('/index.html%00.png', root), null);
   // Эти пути нормализуются URL-парсером ещё до захода в каталог: наружу они не
   // выводят. Файла с расширением в сборке нет — отдаём 404; путь без
-  // расширения считается маршрутом SPA и получает index.html, тоже из сборки.
+  // расширения не должен маскироваться главной страницей (soft 404).
   assert.equal(resolveStaticPath('/../server/origin.mjs', root), join(root, 'server/origin.mjs'));
-  assert.equal(resolveStaticPath('/assets/../../etc/passwd', root), join(root, 'index.html'));
+  assert.equal(resolveStaticPath('/assets/../../etc/passwd', root), null);
 });
 
 test('CSP не оставляет браузеру чужих адресов', () => {

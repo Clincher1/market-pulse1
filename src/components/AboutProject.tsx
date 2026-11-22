@@ -13,6 +13,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import { SectionThemeBadge } from './sectionThemes';
+import methodology from '@/lib/methodology.json';
 
 const architecture = [
   {
@@ -147,6 +148,18 @@ export default function AboutProject() {
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="border-t border-slate-200 p-6 sm:p-8 xl:p-10" aria-label={methodology.title}>
+          {methodology.sections.map(section => (
+            <section key={section.id} aria-labelledby={`methodology-${section.id}`} className="mb-6 last:mb-0">
+              <h3 id={`methodology-${section.id}`} className="text-lg font-extrabold text-text-primary">{section.title}</h3>
+              {section.paragraphs.map(text => <p key={text} className="mt-3 text-sm leading-relaxed text-text-secondary">{text}</p>)}
+              {section.links.length > 0 && <ul className="mt-3 space-y-2">
+                {section.links.map(link => <li key={link.url}><a href={link.url} className="inline-flex min-h-11 items-center text-sm font-bold text-accent-strong underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-accent">{link.label}</a></li>)}
+              </ul>}
+            </section>
+          ))}
         </div>
 
         <div className="grid gap-4 border-t border-slate-200 bg-slate-50 p-6 sm:p-8 lg:grid-cols-3 xl:p-10 xl:pt-8">

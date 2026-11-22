@@ -1,6 +1,7 @@
 // Build-time content only. Snapshot values come from a separately maintained file.
 import { readFileSync } from 'node:fs';
 import descriptions from '../src/lib/pageDescriptions.json' with { type: 'json' };
+import methodology from '../src/lib/methodology.json' with { type: 'json' };
 
 export const origin = 'https://market-pulse1-eta.vercel.app';
 export const routes = {
@@ -11,7 +12,7 @@ export const routes = {
   brief: { title: 'Коротко о рынке', label: 'Бриф за 60 секунд', key: 'brief' },
   news: { title: 'Новости', label: 'Новости', key: 'news' },
   guide: { title: 'Как читать сайт', label: 'Методология', key: 'guide' },
-  about: { title: 'О проекте', label: 'О проекте', key: 'about' },
+  about: { title: 'О проекте и методике', label: 'О проекте', key: 'about' },
   status: { title: 'Состояние системы', label: 'Состояние системы', key: 'status' },
 };
 
@@ -43,7 +44,7 @@ function validDate(value) {
     && Number.isFinite(Date.parse(value));
 }
 
-function renderSnapshot() {
+function readSnapshot() {
   let snapshot;
   try {
     snapshot = JSON.parse(readFileSync(
@@ -82,6 +83,11 @@ function renderSnapshot() {
       !== snapshot.items.length) {
     throw new Error('Invalid data/snapshot.json: expected 3–5 complete observations');
   }
+  return snapshot;
+}
+
+function renderSnapshot() {
+  const snapshot = readSnapshot();
   const rows = snapshot.items.map(row => `
               <tr>
                 <th scope="row">${escape(row.ticker)} — ${escape(row.instrument)}</th>
@@ -120,6 +126,67 @@ function renderSnapshot() {
         </section>`;
 }
 
+// Keep strings intact: converting decimal values to Number would lose source precision.
+// JSON-LD is an inert data block, not executable inline JavaScript. Escape '<' so
+// provider text cannot terminate the script element or inject markup.
+export function snapshotJsonLd() {
+  const snapshot = readSnapshot();
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    '@id': `${origin}/#static-snapshot`,
+    url: `${origin}/#static-snapshot-title`,
+    name: 'Статический снимок данных Market Pulse',
+    description: 'Сохранённые рыночные наблюдения, не котировки в реальном времени и не инвестиционная рекомендация. dateModified соответствует exportedAt — времени выгрузки, не времени наблюдения. Данные могут поступать с задержкой.',
+    inLanguage: 'ru',
+    isAccessibleForFree: true,
+    isPartOf: { '@id': `${origin}/#website` },
+    dateModified: snapshot.exportedAt,
+    hasPart: snapshot.items.map(row => ({
+      '@type': 'Dataset',
+      identifier: row.ticker,
+      name: row.instrument,
+      description: row.basis,
+      // ISO date remains date-only for Yahoo; real timestamp remains intact for XAU.
+      temporalCoverage: row.observedAt,
+      measurementTechnique: row.basis,
+      citation: { '@type': 'CreativeWork', name: row.source.name, url: row.source.url },
+      variableMeasured: {
+        '@type': 'PropertyValue', propertyID: row.ticker,
+        name: row.instrument, value: row.value, unitText: row.unit,
+      },
+    })),
+  }).replaceAll('<', '\\u003c');
+}
+
+function renderMethodology() {
+  return methodology.sections.map(section => `
+        <section aria-labelledby="methodology-${escape(section.id)}">
+          <h2 id="methodology-${escape(section.id)}">${escape(section.title)}</h2>
+          ${section.paragraphs.map(text => `<p>${escape(text)}</p>`).join('\n          ')}
+          ${section.links.length ? `<ul>${section.links.map(link => `<li><a href="${escape(link.url)}">${escape(link.label)}</a></li>`).join('')}</ul>` : ''}
+        </section>`).join('');
+}
+
+export function notFoundDocument(html) {
+  return html
+    .replace(/<title>[^<]*<\/title>/, '<title>404 — Страница не найдена — Market Pulse</title>')
+    .replace(/<meta name="robots" content="[^"]*"\s*\/?>/, '<meta name="robots" content="noindex, follow" />')
+    .replace(/<link rel="canonical"[^>]*>/, '')
+    .replace(/<meta\s+(?:property="og:[^"]*"|name="twitter:[^"]*")[^>]*>/g, '')
+    .replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*\/?>)/, '$1Страница не найдена. Вернитесь к обзору рынков или методике Market Pulse.$2')
+    // Standalone static page: startup must not replace a real 404 with the dashboard.
+    .replace(/<script\b[^>]*src="[^"]*"[^>]*><\/script>/g, '')
+    .replace('<div id="root"></div>', `<div class="initial-document">
+      <header><a class="initial-document__brand" href="/">Market Pulse</a></header>
+      <main id="main" tabindex="-1"><h1>404 — Страница не найдена</h1>
+        <p>Возможно, адрес изменился или в ссылке опечатка.</p>
+        <p><a href="/">Вернуться на главную</a> · <a href="/about">О проекте и методике</a></p>
+      </main>
+      <footer><p>Market Pulse не даёт инвестиционных рекомендаций.</p></footer>
+    </div>`);
+}
+
 export function staticDocument(route) {
   const page = routes[route];
   if (!page) throw new Error(`Unknown public route: ${route}`);
@@ -136,18 +203,20 @@ export function staticDocument(route) {
         <h1>${escape(page.title)}</h1>
         <p>${escape(descriptions[page.key])}</p>
         ${route === '' ? renderSnapshot() : ''}
+        ${route === 'about' ? renderMethodology() : ''}
         <section aria-labelledby="initial-sources">
           <h2 id="initial-sources">Откуда берутся данные?</h2>
           <p>Market Pulse показывает рыночные наблюдения по России и миру и исходные заголовки публикаций. Источник и время наблюдения указаны там, где они доступны. Рассчитанные изменения отделены от исходных значений.</p>
+          <p>Источники мирового раздела: <a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html">ECB — справочные валютные курсы</a>, <a href="https://finance.yahoo.com/">Yahoo Finance — дневные ряды S&amp;P 500 и фьючерса Brent</a>, <a href="https://gold-api.com/">gold-api.com — спотовое золото XAU/USD</a>. Состав статического снимка указан в его таблице; ECB в него не входит.</p>
           <p>Правила чтения значений, расчётов и ограничений описаны в <a href="/guide">методологии</a>. Результаты технических проверок доступны на странице <a href="/status">состояния системы</a>.</p>
         </section>
         <section aria-labelledby="initial-live">
           <h2 id="initial-live">Как посмотреть текущие значения?</h2>
-          <p>Интерактивные котировки, графики и публикации загружаются с помощью JavaScript. Если расширенный интерфейс не появился, проверьте, разрешён ли JavaScript, и обновите страницу. Статический снимок, если он показан выше, не обновляется автоматически.</p>
+          <p>Интерактивные котировки, графики и публикации загружаются с помощью JavaScript. Если расширенный интерфейс не появился, проверьте, разрешён ли JavaScript, и обновите страницу. Статический снимок, если он показан выше, не обновляется автоматически внутри открытой страницы. Новая версия публикуется после ежедневного обновления в 06:00 МСК и проверок; чтобы увидеть её, перезагрузите страницу.</p>
         </section>
       </main>
       <footer>
-        <p>Market Pulse не выпускает новые прогнозы и не даёт инвестиционных рекомендаций.</p>
+        <p>Market Pulse не выпускает новые прогнозы и не даёт инвестиционных рекомендаций. Данные могут поступать с задержкой; перед принятием решений проверяйте первоисточник и дату наблюдения.</p>
         <a href="/about">О проекте и ограничениях данных</a>
       </footer>
     </div>`;
@@ -158,5 +227,5 @@ export function addStaticDocument(html, route) {
     throw new Error('Expected one empty React root before inserting the initial document');
   }
   return html.replace('<div id="root"></div>', () => `<div id="root">${staticDocument(route)}</div>`)
-    .replace('</head>', () => `  <script type="application/ld+json">${websiteJsonLd}</script>\n  </head>`);
+    .replace('</head>', () => `  <script type="application/ld+json">${websiteJsonLd}</script>\n${route === '' ? `  <script type="application/ld+json">${snapshotJsonLd()}</script>\n` : ''}  </head>`);
 }
