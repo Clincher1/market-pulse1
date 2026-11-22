@@ -1,5 +1,6 @@
 // Token-lean news writer with a provider chain (2026-10-28).
 import { serveWithErrorReporting } from "../_shared/observability.ts";
+import { publicationTimestamp } from "../_shared/news-publication.ts";
 import { removeStoredUrlCandidates } from "../_shared/cached-news-dedupe.ts";
 // Same public contract (cached_news rows, {success, updated} response), plus:
 // compact prompt + capped output, retries with backoff for per-minute limits,
@@ -301,7 +302,7 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
     // feeds in the list consumed the whole item budget: over the last week WSJ
     // contributed 0 articles and 68% of the flow came from Bloomberg, which
     // quietly turned the tension index into one newsroom's mood.
-    type Candidate = { title: string; desc: string; url: string; dateRaw: string; ts: number };
+    type Candidate = { title: string; desc: string; url: string; publishedAt: string; ts: number };
     type Queue = { source: { name: string; url: string }; stats: AnyRecord; items: Candidate[] };
     const queues: Queue[] = [];
     for (const source of SOURCES) {
@@ -336,16 +337,19 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
           // more than a day ahead. Analyzing them would burn provider tokens on
           // articles that can never be stored, so skip them before the model
           // gets involved and leave the slot to a usable item.
-          const parsedTs = Date.parse(dateRaw);
-          if (Number.isFinite(parsedTs)) {
-            const ageDays = (Date.now() - parsedTs) / 86_400_000;
-            if (ageDays > 7 || ageDays < -1) { stats.filtered = (stats.filtered as number) + 1; continue; }
-          }
+          // No publication date is better than a fabricated "published now".
+          // Keep undated items in the source feed; do not spend model calls or
+          // insert them into the dated public cache under the ingestion clock.
+          const publishedAt = publicationTimestamp(dateRaw);
+          if (publishedAt === null) { stats.filtered = (stats.filtered as number) + 1; continue; }
+          const parsedTs = Date.parse(publishedAt);
+          const ageDays = (Date.now() - parsedTs) / 86_400_000;
+          if (ageDays > 7 || ageDays < -1) { stats.filtered = (stats.filtered as number) + 1; continue; }
           const haystack = `${title} ${desc}`.toLowerCase();
           if (blacklist.some((phrase) => haystack.includes(phrase))) { stats.filtered = (stats.filtered as number) + 1; continue; }
           seenUrls.add(url);
           stats.fresh = (stats.fresh as number) + 1;
-          items.push({ title, desc, url, dateRaw, ts: Number.isFinite(parsedTs) ? parsedTs : 0 });
+          items.push({ title, desc, url, publishedAt, ts: parsedTs });
         }
       } catch (error) {
         perSource[source.name] = { error: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) };
@@ -434,8 +438,7 @@ serveWithErrorReporting("update-news-v2", async (req: Request) => {
         await sleep(CALL_SPACING_MS);
         if (!outcome) continue;
         const analysis = outcome.analysis;
-        const parsedDate = candidate.dateRaw ? new Date(candidate.dateRaw) : new Date();
-        results.push({ id: Date.now() * 1000 + (++seq), source: queue.source.name, time: 'Недавно', title: candidate.title, summary: candidate.desc, url: candidate.url, published_at: Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString(), impacts: cleanImpacts(analysis.impacts), sentiment: clamp(finite(analysis.sentiment, 0), -1, 1), importance: clamp(Math.round(finite(analysis.importance, 5)), 1, 10), confidence: clamp(finite(analysis.confidence, 0.5), 0, 1), topic: 'Экономика', model: outcome.provider, updated_at: new Date().toISOString() });
+        results.push({ id: Date.now() * 1000 + (++seq), source: queue.source.name, time: 'Недавно', title: candidate.title, summary: candidate.desc, url: candidate.url, published_at: candidate.publishedAt, impacts: cleanImpacts(analysis.impacts), sentiment: clamp(finite(analysis.sentiment, 0), -1, 1), importance: clamp(Math.round(finite(analysis.importance, 5)), 1, 10), confidence: clamp(finite(analysis.confidence, 0.5), 0, 1), topic: 'Экономика', model: outcome.provider, updated_at: new Date().toISOString() });
         queue.stats.added = (queue.stats.added as number) + 1;
       }
       if (!pickedInPass) break;

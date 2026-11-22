@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { AlertTriangle, Database, ExternalLink, RotateCcw, Target } from 'lucide-react';
 import GuideLink from './GuideLink';
 import { ErrorNotice } from './SectionFallback';

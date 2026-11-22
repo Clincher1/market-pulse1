@@ -1,0 +1,99 @@
+name: Read-only facts and every-link audit
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['scripts/*audit.mjs', 'scripts/facts-links-check.mjs', 'scripts/wait-production-artifact.mjs', '.github/workflows/facts-links-audit.yml', '.github/workflows/production-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: facts-links-audit
+  cancel-in-progress: false
+jobs:
+  audit:
+    if: github.repository == 'Clincher1/market-pulse1' && startsWith(github.ref, 'refs/heads/arena/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install isolated browser tooling
+        run: |
+          npm install --prefix .local/production-browser playwright@1.65.1 @axe-core/playwright@4.14.0 lighthouse@13.6.0
+          .local/production-browser/node_modules/.bin/playwright install --with-deps chromium firefox webkit
+      - name: Wait for the exact explicitly deployed frontend before starting measurements
+        run: node scripts/wait-production-artifact.mjs
+      - name: Full technical round A (three engines, privacy and unchanged Lighthouse gates)
+        env:
+          TECHNICAL_AUDIT_OUTPUT: .local/production-audit/technical-A
+        run: node scripts/technical-audit.mjs
+      - name: Full technical round B (independent, no retry of valid bad metrics)
+        if: ${{ !cancelled() }}
+        env:
+          TECHNICAL_AUDIT_OUTPUT: .local/production-audit/technical-B
+        run: node scripts/technical-audit.mjs
+      - name: Original sources and every link, round A
+        if: ${{ !cancelled() }}
+        env:
+          AUDIT_VERIFY_LOCAL_BUILD: '1'
+          FACTS_LINKS_OUTPUT: .local/facts-links-audit/A
+        run: node scripts/facts-links-check.mjs
+      - name: Original sources and every link, independent round B
+        if: ${{ !cancelled() }}
+        env:
+          AUDIT_VERIFY_LOCAL_BUILD: '1'
+          FACTS_LINKS_OUTPUT: .local/facts-links-audit/B
+        run: node scripts/facts-links-check.mjs
+      - name: Two independent live interaction, accessibility, math and rights rounds
+        if: ${{ !cancelled() }}
+        run: node scripts/production-audit.mjs
+      - name: Preserve compact public findings on this same unchanged work branch
+        if: always()
+        run: |
+          set -euo pipefail
+          case "$GITHUB_REF_NAME" in arena/*) ;; *) exit 1 ;; esac
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          for round in A B; do
+            mkdir -p "docs/audit-evidence/facts-links/$round"
+            if [ -f ".local/facts-links-audit/$round/report.json" ]; then
+              cp ".local/facts-links-audit/$round/report.json" "docs/audit-evidence/facts-links/$round/"
+            fi
+          done
+          mkdir -p docs/audit-evidence/technical-readiness
+          for round in A B; do
+            if [ -f ".local/production-audit/technical-$round/technical.json" ]; then
+              cp ".local/production-audit/technical-$round/technical.json" "docs/audit-evidence/technical-readiness/technical-$round.json"
+            fi
+          done
+          if [ -f .local/production-audit/technical-B/technical.json ]; then
+            cp .local/production-audit/technical-B/technical.json docs/audit-evidence/technical-readiness/technical.json
+          fi
+          for name in home world russia news passport brief guide about; do
+            if [ -f ".local/facts-links-audit/B/$name.png" ]; then
+              cp ".local/facts-links-audit/B/$name.png" docs/audit-evidence/facts-links/B/
+            fi
+          done
+          for name in summary.json http-A.json http-B.json; do
+            if [ -f ".local/production-audit/$name" ]; then
+              cp ".local/production-audit/$name" docs/audit-evidence/facts-links/
+            fi
+          done
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/audit-evidence/facts-links docs/audit-evidence/technical-readiness
+          git commit -m 'docs: save both post-fix fact, link and interaction audits'
+          git push origin "HEAD:$GITHUB_REF_NAME"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: facts-links-evidence
+          path: |
+            .local/facts-links-audit/
+            .local/production-audit/
+          retention-days: 7

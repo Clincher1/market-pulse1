@@ -1,15 +1,13 @@
-name: Deploy audited quote and snapshot fixes
+name: Deploy audited news publication time fix
 
 # Explicitly scoped production publication for the owner's active audit branch.
 # Deploy actual bundles with the CLI: accepting source metadata is not proof
 # that an Edge Function can boot. No snapshots/writers are manually invoked.
 on:
   push:
-    branches: ['arena/12edd106-market-pulse1']
+    branches: ['arena/2c9c21a4-market-pulse1']
     paths:
-      - 'supabase/functions/update-assets/**'
-      - 'supabase/functions/selfcheck/**'
-      - 'supabase/functions/snapshot-morning/**'
+      - 'supabase/functions/update-news-v2/**'
       - 'supabase/functions/_shared/**'
       - '.github/workflows/deploy-audit-fixes.yml'
   workflow_dispatch:
@@ -23,7 +21,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.repository == 'Clincher1/market-pulse1' && github.ref == 'refs/heads/arena/12edd106-market-pulse1'
+    if: github.repository == 'Clincher1/market-pulse1' && github.ref == 'refs/heads/arena/2c9c21a4-market-pulse1'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -40,7 +38,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 3.1.0
-      - name: Publish only the three audited functions
+      - name: Publish only the audited news function
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -48,4 +46,4 @@ jobs:
           set -euo pipefail
           test -n "$SUPABASE_ACCESS_TOKEN"
           test "$SUPABASE_PROJECT_REF" = "hekzplfftannlzwvgwwm"
-          supabase functions deploy update-assets selfcheck snapshot-morning --project-ref "$SUPABASE_PROJECT_REF" --yes
+          supabase functions deploy update-news-v2 --project-ref "$SUPABASE_PROJECT_REF" --yes

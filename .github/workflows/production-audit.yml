@@ -1,9 +1,8 @@
 name: Read-only production acceptance audit
 
 on:
-  push:
-    branches: ['arena/398deb1c-market-pulse1']
-    paths: ['scripts/*audit.mjs', '.github/workflows/production-audit.yml']
+  # Automatic full technical/source/interaction coverage lives together in
+  # facts-links-audit.yml, avoiding concurrent evidence commits on one branch.
   workflow_dispatch:
 
 permissions:
@@ -15,7 +14,7 @@ concurrency:
 
 jobs:
   browser:
-    if: github.repository == 'Clincher1/market-pulse1' && github.ref == 'refs/heads/arena/398deb1c-market-pulse1'
+    if: github.repository == 'Clincher1/market-pulse1' && startsWith(github.ref, 'refs/heads/arena/')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -46,7 +45,8 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          test "$GITHUB_REF_NAME" = "arena/398deb1c-market-pulse1"
+          case "$GITHUB_REF_NAME" in arena/*) ;; *) exit 1 ;; esac
+          test "$GITHUB_REF" = "refs/heads/$GITHUB_REF_NAME"
           git fetch origin "$GITHUB_REF_NAME"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           mkdir -p docs/audit-evidence/technical-readiness

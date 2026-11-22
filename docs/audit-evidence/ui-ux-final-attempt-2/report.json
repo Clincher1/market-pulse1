@@ -1,0 +1,1230 @@
+{
+  "scope": "UI/UX measurements, not numeric-source or performance certification",
+  "origin": "https://market-pulse1-eta.vercel.app",
+  "expectedEntry": "index-BR1P7r5M.js",
+  "productSHA": "110b6ce628c9b231a02ba6b3fa93c25e7a8fb371",
+  "startedAt": "2026-11-21T18:21:46.954Z",
+  "cases": [
+    {
+      "path": "/",
+      "width": 768,
+      "title": "Обзор рынка — Market Pulse",
+      "description": "Обзор российских и мировых рынков: котировки, даты наблюдений, источники и исходные заголовки публикаций — без прогнозов и рекомендаций.",
+      "h1": [
+        "Рынки в движении.Факты — на виду."
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 2924.9375
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": {
+        "x": 63.390625,
+        "width": 228.40625,
+        "height": 52
+      },
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        },
+        {
+          "text": "Смотреть сводку дня",
+          "outline": "rgb(121, 231, 223) solid 3px",
+          "shadow": "rgba(44, 183, 227, 0.25) 0px 12px 32px 0px, rgba(255, 255, 255, 0.72) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/passport",
+      "width": 768,
+      "title": "Сводка дня — Market Pulse",
+      "description": "Денежные ориентиры с источниками и датами, наблюдаемая динамика рынков.",
+      "h1": [
+        "Сводка дня"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 2864.875
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/russia",
+      "width": 768,
+      "title": "Россия и бизнес — Market Pulse",
+      "description": "Курсы, Московская биржа и российские деловые заголовки — каждый блок со своим источником.",
+      "h1": [
+        "Россия и бизнес"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 6626
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/world",
+      "width": 768,
+      "title": "Мировые рынки — Market Pulse",
+      "description": "Внешние рыночные ориентиры и история наблюдений, отделённые от российского контура.",
+      "h1": [
+        "Мировые рынки"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 3825.265625
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(16, 16, 16) none 1px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/brief",
+      "width": 768,
+      "title": "Коротко о рынке — Market Pulse",
+      "description": "Сжатый обзор фактов из текущего снимка данных — без прогнозов и рекомендаций.",
+      "h1": [
+        "Коротко о рынке"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 1574.484375
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/news",
+      "width": 768,
+      "title": "Новости — Market Pulse",
+      "description": "Исходные заголовки и ссылки на публикации; заголовок сам по себе не подтверждает событие или его причину.",
+      "h1": [
+        "Лента публикаций"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 1653.734375
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(16, 16, 16) none 1px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/guide",
+      "width": 768,
+      "title": "Как читать сайт — Market Pulse",
+      "description": "Как читать факты и расчёты, проверять источники и понимать ограничения данных.",
+      "h1": [
+        "Методология Market Pulse"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 7465.859375
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/about",
+      "width": 768,
+      "title": "О проекте — Market Pulse",
+      "description": "Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.",
+      "h1": [
+        "О проекте"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 3160.78125
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(32, 76, 195) none 3px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/status",
+      "width": 768,
+      "title": "Состояние системы — Market Pulse",
+      "description": "Свежесть источников, котировок и публикаций; результаты почасовой самопроверки.",
+      "h1": [
+        "Состояние системы"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 768,
+        "height": 74
+      },
+      "main": {
+        "x": 0,
+        "width": 768,
+        "height": 7843.359375
+      },
+      "footer": {
+        "x": 24,
+        "width": 720,
+        "height": 375.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Разделы",
+          "outline": "rgb(16, 16, 16) none 1px",
+          "shadow": "rgba(54, 89, 176, 0.1) 0px 6px 16px 0px, rgb(255, 255, 255) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": {
+        "closes": true,
+        "restoresFocus": true
+      }
+    },
+    {
+      "path": "/",
+      "width": 1024,
+      "title": "Обзор рынка — Market Pulse",
+      "description": "Обзор российских и мировых рынков: котировки, даты наблюдений, источники и исходные заголовки публикаций — без прогнозов и рекомендаций.",
+      "h1": [
+        "Рынки в движении.Факты — на виду."
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 2825.578125
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": {
+        "x": 527.359375,
+        "width": 228.40625,
+        "height": 52
+      },
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Смотреть сводку дня",
+          "outline": "rgb(121, 231, 223) solid 3px",
+          "shadow": "rgba(44, 183, 227, 0.25) 0px 12px 32px 0px, rgba(255, 255, 255, 0.72) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": null
+    },
+    {
+      "path": "/passport",
+      "width": 1024,
+      "title": "Сводка дня — Market Pulse",
+      "description": "Денежные ориентиры с источниками и датами, наблюдаемая динамика рынков.",
+      "h1": [
+        "Сводка дня"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 2361.375
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/russia",
+      "width": 1024,
+      "title": "Россия и бизнес — Market Pulse",
+      "description": "Курсы, Московская биржа и российские деловые заголовки — каждый блок со своим источником.",
+      "h1": [
+        "Россия и бизнес"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 5190.125
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/world",
+      "width": 1024,
+      "title": "Мировые рынки — Market Pulse",
+      "description": "Внешние рыночные ориентиры и история наблюдений, отделённые от российского контура.",
+      "h1": [
+        "Мировые рынки"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 3331.265625
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/brief",
+      "width": 1024,
+      "title": "Коротко о рынке — Market Pulse",
+      "description": "Сжатый обзор фактов из текущего снимка данных — без прогнозов и рекомендаций.",
+      "h1": [
+        "Коротко о рынке"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 1330.984375
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/news",
+      "width": 1024,
+      "title": "Новости — Market Pulse",
+      "description": "Исходные заголовки и ссылки на публикации; заголовок сам по себе не подтверждает событие или его причину.",
+      "h1": [
+        "Лента публикаций"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 1234.484375
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/guide",
+      "width": 1024,
+      "title": "Как читать сайт — Market Pulse",
+      "description": "Как читать факты и расчёты, проверять источники и понимать ограничения данных.",
+      "h1": [
+        "Методология Market Pulse"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 6597.21875
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/about",
+      "width": 1024,
+      "title": "О проекте — Market Pulse",
+      "description": "Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.",
+      "h1": [
+        "О проекте"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 2419.859375
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/status",
+      "width": 1024,
+      "title": "Состояние системы — Market Pulse",
+      "description": "Свежесть источников, котировок и публикаций; результаты почасовой самопроверки.",
+      "h1": [
+        "Состояние системы"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "width": 1024,
+        "height": 82
+      },
+      "main": {
+        "x": 0,
+        "width": 1024,
+        "height": 6606.953125
+      },
+      "footer": {
+        "x": 40,
+        "width": 944,
+        "height": 292.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "title": "Обзор рынка — Market Pulse",
+      "description": "Обзор российских и мировых рынков: котировки, даты наблюдений, источники и исходные заголовки публикаций — без прогнозов и рекомендаций.",
+      "h1": [
+        "Рынки в движении.Факты — на виду."
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 2512.921875
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": {
+        "x": 741.59375,
+        "width": 228.40625,
+        "height": 52
+      },
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [
+        {
+          "text": "Смотреть сводку дня",
+          "outline": "rgb(121, 231, 223) solid 3px",
+          "shadow": "rgba(44, 183, 227, 0.25) 0px 12px 32px 0px, rgba(255, 255, 255, 0.72) 0px 1px 0px 0px inset"
+        }
+      ],
+      "mobileEscape": null
+    },
+    {
+      "path": "/passport",
+      "width": 1440,
+      "title": "Сводка дня — Market Pulse",
+      "description": "Денежные ориентиры с источниками и датами, наблюдаемая динамика рынков.",
+      "h1": [
+        "Сводка дня"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 2261.78125
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/russia",
+      "width": 1440,
+      "title": "Россия и бизнес — Market Pulse",
+      "description": "Курсы, Московская биржа и российские деловые заголовки — каждый блок со своим источником.",
+      "h1": [
+        "Россия и бизнес"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 5117.0625
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/world",
+      "width": 1440,
+      "title": "Мировые рынки — Market Pulse",
+      "description": "Внешние рыночные ориентиры и история наблюдений, отделённые от российского контура.",
+      "h1": [
+        "Мировые рынки"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 3226.921875
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/brief",
+      "width": 1440,
+      "title": "Коротко о рынке — Market Pulse",
+      "description": "Сжатый обзор фактов из текущего снимка данных — без прогнозов и рекомендаций.",
+      "h1": [
+        "Коротко о рынке"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 1290.390625
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/news",
+      "width": 1440,
+      "title": "Новости — Market Pulse",
+      "description": "Исходные заголовки и ссылки на публикации; заголовок сам по себе не подтверждает событие или его причину.",
+      "h1": [
+        "Лента публикаций"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 1240.890625
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/guide",
+      "width": 1440,
+      "title": "Как читать сайт — Market Pulse",
+      "description": "Как читать факты и расчёты, проверять источники и понимать ограничения данных.",
+      "h1": [
+        "Методология Market Pulse"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 5915.34375
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/about",
+      "width": 1440,
+      "title": "О проекте — Market Pulse",
+      "description": "Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.",
+      "h1": [
+        "О проекте"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 1952.015625
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    },
+    {
+      "path": "/status",
+      "width": 1440,
+      "title": "Состояние системы — Market Pulse",
+      "description": "Свежесть источников, котировок и публикаций; результаты почасовой самопроверки.",
+      "h1": [
+        "Состояние системы"
+      ],
+      "overflow": false,
+      "header": {
+        "x": 20,
+        "width": 1400,
+        "height": 82
+      },
+      "main": {
+        "x": 20,
+        "width": 1400,
+        "height": 6494.53125
+      },
+      "footer": {
+        "x": 60,
+        "width": 1320,
+        "height": 240.09375
+      },
+      "heroCTA": null,
+      "font": "Inter, system-ui, sans-serif",
+      "smallTargets": [],
+      "smallText": [],
+      "longLines": [],
+      "imagesMissingAlt": [],
+      "accessibility": [],
+      "focus": [],
+      "mobileEscape": null
+    }
+  ],
+  "errors": [
+    {
+      "path": "/",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/passport",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/russia",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/world",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/brief",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/news",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/guide",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/about",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    },
+    {
+      "path": "/status",
+      "width": 360,
+      "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await page.locator('script[type=\"module\"][src]').first().getAttribute('src')).includes(expected))\n"
+    }
+  ],
+  "links": [
+    {
+      "href": "/#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/passport",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/russia",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/world",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/news",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/brief",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/guide",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/about",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/status",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/passport#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/russia#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-russia",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/world#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-assets",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/brief#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/api/brief-image",
+      "status": 200,
+      "fragmentExists": null
+    },
+    {
+      "href": "/news#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-news",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-start",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-brief",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-changes",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-data-quality",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-faq",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/about#main",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/guide#guide-overview",
+      "status": 200,
+      "fragmentExists": true
+    },
+    {
+      "href": "/status#main",
+      "status": 200,
+      "fragmentExists": true
+    }
+  ],
+  "finishedAt": "2026-11-21T18:24:43.268Z",
+  "failures": [
+    "Incomplete viewport matrix"
+  ]
+}

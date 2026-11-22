@@ -17,7 +17,7 @@ const STEPS = [
     icon: Database,
     title: 'Забираем',
     text:
-      'Yahoo Finance (Brent, S&P 500), Европейский центральный банк (USD/EUR), gold-api.com (котировка золота) и Twelve Data (его дневная история), Kraken (BTC), ЦБ РФ и Мосбиржа для рубля, индексов и ОФЗ. Новости — из открытых RSS-лент.',
+      'Yahoo Finance (Brent, S&P 500), Европейский центральный банк (USD/EUR), gold-api.com (котировка золота и ряд сохранённых наблюдений этого же источника), Kraken (BTC), ЦБ РФ и Мосбиржа для рубля, индексов и ОФЗ. Новости — из открытых RSS-лент.',
     href: '/guide#guide-overview',
     link: 'Источники',
   },
@@ -52,7 +52,7 @@ export default function HowWeKnow() {
     <section aria-labelledby="how-we-know-title" className="mb-8 lg:mb-10">
       <h2
         id="how-we-know-title"
-        className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-text-secondary"
+        className="text-xs font-extrabold uppercase tracking-[0.14em] text-text-secondary"
       >
         Откуда мы знаем
       </h2>
@@ -60,21 +60,21 @@ export default function HowWeKnow() {
         {STEPS.map((step, index) => (
           <li
             key={step.title}
-            className="flex flex-col rounded-xl border border-slate-200 bg-bg-card p-3.5"
+            className="flex flex-col rounded-xl border border-slate-200 bg-bg-card p-5"
           >
             <div className="flex items-center gap-2">
               {/* Номер остаётся тёмным на мягкой акцентной подложке, чтобы
                   сохранить читаемость в светлой теме. */}
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-extrabold tabular-nums text-text-primary">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent/15 text-xs font-extrabold tabular-nums text-text-primary">
                 {String(index + 1).padStart(2, '0')}
               </span>
               <step.icon className="h-4 w-4 text-accent" aria-hidden="true" />
               <h3 className="text-sm font-extrabold text-text-primary">{step.title}</h3>
             </div>
-            <p className="mt-2 flex-1 text-[11px] leading-relaxed text-text-secondary">{step.text}</p>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-text-secondary">{step.text}</p>
             <a
               href={step.href}
-              className="mt-2 inline-flex min-h-6 w-fit items-center gap-1 text-[11px] font-bold text-accent underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+              className="mt-2 inline-flex min-h-11 w-fit items-center gap-1 text-xs font-bold text-accent underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
             >
               {step.link}
               <ArrowRight className="h-3 w-3" aria-hidden="true" />

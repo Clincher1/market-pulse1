@@ -140,10 +140,10 @@ export default function OfzCurve({ indicator }: { indicator: RussiaMarketIndicat
           </div>
         </div>
         <a
-          href="https://www.moex.com/ru/marketdata/indices/state/gcurve/"
+          href="https://iss.moex.com/iss/engines/stock/zcyc.json?iss.meta=off"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-6 items-center text-[11px] font-semibold text-blue-800 underline-offset-2 hover:underline"
+          className="inline-flex min-h-11 items-center text-[11px] font-semibold text-blue-800 underline-offset-2 hover:underline"
         >
           Открыть источник
         </a>

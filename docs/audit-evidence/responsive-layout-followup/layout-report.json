@@ -1,0 +1,1639 @@
+{
+  "scope": "Live responsive layout only; not source or performance acceptance.",
+  "cases": [
+    {
+      "round": "A",
+      "width": 320,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 304,
+          "bottom": 533.25,
+          "width": 288,
+          "height": 437.25
+        },
+        "art": {
+          "left": 50,
+          "top": 337.359375,
+          "right": 270,
+          "bottom": 513.25,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 50,
+          "top": 345.359375,
+          "right": 270,
+          "bottom": 482.859375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 304,
+          "bottom": 329.359375,
+          "width": 288,
+          "height": 222.96875
+        },
+        "caption": {
+          "left": 85.484375,
+          "top": 490.859375,
+          "right": 234.515625,
+          "bottom": 505.25,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 320,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 304,
+          "bottom": 533.25,
+          "width": 288,
+          "height": 437.25
+        },
+        "art": {
+          "left": 50,
+          "top": 337.359375,
+          "right": 270,
+          "bottom": 513.25,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 50,
+          "top": 345.359375,
+          "right": 270,
+          "bottom": 482.859375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 304,
+          "bottom": 329.359375,
+          "width": 288,
+          "height": 222.96875
+        },
+        "caption": {
+          "left": 85.484375,
+          "top": 490.859375,
+          "right": 234.515625,
+          "bottom": 505.25,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 344,
+          "bottom": 512.984375,
+          "width": 328,
+          "height": 416.984375
+        },
+        "art": {
+          "left": 70,
+          "top": 317.09375,
+          "right": 290,
+          "bottom": 492.984375,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 70,
+          "top": 325.09375,
+          "right": 290,
+          "bottom": 462.59375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 344,
+          "bottom": 309.09375,
+          "width": 328,
+          "height": 202.703125
+        },
+        "caption": {
+          "left": 105.484375,
+          "top": 470.59375,
+          "right": 254.515625,
+          "bottom": 484.984375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 344,
+          "bottom": 512.984375,
+          "width": 328,
+          "height": 416.984375
+        },
+        "art": {
+          "left": 70,
+          "top": 317.09375,
+          "right": 290,
+          "bottom": 492.984375,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 70,
+          "top": 325.09375,
+          "right": 290,
+          "bottom": 462.59375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 344,
+          "bottom": 309.09375,
+          "width": 328,
+          "height": 202.703125
+        },
+        "caption": {
+          "left": 105.484375,
+          "top": 470.59375,
+          "right": 254.515625,
+          "bottom": 484.984375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 639,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 623,
+          "bottom": 500.171875,
+          "width": 607,
+          "height": 404.171875
+        },
+        "art": {
+          "left": 209.5,
+          "top": 304.28125,
+          "right": 429.5,
+          "bottom": 480.171875,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 209.5,
+          "top": 312.28125,
+          "right": 429.5,
+          "bottom": 449.78125,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 623,
+          "bottom": 296.28125,
+          "width": 607,
+          "height": 189.890625
+        },
+        "caption": {
+          "left": 244.984375,
+          "top": 457.78125,
+          "right": 394.015625,
+          "bottom": 472.171875,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 639,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 623,
+          "bottom": 500.171875,
+          "width": 607,
+          "height": 404.171875
+        },
+        "art": {
+          "left": 209.5,
+          "top": 304.28125,
+          "right": 429.5,
+          "bottom": 480.171875,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 209.5,
+          "top": 312.28125,
+          "right": 429.5,
+          "bottom": 449.78125,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 623,
+          "bottom": 296.28125,
+          "width": 607,
+          "height": 189.890625
+        },
+        "caption": {
+          "left": 244.984375,
+          "top": 457.78125,
+          "right": 394.015625,
+          "bottom": 472.171875,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 744,
+          "bottom": 575.234375,
+          "width": 720,
+          "height": 479.234375
+        },
+        "art": {
+          "left": 244,
+          "top": 335.453125,
+          "right": 524,
+          "bottom": 548.84375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 244,
+          "top": 343.453125,
+          "right": 524,
+          "bottom": 518.453125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 323.453125,
+          "width": 720,
+          "height": 207.453125
+        },
+        "caption": {
+          "left": 309.484375,
+          "top": 526.453125,
+          "right": 458.515625,
+          "bottom": 540.84375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 744,
+          "bottom": 575.234375,
+          "width": 720,
+          "height": 479.234375
+        },
+        "art": {
+          "left": 244,
+          "top": 335.453125,
+          "right": 524,
+          "bottom": 548.84375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 244,
+          "top": 343.453125,
+          "right": 524,
+          "bottom": 518.453125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 323.453125,
+          "width": 720,
+          "height": 207.453125
+        },
+        "caption": {
+          "left": 309.484375,
+          "top": 526.453125,
+          "right": 458.515625,
+          "bottom": 540.84375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 900,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 876,
+          "bottom": 577.484375,
+          "width": 852,
+          "height": 481.484375
+        },
+        "art": {
+          "left": 310,
+          "top": 337.703125,
+          "right": 590,
+          "bottom": 551.09375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 310,
+          "top": 345.703125,
+          "right": 590,
+          "bottom": 520.703125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 325.703125,
+          "width": 720,
+          "height": 209.703125
+        },
+        "caption": {
+          "left": 375.484375,
+          "top": 528.703125,
+          "right": 524.515625,
+          "bottom": 543.09375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 900,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 876,
+          "bottom": 577.484375,
+          "width": 852,
+          "height": 481.484375
+        },
+        "art": {
+          "left": 310,
+          "top": 337.703125,
+          "right": 590,
+          "bottom": 551.09375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 310,
+          "top": 345.703125,
+          "right": 590,
+          "bottom": 520.703125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 325.703125,
+          "width": 720,
+          "height": 209.703125
+        },
+        "caption": {
+          "left": 375.484375,
+          "top": 528.703125,
+          "right": 524.515625,
+          "bottom": 543.09375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 984,
+          "bottom": 396.78125,
+          "width": 944,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 663.984375,
+          "top": 132,
+          "right": 983.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 663.984375,
+          "top": 140,
+          "right": 983.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 151.859375,
+          "right": 596.953125,
+          "bottom": 350.515625,
+          "width": 556.953125,
+          "height": 198.65625
+        },
+        "caption": {
+          "left": 749.46875,
+          "top": 348,
+          "right": 898.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 984,
+          "bottom": 396.78125,
+          "width": 944,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 663.984375,
+          "top": 132,
+          "right": 983.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 663.984375,
+          "top": 140,
+          "right": 983.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 151.859375,
+          "right": 596.953125,
+          "bottom": 350.515625,
+          "width": 556.953125,
+          "height": 198.65625
+        },
+        "caption": {
+          "left": 749.46875,
+          "top": 348,
+          "right": 898.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 1280,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 1240,
+          "bottom": 396.78125,
+          "width": 1200,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 919.984375,
+          "top": 132,
+          "right": 1239.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 919.984375,
+          "top": 140,
+          "right": 1239.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 146.171875,
+          "right": 747.984375,
+          "bottom": 356.203125,
+          "width": 707.984375,
+          "height": 210.03125
+        },
+        "caption": {
+          "left": 1005.46875,
+          "top": 348,
+          "right": 1154.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 1280,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 1240,
+          "bottom": 396.78125,
+          "width": 1200,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 919.984375,
+          "top": 132,
+          "right": 1239.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 919.984375,
+          "top": 140,
+          "right": 1239.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 146.171875,
+          "right": 747.984375,
+          "bottom": 356.203125,
+          "width": 707.984375,
+          "height": 210.03125
+        },
+        "caption": {
+          "left": 1005.46875,
+          "top": 348,
+          "right": 1154.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 1536,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 108,
+          "top": 112,
+          "right": 1428,
+          "bottom": 396.78125,
+          "width": 1320,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 1108,
+          "top": 132,
+          "right": 1428,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 1108,
+          "top": 140,
+          "right": 1428,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 108,
+          "top": 140.6875,
+          "right": 868,
+          "bottom": 361.703125,
+          "width": 760,
+          "height": 221.015625
+        },
+        "caption": {
+          "left": 1193.484375,
+          "top": 348,
+          "right": 1342.515625,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "A",
+      "width": 1536,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 108,
+          "top": 112,
+          "right": 1428,
+          "bottom": 396.78125,
+          "width": 1320,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 1108,
+          "top": 132,
+          "right": 1428,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 1108,
+          "top": 140,
+          "right": 1428,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 108,
+          "top": 140.6875,
+          "right": 868,
+          "bottom": 361.703125,
+          "width": 760,
+          "height": 221.015625
+        },
+        "caption": {
+          "left": 1193.484375,
+          "top": 348,
+          "right": 1342.515625,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 320,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 304,
+          "bottom": 533.25,
+          "width": 288,
+          "height": 437.25
+        },
+        "art": {
+          "left": 50,
+          "top": 337.359375,
+          "right": 270,
+          "bottom": 513.25,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 50,
+          "top": 345.359375,
+          "right": 270,
+          "bottom": 482.859375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 304,
+          "bottom": 329.359375,
+          "width": 288,
+          "height": 222.96875
+        },
+        "caption": {
+          "left": 85.484375,
+          "top": 490.859375,
+          "right": 234.515625,
+          "bottom": 505.25,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 320,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 304,
+          "bottom": 533.25,
+          "width": 288,
+          "height": 437.25
+        },
+        "art": {
+          "left": 50,
+          "top": 337.359375,
+          "right": 270,
+          "bottom": 513.25,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 50,
+          "top": 345.359375,
+          "right": 270,
+          "bottom": 482.859375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 304,
+          "bottom": 329.359375,
+          "width": 288,
+          "height": 222.96875
+        },
+        "caption": {
+          "left": 85.484375,
+          "top": 490.859375,
+          "right": 234.515625,
+          "bottom": 505.25,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 344,
+          "bottom": 512.984375,
+          "width": 328,
+          "height": 416.984375
+        },
+        "art": {
+          "left": 70,
+          "top": 317.09375,
+          "right": 290,
+          "bottom": 492.984375,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 70,
+          "top": 325.09375,
+          "right": 290,
+          "bottom": 462.59375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 344,
+          "bottom": 309.09375,
+          "width": 328,
+          "height": 202.703125
+        },
+        "caption": {
+          "left": 105.484375,
+          "top": 470.59375,
+          "right": 254.515625,
+          "bottom": 484.984375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 344,
+          "bottom": 512.984375,
+          "width": 328,
+          "height": 416.984375
+        },
+        "art": {
+          "left": 70,
+          "top": 317.09375,
+          "right": 290,
+          "bottom": 492.984375,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 70,
+          "top": 325.09375,
+          "right": 290,
+          "bottom": 462.59375,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 344,
+          "bottom": 309.09375,
+          "width": 328,
+          "height": 202.703125
+        },
+        "caption": {
+          "left": 105.484375,
+          "top": 470.59375,
+          "right": 254.515625,
+          "bottom": 484.984375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 639,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 623,
+          "bottom": 500.171875,
+          "width": 607,
+          "height": 404.171875
+        },
+        "art": {
+          "left": 209.5,
+          "top": 304.28125,
+          "right": 429.5,
+          "bottom": 480.171875,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 209.5,
+          "top": 312.28125,
+          "right": 429.5,
+          "bottom": 449.78125,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 623,
+          "bottom": 296.28125,
+          "width": 607,
+          "height": 189.890625
+        },
+        "caption": {
+          "left": 244.984375,
+          "top": 457.78125,
+          "right": 394.015625,
+          "bottom": 472.171875,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 639,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 16,
+          "top": 96,
+          "right": 623,
+          "bottom": 500.171875,
+          "width": 607,
+          "height": 404.171875
+        },
+        "art": {
+          "left": 209.5,
+          "top": 304.28125,
+          "right": 429.5,
+          "bottom": 480.171875,
+          "width": 220,
+          "height": 175.890625
+        },
+        "drawing": {
+          "left": 209.5,
+          "top": 312.28125,
+          "right": 429.5,
+          "bottom": 449.78125,
+          "width": 220,
+          "height": 137.5
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 16,
+          "top": 106.390625,
+          "right": 623,
+          "bottom": 296.28125,
+          "width": 607,
+          "height": 189.890625
+        },
+        "caption": {
+          "left": 244.984375,
+          "top": 457.78125,
+          "right": 394.015625,
+          "bottom": 472.171875,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 744,
+          "bottom": 575.234375,
+          "width": 720,
+          "height": 479.234375
+        },
+        "art": {
+          "left": 244,
+          "top": 335.453125,
+          "right": 524,
+          "bottom": 548.84375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 244,
+          "top": 343.453125,
+          "right": 524,
+          "bottom": 518.453125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 323.453125,
+          "width": 720,
+          "height": 207.453125
+        },
+        "caption": {
+          "left": 309.484375,
+          "top": 526.453125,
+          "right": 458.515625,
+          "bottom": 540.84375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 744,
+          "bottom": 575.234375,
+          "width": 720,
+          "height": 479.234375
+        },
+        "art": {
+          "left": 244,
+          "top": 335.453125,
+          "right": 524,
+          "bottom": 548.84375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 244,
+          "top": 343.453125,
+          "right": 524,
+          "bottom": 518.453125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 323.453125,
+          "width": 720,
+          "height": 207.453125
+        },
+        "caption": {
+          "left": 309.484375,
+          "top": 526.453125,
+          "right": 458.515625,
+          "bottom": 540.84375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 900,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 876,
+          "bottom": 577.484375,
+          "width": 852,
+          "height": 481.484375
+        },
+        "art": {
+          "left": 310,
+          "top": 337.703125,
+          "right": 590,
+          "bottom": 551.09375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 310,
+          "top": 345.703125,
+          "right": 590,
+          "bottom": 520.703125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 325.703125,
+          "width": 720,
+          "height": 209.703125
+        },
+        "caption": {
+          "left": 375.484375,
+          "top": 528.703125,
+          "right": 524.515625,
+          "bottom": 543.09375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 900,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 24,
+          "top": 96,
+          "right": 876,
+          "bottom": 577.484375,
+          "width": 852,
+          "height": 481.484375
+        },
+        "art": {
+          "left": 310,
+          "top": 337.703125,
+          "right": 590,
+          "bottom": 551.09375,
+          "width": 280,
+          "height": 213.390625
+        },
+        "drawing": {
+          "left": 310,
+          "top": 345.703125,
+          "right": 590,
+          "bottom": 520.703125,
+          "width": 280,
+          "height": 175
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 24,
+          "top": 116,
+          "right": 744,
+          "bottom": 325.703125,
+          "width": 720,
+          "height": 209.703125
+        },
+        "caption": {
+          "left": 375.484375,
+          "top": 528.703125,
+          "right": 524.515625,
+          "bottom": 543.09375,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 984,
+          "bottom": 396.78125,
+          "width": 944,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 663.984375,
+          "top": 132,
+          "right": 983.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 663.984375,
+          "top": 140,
+          "right": 983.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 151.859375,
+          "right": 596.953125,
+          "bottom": 350.515625,
+          "width": 556.953125,
+          "height": 198.65625
+        },
+        "caption": {
+          "left": 749.46875,
+          "top": 348,
+          "right": 898.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 984,
+          "bottom": 396.78125,
+          "width": 944,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 663.984375,
+          "top": 132,
+          "right": 983.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 663.984375,
+          "top": 140,
+          "right": 983.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 151.859375,
+          "right": 596.953125,
+          "bottom": 350.515625,
+          "width": 556.953125,
+          "height": 198.65625
+        },
+        "caption": {
+          "left": 749.46875,
+          "top": 348,
+          "right": 898.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 1280,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 1240,
+          "bottom": 396.78125,
+          "width": 1200,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 919.984375,
+          "top": 132,
+          "right": 1239.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 919.984375,
+          "top": 140,
+          "right": 1239.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 146.171875,
+          "right": 747.984375,
+          "bottom": 356.203125,
+          "width": 707.984375,
+          "height": 210.03125
+        },
+        "caption": {
+          "left": 1005.46875,
+          "top": 348,
+          "right": 1154.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 1280,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 40,
+          "top": 112,
+          "right": 1240,
+          "bottom": 396.78125,
+          "width": 1200,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 919.984375,
+          "top": 132,
+          "right": 1239.984375,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 919.984375,
+          "top": 140,
+          "right": 1239.984375,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 40,
+          "top": 146.171875,
+          "right": 747.984375,
+          "bottom": 356.203125,
+          "width": 707.984375,
+          "height": 210.03125
+        },
+        "caption": {
+          "left": 1005.46875,
+          "top": 348,
+          "right": 1154.5,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 1536,
+      "path": "/russia",
+      "intro": {
+        "header": {
+          "left": 108,
+          "top": 112,
+          "right": 1428,
+          "bottom": 396.78125,
+          "width": 1320,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 1108,
+          "top": 132,
+          "right": 1428,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 1108,
+          "top": 140,
+          "right": 1428,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 108,
+          "top": 140.6875,
+          "right": 868,
+          "bottom": 361.703125,
+          "width": 760,
+          "height": 221.015625
+        },
+        "caption": {
+          "left": 1193.484375,
+          "top": 348,
+          "right": 1342.515625,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    },
+    {
+      "round": "B",
+      "width": 1536,
+      "path": "/world",
+      "intro": {
+        "header": {
+          "left": 108,
+          "top": 112,
+          "right": 1428,
+          "bottom": 396.78125,
+          "width": 1320,
+          "height": 284.78125
+        },
+        "art": {
+          "left": 1108,
+          "top": 132,
+          "right": 1428,
+          "bottom": 370.390625,
+          "width": 320,
+          "height": 238.390625
+        },
+        "drawing": {
+          "left": 1108,
+          "top": 140,
+          "right": 1428,
+          "bottom": 340,
+          "width": 320,
+          "height": 200
+        },
+        "drawingOverflow": "hidden",
+        "content": {
+          "left": 108,
+          "top": 140.6875,
+          "right": 868,
+          "bottom": 361.703125,
+          "width": 760,
+          "height": 221.015625
+        },
+        "caption": {
+          "left": 1193.484375,
+          "top": 348,
+          "right": 1342.515625,
+          "bottom": 362.390625,
+          "width": 149.03125,
+          "height": 14.390625
+        },
+        "captionVisible": true,
+        "separate": true
+      },
+      "logo": null
+    }
+  ],
+  "failures": [],
+  "clipping": []
+}

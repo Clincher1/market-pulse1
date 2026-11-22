@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { AlertTriangle, Globe, RotateCcw } from 'lucide-react';
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import MarketHeatmap from './MarketHeatmap';
@@ -51,7 +51,7 @@ export default function KeyAssets() {
             mobileLabel="Справка"
           />
         </div>
-        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-text-secondary">
+        <p className="mt-2 max-w-[72ch] text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">Это не российский рынок.</strong> Ниже только внешние ориентиры:
           USD/EUR, S&amp;P 500, Brent, золото и BTC. Рубль, Мосбиржа и RGBI находятся на отдельной странице российского
           контура — так внешний драйвер не смешивается с реакцией России.
@@ -77,7 +77,7 @@ export default function KeyAssets() {
                 type="button"
                 onClick={() => void refresh()}
                 disabled={isRefreshing}
-                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-300/25 disabled:opacity-60"
               >
                 <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? 'Проверяем…' : 'Повторить'}

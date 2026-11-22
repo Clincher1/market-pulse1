@@ -14,6 +14,8 @@ import { formatCapPercent, formatPercent } from "@/lib/percent";
 import { formatPriceText } from "@/lib/price";
 import { AssetData } from "@/data/marketTypes";
 import ExpandHint from "./ExpandHint";
+import CopyQuoteButton from './CopyQuoteButton';
+import DownloadChartCsvButton from './DownloadChartCsvButton';
 import {
   fetchAssetPriceHistory,
   type AssetHistoryPoint,
@@ -447,7 +449,7 @@ function HeatTile({
           </div>
         )}
 
-        <div className="mt-3 flex items-end justify-between gap-2">
+        <div data-testid="heat-tile-change-scale" className="mt-3 flex flex-wrap items-end justify-between gap-2">
           <span className="text-base font-extrabold tabular-nums">
             {isFallback || horizonChangeValue === null
               ? "—"
@@ -674,7 +676,7 @@ function AssetChart({
           </>
         )}
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-2 text-xs leading-relaxed text-text-secondary">
         Дневные наблюдения · последние {points.length} {daysWord(points.length)} ·
         наведите курсор или коснитесь графика, чтобы увидеть значения.
         {highlight && highlightLabel
@@ -908,7 +910,7 @@ function DatedAssetChart({
         })}
       </div>
 
-      <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-1 text-xs leading-relaxed text-text-secondary">
         Дневные наблюдения · {points.length} {observationsWord(points.length)} ·{" "}
         {formatDateLong(first.date)} — {formatDateLong(last.date)}. Ось X
         линейна по календарным датам источника; наведите курсор или коснитесь
@@ -1098,12 +1100,13 @@ function AssetPanel({
             {asset.id === 'gold' ? 'к последнему наблюдению завершённых UTC-суток' : 'за день'}
           </p>
           {asset.id === 'gold' && <p className="mt-1 text-xs text-text-secondary">{ASSET_SOURCE_META.gold.note}</p>}
+          <CopyQuoteButton key={asset.id} asset={asset} sourceUrl={meta?.url ?? ''} unavailable={isFallback} />
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Свернуть панель актива"
-          className="ml-auto inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-extrabold text-cyan-900 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+          className="ml-auto inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-extrabold text-cyan-900 transition-colors hover:border-cyan-300/60 hover:bg-cyan-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
         >
           Свернуть
           <X className="h-4 w-4" aria-hidden="true" />
@@ -1161,7 +1164,7 @@ function AssetPanel({
                     type="button"
                     aria-pressed={historyRangeDays === days}
                     onClick={() => setHistoryRangeDays(days)}
-                    className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+                    className={`min-h-11 rounded-full px-3 py-1.5 text-xs font-extrabold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 ${
                       historyRangeDays === days
                         ? "bg-cyan-300 text-[#071120]"
                         : "text-text-secondary hover:bg-slate-100 hover:text-text-primary"
@@ -1180,9 +1183,13 @@ function AssetPanel({
               domainEndMs={historyDomainEndMs}
               paletteId={paletteId}
             />
+            <DownloadChartCsvButton key={`${asset.id}-${historyRangeDays}`} input={{
+              assetId: asset.id, assetName: asset.name, sourceUrl: meta?.url ?? '',
+              history, points: visibleHistoryPoints,
+            }} />
 
             {history.unfinishedDayExcluded && (
-              <p className="mt-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] leading-relaxed text-cyan-900">
+              <p className="mt-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs leading-relaxed text-cyan-900">
                 Сегодняшний день ещё не закрыт, поэтому последняя точка графика
                 — наблюдение за {formatDateLong(lastHistoryPoint.date)}. Текущая цена
                 дня показана на плитке выше и меняется в течение суток; на
@@ -1192,7 +1199,7 @@ function AssetPanel({
             )}
 
             {isHistoryPartial && historyPoints[0] && (
-              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
+              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
                 Доступная датированная история начинается{" "}
                 {formatDateLong(historyPoints[0].date)}, поэтому выбранный
                 диапазон {historyRangeDays} {calendarDaysWord(historyRangeDays)}{" "}
@@ -1304,11 +1311,11 @@ function AssetPanel({
 
       {history && visibleHistoryPoints.length > 0 && (
         <details className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+          <summary className="min-h-11 cursor-pointer py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Проверить данные · {visibleHistoryPoints.length}{" "}
             {observationsWord(visibleHistoryPoints.length)}
           </summary>
-          <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-2 text-xs leading-relaxed text-text-secondary">
             Это ровно те точки, из которых построена линия выше: ряд{" "}
             <span className="font-bold text-text-primary">
               {history.providerSymbol}
@@ -1356,7 +1363,7 @@ function AssetPanel({
             </table>
           </div>
           {visibleHistoryPoints.length > 30 && (
-            <p className="mt-2 text-[11px] text-text-secondary">
+            <p className="mt-2 text-xs text-text-secondary">
               Показаны последние 30 записей из {visibleHistoryPoints.length}:
               весь диапазон целиком на графике, здесь — конец ряда.
             </p>
@@ -1394,7 +1401,7 @@ function AssetPanel({
                   style={{ width: `${windowPositionPct}%` }}
                 />
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+              <p className="mt-2 text-xs leading-relaxed text-text-secondary">
                 Это факт по сохранённым закрытиям: где цена стоит внутри своего
                 окна. Ожиданий и рекомендаций здесь нет — выдача прогнозов
                 остановлена 31 октября 2026 года.
@@ -1444,7 +1451,7 @@ function AssetPanel({
               цен.
             </p>
           )}
-          <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-3 text-xs leading-relaxed text-text-secondary">
             Это дневные закрытия, а не поток котировок в реальном времени.
           </p>
         </section>
@@ -1587,7 +1594,7 @@ export default function MarketHeatmap({
               disabled={loading}
               aria-pressed={horizonId === option.id}
               onClick={() => setHorizonId(option.id)}
-              className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
+              className={`min-h-11 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
                 horizonId === option.id
                   ? "bg-cyan-300 text-[#071120]"
                   : "text-text-secondary hover:bg-slate-100 hover:text-text-primary"
@@ -1612,7 +1619,7 @@ export default function MarketHeatmap({
               previous === "colorblind" ? "standard" : "colorblind",
             )
           }
-          className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
+          className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-50 ${
             paletteId === "colorblind"
               ? "border-sky-200 bg-sky-50 text-sky-900"
               : "border-slate-200 bg-white text-text-secondary hover:bg-slate-100 hover:text-text-primary"
@@ -1621,7 +1628,7 @@ export default function MarketHeatmap({
           <PaletteIcon className="h-3.5 w-3.5" aria-hidden="true" />
           Палитра для дальтоников
         </button>
-        <p className="w-full text-[11px] leading-relaxed text-text-secondary sm:w-auto sm:flex-1">
+        <p className="w-full text-xs leading-relaxed text-text-secondary sm:w-auto sm:flex-1">
           День — изменение цены к предыдущему закрытию, а не разность двух точек графика.
           Неделя — пять переходов между сохранёнными закрытиями, месяц — до 29.
           Это наблюдения, а не обязательно календарные дни; текущая цена может отличаться от конца ряда.

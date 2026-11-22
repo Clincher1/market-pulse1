@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpen,
@@ -169,7 +169,7 @@ export default function AnalyticsGuide() {
             <a
               key={href}
               href={href}
-              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-text-secondary transition-colors hover:border-slate-200 hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-text-secondary transition-colors hover:border-slate-200 hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300"
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               {label}
@@ -510,7 +510,7 @@ export default function AnalyticsGuide() {
               key={q}
               className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
             >
-              <summary className="min-h-6 cursor-pointer py-1 text-sm font-extrabold text-text-primary">
+              <summary className="min-h-11 cursor-pointer py-3 text-sm font-extrabold text-text-primary">
                 {q}
               </summary>
               <p className="mt-2 text-sm leading-relaxed text-text-secondary">{a}</p>

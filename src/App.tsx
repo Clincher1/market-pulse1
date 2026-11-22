@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, BookOpen, HeartPulse, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 const DailyBrief = lazy(() => import('@/components/DailyBrief'));
@@ -13,10 +13,11 @@ import PulseOrbit from '@/components/PulseOrbit';
 import PageSignalIntro from '@/components/PageSignalIntro';
 const BusinessMoney = lazy(() => import('@/components/BusinessMoney'));
 const WhatChanged = lazy(() => import('@/components/WhatChanged'));
-import MarketDesk from '@/components/MarketDesk';
+const MarketDesk = lazy(() => import('@/components/MarketDesk'));
 import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
 import { SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
+import PAGE_DESCRIPTIONS from '@/lib/pageDescriptions.json';
 import { PAGE_PATHS, pathFromLegacyHash, viewFromLocation, type AppView } from '@/lib/routes';
 
 const NewsFeed = lazy(() => import('@/components/NewsFeed'));
@@ -50,47 +51,47 @@ const PAGE_INFO: Record<InnerPageView, PageInfo> = {
   passport: {
     themeId: 'passport',
     title: 'Сводка дня',
-    description: 'Денежные ориентиры с источниками и датами, наблюдаемая динамика рынков.',
+    description: PAGE_DESCRIPTIONS.passport,
   },
   russia: {
     themeId: 'russia',
     title: 'Россия и бизнес',
-    description: 'Курсы, Московская биржа и российские деловые заголовки — каждый блок со своим источником.',
+    description: PAGE_DESCRIPTIONS.russia,
   },
   global: {
     themeId: 'global',
     title: 'Мировые рынки',
-    description: 'Внешние рыночные ориентиры и история наблюдений, отделённые от российского контура.',
+    description: PAGE_DESCRIPTIONS.global,
   },
   brief: {
     themeId: 'brief',
     title: 'Коротко о рынке',
-    description: 'Сжатый обзор фактов из текущего снимка данных — без прогнозов и рекомендаций.',
+    description: PAGE_DESCRIPTIONS.brief,
   },
   news: {
     themeId: 'news',
     title: 'Лента публикаций',
-    description: 'Исходные заголовки и ссылки на публикации; заголовок сам по себе не подтверждает событие или его причину.',
+    description: PAGE_DESCRIPTIONS.news,
   },
   memory: {
     themeId: 'memory',
     title: 'Архив и оценки',
-    description: 'Исторические прогнозные записи и рассчитанные исходы сохранены для проверки; новые прогнозы не выпускаются.',
+    description: PAGE_DESCRIPTIONS.memory,
   },
   guide: {
     themeId: 'guide',
     title: 'Методология Market Pulse',
-    description: 'Как читать факты и расчёты, проверять источники и понимать ограничения данных.',
+    description: PAGE_DESCRIPTIONS.guide,
   },
   about: {
     themeId: 'about',
     title: 'О проекте',
-    description: 'Как устроен Market Pulse, откуда берутся данные и какие ограничения соблюдает сайт.',
+    description: PAGE_DESCRIPTIONS.about,
   },
   status: {
     themeId: 'status',
     title: 'Состояние системы',
-    description: 'Свежесть источников, котировок и публикаций; результаты почасовой самопроверки.',
+    description: PAGE_DESCRIPTIONS.status,
   },
 };
 
@@ -106,7 +107,7 @@ function DashboardPage() {
 
   return (
     <>
-      <section id="dashboard" className="overview-hero mb-8 scroll-mt-24 lg:mb-12">
+      <section id="dashboard" className="overview-hero mb-12 scroll-mt-24 lg:mb-16">
         <div className="overview-hero__backdrop" aria-hidden="true" />
         <div className="overview-hero__copy">
           <motion.div className="overview-hero__eyebrow" {...appear(0.04)}>
@@ -151,7 +152,11 @@ function DashboardPage() {
         </motion.div>
       </section>
 
-      <SectionBoundary title="Обзор и мои ориентиры"><MarketDesk summary /></SectionBoundary>
+      <SectionBoundary title="Обзор и мои ориентиры">
+        <Suspense fallback={<SectionFallback title="Главное за минуту" minHeightClass="min-h-[520px]" />}>
+          <MarketDesk summary />
+        </Suspense>
+      </SectionBoundary>
 
       <section aria-labelledby="page-links-title" className="overview-topics mb-10 lg:mb-14">
         <div className="overview-topics__heading">
@@ -243,11 +248,15 @@ function SectionPage({ view }: { view: SectionPageView }) {
         <>
           <PageSignalIntro page={page} />
           <MarketTicker />
-          <SectionBoundary title="Мои ориентиры и сравнение"><MarketDesk /></SectionBoundary>
+          <SectionBoundary title="Мои ориентиры и сравнение">
+            <Suspense fallback={<SectionFallback title="Мои ориентиры и сравнение" minHeightClass="min-h-[600px]" />}>
+              <MarketDesk />
+            </Suspense>
+          </SectionBoundary>
           <section
             id="global-economy"
             aria-labelledby="global-economy-title"
-            className="mb-10 scroll-mt-24 rounded-[28px] border border-cyan-200/80 bg-linear-to-br from-cyan-50/80 via-white to-blue-50/70 p-3 shadow-sm sm:p-5 lg:mb-12 lg:p-6"
+            className="deferred-market-layout mb-10 scroll-mt-24 rounded-[28px] border border-cyan-200/80 bg-linear-to-br from-cyan-50/80 via-white to-blue-50/70 p-3 shadow-sm sm:p-5 lg:mb-12 lg:p-6"
           >
             <div className="mb-6 px-1 pt-1 sm:px-2">
               <h2 id="global-economy-title" className="text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
@@ -308,7 +317,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
             <SectionBoundary title="О проекте"><AboutProject /></SectionBoundary>
           </Suspense>
           <details className="mb-10 rounded-2xl border border-border-subtle bg-bg-card p-4 shadow-sm lg:mb-12">
-            <summary className="cursor-pointer text-sm font-extrabold text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent">
+            <summary className="min-h-11 cursor-pointer py-3 text-sm font-extrabold text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent">
               Как собираем и проверяем данные
             </summary>
             <div className="mt-4">
@@ -351,6 +360,11 @@ function App() {
 
   useEffect(() => {
     document.title = `${VIEW_TITLES[view]} — Market Pulse`;
+    const description = PAGE_DESCRIPTIONS[view];
+    document.querySelectorAll('meta[name="description"], meta[property="og:description"], meta[name="twitter:description"]')
+      .forEach(meta => meta.setAttribute('content', description));
+    document.querySelectorAll('meta[property="og:title"], meta[name="twitter:title"]')
+      .forEach(meta => meta.setAttribute('content', document.title));
     const canonical = `https://market-pulse1-eta.vercel.app${PAGE_PATHS[view]}`;
     document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonical);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
@@ -458,7 +472,7 @@ function App() {
       <main
         id="main"
         tabIndex={-1}
-        className="mx-auto max-w-[1400px] px-4 pb-8 pt-24 outline-hidden sm:px-6 lg:px-10 lg:pt-28"
+        className="site-container pb-8 pt-24 outline-hidden lg:pt-28"
       >
         <motion.div
           key={view}

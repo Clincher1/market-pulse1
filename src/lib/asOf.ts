@@ -12,16 +12,22 @@
  * для момента котировки здесь два разных вида.
  */
 
+// Locale/time-zone options are fixed. Reuse the native ICU formatters across
+// ticker, tiles and favorites instead of rebuilding them on every render.
+let clockFormatter: Intl.DateTimeFormat | undefined;
+let observationDayFormatter: Intl.DateTimeFormat | undefined;
+let moscowDayFormatter: Intl.DateTimeFormat | undefined;
+
 /** Время по Москве: «12:02». Пустая строка, если времени нет. */
 export function moscowClock(value?: string | null): string {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('ru-RU', {
+  return (clockFormatter ??= new Intl.DateTimeFormat('ru-RU', {
     timeZone: 'Europe/Moscow',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date);
+  })).format(date);
 }
 
 /**
@@ -43,11 +49,11 @@ export function observationLabel(asOf?: string | null): string {
   if (dateOnly) {
     const day = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
     if (Number.isNaN(day.getTime())) return '';
-    return `за ${new Intl.DateTimeFormat('ru-RU', {
+    return `за ${(observationDayFormatter ??= new Intl.DateTimeFormat('ru-RU', {
       day: 'numeric',
       month: 'short',
       timeZone: 'Europe/Moscow',
-    }).format(day)}`;
+    })).format(day)}`;
   }
   const clock = moscowClock(iso);
   return clock ? `на ${clock} МСК` : '';
@@ -57,12 +63,12 @@ const DAY_MS = 86_400_000;
 
 function moscowDateKey(value: Date): string | null {
   if (Number.isNaN(value.getTime())) return null;
-  const parts = new Intl.DateTimeFormat('en-GB', {
+  const parts = (moscowDayFormatter ??= new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Europe/Moscow',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).formatToParts(value);
+  })).formatToParts(value);
   const part = (type: string) => parts.find((item) => item.type === type)?.value ?? '';
   const year = part('year');
   const month = part('month');

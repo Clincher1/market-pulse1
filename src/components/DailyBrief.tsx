@@ -87,7 +87,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
       {marker}
       <a
         href={item.href}
-        className="group flex min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+        className="group flex min-h-11 min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
       >
         <span className="min-w-0 flex-1">{item.body}</span>
         <ArrowRight
@@ -100,7 +100,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex basis-full items-center gap-1 pl-6 text-[11px] sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="inline-flex min-h-11 basis-full items-center gap-1 pl-6 text-xs sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
           aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
         >
           {item.sourceLabel ?? 'Источник'}
@@ -420,14 +420,14 @@ export default function DailyBrief() {
       )}
 
       {snapshot && changeView.renamed.length > 0 && (
-        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary">
+        <p className="mt-2 px-1 text-xs leading-relaxed text-text-secondary">
           Для {changeView.renamed.join(', ')} сравнение не выполняется: с момента снимка сменился
           инструмент или источник.
         </p>
       )}
 
       {snapshot && changeView.comparable > 0 && (
-        <p className="mt-2 px-1 text-[11px] leading-relaxed text-text-secondary">
+        <p className="mt-2 px-1 text-xs leading-relaxed text-text-secondary">
           Цены и курсы: (текущее значение / значение в снимке − 1) × 100 %.
           Ставки и доходности: текущее значение − значение в снимке, в процентных пунктах.
           Точность — 0,01 % или 0,01 п.п. В каждой группе — до шести наибольших по модулю
@@ -459,7 +459,7 @@ export default function DailyBrief() {
           download="market-pulse-brief.png"
           title="Серверная PNG-карточка с актуальными цифрами, без параметров отслеживания"
           aria-label="Снимок для Telegram — скачать PNG брифа"
-          className="ml-auto inline-flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-800 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-800 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
           Снимок для Telegram
@@ -506,7 +506,7 @@ export default function DailyBrief() {
               ))}
             </ol>
             {changesSection}
-            <p className="mt-3.5 text-[11px] leading-relaxed text-text-secondary">
+            <p className="mt-3.5 text-xs leading-relaxed text-text-secondary">
               Сводка показывает загруженные значения и арифметические сравнения с сохранённым
               снимком. Совпадение по времени не объясняет причину изменения; рекомендации не
               выдаются.

@@ -91,6 +91,28 @@
   }
 }
 
+/* Shared page shell: preserve the existing 1400px border-box and gutters.
+   Inner card padding and vertical section spacing remain component-owned. */
+:root {
+  --layout-max-width: 1400px;
+  --layout-gutter: 16px;
+}
+
+@media (min-width: 640px) {
+  :root { --layout-gutter: 24px; }
+}
+
+@media (min-width: 1024px) {
+  :root { --layout-gutter: 40px; }
+}
+
+.site-container {
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin-inline: auto;
+  padding-inline: var(--layout-gutter);
+}
+
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -659,7 +681,7 @@
 .overview-section-kicker {
   margin: 0 0 0.35rem;
   color: #2563eb;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.16em;
 }
@@ -1383,3 +1405,75 @@
 }
 
 .desk-table-wrap:focus-visible { outline: 2px solid #0891b2; outline-offset: 3px; }
+
+/* Native off-screen rendering containment, not delayed data or hidden content.
+   The mobile profile showed more style/layout and rendering work than script
+   evaluation. Keep charts, controls and source labels in the DOM/accessibility
+   tree; let the browser render off-screen market sections as the reader nears
+   them. The remembered natural size replaces the estimate after first render.
+   Browsers without support simply render the full sections as before. */
+.deferred-market-layout {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1500px;
+}
+
+/* Reading measures apply to explanatory prose, not dense numeric tables. */
+:where(#guide, #about) p {
+  max-width: 72ch;
+  line-height: 1.6;
+}
+
+:where(main) p { max-width: 72ch; }
+
+/* Initial HTML only: React replaces this entire subtree on its first commit.
+   Keep it readable with JS disabled or a failed module download. No hiding or
+   user-agent detection: visitors and crawlers receive the same document. */
+.initial-document {
+  max-width: 76rem;
+  margin-inline: auto;
+  padding: 1.5rem;
+  color: #0f172a;
+}
+.initial-document header,
+.initial-document main,
+.initial-document footer { padding-block: 1rem; }
+.initial-document__brand { font-size: 1.5rem; font-weight: 800; }
+.initial-document nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.initial-document nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+}
+.initial-document h1 { font-size: clamp(1.75rem, 5vw, 3rem); font-weight: 800; line-height: 1.2; }
+.initial-document h2 { margin-top: 1.5rem; font-size: 1.25rem; font-weight: 700; }
+.initial-document p { margin-block: 0.75rem; line-height: 1.65; }
+.initial-document a { color: #1d4ed8; text-decoration: underline; text-underline-offset: 0.2em; }
+.initial-document a:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 3px; }
+.initial-document [aria-current="page"] { font-weight: 800; background: #eff6ff; }
+.initial-document__skip { display: inline-block; padding-block: 0.75rem; }
+
+.initial-document__snapshot {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-block: 1rem;
+}
+.initial-document__snapshot:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 3px;
+}
+.initial-document__snapshot table {
+  min-width: 600px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.initial-document__snapshot caption { text-align: left; }
+.initial-document__snapshot td:last-child { min-width: 18rem; }
+.initial-document__snapshot th,
+.initial-document__snapshot td {
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}

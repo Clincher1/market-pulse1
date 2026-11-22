@@ -14,6 +14,8 @@
  * подставлять сюда выдуманное число нельзя.
  */
 const NBSP = '\u00A0';
+// Precision is bounded to 0..4, so at most five native formatters are retained.
+const priceFormatters = new Map<number, Intl.NumberFormat>();
 
 export function formatPriceText(raw: string | null | undefined): string {
   if (raw === null || raw === undefined) return '';
@@ -24,11 +26,15 @@ export function formatPriceText(raw: string | null | undefined): string {
   const value = Number(numeric);
   if (!Number.isFinite(value)) return text;
   const digits = Math.min(numeric.split('.')[1]?.length ?? 0, 4);
-  const formatted = new Intl.NumberFormat('ru-RU', {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
-    .format(value)
+  let formatter = priceFormatters.get(digits);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('ru-RU', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+    priceFormatters.set(digits, formatter);
+  }
+  const formatted = formatter.format(value)
     // ru-RU разделяет разряды узким неразрывным пробелом в части движков;
     // приводим к обычному неразрывному, чтобы формат не зависел от ICU.
     .replace(/\s/g, NBSP);

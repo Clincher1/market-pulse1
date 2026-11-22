@@ -468,7 +468,7 @@ async function fetchMoexOfz10y() {
     basis: exact
       ? 'Точка кривой бескупонной доходности на 10 лет; публичный поток может быть задержан'
       : `Точки на 10 лет в кривой нет: показана ближайшая — ${best.period} г.`,
-    sourceUrl: 'https://www.moex.com/ru/marketdata/indices/state/gcurve/',
+    sourceUrl: 'https://iss.moex.com/iss/engines/stock/zcyc.json?iss.meta=off',
     // Для рисунка кривой: точки, которые реально пришли, без сглаживания.
     curve: curve.length >= 2 ? curve : null,
     curveAsOf: `${best.row.tradedate ?? ''} ${best.row.tradetime ?? ''}`.trim(),
@@ -678,12 +678,10 @@ async function fetchMoexGold() {
 
 // Страница ЦБ с таблицей «ключевая ставка / инфляция / цель». Таблица приходит
 // в самой разметке, поэтому читается обычным запросом без браузера.
-const INFLATION_PAGES = [
-  'https://www.cbr.ru/hd_base/infl/',
-  // Выгрузка той же таблицы: если вёрстка страницы изменится, данные всё равно
-  // найдутся. Идентификатор набора — часть публичной ссылки «XLSX» на странице.
-  'https://www.cbr.ru/Queries/UniDbQuery/DownloadExcel/132934',
-];
+// This parser consumes the configured HTML table, not XLSX binary bytes.
+// A bare DownloadExcel URL returned 404 in both live audit rounds; a workbook
+// is not a second HTML feed and must not be advertised as a working fallback.
+const INFLATION_PAGE = 'https://www.cbr.ru/hd_base/infl/';
 
 /**
  * Инфляция год к году из таблицы Банка России (данные Росстата).
@@ -696,22 +694,9 @@ const INFLATION_PAGES = [
  * не «+0,3 %». Процент от процента — другое число.
  */
 async function fetchInflation() {
-  let rows = [];
-  const failures = [];
-  for (const url of INFLATION_PAGES) {
-    try {
-      const parsed = parseInflationTable(await fetchText(url));
-      if (parsed.length > 0) {
-        rows = parsed;
-        break;
-      }
-      failures.push(`${url}: строк с месяцем не найдено`);
-    } catch (error) {
-      failures.push(`${url}: ${error?.message || 'недоступно'}`);
-    }
-  }
+  const rows = parseInflationTable(await fetchText(INFLATION_PAGE));
   const picked = pickLatestInflation(rows);
-  if (!picked) throw new Error(`таблица инфляции не разобрана (${failures.join('; ')})`);
+  if (!picked) throw new Error('Таблица инфляции ЦБ не разобрана');
 
   const { latest, previous } = picked;
   const change = previous ? round(latest.inflation - previous.inflation, 2) : null;

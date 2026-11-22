@@ -1,0 +1,32 @@
+name: Read-only revealed comparison screenshots
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['scripts/capture-market-comparison.mjs', '.github/workflows/capture-market-comparison.yml']
+permissions:
+  contents: write
+jobs:
+  capture:
+    if: github.repository == 'Clincher1/market-pulse1' && startsWith(github.ref, 'refs/heads/arena/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: |
+          npm install --prefix .local/production-browser playwright@1.65.1
+          .local/production-browser/node_modules/.bin/playwright install --with-deps chromium
+      - run: node scripts/capture-market-comparison.mjs
+      - name: Preserve actual section captures on the unchanged work branch
+        run: |
+          set -euo pipefail
+          case "$GITHUB_REF_NAME" in arena/*) ;; *) exit 1 ;; esac
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/audit-evidence/visual-comparison
+          git commit -m 'docs: capture the comparison section after real viewport reveal'
+          git push origin "HEAD:$GITHUB_REF_NAME"

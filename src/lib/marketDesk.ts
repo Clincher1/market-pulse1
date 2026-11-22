@@ -3,8 +3,9 @@ import type { AssetData } from '../data/marketTypes.ts';
 export const DESK_ASSET_IDS = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'] as const;
 export const FAVORITES_KEY = 'market-pulse-favorites-v1';
 export { WORLD_ASSET_UNITS as DESK_UNITS } from './marketUnits.ts';
+let deskFormatter: Intl.NumberFormat | undefined;
 export function deskValue(value: number): string {
-  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 6 }).format(value);
+  return (deskFormatter ??= new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 6 })).format(value);
 }
 export interface DatedValue { date: string; value: number }
 

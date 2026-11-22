@@ -108,7 +108,7 @@ function toneOf(value: number | null | undefined): 'up' | 'down' | 'flat' {
  * молчание читалось бы как «цена сегодняшняя».
  */
 function brentFact(
-  asset: { price: string; change: number; asOf: string | null } | null,
+  asset: { price: string; change: number | null; asOf: string | null } | null,
 ): Fact {
   const observed = asset?.asOf ? shortDate(asset.asOf.slice(0, 10)) : null;
   return {
@@ -118,7 +118,7 @@ function brentFact(
     value: asset ? formatPriceText(asset.price) : null,
     unit: 'Brent (фьючерс), $ за баррель',
     secondary: null,
-    change: asset ? pctText(asset.change) : null,
+    change: typeof asset?.change === 'number' && Number.isFinite(asset.change) ? pctText(asset.change) : null,
     changeTone: toneOf(asset?.change),
     asOf: observed ?? (asset ? 'дата наблюдения не сохранена' : null),
     provider: 'Yahoo Finance · фьючерс BZ=F',
@@ -129,7 +129,7 @@ function brentFact(
 
 function factsFrom(
   markets: RussiaMarketIndicator[],
-  brent: { price: string; change: number; asOf: string | null } | null,
+  brent: { price: string; change: number | null; asOf: string | null } | null,
 ): Fact[] {
   const byId = new Map(markets.map((market) => [market.id, market]));
   const usd = byId.get('usd-rub') ?? null;
@@ -137,7 +137,7 @@ function factsFrom(
   // дате. Биржевое значение юаня на этой дате могло быть предыдущим закрытием
   // («сделок сегодня в потоке нет»), и на карточке «курс для расчётов» это
   // выглядело бы как текущая котировка.
-  const cny = byId.get('cny-rub-cbr') ?? byId.get('cny-rub-moex') ?? null;
+  const cny = byId.get('cny-rub-cbr') ?? null;
   const keyRate = byId.get('key-rate') ?? null;
   const ruonia = byId.get('ruonia') ?? null;
   const reserves = byId.get('reserves') ?? null;
@@ -174,7 +174,7 @@ function factsFrom(
       changeTone: 'flat',
       asOf: keyRate ? `с ${shortDate(keyRate.asOf)}` : shortDate(ruonia?.asOf),
       provider: 'Банк России',
-      sourceUrl: ruonia?.sourceUrl ?? keyRate?.sourceUrl ?? 'https://www.cbr.ru/hd_base/KeyRate/',
+      sourceUrl: keyRate?.sourceUrl ?? ruonia?.sourceUrl ?? 'https://www.cbr.ru/hd_base/KeyRate/',
       check: 'если ставка в вашем кредите плавающая, она привязана к одной из этих двух',
     },
 
@@ -252,7 +252,7 @@ export default function BusinessMoney() {
     // Резервная заглушка («—», change 0) не является котировкой: показывать
     // её как «0,00 %» — значит утверждать, что цена не изменилась.
     if (!asset || fallbackAssetIds.includes('brent') || asset.price === '—') return null;
-    return { price: asset.price, change: asset.change ?? 0, asOf: asset.asOf ?? null };
+    return { price: asset.price, change: asset.change, asOf: asset.asOf ?? null };
   }, [assets, fallbackAssetIds]);
 
   const facts = useMemo(() => factsFrom(markets, brent), [markets, brent]);
@@ -354,7 +354,7 @@ export default function BusinessMoney() {
                 {fact.asOf && <> · {fact.asOf}</>}
               </div>
 
-              <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+              <p className="mt-2 text-xs leading-relaxed text-text-secondary">
                 <span className="font-bold text-slate-700">Что сверить:</span> {fact.check}.
               </p>
             </a>

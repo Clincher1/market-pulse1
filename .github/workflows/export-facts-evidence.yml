@@ -1,0 +1,36 @@
+name: Export observed public audit evidence
+on:
+  push:
+    branches: ['arena/2c9c21a4-market-pulse1']
+    paths: ['.github/workflows/export-facts-evidence.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  export:
+    if: github.repository == 'Clincher1/market-pulse1' && github.ref == 'refs/heads/arena/2c9c21a4-market-pulse1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          name: facts-links-evidence
+          run-id: 44910358866
+          github-token: ${{ github.token }}
+          path: .local/previous-facts-evidence
+      - name: Preserve the actual first findings, not only green results
+        run: |
+          set -euo pipefail
+          mkdir -p docs/audit-evidence/facts-links/first
+          find .local/previous-facts-evidence -type f \( -name 'report.json' -o -name 'summary.json' -o -name 'http-A.json' -o -name 'http-B.json' \) -exec cp '{}' docs/audit-evidence/facts-links/first/ \;
+          for name in home world russia news passport brief guide about; do
+            find .local/previous-facts-evidence -path "*/facts-links-audit/$name.png" -exec cp '{}' docs/audit-evidence/facts-links/first/ \;
+          done
+          test -f docs/audit-evidence/facts-links/first/report.json
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/audit-evidence/facts-links/first
+          git commit -m 'docs: preserve first original-source and link audit evidence'
+          git push origin "HEAD:$GITHUB_REF_NAME"

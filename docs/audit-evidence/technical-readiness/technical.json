@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-21T08:07:51.443Z",
+  "started": "2026-11-21T15:29:07.450Z",
   "data": [
     {
       "id": "usd-eur",
@@ -20,18 +20,18 @@
     {
       "id": "imoex",
       "points": 65,
-      "current": 2322.89,
-      "asOf": "2026-11-21 11:06:14",
-      "changeExpected": -1.3383452259599138,
-      "changeStored": -1.338
+      "current": 2326.4,
+      "asOf": "2026-11-21 18:27:00",
+      "changeExpected": -1.1892626571525677,
+      "changeStored": -1.189
     },
     {
       "id": "rgbi",
       "points": 65,
-      "current": 110.9,
-      "asOf": "2026-11-21 11:06:16",
-      "changeExpected": 0.00901794571197545,
-      "changeStored": 0.009
+      "current": 110.87,
+      "asOf": "2026-11-21 18:27:01",
+      "changeExpected": -0.018035891423928696,
+      "changeStored": -0.018
     },
     {
       "id": "usd-rub",
@@ -70,7 +70,7 @@
       "width": 390,
       "path": "/",
       "overflow": false,
-      "text": 1916,
+      "text": 1915,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -85,7 +85,7 @@
       "width": 390,
       "path": "/world",
       "overflow": false,
-      "text": 6901,
+      "text": 2172,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -95,6 +95,33 @@
       "storage": [
         "market-pulse-heatmap-palette"
       ],
+      "quoteComparisons": [
+        {
+          "id": "usd-eur",
+          "ticker": "0,9099",
+          "tile": "0,9099"
+        },
+        {
+          "id": "sp500",
+          "ticker": "6 910",
+          "tile": "6 910"
+        },
+        {
+          "id": "brent",
+          "ticker": "$92,57",
+          "tile": "$92,57"
+        },
+        {
+          "id": "gold",
+          "ticker": "$3 539,0",
+          "tile": "$3 539,0"
+        },
+        {
+          "id": "btc",
+          "ticker": "$60 072",
+          "tile": "$60 072"
+        }
+      ],
       "errors": []
     },
     {
@@ -102,7 +129,7 @@
       "width": 390,
       "path": "/russia",
       "overflow": false,
-      "text": 8593,
+      "text": 8693,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -118,7 +145,7 @@
       "width": 390,
       "path": "/news",
       "overflow": false,
-      "text": 1098,
+      "text": 1120,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -135,7 +162,7 @@
       "width": 1280,
       "path": "/",
       "overflow": false,
-      "text": 2375,
+      "text": 2374,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -160,6 +187,33 @@
       "storage": [
         "market-pulse-heatmap-palette"
       ],
+      "quoteComparisons": [
+        {
+          "id": "usd-eur",
+          "ticker": "0,9099",
+          "tile": "0,9099"
+        },
+        {
+          "id": "sp500",
+          "ticker": "6 910",
+          "tile": "6 910"
+        },
+        {
+          "id": "brent",
+          "ticker": "$92,57",
+          "tile": "$92,57"
+        },
+        {
+          "id": "gold",
+          "ticker": "$3 539,0",
+          "tile": "$3 539,0"
+        },
+        {
+          "id": "btc",
+          "ticker": "$60 072",
+          "tile": "$60 072"
+        }
+      ],
       "errors": []
     },
     {
@@ -167,7 +221,7 @@
       "width": 1280,
       "path": "/russia",
       "overflow": false,
-      "text": 8618,
+      "text": 8718,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -183,7 +237,7 @@
       "width": 1280,
       "path": "/news",
       "overflow": false,
-      "text": 1156,
+      "text": 1178,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -200,7 +254,7 @@
       "width": 390,
       "path": "/",
       "overflow": false,
-      "text": 1916,
+      "text": 1915,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -215,7 +269,7 @@
       "width": 390,
       "path": "/world",
       "overflow": false,
-      "text": 6805,
+      "text": 2076,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -225,6 +279,33 @@
       "storage": [
         "market-pulse-heatmap-palette"
       ],
+      "quoteComparisons": [
+        {
+          "id": "usd-eur",
+          "ticker": "0,9099",
+          "tile": "0,9099"
+        },
+        {
+          "id": "sp500",
+          "ticker": "6 910",
+          "tile": "6 910"
+        },
+        {
+          "id": "brent",
+          "ticker": "$92,57",
+          "tile": "$92,57"
+        },
+        {
+          "id": "gold",
+          "ticker": "$3 539,0",
+          "tile": "$3 539,0"
+        },
+        {
+          "id": "btc",
+          "ticker": "$60 072",
+          "tile": "$60 072"
+        }
+      ],
       "errors": []
     },
     {
@@ -232,7 +313,7 @@
       "width": 390,
       "path": "/russia",
       "overflow": false,
-      "text": 8568,
+      "text": 8668,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -248,7 +329,7 @@
       "width": 390,
       "path": "/news",
       "overflow": false,
-      "text": 1098,
+      "text": 1120,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -265,7 +346,7 @@
       "width": 1280,
       "path": "/",
       "overflow": false,
-      "text": 2375,
+      "text": 2374,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -280,7 +361,7 @@
       "width": 1280,
       "path": "/world",
       "overflow": false,
-      "text": 6831,
+      "text": 2093,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -290,6 +371,33 @@
       "storage": [
         "market-pulse-heatmap-palette"
       ],
+      "quoteComparisons": [
+        {
+          "id": "usd-eur",
+          "ticker": "0,9099",
+          "tile": "0,9099"
+        },
+        {
+          "id": "sp500",
+          "ticker": "6 910",
+          "tile": "6 910"
+        },
+        {
+          "id": "brent",
+          "ticker": "$92,57",
+          "tile": "$92,57"
+        },
+        {
+          "id": "gold",
+          "ticker": "$3 539,0",
+          "tile": "$3 539,0"
+        },
+        {
+          "id": "btc",
+          "ticker": "$60 072",
+          "tile": "$60 072"
+        }
+      ],
       "errors": []
     },
     {
@@ -297,7 +405,7 @@
       "width": 1280,
       "path": "/russia",
       "overflow": false,
-      "text": 8593,
+      "text": 8693,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -313,7 +421,7 @@
       "width": 1280,
       "path": "/news",
       "overflow": false,
-      "text": 1156,
+      "text": 1178,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -330,7 +438,7 @@
       "width": 390,
       "path": "/",
       "overflow": false,
-      "text": 1916,
+      "text": 1915,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -345,7 +453,7 @@
       "width": 390,
       "path": "/world",
       "overflow": false,
-      "text": 6809,
+      "text": 1031,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -355,6 +463,33 @@
       "storage": [
         "market-pulse-heatmap-palette"
       ],
+      "quoteComparisons": [
+        {
+          "id": "usd-eur",
+          "ticker": "0,9099",
+          "tile": "0,9099"
+        },
+        {
+          "id": "sp500",
+          "ticker": "6 910",
+          "tile": "6 910"
+        },
+        {
+          "id": "brent",
+          "ticker": "$92,57",
+          "tile": "$92,57"
+        },
+        {
+          "id": "gold",
+          "ticker": "$3 539,0",
+          "tile": "$3 539,0"
+        },
+        {
+          "id": "btc",
+          "ticker": "$60 072",
+          "tile": "$60 072"
+        }
+      ],
       "errors": []
     },
     {
@@ -362,7 +497,7 @@
       "width": 390,
       "path": "/russia",
       "overflow": false,
-      "text": 8592,
+      "text": 8692,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -378,7 +513,7 @@
       "width": 390,
       "path": "/news",
       "overflow": false,
-      "text": 1098,
+      "text": 1120,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -395,7 +530,7 @@
       "width": 1280,
       "path": "/",
       "overflow": false,
-      "text": 2375,
+      "text": 2374,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -410,7 +545,7 @@
       "width": 1280,
       "path": "/world",
       "overflow": false,
-      "text": 6835,
+      "text": 1048,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -420,6 +555,33 @@
       "storage": [
         "market-pulse-heatmap-palette"
       ],
+      "quoteComparisons": [
+        {
+          "id": "usd-eur",
+          "ticker": "0,9099",
+          "tile": "0,9099"
+        },
+        {
+          "id": "sp500",
+          "ticker": "6 910",
+          "tile": "6 910"
+        },
+        {
+          "id": "brent",
+          "ticker": "$92,57",
+          "tile": "$92,57"
+        },
+        {
+          "id": "gold",
+          "ticker": "$3 539,0",
+          "tile": "$3 539,0"
+        },
+        {
+          "id": "btc",
+          "ticker": "$59 883",
+          "tile": "$59 883"
+        }
+      ],
       "errors": []
     },
     {
@@ -427,7 +589,7 @@
       "width": 1280,
       "path": "/russia",
       "overflow": false,
-      "text": 8618,
+      "text": 8718,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app"
@@ -443,7 +605,7 @@
       "width": 1280,
       "path": "/news",
       "overflow": false,
-      "text": 1156,
+      "text": 1178,
       "cookie": "",
       "hosts": [
         "market-pulse1-eta.vercel.app",
@@ -461,14 +623,14 @@
       "path": "/",
       "mode": "mobile",
       "scores": {
-        "performance": 0.99,
+        "performance": 0.96,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 916.381,
+      "lcpMs": 907.624,
       "cls": 0,
-      "tbtMs": 118,
+      "tbtMs": 217,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -521,12 +683,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 11.561
+                  "duration": 12.619
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 214.805
+                  "duration": 318.37
                 }
               ]
             },
@@ -569,19 +731,31 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27127,
-              "wastedMs": 156
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-Be0KIy32.css",
+              "totalBytes": 26237,
+              "wastedMs": 151
             }
           ]
         }
       },
       "findings": [
         {
-          "id": "unused-javascript",
-          "score": 0.5,
-          "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 52 KiB"
+          "id": "total-blocking-time",
+          "score": 0.88,
+          "title": "Total Blocking Time",
+          "displayValue": "220 ms"
+        },
+        {
+          "id": "max-potential-fid",
+          "score": 0.69,
+          "title": "Max Potential First Input Delay",
+          "displayValue": "190 ms"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.5 s"
         },
         {
           "id": "network-dependency-tree-insight",
@@ -592,7 +766,7 @@
           "id": "render-blocking-insight",
           "score": 0,
           "title": "Render-blocking requests",
-          "displayValue": "Est savings of 150 ms"
+          "displayValue": "Est savings of 140 ms"
         }
       ]
     },
@@ -605,7 +779,7 @@
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 249.637,
+      "lcpMs": 247.456,
       "cls": 0,
       "tbtMs": 0,
       "diagnostics": {
@@ -660,12 +834,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 10.961
+                  "duration": 38.346
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 354.279
+                  "duration": 459.344
                 }
               ]
             },
@@ -708,19 +882,13 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27327
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-Be0KIy32.css",
+              "totalBytes": 26247
             }
           ]
         }
       },
       "findings": [
-        {
-          "id": "unused-javascript",
-          "score": 0.5,
-          "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 52 KiB"
-        },
         {
           "id": "network-dependency-tree-insight",
           "score": 0,
@@ -737,14 +905,14 @@
       "path": "/world",
       "mode": "mobile",
       "scores": {
-        "performance": 0.98,
+        "performance": 0.96,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 910.444,
-      "cls": 0,
-      "tbtMs": 166,
+      "lcpMs": 908.3325,
+      "cls": 0.001502679277614253,
+      "tbtMs": 223,
       "diagnostics": {
         "label-content-name-mismatch": {
           "type": "table",
@@ -797,12 +965,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 11.686
+                  "duration": 13.652
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 227.349
+                  "duration": 297.583
                 }
               ]
             },
@@ -845,25 +1013,31 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27126,
-              "wastedMs": 151
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-Be0KIy32.css",
+              "totalBytes": 26241,
+              "wastedMs": 150
             }
           ]
         }
       },
       "findings": [
         {
-          "id": "max-potential-fid",
-          "score": 0.89,
-          "title": "Max Potential First Input Delay",
-          "displayValue": "130 ms"
+          "id": "total-blocking-time",
+          "score": 0.87,
+          "title": "Total Blocking Time",
+          "displayValue": "220 ms"
         },
         {
-          "id": "unused-javascript",
-          "score": 0.5,
-          "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 28 KiB"
+          "id": "max-potential-fid",
+          "score": 0.8,
+          "title": "Max Potential First Input Delay",
+          "displayValue": "160 ms"
+        },
+        {
+          "id": "mainthread-work-breakdown",
+          "score": 0,
+          "title": "Minimize main-thread work",
+          "displayValue": "2.6 s"
         },
         {
           "id": "network-dependency-tree-insight",
@@ -874,7 +1048,7 @@
           "id": "render-blocking-insight",
           "score": 0,
           "title": "Render-blocking requests",
-          "displayValue": "Est savings of 120 ms"
+          "displayValue": "Est savings of 60 ms"
         }
       ]
     },
@@ -887,7 +1061,7 @@
         "best-practices": 1,
         "seo": 1
       },
-      "lcpMs": 248.5245,
+      "lcpMs": 625.2705,
       "cls": 0.002455451222966272,
       "tbtMs": 0,
       "diagnostics": {
@@ -942,12 +1116,12 @@
                 {
                   "subpart": "timeToFirstByte",
                   "label": "Time to first byte",
-                  "duration": 9.782
+                  "duration": 23.356
                 },
                 {
                   "subpart": "elementRenderDelay",
                   "label": "Element render delay",
-                  "duration": 226.051
+                  "duration": 538.166
                 }
               ]
             },
@@ -990,19 +1164,13 @@
           ],
           "items": [
             {
-              "url": "https://market-pulse1-eta.vercel.app/assets/index-B3JqCi44.css",
-              "totalBytes": 27130
+              "url": "https://market-pulse1-eta.vercel.app/assets/index-Be0KIy32.css",
+              "totalBytes": 26237
             }
           ]
         }
       },
       "findings": [
-        {
-          "id": "unused-javascript",
-          "score": 0.5,
-          "title": "Reduce unused JavaScript",
-          "displayValue": "Est savings of 28 KiB"
-        },
         {
           "id": "network-dependency-tree-insight",
           "score": 0,
@@ -1016,7 +1184,17 @@
       ]
     }
   ],
-  "instrumentationRetries": [],
-  "failures": [],
-  "finished": "2026-11-21T08:09:16.058Z"
+  "instrumentationRetries": [
+    {
+      "path": "/",
+      "mode": "mobile",
+      "reason": "NO_NAVSTART",
+      "attempt": 1
+    }
+  ],
+  "failures": [
+    "Lighthouse mobile /: TBT 217ms",
+    "Lighthouse mobile /world: TBT 223ms"
+  ],
+  "finished": "2026-11-21T15:31:03.385Z"
 }

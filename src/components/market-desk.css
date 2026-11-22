@@ -1,11 +1,11 @@
-.market-desk-stack { display: grid; gap: 1.25rem; margin: 1.5rem 0 2rem; }
+.market-desk-stack { display: grid; gap: 1.5rem; margin: 1.5rem 0 3rem; }
 .market-desk { min-width: 0; border: 1px solid #cbd5e1; border-radius: 24px; background: #fff; padding: clamp(1rem, 3vw, 1.75rem); color: #0f172a; }
 .market-desk h2 { margin: .15rem 0; font-size: clamp(1.3rem, 3vw, 1.65rem); font-weight: 800; letter-spacing: -.025em; }
 .market-desk h3 { font-size: 1rem; font-weight: 750; }
-.market-desk p { margin: .5rem 0; line-height: 1.6; font-size: .875rem; }
-.market-desk .market-desk__eyebrow { margin: 0; color: #0e7490; font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
+.market-desk p { margin: .5rem 0; line-height: 1.6; font-size: .875rem; max-width: 72ch; }
+.market-desk .market-desk__eyebrow { margin: 0; color: #0e7490; font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
 .market-desk__heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; margin-bottom: .65rem; }
-.market-desk a { display: inline-flex; align-items: center; gap: .3rem; color: #075985; font-size: .85rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.market-desk a { display: inline-flex; min-height: 44px; align-items: center; gap: .3rem; color: #075985; font-size: .85rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .market-desk .market-desk__muted { color: #475569; font-size: .8rem; overflow-wrap: anywhere; }
 .market-desk button, .market-desk select { min-height: 44px; border: 1px solid #94a3b8; border-radius: 12px; background: #fff; color: #334155; font: inherit; font-size: .82rem; padding: .6rem .8rem; }
 .market-desk button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; cursor: pointer; }
@@ -41,3 +41,5 @@
 .desk-table svg { display: inline-block; }
 .desk-table td { font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .minute-grid { grid-template-columns: 1fr; } .desk-controls { display: grid; } .desk-chart { min-height: 170px; } }
+
+@media (min-width: 1024px) { .market-desk-stack { margin-bottom: 4rem; } }

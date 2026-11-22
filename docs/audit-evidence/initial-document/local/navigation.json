@@ -1,0 +1,5768 @@
+{
+  "scope": "Brief discoverability and header geometry only; API requests blocked",
+  "origin": "http://127.0.0.1:5174",
+  "expected": "index-ChzyMUIF.js",
+  "cases": [
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/passport",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/russia",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/world",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/brief",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/news",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/guide",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/guide",
+          "text": "Гид",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/about",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/about",
+          "text": "Проект",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 360,
+      "path": "/status",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/status",
+          "text": "Система",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/passport",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/russia",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/world",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/brief",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/news",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/guide",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/guide",
+          "text": "Гид",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/about",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/about",
+          "text": "Проект",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 768,
+      "path": "/status",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/status",
+          "text": "Система",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/passport",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/russia",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/world",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/brief",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/news",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/guide",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/about",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1024,
+      "path": "/status",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/passport",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/russia",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/world",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/brief",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/news",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/guide",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/about",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "A",
+      "width": 1440,
+      "path": "/status",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/passport",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/russia",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/world",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/brief",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/news",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/guide",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/guide",
+          "text": "Гид",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/about",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/about",
+          "text": "Проект",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 360,
+      "path": "/status",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 71.328125,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 71.328125,
+          "right": 125.671875,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 125.671875,
+          "right": 180,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 180,
+          "right": 234.34375,
+          "width": 54.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 234.34375,
+          "right": 288.671875,
+          "width": 54.328125,
+          "height": 44
+        },
+        {
+          "href": "/status",
+          "text": "Система",
+          "x": 288.671875,
+          "right": 343,
+          "width": 54.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 348,
+        "width": 336,
+        "height": 54
+      },
+      "brand": {
+        "x": 16,
+        "right": 170.921875,
+        "width": 154.921875,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 360,
+        "width": 360,
+        "height": 68
+      },
+      "padding": 16,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/passport",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/russia",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/world",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/brief",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/news",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/guide",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/guide",
+          "text": "Гид",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/about",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/about",
+          "text": "Проект",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 768,
+      "path": "/status",
+      "desktop": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 17,
+          "right": 139.328125,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф",
+          "x": 139.328125,
+          "right": 261.671875,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 261.671875,
+          "right": 384,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 384,
+          "right": 506.34375,
+          "width": 122.34375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 506.34375,
+          "right": 628.671875,
+          "width": 122.328125,
+          "height": 44
+        },
+        {
+          "href": "/status",
+          "text": "Система",
+          "x": 628.671875,
+          "right": 751,
+          "width": 122.328125,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 12,
+        "right": 756,
+        "width": 744,
+        "height": 54
+      },
+      "brand": {
+        "x": 24,
+        "right": 197.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 768,
+        "width": 768,
+        "height": 74
+      },
+      "padding": 24,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/passport",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/russia",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/world",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/brief",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/news",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/guide",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/about",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1024,
+      "path": "/status",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 243.75,
+          "right": 332.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 337.796875,
+          "right": 504.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 509.84375,
+          "right": 605.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 610.890625,
+          "right": 705.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 710.9375,
+          "right": 788.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 793.984375,
+          "right": 896.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 236.671875,
+        "right": 984,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 40,
+        "right": 213.125,
+        "width": 173.125,
+        "height": 44
+      },
+      "header": {
+        "x": 0,
+        "right": 1024,
+        "width": 1024,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/passport",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/russia",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/world",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/brief",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": "page",
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/news",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/guide",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/about",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    },
+    {
+      "round": "B",
+      "width": 1440,
+      "path": "/status",
+      "desktop": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "Обзор",
+          "x": 639.75,
+          "right": 728.6875,
+          "width": 88.9375,
+          "height": 44
+        },
+        {
+          "href": "/brief",
+          "text": "Бриф за 60 секунд",
+          "x": 733.796875,
+          "right": 900.734375,
+          "width": 166.9375,
+          "height": 44
+        },
+        {
+          "href": "/passport",
+          "text": "Сводка",
+          "x": 905.84375,
+          "right": 1001.78125,
+          "width": 95.9375,
+          "height": 44
+        },
+        {
+          "href": "/russia",
+          "text": "Россия",
+          "x": 1006.890625,
+          "right": 1101.828125,
+          "width": 94.9375,
+          "height": 44
+        },
+        {
+          "href": "/world",
+          "text": "Мир",
+          "x": 1106.9375,
+          "right": 1184.875,
+          "width": 77.9375,
+          "height": 44
+        },
+        {
+          "href": "/news",
+          "text": "Новости",
+          "x": 1189.984375,
+          "right": 1292.921875,
+          "width": 102.9375,
+          "height": 44
+        }
+      ],
+      "briefHref": "/brief",
+      "briefName": "Бриф за 60 секунд",
+      "briefActive": null,
+      "nav": {
+        "x": 632.671875,
+        "right": 1380,
+        "width": 747.328125,
+        "height": 58.15625
+      },
+      "brand": {
+        "x": 60,
+        "right": 301.46875,
+        "width": 241.46875,
+        "height": 44
+      },
+      "header": {
+        "x": 20,
+        "right": 1420,
+        "width": 1400,
+        "height": 82
+      },
+      "padding": 40,
+      "duplicateInMore": false,
+      "overflow": false
+    }
+  ],
+  "failures": []
+}

@@ -1,0 +1,455 @@
+{
+  "purpose": "Diagnosis only; previous failed acceptance results remain failures.",
+  "observedAt": "2026-11-21T14:50:40.458Z",
+  "audits": {
+    "mainthread-work-breakdown": {
+      "id": "mainthread-work-breakdown",
+      "title": "Minimizes main-thread work",
+      "description": "Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. [Learn how to minimize main-thread work](https://developer.chrome.com/docs/lighthouse/performance/mainthread-work-breakdown/)",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "numericValue": 1862.6800000000142,
+      "numericUnit": "millisecond",
+      "displayValue": "1.9 s",
+      "metricSavings": {
+        "TBT": 100
+      },
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "groupLabel",
+            "valueType": "text",
+            "label": "Category"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "granularity": 1,
+            "label": "Time Spent"
+          }
+        ],
+        "items": [
+          {
+            "group": "other",
+            "groupLabel": "Other",
+            "duration": 711.7760000000007
+          },
+          {
+            "group": "styleLayout",
+            "groupLabel": "Style & Layout",
+            "duration": 459.6520000000002
+          },
+          {
+            "group": "paintCompositeRender",
+            "groupLabel": "Rendering",
+            "duration": 360.9920000000122
+          },
+          {
+            "group": "scriptEvaluation",
+            "groupLabel": "Script Evaluation",
+            "duration": 302.868000000001
+          },
+          {
+            "group": "garbageCollection",
+            "groupLabel": "Garbage Collection",
+            "duration": 12.627999999999997
+          },
+          {
+            "group": "parseHTML",
+            "groupLabel": "Parse HTML & CSS",
+            "duration": 11.408
+          },
+          {
+            "group": "scriptParseCompile",
+            "groupLabel": "Script Parsing & Compilation",
+            "duration": 3.3560000000000003
+          }
+        ],
+        "sortedBy": [
+          "duration"
+        ]
+      },
+      "guidanceLevel": 1
+    },
+    "bootup-time": {
+      "id": "bootup-time",
+      "title": "JavaScript execution time",
+      "description": "Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. [Learn how to reduce Javascript execution time](https://developer.chrome.com/docs/lighthouse/performance/bootup-time/).",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "numericValue": 280.65600000000006,
+      "numericUnit": "millisecond",
+      "displayValue": "0.3 s",
+      "metricSavings": {
+        "TBT": 100
+      },
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "total",
+            "granularity": 1,
+            "valueType": "ms",
+            "label": "Total CPU Time"
+          },
+          {
+            "key": "scripting",
+            "granularity": 1,
+            "valueType": "ms",
+            "label": "Script Evaluation"
+          },
+          {
+            "key": "scriptParseCompile",
+            "granularity": 1,
+            "valueType": "ms",
+            "label": "Script Parse"
+          }
+        ],
+        "items": [
+          {
+            "url": "https://market-pulse1-eta.vercel.app/world",
+            "total": 1249.3880000000095,
+            "scripting": 7.275999999999999,
+            "scriptParseCompile": 1.276
+          },
+          {
+            "url": "https://market-pulse1-eta.vercel.app/assets/index-DVjmFbuY.js",
+            "total": 319.83600000000007,
+            "scripting": 240.50000000000006,
+            "scriptParseCompile": 0.708
+          },
+          {
+            "url": "Unattributable",
+            "total": 217.63200000000222,
+            "scripting": 30.895999999999997,
+            "scriptParseCompile": 0
+          }
+        ],
+        "summary": {
+          "wastedMs": 280.65600000000006
+        },
+        "sortedBy": [
+          "total"
+        ]
+      },
+      "guidanceLevel": 1
+    },
+    "long-tasks": {
+      "id": "long-tasks",
+      "title": "Avoid long main-thread tasks",
+      "description": "Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. [Learn how to avoid long main-thread tasks](https://web.dev/articles/optimize-long-tasks)",
+      "score": 1,
+      "scoreDisplayMode": "informative",
+      "displayValue": "4 long tasks found",
+      "metricSavings": {
+        "TBT": 100
+      },
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "startTime",
+            "valueType": "ms",
+            "granularity": 1,
+            "label": "Start Time"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "granularity": 1,
+            "label": "Duration"
+          }
+        ],
+        "items": [
+          {
+            "url": "https://market-pulse1-eta.vercel.app/assets/index-DVjmFbuY.js",
+            "duration": 98,
+            "startTime": 2341.6258199999997
+          },
+          {
+            "url": "https://market-pulse1-eta.vercel.app/assets/index-DVjmFbuY.js",
+            "duration": 72,
+            "startTime": 2529.6258199999997
+          },
+          {
+            "url": "https://market-pulse1-eta.vercel.app/assets/index-DVjmFbuY.js",
+            "duration": 67,
+            "startTime": 2439.6258199999997
+          },
+          {
+            "url": "Unattributable",
+            "duration": 61,
+            "startTime": 809.3094199999999
+          }
+        ],
+        "sortedBy": [
+          "duration"
+        ],
+        "skipSumming": [
+          "startTime"
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "urls": [
+            "https://market-pulse1-eta.vercel.app/assets/index-DVjmFbuY.js",
+            "Unattributable"
+          ],
+          "tasks": [
+            {
+              "urlIndex": 0,
+              "startTime": 2341.6,
+              "duration": 98,
+              "other": 98
+            },
+            {
+              "urlIndex": 0,
+              "startTime": 2529.6,
+              "duration": 72,
+              "other": 72,
+              "scriptEvaluation": 0
+            },
+            {
+              "urlIndex": 0,
+              "startTime": 2439.6,
+              "duration": 67,
+              "other": 67
+            },
+            {
+              "urlIndex": 1,
+              "startTime": 809.3,
+              "duration": 61,
+              "other": 61,
+              "scriptEvaluation": 0
+            }
+          ]
+        }
+      },
+      "guidanceLevel": 1
+    },
+    "forced-reflow-insight": {
+      "id": "forced-reflow-insight",
+      "title": "Forced reflow",
+      "description": "A forced reflow occurs when JavaScript queries geometric properties (such as offsetWidth) after styles have been invalidated by a change to the DOM state. This can result in poor performance. Learn more about [forced reflows](https://developer.chrome.com/docs/performance/insights/forced-reflow) and possible mitigations.",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "details": {
+        "type": "list",
+        "items": [
+          {
+            "type": "table",
+            "headings": [
+              {
+                "key": "source",
+                "valueType": "source-location",
+                "label": "Source"
+              },
+              {
+                "key": "reflowTime",
+                "valueType": "ms",
+                "granularity": 1,
+                "label": "Total reflow time"
+              }
+            ],
+            "items": []
+          }
+        ]
+      },
+      "guidanceLevel": 3
+    },
+    "dom-size-insight": {
+      "id": "dom-size-insight",
+      "title": "Optimize DOM size",
+      "description": "A large DOM can increase the duration of style calculations and layout reflows, impacting page responsiveness. A large DOM will also increase memory usage. [Learn how to avoid an excessive DOM size](https://developer.chrome.com/docs/performance/insights/dom-size).",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 594,
+      "numericUnit": "element",
+      "metricSavings": {
+        "INP": 0
+      },
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "statistic",
+            "valueType": "text",
+            "label": "Statistic"
+          },
+          {
+            "key": "node",
+            "valueType": "node",
+            "label": "Element"
+          },
+          {
+            "key": "value",
+            "valueType": "numeric",
+            "label": "Value"
+          }
+        ],
+        "items": [
+          {
+            "statistic": "Total elements",
+            "value": {
+              "type": "numeric",
+              "granularity": 1,
+              "value": 594
+            }
+          },
+          {
+            "statistic": "DOM depth",
+            "node": {
+              "type": "node",
+              "lhId": "page-16-line",
+              "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,2,DIV,1,SECTION,6,DIV,0,TABLE,2,TBODY,0,TR,0,TH,0,svg,0,line",
+              "selector": "tr > th > svg > line",
+              "boundingRect": {
+                "top": 2135,
+                "bottom": 2135,
+                "left": 41,
+                "right": 69,
+                "width": 28,
+                "height": 0
+              },
+              "snippet": "<line x1=\"0\" x2=\"28\" y1=\"5\" y2=\"5\" stroke=\"#0369a1\" stroke-width=\"3\" stroke-dasharray=\"none\">",
+              "nodeLabel": "tr > th > svg > line"
+            },
+            "value": {
+              "type": "numeric",
+              "granularity": 1,
+              "value": 14
+            }
+          },
+          {
+            "statistic": "Most children",
+            "node": {
+              "type": "node",
+              "lhId": "page-15-svg",
+              "path": "1,HTML,1,BODY,0,DIV,0,DIV,3,MAIN,0,DIV,0,HEADER,1,DIV,0,svg",
+              "selector": "div > header.page-signal-intro > div.page-signal-intro__art > svg",
+              "boundingRect": {
+                "top": 90,
+                "bottom": 237,
+                "left": 191,
+                "right": 426,
+                "width": 236,
+                "height": 147
+              },
+              "snippet": "<svg viewBox=\"0 0 480 300\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">",
+              "nodeLabel": "div > header.page-signal-intro > div.page-signal-intro__art > svg"
+            },
+            "value": {
+              "type": "numeric",
+              "granularity": 1,
+              "value": 10
+            }
+          }
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "totalElements": 594,
+          "maxChildren": 10,
+          "maxDepth": 14
+        }
+      },
+      "guidanceLevel": 3
+    },
+    "unused-javascript": {
+      "id": "unused-javascript",
+      "title": "Reduce unused JavaScript",
+      "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused JavaScript](https://developer.chrome.com/docs/lighthouse/performance/unused-javascript/).",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "numericValue": 0,
+      "numericUnit": "millisecond",
+      "displayValue": "",
+      "metricSavings": {
+        "FCP": 0,
+        "LCP": 0
+      },
+      "details": {
+        "type": "opportunity",
+        "headings": [],
+        "items": [],
+        "overallSavingsMs": 0,
+        "overallSavingsBytes": 0,
+        "sortedBy": [
+          "wastedBytes"
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "metricSavings": {
+            "FCP": 0,
+            "LCP": 0
+          }
+        }
+      },
+      "guidanceLevel": 1
+    },
+    "total-blocking-time": {
+      "id": "total-blocking-time",
+      "title": "Total Blocking Time",
+      "description": "Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. [Learn more about the Total Blocking Time metric](https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time/).",
+      "score": 0.99,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 76,
+      "numericUnit": "millisecond",
+      "displayValue": "80 ms",
+      "scoringOptions": {
+        "p10": 200,
+        "median": 600
+      }
+    },
+    "largest-contentful-paint": {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "description": "Largest Contentful Paint marks the time at which the largest text or image is painted. [Learn more about the Largest Contentful Paint metric](https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint/)",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 962.5410599999999,
+      "numericUnit": "millisecond",
+      "displayValue": "1.0 s",
+      "scoringOptions": {
+        "p10": 2500,
+        "median": 4000
+      }
+    },
+    "cumulative-layout-shift": {
+      "id": "cumulative-layout-shift",
+      "title": "Cumulative Layout Shift",
+      "description": "Cumulative Layout Shift measures the movement of visible elements within the viewport. [Learn more about the Cumulative Layout Shift metric](https://web.dev/articles/cls).",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 0.001502679277614253,
+      "numericUnit": "unitless",
+      "displayValue": "0.002",
+      "scoringOptions": {
+        "p10": 0.1,
+        "median": 0.25
+      },
+      "details": {
+        "type": "debugdata",
+        "items": [
+          {
+            "cumulativeLayoutShiftMainFrame": 0.001502679277614253,
+            "newEngineResult": {
+              "cumulativeLayoutShift": 0.001502679277614253,
+              "cumulativeLayoutShiftMainFrame": 0.001502679277614253
+            },
+            "newEngineResultDiffered": false
+          }
+        ]
+      }
+    }
+  }
+}

@@ -71,7 +71,7 @@ function indicatorsWord(count: number): string {
 function MorningAssets({ assets }: { assets: PassportAsset[] }) {
   if (assets.length === 0) {
     return (
-      <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-3 text-xs leading-relaxed text-text-secondary">
         В этом снимке цен мировых индикаторов нет: он сделан до того, как их
         начали сохранять. Подставить сегодняшние цены нельзя — тогда запись
         перестала бы быть утренней.
@@ -110,7 +110,7 @@ function MorningAssets({ assets }: { assets: PassportAsset[] }) {
               <span className="text-text-secondary">{observationLabel(asset.asOf)}</span>
             )}
           </div>
-          {asset.goldAudit && <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+          {asset.goldAudit && <p className="mt-1 text-xs leading-relaxed text-text-secondary">
             {asset.goldAudit.baseDate ? `Проверено: цена снимка к закрытию ${asset.goldAudit.baseValue?.toLocaleString('ru-RU')} от ${asset.goldAudit.baseDate}.` : 'Золото исключено из выбора лидера: нет подтверждённой базы.'}
           </p>}
         </div>
@@ -188,7 +188,7 @@ export default function DailyPassport() {
           <CalendarCheck className="h-5 w-5 text-emerald-700" aria-hidden="true" />
           Паспорт дня
         </h2>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
+        <p className="mt-2 max-w-[72ch] text-sm leading-relaxed text-text-secondary">
           Утренняя запись ещё не сделана. Паспорт создаётся один раз в начале дня по
           московскому времени и больше не переписывается.
         </p>
@@ -233,7 +233,7 @@ export default function DailyPassport() {
           >
             {today.topMover ? changeWord(today.topMover.change) : '—'}
           </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-3 text-xs leading-relaxed text-text-secondary">
             {today.topMover
               ? `${today.topMover.name} — среди доступных изменений мировых индикаторов${priceAsOf(today.topMover.asOf)}`
               : 'в снимке нет движений за день'}
@@ -255,7 +255,7 @@ export default function DailyPassport() {
                   maximumFractionDigits: 4,
                 }).format(today.usdRub)} ₽`}
           </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-3 text-xs leading-relaxed text-text-secondary">
             {today.usdRub === null
               ? 'курс не попал в утренний снимок'
               : 'Банк России, курс дня'}
@@ -275,7 +275,7 @@ export default function DailyPassport() {
       </div>
       <MorningAssets assets={today.assets} />
 
-      <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
         <Database className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span>
           Запись создаётся первой вставкой дня: повторный запуск её не перезаписывает.
@@ -284,7 +284,7 @@ export default function DailyPassport() {
         </span>
       </p>
 
-      <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+      <p className="mt-3 text-xs leading-relaxed text-text-secondary">
         Процент золота рассчитан заново из цены именно этого снимка и подтверждённого
         закрытия XAU/USD; другие проценты сохранены как в записи. Это не текущая цена.
         Если база золота не подтверждена, процент не показывается и не участвует в выборе лидера.
@@ -293,7 +293,7 @@ export default function DailyPassport() {
 
       {archive.length > 0 ? (
         <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <summary className="min-h-6 cursor-pointer py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+          <summary className="min-h-11 cursor-pointer py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Архив · {archive.length} {movingWord(archive.length)} до сегодня
           </summary>
           <div className="mt-2 overflow-x-auto">
@@ -322,7 +322,7 @@ export default function DailyPassport() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary">
+          <p className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
               Архив начинается с {passportDate(days[days.length - 1]?.date ?? today.date)}:
@@ -334,7 +334,7 @@ export default function DailyPassport() {
           </p>
         </details>
       ) : (
-        <p className="mt-3 text-[11px] leading-relaxed text-text-secondary">
+        <p className="mt-3 text-xs leading-relaxed text-text-secondary">
           Это первая запись в архиве. Предыдущих дней нет: снимки начали сохраняться
           только сейчас, и заполнить их задним числом невозможно.
         </p>
