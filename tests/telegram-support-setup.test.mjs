@@ -40,12 +40,39 @@ test('GET serves a no-store mobile form and never includes configured secrets', 
 test('POST rejects missing configuration and a wrong secret regardless of Origin', async () => {
   const calls = [];
   const fetchImpl = async (...args) => { calls.push(args); return { ok: true, json: async () => ({ ok: true }) }; };
-  assert.equal((await invoke(createTelegramSupportSetupHandler({ env: {}, fetchImpl }), { method: 'POST', body: { secret } })).statusCode, 503);
+  const missing = await invoke(createTelegramSupportSetupHandler({ env: {}, fetchImpl }), { method: 'POST', body: { secret } });
+  assert.equal(missing.statusCode, 503);
+  assert.match(missing.body, /TELEGRAM_WEBHOOK_SECRET/);
   assert.equal((await invoke(createTelegramSupportSetupHandler({ env, fetchImpl }), { method: 'POST', body: { secret: 'wrong' } })).statusCode, 403);
   assert.equal((await invoke(createTelegramSupportSetupHandler({ env, fetchImpl }), {
     method: 'POST', body: { secret: 'wrong' }, headers: { origin: 'https://attacker.example' },
   })).statusCode, 403);
   assert.equal(calls.length, 0);
+});
+
+test('matching secret gets actionable config-key diagnostics without leaking any configured value', async () => {
+  const handler = createTelegramSupportSetupHandler({
+    env: { ...env, TELEGRAM_SUPPORT_ADMIN_ID: '@owner' },
+    fetchImpl: async () => { throw new Error('must not call Telegram'); },
+  });
+  const res = await invoke(handler, { method: 'POST', body: { secret } });
+  assert.equal(res.statusCode, 503);
+  assert.match(res.body, /TELEGRAM_SUPPORT_ADMIN_ID/);
+  assert.match(res.body, /только цифры, без @/);
+  assert.doesNotMatch(res.body, /fake-token-not-real|localGeneratedSecret|@owner/);
+});
+
+test('malformed webhook secret reports its format requirements without echoing it', async () => {
+  const malformedSecret = 'too-short';
+  const handler = createTelegramSupportSetupHandler({
+    env: { ...env, TELEGRAM_WEBHOOK_SECRET: malformedSecret },
+    fetchImpl: async () => { throw new Error('must not call Telegram'); },
+  });
+  const res = await invoke(handler, { method: 'POST', body: { secret: malformedSecret } });
+  assert.equal(res.statusCode, 503);
+  assert.match(res.body, /TELEGRAM_WEBHOOK_SECRET/);
+  assert.match(res.body, /от 32 до 256 символов/);
+  assert.doesNotMatch(res.body, /too-short|fake-token-not-real/);
 });
 
 test('valid secret registers only the fixed production webhook and does not echo secret or token', async () => {
