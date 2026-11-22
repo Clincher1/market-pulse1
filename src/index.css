@@ -1454,3 +1454,26 @@
 .initial-document a:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 3px; }
 .initial-document [aria-current="page"] { font-weight: 800; background: #eff6ff; }
 .initial-document__skip { display: inline-block; padding-block: 0.75rem; }
+
+.initial-document__snapshot {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-block: 1rem;
+}
+.initial-document__snapshot:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 3px;
+}
+.initial-document__snapshot table {
+  min-width: 600px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.initial-document__snapshot caption { text-align: left; }
+.initial-document__snapshot td:last-child { min-width: 18rem; }
+.initial-document__snapshot th,
+.initial-document__snapshot td {
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}

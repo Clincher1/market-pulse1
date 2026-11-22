@@ -1,4 +1,5 @@
-// Build-time content only. No source requests, quotes, generated dates or runtime state.
+// Build-time content only. Snapshot values come from a separately maintained file.
+import { readFileSync } from 'node:fs';
 import descriptions from '../src/lib/pageDescriptions.json' with { type: 'json' };
 
 export const origin = 'https://market-pulse1-eta.vercel.app';
@@ -28,6 +29,94 @@ export const websiteJsonLd = JSON.stringify({
 const escape = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
   .replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+function validDate(value) {
+  if (typeof value !== 'string') return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const date = new Date(value);
+    return Number.isFinite(date.getTime())
+      && date.toISOString().slice(0, 10) === value;
+  }
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+    && Number.isFinite(Date.parse(value));
+}
+
+function renderSnapshot() {
+  let snapshot;
+  try {
+    snapshot = JSON.parse(readFileSync(
+      new URL('../data/snapshot.json', import.meta.url), 'utf8',
+    ));
+  } catch (error) {
+    throw new Error(`Cannot read data/snapshot.json: ${error.message}`, { cause: error });
+  }
+  const nonempty = value =>
+    typeof value === 'string' && value.trim().length > 0;
+  const validRow = row => {
+    if (!row || typeof row !== 'object') return false;
+    if (![
+      row.ticker, row.instrument, row.unit, row.basis, row.source?.name,
+    ].every(nonempty)) return false;
+    if (typeof row.value !== 'string'
+      || !/^\d+(?:\.\d+)?$/.test(row.value)
+      || !Number.isFinite(Number(row.value))
+      || Number(row.value) <= 0
+      || !validDate(row.observedAt)) return false;
+    try {
+      const url = new URL(row.source.url);
+      return url.protocol === 'https:' && !url.username && !url.password;
+    } catch {
+      return false;
+    }
+  };
+  if (snapshot?.schemaVersion !== 1
+    || !validDate(snapshot.exportedAt)
+    || !snapshot.exportedAt.includes('T')
+    || !Array.isArray(snapshot.items)
+    || snapshot.items.length < 3
+    || snapshot.items.length > 5
+    || !snapshot.items.every(validRow)
+    || new Set(snapshot.items.map(row => row.ticker)).size
+      !== snapshot.items.length) {
+    throw new Error('Invalid data/snapshot.json: expected 3–5 complete observations');
+  }
+  const rows = snapshot.items.map(row => `
+              <tr>
+                <th scope="row">${escape(row.ticker)} — ${escape(row.instrument)}</th>
+                <td>${escape(row.value)}</td>
+                <td>${escape(row.unit)}</td>
+                <td><time datetime="${escape(row.observedAt)}">${escape(row.observedAt)}</time></td>
+                <td><a href="${escape(row.source.url)}">${escape(row.source.name)}</a></td>
+                <td>${escape(row.basis)}</td>
+              </tr>`).join('');
+  return `
+        <section aria-labelledby="static-snapshot-title">
+          <h2 id="static-snapshot-title">Статический снимок данных</h2>
+          <p>Данные актуальны на момент сборки. Это сохранённый снимок доступных данных,
+          а не котировки в реальном времени; даты наблюдений указаны отдельно.</p>
+          <p>Снимок выгружен:
+            <time datetime="${escape(snapshot.exportedAt)}">${escape(snapshot.exportedAt)}</time>.
+            Данные могут поступать с задержкой.</p>
+          <div class="initial-document__snapshot"
+            role="region" aria-label="Таблица статического снимка" tabindex="0">
+            <table>
+              <caption>Рыночные наблюдения из сохранённого снимка</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Тикер и инструмент</th>
+                  <th scope="col">Значение</th>
+                  <th scope="col">Единица</th>
+                  <th scope="col">Дата наблюдения</th>
+                  <th scope="col">Источник</th>
+                  <th scope="col">Основание значения</th>
+                </tr>
+              </thead>
+              <tbody>${rows}
+              </tbody>
+            </table>
+          </div>
+        </section>`;
+}
+
 export function staticDocument(route) {
   const page = routes[route];
   if (!page) throw new Error(`Unknown public route: ${route}`);
@@ -43,6 +132,7 @@ export function staticDocument(route) {
       <main id="main" tabindex="-1">
         <h1>${escape(page.title)}</h1>
         <p>${escape(descriptions[page.key])}</p>
+        ${route === '' ? renderSnapshot() : ''}
         <section aria-labelledby="initial-sources">
           <h2 id="initial-sources">Откуда берутся данные?</h2>
           <p>Market Pulse показывает рыночные наблюдения по России и миру и исходные заголовки публикаций. Источник и время наблюдения указаны там, где они доступны. Рассчитанные изменения отделены от исходных значений.</p>
@@ -50,7 +140,7 @@ export function staticDocument(route) {
         </section>
         <section aria-labelledby="initial-live">
           <h2 id="initial-live">Как посмотреть текущие значения?</h2>
-          <p>Котировки, графики и публикации загружаются с помощью JavaScript. Если расширенный интерфейс не появился, проверьте, разрешён ли JavaScript, и обновите страницу. В этой текстовой версии текущие значения не приводятся.</p>
+          <p>Интерактивные котировки, графики и публикации загружаются с помощью JavaScript. Если расширенный интерфейс не появился, проверьте, разрешён ли JavaScript, и обновите страницу. Статический снимок, если он показан выше, не обновляется автоматически.</p>
         </section>
       </main>
       <footer>

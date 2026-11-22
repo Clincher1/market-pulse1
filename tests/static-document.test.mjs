@@ -35,19 +35,22 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       assert.equal(doc.querySelectorAll('nav[aria-label]').length, 1);
       assert.equal(doc.querySelector('[data-initial-document]').dataset.initialDocument, entry.key);
       assert.equal(doc.querySelector('nav [aria-current="page"]').getAttribute('href'), `/${route}`);
-      assert.equal(doc.querySelectorAll('h2').length, 2);
+      assert.equal(doc.querySelectorAll('h2').length, route === '' ? 3 : 2);
       assert.ok(doc.querySelector('main').textContent.trim().length > 500);
-      assert.ok(doc.querySelector('main').textContent.includes('текущие значения не приводятся'));
+      assert.ok(doc.querySelector('main').textContent.includes('не обновляется автоматически'));
+      assert.equal(doc.querySelectorAll('.initial-document__snapshot').length, route === '' ? 1 : 0);
       for (const link of doc.querySelectorAll('a[href]')) {
         const href = link.getAttribute('href');
         if (href.startsWith('#')) assert.ok(doc.getElementById(href.slice(1)));
-        else assert.ok(Object.hasOwn(routes, href.slice(1)), `Unknown link: ${href}`);
+        else if (href.startsWith('/')) assert.ok(Object.hasOwn(routes, href.slice(1)), `Unknown link: ${href}`);
+        else assert.equal(new URL(href).protocol, 'https:');
       }
       assert.equal(doc.querySelectorAll('script[type="application/ld+json"]').length, 1);
       assert.deepEqual(JSON.parse(doc.querySelector('script[type="application/ld+json"]').textContent), JSON.parse(websiteJsonLd));
       assert.equal(doc.querySelectorAll('script[type="module"][src]').length, 1);
       assert.equal(doc.querySelectorAll('script:not([src]):not([type="application/ld+json"])').length, 0);
-      assert.equal(doc.querySelectorAll('[style], [hidden], noscript, time').length, 0);
+      assert.equal(doc.querySelectorAll('[style], [hidden], noscript').length, 0);
+      assert.equal(doc.querySelectorAll('time').length, route === '' ? 4 : 0);
       dom.window.close();
     }
   } finally { await rm(dir, { recursive: true, force: true }); }
