@@ -1,0 +1,39 @@
+name: Read-only snapshot release verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: snapshot-release-verification
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.repository == 'Clincher1/market-pulse1' && github.ref == 'refs/heads/arena/2c9c21a4-market-pulse1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix .local/feature-browser playwright@1.65.1 @sparticuz/chromium@153.0.0
+          .local/feature-browser/node_modules/.bin/playwright install-deps chromium
+      - name: Check live snapshot and real React navigation twice at four widths
+        run: node scripts/check-snapshot-release.mjs
+      - name: Check all routes and bootstrap modes twice with data isolated
+        env:
+          DOCUMENT_ORIGIN: https://market-pulse1-eta.vercel.app
+          DOCUMENT_OUTPUT: .local/snapshot-release/bootstrap
+        run: node scripts/check-initial-document.mjs
+      - name: Preserve reports and screenshots without repository writes
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-release-verification
+          path: .local/snapshot-release/
+          retention-days: 14
