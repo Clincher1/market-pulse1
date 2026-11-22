@@ -49,7 +49,10 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       for (const link of doc.querySelectorAll('a[href]')) {
         const href = link.getAttribute('href');
         if (href.startsWith('#')) assert.ok(doc.getElementById(href.slice(1)));
-        else if (href.startsWith('/')) assert.ok(Object.hasOwn(routes, href.slice(1)), `Unknown link: ${href}`);
+        else if (href.startsWith('/')) assert.ok(
+          Object.hasOwn(routes, href.slice(1)) || href === '/api/telegram-support-link',
+          `Unknown link: ${href}`,
+        );
         else assert.equal(new URL(href).protocol, 'https:');
       }
       assert.equal(doc.querySelectorAll('script[type="application/ld+json"]').length, route === '' ? 2 : 1);

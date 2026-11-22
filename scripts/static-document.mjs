@@ -30,6 +30,13 @@ export const websiteJsonLd = JSON.stringify({
 const escape = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
   .replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+function telegramSupportLink() {
+  const username = process.env.VITE_TELEGRAM_SUPPORT_BOT_USERNAME?.trim().replace(/^@/, '');
+  return username && /^[A-Za-z0-9_]{5,32}$/.test(username)
+    ? '<a href="/api/telegram-support-link">Поддержка в Telegram</a>'
+    : '';
+}
+
 function validDate(value) {
   if (typeof value !== 'string') return false;
   // Validate the written calendar date before parsing any time-zone offset.
@@ -219,6 +226,8 @@ export function staticDocument(route) {
         <p>Market Pulse не выпускает новые прогнозы и не даёт инвестиционных рекомендаций. Данные могут поступать с задержкой; перед принятием решений проверяйте первоисточник и дату наблюдения.</p>
         <a href="/about">О проекте и ограничениях данных</a>
         <a href="/status">Состояние данных</a>
+        ${telegramSupportLink()}
+        ${telegramSupportLink() ? '<p>Обращения принимает Telegram-бот; Telegram получает текст сообщения и Telegram ID. Чат с ботом не является секретным.</p>' : ''}
       </footer>
     </div>`;
 }

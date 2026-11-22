@@ -65,6 +65,10 @@ removing its display does not authorize deleting historical rows or changing pro
   feature merely because it still exists.
 - External requests need server-side timeouts and must fail independently. One slow provider
   must not hold up unrelated market values or headlines.
+- Optional Telegram support is a separate server-side Vercel function. It must not depend on
+  Supabase, store messages in the market database, or log message text or Telegram IDs. The
+  footer link is shown only when a valid public bot username is configured. Clearly disclose
+  that Telegram bots are not end-to-end encrypted and do not solicit passwords or payment data.
 - Only free service tiers are in scope. No cookies, analytics, telemetry or browser monitoring
   SDKs; technical monitoring is server-side.
 
