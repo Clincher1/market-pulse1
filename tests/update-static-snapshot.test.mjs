@@ -176,9 +176,9 @@ test('workflow gates main commits on candidate checks, permits only snapshot, ne
   for (const command of ['npm ci', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run build', 'deno@2 check']) {
     assert.ok(workflow.indexOf(command) < workflow.indexOf('git commit -m'));
   }
-  assert.match(workflow, /git diff --name-only\)" = 'data\/snapshot.json'/);
-  assert.match(workflow, /git diff --cached --name-only\)" = 'data\/snapshot.json'/);
-  assert.match(workflow, /git rev-parse origin\/main/);
+  assert.match(workflow, /git diff --name-only\)" != 'data\/snapshot.json'/);
+  assert.match(workflow, /git diff --cached --name-only\)" != 'data\/snapshot.json'/);
+  assert.match(workflow, /git rev-parse FETCH_HEAD/);
   assert.match(workflow, /git push origin HEAD:main/);
   assert.doesNotMatch(workflow, /git push[^\n]*(?:--force|-f\b)|gh pr merge|pull_request_target/);
   assert.match(workflow, /secrets.SNAPSHOT_SUPABASE_READ_KEY/);
