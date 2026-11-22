@@ -1,0 +1,59 @@
+name: Snapshot public access
+
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'supabase/migrations/*static_snapshot_rpc.sql'
+      - 'scripts/check-snapshot-access.mjs'
+      - 'scripts/update-static-snapshot.mjs'
+      - '.github/workflows/snapshot-access.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/*static_snapshot_rpc.sql'
+      - 'scripts/check-snapshot-access.mjs'
+      - 'scripts/update-static-snapshot.mjs'
+      - '.github/workflows/snapshot-access.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verify real public-key RPC, denied source access and unchanged site reads
+        run: node scripts/check-snapshot-access.mjs
+      - name: Verify repository runtime configuration without changing the snapshot
+        # Fork/PR events must not receive repository credentials.
+        # A trusted branch push also rechecks configuration after an owner key update.
+        if: github.event_name != 'pull_request'
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SNAPSHOT_SUPABASE_READ_KEY: ${{ secrets.SNAPSHOT_SUPABASE_READ_KEY }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdtemp, copyFile, rm } from 'node:fs/promises';
+          import { tmpdir } from 'node:os';
+          import { join } from 'node:path';
+          import { updateSnapshot } from './scripts/update-static-snapshot.mjs';
+          const dir = await mkdtemp(join(tmpdir(), 'snapshot-runtime-config-'));
+          try {
+            const file = join(dir, 'snapshot.json');
+            await copyFile('data/snapshot.json', file);
+            const result = await updateSnapshot({ file });
+            console.log(`Runtime configuration verified: ${result.items.length} observations; repository snapshot unchanged.`);
+          } catch {
+            console.error('Runtime configuration check failed; no repository files changed. Check repository Secret/Variable and RPC availability.');
+            process.exitCode = 1;
+          } finally {
+            await rm(dir, { recursive: true, force: true });
+          }
+          NODE
