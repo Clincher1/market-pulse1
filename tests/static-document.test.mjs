@@ -34,7 +34,14 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       for (const tag of ['main', 'header', 'footer']) assert.equal(doc.querySelectorAll(tag).length, 1);
       assert.equal(doc.querySelectorAll('nav[aria-label]').length, 1);
       assert.equal(doc.querySelector('[data-initial-document]').dataset.initialDocument, entry.key);
-      assert.equal(doc.querySelector('nav [aria-current="page"]').getAttribute('href'), `/${route}`);
+      if (route === 'status') {
+        assert.equal(doc.querySelector('nav [aria-current="page"]'), null);
+        assert.equal(doc.querySelector('footer a[href="/status"]').textContent, 'Состояние данных');
+      } else {
+        assert.equal(doc.querySelector('nav [aria-current="page"]').getAttribute('href'), `/${route}`);
+      }
+      assert.equal(doc.querySelectorAll('nav a').length, 8);
+      assert.equal(doc.querySelectorAll('nav a[href="/status"]').length, 0);
       assert.equal(doc.querySelectorAll('h2').length, route === '' ? 3 : route === 'about' ? 6 : 2);
       assert.ok(doc.querySelector('main').textContent.trim().length > 500);
       assert.ok(doc.querySelector('main').textContent.includes('не обновляется автоматически'));

@@ -26,7 +26,7 @@ export default function Footer() {
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-extrabold text-text-primary transition-colors hover:border-emerald-300/60 hover:bg-emerald-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-300"
             >
               <HeartPulse className="h-4 w-4 text-emerald-800" />
-              Состояние системы
+              Состояние данных
             </a>
             <a
               href="/about"

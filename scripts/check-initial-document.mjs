@@ -59,7 +59,9 @@ try {
         assert.equal(await page.locator('footer').count(), 1);
         if (mode !== 'interactive') {
           assert.equal(await page.locator('h1').textContent(), entry.title);
-          assert.equal(await page.locator('nav a').count(), 9);
+          assert.equal(await page.locator('nav a').count(), 8);
+          assert.equal(await page.locator('nav a[href="/status"]').count(), 0);
+          assert.equal(await page.locator('footer a[href="/status"]').count(), 1);
           await page.locator('a[href="#main"]').click();
           assert.equal(await page.evaluate(() => document.activeElement?.id), 'main');
         }
