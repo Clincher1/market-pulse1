@@ -18,6 +18,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Minimum write permission, scoped only to this job; no admin/bypass rights.
     permissions:
       contents: write
     steps:
@@ -48,26 +49,121 @@ jobs:
       - name: Type-check Supabase Edge Functions
         working-directory: supabase/functions
         run: npx -y deno@2 check */index.ts _shared/*.ts
-      - name: Commit only the snapshot and stop if main moved
+      - name: Check changed files (snapshot only)
+        id: snapshot_changes
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- data/snapshot.json; then
-            echo "Snapshot is unchanged; nothing to commit."
+          changed_files="$(git diff --name-only)"
+          staged_files="$(git diff --cached --name-only)"
+          untracked_files="$(git ls-files --others --exclude-standard)"
+          {
+            echo '### Snapshot: changed-file guard'
+            echo 'Tracked changes (paths only):'
+            printf '%s\n' "${changed_files:-(none)}"
+            echo 'Already staged (paths only):'
+            printf '%s\n' "${staged_files:-(none)}"
+            echo 'Untracked (paths only):'
+            printf '%s\n' "${untracked_files:-(none)}"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          if test -n "$staged_files" || test -n "$untracked_files"; then
+            echo '::error::Changed-file guard failed: staged or untracked files detected. No commit or push.'
+            echo 'FAILED: staged or untracked files detected; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if test -z "$changed_files"; then
+            echo 'has_changes=false' >> "$GITHUB_OUTPUT"
+            echo 'Snapshot unchanged; commit and push will be skipped.' | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          test "$(git diff --name-only)" = 'data/snapshot.json'
-          test -z "$(git ls-files --others --exclude-standard)"
-          git fetch origin main
-          if test "$(git rev-parse origin/main)" != "$SNAPSHOT_BASE_SHA"; then
-            echo 'Main changed during validation; stopping without commit or push.'
+          if test "$changed_files" != 'data/snapshot.json'; then
+            echo '::error::Changed-file guard failed: only data/snapshot.json may change. No commit or push.'
+            echo 'FAILED: unexpected tracked changes; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo 'has_changes=true' >> "$GITHUB_OUTPUT"
+          echo 'PASS: only data/snapshot.json changed.' | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Check main is still current
+        if: steps.snapshot_changes.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '### Snapshot: main revision guard' >> "$GITHUB_STEP_SUMMARY"
+          if git fetch origin main > /dev/null 2>&1; then
+            echo 'Fetch main succeeded.' | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            code=$?
+            echo "::error::Fetching main failed (exit $code). No commit or push; remote details withheld."
+            echo "FAILED: fetch main (exit $code); no commit or push." >> "$GITHUB_STEP_SUMMARY"
+            exit "$code"
+          fi
+          remote_sha="$(git rev-parse FETCH_HEAD)"
+          local_sha="$(git rev-parse HEAD)"
+          printf 'Checkout base: %s\nFetched main: %s\nLocal HEAD: %s\n' \
+            "$SNAPSHOT_BASE_SHA" "$remote_sha" "$local_sha" | tee -a "$GITHUB_STEP_SUMMARY"
+          if test "$remote_sha" != "$SNAPSHOT_BASE_SHA" || test "$local_sha" != "$SNAPSHOT_BASE_SHA"; then
+            echo '::error::Main or local HEAD changed during validation. Stopping without commit or push.'
+            echo 'FAILED: main or local HEAD moved; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo 'PASS: main and local HEAD still match checkout base.' | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit validated snapshot locally
+        if: steps.snapshot_changes.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '### Snapshot: local commit' >> "$GITHUB_STEP_SUMMARY"
+          # Recheck the allowlist immediately before staging; never git add all.
+          if test "$(git diff --name-only)" != 'data/snapshot.json' \
+            || test -n "$(git diff --cached --name-only)" \
+            || test -n "$(git ls-files --others --exclude-standard)"; then
+            echo '::error::Pre-commit changed-file guard failed. No commit or push.'
+            echo 'FAILED: pre-commit changed-file guard; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
           git config user.name 'Clincher1'
           git config user.email '88886535+Clincher1@users.noreply.github.com'
           git add -- data/snapshot.json
-          test "$(git diff --cached --name-only)" = 'data/snapshot.json'
-          git commit -m 'Refresh validated static market snapshot'
-          # A concurrent update or branch protection rejects this normal push.
-          # No retry/rebase/force push and no admin bypass.
-          git push origin HEAD:main
+          if test "$(git diff --cached --name-only)" != 'data/snapshot.json'; then
+            echo '::error::Staged-file guard failed: only data/snapshot.json may be committed.'
+            echo 'FAILED: staged-file guard; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if git commit -m 'Refresh validated static market snapshot'; then
+            echo "PASS: local snapshot commit $(git rev-parse HEAD). Not yet pushed." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            code=$?
+            echo "::error::Local commit failed (exit $code). Push will not run."
+            echo "FAILED: local commit (exit $code); no push." >> "$GITHUB_STEP_SUMMARY"
+            exit "$code"
+          fi
+
+      - name: Push snapshot commit (no force or bypass)
+        if: steps.snapshot_changes.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '### Snapshot: push to main' >> "$GITHUB_STEP_SUMMARY"
+          # Never print credentials, remote URLs, git config, environment or raw
+          # remote output. Classify known refusals without revealing token data.
+          push_log="$(mktemp "$RUNNER_TEMP/snapshot-push.XXXXXX")"
+          trap 'rm -f "$push_log"' EXIT
+          if git push origin HEAD:main > "$push_log" 2>&1; then
+            echo "PASS: snapshot commit $(git rev-parse HEAD) pushed to main." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            code=$?
+            if grep -Eiq 'GH006|GH013|protected branch|repository rule|rule violations|required status check|pull request' "$push_log"; then
+              reason='Branch protection or repository rules rejected push. Owner decision required: bot PR or narrowly scoped service exception; no rules were changed.'
+            elif grep -Eiq 'non-fast-forward|fetch first|stale info|cannot lock ref|failed to update ref' "$push_log"; then
+              reason='Main changed after the revision check. No retry, rebase or force push.'
+            elif grep -Eiq '403|permission|denied|authentication|not permitted|write access' "$push_log"; then
+              reason='Push authentication/permission rejected. Job already requests contents: write; check effective repository policy without printing credentials.'
+            else
+              reason='Unclassified push failure. Raw remote output withheld to protect credentials; review GitHub policy/network availability before changing anything.'
+            fi
+            echo "::error::Push failed (exit $code). $reason"
+            echo "FAILED: push (exit $code). $reason" >> "$GITHUB_STEP_SUMMARY"
+            exit "$code"
+          fi
