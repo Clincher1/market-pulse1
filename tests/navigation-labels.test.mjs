@@ -15,3 +15,11 @@ test('orbit links reset old opposing absolute edges before new positions', () =>
   const width = Number(link.match(/width: min\((\d+)%, 245px\)/)?.[1]);
   assert.ok(width > 0 && width < 50, 'Both cards need a gap, not a hard-coded historical percentage');
 });
+
+test('system status stays available in footer, not in primary desktop or mobile navigation', () => {
+  const header = readFileSync('src/components/Header.tsx', 'utf8');
+  const footer = readFileSync('src/components/Footer.tsx', 'utf8');
+  assert.doesNotMatch(header, /PAGE_PATHS\.status|Состояние системы|Система/);
+  assert.match(header, /activeView === 'status' \|\| mobileQuickLinks/);
+  assert.match(footer, /href="\/status"[\s\S]*?Состояние данных/);
+});

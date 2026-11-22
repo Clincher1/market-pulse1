@@ -190,7 +190,7 @@ export function notFoundDocument(html) {
 export function staticDocument(route) {
   const page = routes[route];
   if (!page) throw new Error(`Unknown public route: ${route}`);
-  const links = Object.entries(routes).map(([path, entry]) =>
+  const links = Object.entries(routes).filter(([path]) => path !== 'status').map(([path, entry]) =>
     `<a href="/${path}"${path === route ? ' aria-current="page"' : ''}>${escape(entry.label)}</a>`
   ).join('\n          ');
   return `<div class="initial-document" data-initial-document="${page.key}">
@@ -218,6 +218,7 @@ export function staticDocument(route) {
       <footer>
         <p>Market Pulse не выпускает новые прогнозы и не даёт инвестиционных рекомендаций. Данные могут поступать с задержкой; перед принятием решений проверяйте первоисточник и дату наблюдения.</p>
         <a href="/about">О проекте и ограничениях данных</a>
+        <a href="/status">Состояние данных</a>
       </footer>
     </div>`;
 }

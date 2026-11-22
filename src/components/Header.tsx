@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, ChevronDown, ChevronRight, HeartPulse, LayoutDashboard, Menu, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, ChevronRight, LayoutDashboard, Menu, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import {
   DASHBOARD_THEME_ORDER,
@@ -66,7 +66,7 @@ const mobileQuickLinks = [
 ];
 
 function mobileLinksForView(activeView: AppView) {
-  if (activeView === 'dashboard' || mobileQuickLinks.some((link) => link.page === activeView)) {
+  if (activeView === 'dashboard' || activeView === 'status' || mobileQuickLinks.some((link) => link.page === activeView)) {
     return mobileQuickLinks;
   }
 
@@ -248,7 +248,7 @@ export default function Header({ activeView }: HeaderProps) {
             })}
 
             <details ref={moreMenuRef} className={`desktop-navigation__more ${
-              desktopMoreLinks.some((link) => isActiveLink(link.themeId)) || activeView === 'status'
+              desktopMoreLinks.some((link) => isActiveLink(link.themeId))
                 ? 'is-active'
                 : ''
             }`}>
@@ -284,25 +284,6 @@ export default function Header({ activeView }: HeaderProps) {
                     </a>
                   );
                 })}
-                <a
-                  href={PAGE_PATHS.status}
-                  onClick={(event) => {
-                    setMenuOpen(false);
-                    const menu = event.currentTarget.closest('details');
-                    if (menu) menu.open = false;
-                  }}
-                  aria-current={activeView === 'status' ? 'page' : undefined}
-                  className={`desktop-navigation__menu-item ${activeView === 'status' ? 'is-active' : ''}`}
-                >
-                  <span className="desktop-navigation__menu-icon desktop-navigation__menu-icon--status">
-                    <HeartPulse className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <span className="desktop-navigation__menu-copy">
-                    <span className="desktop-navigation__menu-title">Состояние системы</span>
-                    <span className="desktop-navigation__menu-description">Источники и проверки</span>
-                  </span>
-                  <ArrowUpRight className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden="true" />
-                </a>
               </div>
             </details>
           </nav>
@@ -349,37 +330,6 @@ export default function Header({ activeView }: HeaderProps) {
                 <div role="group" aria-label="О сайте" className="mt-2 flex flex-col gap-2.5 border-t border-slate-200 pt-4">
                   <h3 className="px-1 text-xs font-bold text-text-secondary">О сайте</h3>
                   {navLinks.slice(5).map(renderMobileLink)}
-                <a
-                  href={PAGE_PATHS.status}
-                  data-theme={SECTION_THEMES.status.id}
-                  onClick={() => setMenuOpen(false)}
-                  aria-current={activeView === 'status' ? 'page' : undefined}
-                  className={`mobile-navigation__link group flex min-h-[60px] items-center gap-3 rounded-2xl border px-3.5 py-3 transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary ${
-                    activeView === 'status'
-                      ? SECTION_THEMES.status.activeClass
-                      : `${SECTION_THEMES.status.cardClass} text-text-primary`
-                  }`}
-                >
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
-                    activeView === 'status'
-                      ? 'border-white/25 bg-white/15 text-current'
-                      : `border-transparent ${SECTION_THEMES.status.iconClass}`
-                  }`}>
-                    <HeartPulse className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-base font-extrabold">Состояние системы</span>
-                    <span className={`mt-0.5 text-xs ${activeView === 'status' ? 'text-current opacity-85' : 'text-text-secondary'}`}>
-                      Источники, котировки и проверки
-                    </span>
-                  </span>
-                  <ChevronRight
-                    className={`h-5 w-5 shrink-0 text-current transition-transform duration-200 group-hover:translate-x-0.5 ${
-                      activeView === 'status' ? '' : SECTION_THEMES.status.textClass
-                    }`}
-                    aria-hidden="true"
-                  />
-                </a>
                 </div>
               </div>
             </div>
