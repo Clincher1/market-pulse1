@@ -1,5 +1,6 @@
-import { ArrowRight, BookOpen, HeartPulse, Info } from 'lucide-react';
+import { ArrowRight, BookOpen, HeartPulse, Info, Send } from 'lucide-react';
 import BrandMark from './BrandMark';
+import { telegramSupportUrl } from '@/lib/telegramSupport';
 
 export default function Footer() {
   return (
@@ -21,11 +22,21 @@ export default function Footer() {
           </div>
 
           <nav aria-label="Полезные страницы" className="site-footer__links flex flex-wrap items-center justify-center gap-2">
+            {telegramSupportUrl && (
+              <a
+                href={telegramSupportUrl}
+                aria-label="Поддержка Market Pulse в Telegram"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-sky-300/30 bg-sky-400/10 px-4 py-2 text-sm font-extrabold text-text-primary transition-colors hover:border-sky-300/60 hover:bg-sky-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-300"
+              >
+                <Send className="h-4 w-4 text-sky-800" aria-hidden="true" />
+                Поддержка в Telegram
+              </a>
+            )}
             <a
               href="/status"
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-extrabold text-text-primary transition-colors hover:border-emerald-300/60 hover:bg-emerald-400/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-300"
             >
-              <HeartPulse className="h-4 w-4 text-emerald-800" />
+              <HeartPulse className="h-4 w-4 text-emerald-800" aria-hidden="true" />
               Состояние данных
             </a>
             <a
@@ -49,10 +60,10 @@ export default function Footer() {
 
         <div className="site-footer__legal mt-6">
         <p className="text-center text-xs leading-relaxed text-text-secondary">
-          Сайт не использует cookies, не ставит трекеры и не собирает
-          персональные данные. Локально в вашем браузере сохраняются выбранные
-          инструменты в «Моих ориентирах» и палитра тепловой карты.
-          Эти настройки никуда не отправляются.
+          Сайт не использует cookies и браузерные трекеры. Выбранные инструменты
+          в «Моих ориентирах» и палитра тепловой карты сохраняются только в вашем
+          браузере. Если вы обратитесь через Telegram, Telegram и бот получат
+          текст сообщения и ваш Telegram ID; чат с ботом не является секретным.
         </p>
         <p className="mt-2 text-center text-xs leading-relaxed text-text-secondary">
           Материалы сайта носят информационный характер и не являются

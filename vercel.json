@@ -10,6 +10,9 @@
     },
     "api/russia-history.js": {
       "maxDuration": 30
+    },
+    "api/telegram-support.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
