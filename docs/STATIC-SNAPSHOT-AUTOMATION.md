@@ -7,7 +7,7 @@
 описаны в [SNAPSHOT-APP-PUSH.md](SNAPSHOT-APP-PUSH.md).
 
 `.github/workflows/update-static-snapshot.yml` после слияния в `main` запускается
-ежедневно в **03:00 UTC / 06:00 Москвы**, а также вручную через `workflow_dispatch`.
+ежедневно в **05:40 UTC / 08:40 Москвы**, а также вручную через `workflow_dispatch`.
 GitHub может задерживать плановый запуск. Ручной запуск допускает обновление только
 с ветки `main`.
 
