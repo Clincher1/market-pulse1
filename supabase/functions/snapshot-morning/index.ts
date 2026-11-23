@@ -88,6 +88,30 @@ export function snapshotLastObservation(sparkline: unknown, sparkDates: unknown)
   return { last: validValue ? last : null, last_date: validValue && validDates ? dates.at(-1) : null };
 }
 
+export function snapshotPriceLabels(
+  id: string,
+  asOf: unknown,
+  updatedAt: unknown,
+  sourceLabel: unknown,
+): { price_label: string; last_label: string } {
+  const source = typeof sourceLabel === "string" && sourceLabel.trim() ? sourceLabel.trim() : "Источник не указан";
+  const asOfTime = typeof asOf === "string" ? Date.parse(asOf) : Number.NaN;
+  const updatedTime = typeof updatedAt === "string" ? Date.parse(updatedAt) : Number.NaN;
+  const liveQuote = Number.isFinite(asOfTime) && Number.isFinite(updatedTime)
+    && Math.abs(updatedTime - asOfTime) <= 120_000;
+  const priceLabel = id === "btc"
+    ? liveQuote
+      ? `Live-котировка ${source} на момент снимка`
+      : `Последняя дневная точка ${source}; live-котировка не подтверждена`
+    : id === "usd-eur"
+      ? `Официальный курс ${source}, сохранённый в кэше на момент снимка`
+      : `Цена ${source}, сохранённая в кэше на момент снимка`;
+  return {
+    price_label: priceLabel,
+    last_label: "Последняя датированная точка дневного ряда",
+  };
+}
+
 async function fetchRussia(): Promise<AnyRecord | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10_000);
@@ -114,6 +138,7 @@ async function fetchRussia(): Promise<AnyRecord | null> {
           unit: String(row.unit ?? ""),
           changePct: finiteNumber(row.changePct),
           asOf: typeof row.asOf === "string" ? row.asOf : null,
+          asOfLabel: typeof row.asOfLabel === "string" ? row.asOfLabel : null,
           provider: String(row.provider ?? ""),
         };
       }),
@@ -138,7 +163,7 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
         "cached_tension?select=value,label,news_count,updated_at&id=eq.1&limit=1",
       ) as Promise<AnyRecord[]>,
       restJson(
-        "cached_assets?select=id,name,price,change,sparkline,spark_dates,updated_at,as_of&limit=20",
+        "cached_assets?select=id,name,price,change,sparkline,spark_dates,updated_at,as_of,source_label&limit=20",
       ) as Promise<AnyRecord[]>,
       fetchRussia(),
     ]);
@@ -165,6 +190,8 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       ...snapshotLastObservation(row.sparkline, row.spark_dates),
       updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
       as_of: typeof row.as_of === "string" ? row.as_of : null,
+      source_label: typeof row.source_label === "string" ? row.source_label : null,
+      ...snapshotPriceLabels(row.id, row.as_of, row.updated_at, row.source_label),
     }));
 
     // A first insertion is immutable: never freeze a partial/undated cache.
@@ -172,7 +199,7 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       const matches = assets.filter((asset) => asset.id === id);
       const asset = matches[0];
       if (matches.length !== 1 || !asset.last || !asset.last_date || !asset.price ||
-          !asset.as_of || !Number.isFinite(Date.parse(asset.as_of))) {
+          !asset.price_label || !asset.last_label || !asset.as_of || !Number.isFinite(Date.parse(asset.as_of))) {
         throw new Error(`Snapshot rejected: ${id} has no unique dated observation`);
       }
     }

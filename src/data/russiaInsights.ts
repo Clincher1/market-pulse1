@@ -13,6 +13,8 @@ export interface RussiaMarketIndicator {
   changeAbs?: number | null;
   changeAbsUnit?: string | null;
   asOf: string;
+  /** Human-readable date meaning, e.g. a CBR rate effective from a future date. */
+  asOfLabel?: string | null;
   previousDate?: string | null;
   /**
    * Подпись базы сравнения словами — для месячных рядов, где дата («31.08»)

@@ -37,8 +37,13 @@ test('exports exact numeric strings, date-only Yahoo sessions, gold time and unc
   assert.deepEqual(result.items.map(row => row.value), ['89.9499969482', '6910.3901367188', '3539.0000000000']);
   assert.deepEqual(result.items.map(row => row.observedAt), ['2026-11-20', '2026-11-20', '2026-11-22T07:09:39.000000Z']);
   result.items.forEach((row, index) => {
-    for (const field of ['ticker', 'instrument', 'unit', 'basis', 'source']) {
+    for (const field of ['ticker', 'instrument', 'unit', 'source']) {
       assert.deepEqual(row[field], previous.items[index][field]);
+    }
+    if (row.ticker === 'BZ=F') {
+      assert.match(row.basis, /текущий незакрытый день исключён/);
+    } else {
+      assert.equal(row.basis, previous.items[index].basis);
     }
   });
 });
@@ -54,6 +59,8 @@ const invalidCases = [
   ['date-only export', d => d.exportedAt = '2026-11-22'],
   ['future export clock', d => d.exportedAt = '2026-11-22T08:15:49Z'],
   ['old export clock', d => d.exportedAt = '2026-11-22T06:15:49Z'],
+  ['forming Brent day', d => d.rows.find(row => row.id === 'brent_yahoo_bzf').observationDate = '2026-11-22'],
+  ['forming S&P day', d => d.rows.find(row => row.id === 'sp500_yahoo_gspc').observationDate = '2026-11-22'],
 ];
 for (const field of ['symbol', 'provider', 'instrumentType', 'unit', 'currency', 'frequency', 'sourceUrl']) {
   invalidCases.push([`wrong ${field}`, d => d.rows[0][field] = 'incorrect']);
@@ -166,6 +173,13 @@ test('rejects wrong project and privileged/missing keys before any HTTP request'
       assert.equal(await readFile(file, 'utf8'), bytes);
     });
   }
+});
+
+test('database static export excludes the current Yahoo daily bar but retains current XAU quotes', async () => {
+  const migration = await readFile(new URL('../supabase/migrations/20261123170000_static_snapshot_closed_yahoo_bars.sql', import.meta.url), 'utf8');
+  assert.match(migration, /i\.id not in \('brent_yahoo_bzf', 'sp500_yahoo_gspc'\)/);
+  assert.match(migration, /p\.observation_date < \(pg_catalog\.statement_timestamp\(\) at time zone 'UTC'\)::date/);
+  assert.match(migration, /timestamped live observation and is intentionally allowed on the current day/);
 });
 
 test('workflow gates main commits on candidate checks, permits only snapshot, never force pushes', async () => {

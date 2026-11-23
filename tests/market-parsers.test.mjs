@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import {
   extractCurve,
+  moexAsOf,
+  officialRateAsOfLabel,
   parseKeyRateXml,
   pickOfz10y,
   pickPreviousClose,
@@ -22,6 +24,18 @@ import { parseRuoniaXml } from '../api/_shared/cbrRuonia.js';
  * именно здесь (блок ZCYC, срок в годах, пустая ячейка как 0), поэтому
  * проверки живут в репозитории, а не в чьей-то памяти.
  */
+
+test('MOEX asOf prefers TRADEDATE and only falls back to SYSTIME', () => {
+  assert.equal(moexAsOf({ TRADEDATE: '2026-11-23', SYSTIME: '2026-11-23 07:00:04', UPDATETIME: '07:00:04' }), '2026-11-23');
+  assert.equal(moexAsOf({ TRADEDATE: '', SYSTIME: '2026-11-23 07:00:04', UPDATETIME: '07:00:04' }), '2026-11-23 07:00:04');
+  assert.equal(moexAsOf({ UPDATETIME: '07:00:04' }), '07:00:04');
+});
+
+test('future-dated CBR official rate is labeled as effective from that day', () => {
+  assert.equal(officialRateAsOfLabel('2026-11-24', '2026-11-23'), 'Курс, действующий с 24.11');
+  assert.equal(officialRateAsOfLabel('2026-11-23', '2026-11-23'), 'Официальный курс на 23.11');
+  assert.equal(officialRateAsOfLabel('not-a-date', '2026-11-23'), null);
+});
 
 test('ISS history: колонки по имени, мусор отбрасывается', () => {
   const payload = {

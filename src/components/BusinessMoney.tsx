@@ -185,7 +185,7 @@ function factsFrom(
       value: usd ? `${num(usd.value, 4)} ₽` : null,
       unit: 'USD/RUB, официальный курс ЦБ',
       secondary: cny
-        ? { label: 'CNY/RUB', value: `${num(cny.value, 4)} ₽`, note: shortDate(cny.asOf) }
+        ? { label: 'CNY/RUB', value: `${num(cny.value, 4)} ₽`, note: cny.asOfLabel ?? shortDate(cny.asOf) }
         : null,
       change:
         usd?.changePct !== null && usd?.changePct !== undefined ? pctText(usd.changePct) : null,

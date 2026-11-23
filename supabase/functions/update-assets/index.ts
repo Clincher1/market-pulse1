@@ -288,8 +288,6 @@ export function makeAsset(input: {
   provider: string;
   points: Point[];
   currentPrice?: number;
-  previousPrice?: number;
-  changePct?: number | null;
   asOf?: string | null;
   format: (value: number) => string;
   updatedAt: string;
@@ -314,13 +312,12 @@ export function makeAsset(input: {
     throw new Error(`${input.id}: only ${history.points.length} closed observations`);
   }
   const price = input.currentPrice ?? latestPoint.value;
-  // Предыдущее закрытие зависит от того, попала ли цена в историю: если это
-  // последнее закрытие — предыдущее на шаг раньше; если цена из кавычки, а бар
-  // ещё формируется — предыдущее это и есть последнее закрытие.
-  const previous = input.previousPrice ?? previousClosedValue(history.points, asOf);
+  // Цена и процент всегда описывают один инструмент: live-котировка сравнивается
+  // с последней закрытой точкой того же ряда; если цена сама является закрытием,
+  // база сдвигается на закрытие перед ним.
+  const previous = previousClosedValue(history.points, asOf);
   if (!previous || previous <= 0) throw new Error(`${input.id}: missing previous price`);
-  const computedChange = ((price - previous) / previous) * 100;
-  const change = input.changePct != null && Number.isFinite(input.changePct) ? input.changePct : computedChange;
+  const change = ((price - previous) / previous) * 100;
   const limits = LIMITS[input.id];
   if (limits && (price < limits.min || price > limits.max)) {
     throw new Error(`${input.id}: price ${price} outside plausibility range`);
@@ -414,7 +411,7 @@ async function fetchBrent(updatedAt: string): Promise<AssetResult> {
   return makeAsset({
     id: "brent",
     name: EXPECTED_NAMES.brent,
-    instrument: "Brent front-month futures, daily close (NYMEX BZ=F) — не спот EIA",
+    instrument: "Brent front-month futures (NYMEX BZ=F): live quote against the last closed daily point; history is daily closes — не спот EIA",
     provider: "Yahoo Finance",
     points: series.points,
     asOf: series.asOf,
