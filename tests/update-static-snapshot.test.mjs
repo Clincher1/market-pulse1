@@ -170,7 +170,7 @@ test('rejects wrong project and privileged/missing keys before any HTTP request'
 
 test('workflow gates main commits on candidate checks, permits only snapshot, never force pushes', async () => {
   const workflow = await readFile(new URL('../.github/workflows/update-static-snapshot.yml', import.meta.url), 'utf8');
-  assert.match(workflow, /cron: '40 5 \* \* \*'/);
+  assert.match(workflow, /cron: '10 6 \* \* \*'/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /if: github.ref == 'refs\/heads\/main'/);
   for (const command of ['npm ci', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run build', 'deno@2 check']) {

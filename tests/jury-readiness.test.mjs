@@ -103,7 +103,7 @@ test('about page contains the shared methodology in source HTML, not only in Rea
       for (const text of section.paragraphs) assert.ok(node.textContent.includes(text));
       for (const link of section.links) assert.ok([...node.querySelectorAll('a')].some(a => a.href === link.url && a.textContent === link.label));
     }
-    assert.ok(doc.querySelector('main').textContent.includes('08:40 МСК (05:40 UTC)'));
+    assert.ok(doc.querySelector('main').textContent.includes('09:10 МСК (06:10 UTC)'));
     assert.ok(doc.querySelector('main').textContent.includes('(последнее значение / предыдущее значение − 1) × 100 %'));
     assert.ok(doc.querySelector('main').textContent.includes('exportedAt'));
     const react = await read('src/components/AboutProject.tsx');
