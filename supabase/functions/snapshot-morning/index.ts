@@ -191,7 +191,7 @@ serveWithErrorReporting("snapshot-morning", async (req) => {
       updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
       as_of: typeof row.as_of === "string" ? row.as_of : null,
       source_label: typeof row.source_label === "string" ? row.source_label : null,
-      ...snapshotPriceLabels(row.id, row.as_of, row.updated_at, row.source_label),
+      ...snapshotPriceLabels(typeof row.id === "string" ? row.id : "", row.as_of, row.updated_at, row.source_label),
     }));
 
     // A first insertion is immutable: never freeze a partial/undated cache.
