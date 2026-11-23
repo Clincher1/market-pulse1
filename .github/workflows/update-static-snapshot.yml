@@ -2,8 +2,8 @@ name: Update static snapshot
 
 on:
   schedule:
-    # 03:00 UTC = 06:00 Moscow. GitHub can delay scheduled jobs.
-    - cron: '0 3 * * *'
+    # 05:40 UTC = 08:40 Moscow. Avoid the start-of-hour scheduling peak.
+    - cron: '40 5 * * *'
   workflow_dispatch:
 
 permissions:
