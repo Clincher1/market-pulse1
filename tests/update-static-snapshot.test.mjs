@@ -127,7 +127,7 @@ const jsonResponse = data => new Response(JSON.stringify(data), { status: 200 })
 test('atomic success sends parameterless RPC with apikey and timeout, never Authorization/service key', async () => {
   await withFile(async ({ dir, file }) => {
     await updateSnapshot({ ...config, file, fetchImpl: async (url, options) => {
-      assert.equal(url, `${config.url}/rest/v1/rpc/export_static_snapshot_v1`);
+      assert.equal(url, `${config.url}/rest/v1/rpc/export_static_snapshot_v2`);
       assert.equal(options.method, 'POST');
       assert.equal(options.body, '{}');
       assert.equal(options.headers.apikey, config.key);

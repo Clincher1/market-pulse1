@@ -97,7 +97,7 @@ export async function updateSnapshot({
   const previous = JSON.parse(await readFile(file, 'utf8'));
   let response;
   try {
-    response = await fetchImpl(`${PROJECT_URL}/rest/v1/rpc/export_static_snapshot_v1`, {
+    response = await fetchImpl(`${PROJECT_URL}/rest/v1/rpc/export_static_snapshot_v2`, {
       method: 'POST', headers: { apikey: key, 'Content-Type': 'application/json' }, body: '{}',
       redirect: 'error', signal: AbortSignal.timeout(20000),
     });
