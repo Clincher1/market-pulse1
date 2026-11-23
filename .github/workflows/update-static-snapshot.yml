@@ -2,8 +2,8 @@ name: Update static snapshot
 
 on:
   schedule:
-    # 05:40 UTC = 08:40 Moscow. Avoid the start-of-hour scheduling peak.
-    - cron: '40 5 * * *'
+    # 06:10 UTC = 09:10 Moscow. Avoid the start-of-hour scheduling peak.
+    - cron: '10 6 * * *'
   workflow_dispatch:
 
 permissions:
