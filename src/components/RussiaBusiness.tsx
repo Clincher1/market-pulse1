@@ -78,6 +78,7 @@ function formatIndicatorValue(indicator: RussiaMarketIndicator): string {
 }
 
 function formatAsOf(indicator: RussiaMarketIndicator): string {
+  if (indicator.asOfLabel) return indicator.asOfLabel;
   if (/^\d{4}-\d{2}-\d{2}$/.test(indicator.asOf)) {
     return new Intl.DateTimeFormat('ru-RU', {
       day: '2-digit',

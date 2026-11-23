@@ -29,6 +29,12 @@ export interface PassportAsset {
   name: string;
   /** Цена так, как её напечатал источник. Пусто — цена не сохранилась. */
   price: string;
+  /** Подпись поясняет, что это цена в кэше, а не обязательно последняя точка ряда. */
+  priceLabel?: string | null;
+  last?: number | null;
+  lastDate?: string | null;
+  lastLabel?: string | null;
+  sourceLabel?: string | null;
   change: number | null;
   originalChange?: number | null;
   goldAudit?: { baseDate: string | null; baseValue: number | null };
@@ -85,6 +91,11 @@ export function normalizeDay(row: Record<string, unknown>, goldHistory: GoldClos
       id,
       name,
       price: typeof asset.price === 'string' ? asset.price : '',
+      priceLabel: typeof asset.price_label === 'string' ? asset.price_label : null,
+      last: finiteNumber(asset.last),
+      lastDate: typeof asset.last_date === 'string' ? asset.last_date : null,
+      lastLabel: typeof asset.last_label === 'string' ? asset.last_label : null,
+      sourceLabel: typeof asset.source_label === 'string' ? asset.source_label : null,
       change: goldAudit ? goldAudit.change : finiteNumber(asset.change),
       ...(goldAudit ? { originalChange: finiteNumber(asset.change), goldAudit } : {}),
       asOf: typeof asset.as_of === 'string' && asset.as_of ? asset.as_of : null,

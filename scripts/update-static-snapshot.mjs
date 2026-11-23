@@ -8,6 +8,7 @@ const contracts = [
   { id: 'brent_yahoo_bzf', symbol: 'BZ=F', provider: 'Yahoo Finance',
     instrumentType: 'commodity_future', unit: 'usd_per_barrel',
     instrument: 'Brent, фьючерс ближайшего месяца NYMEX', displayUnit: 'USD за баррель',
+    basis: 'Дневное наблюдение Yahoo Finance BZ=F, дата торговой сессии без времени; текущий незакрытый день исключён. Не спотовая цена Brent.',
     sourceUrl: 'https://query1.finance.yahoo.com/v8/finance/chart/BZ%3DF?range=1y&interval=1d' },
   { id: 'sp500_yahoo_gspc', symbol: '^GSPC', provider: 'Yahoo Finance',
     instrumentType: 'cash_index', unit: 'index_points',
@@ -60,6 +61,10 @@ export function buildSnapshot(payload, previous, now = new Date()) {
     requireThat(calendar(row.observationDate), `${label}: invalid observation calendar date`);
     const age = (Date.parse(exportDay) - Date.parse(row.observationDate)) / DAY;
     requireThat(age >= 0 && age <= 7, `${label}: observation is future-dated or older than seven UTC calendar days`);
+    if (contract.id === 'brent_yahoo_bzf' || contract.id === 'sp500_yahoo_gspc') {
+      requireThat(row.observationDate < exportDay,
+        `${label}: current daily bar is incomplete and must not enter the static snapshot`);
+    }
     if (row.priceTimestamp !== null) {
       requireThat(timestamp(row.priceTimestamp)
         && row.priceTimestamp.slice(0, 10) === row.observationDate
@@ -74,7 +79,7 @@ export function buildSnapshot(payload, previous, now = new Date()) {
     return {
       ticker: label, instrument: old.instrument, value: row.value, unit: old.unit,
       observedAt: label === 'XAU' ? row.priceTimestamp : row.observationDate,
-      basis: old.basis, source: { name: contract.provider, url: row.sourceUrl },
+      basis: contract.basis ?? old.basis, source: { name: contract.provider, url: row.sourceUrl },
     };
   });
   return { schemaVersion: 1, exportedAt: payload.exportedAt, items };
@@ -92,7 +97,7 @@ export async function updateSnapshot({
   const previous = JSON.parse(await readFile(file, 'utf8'));
   let response;
   try {
-    response = await fetchImpl(`${PROJECT_URL}/rest/v1/rpc/export_static_snapshot_v1`, {
+    response = await fetchImpl(`${PROJECT_URL}/rest/v1/rpc/export_static_snapshot_v2`, {
       method: 'POST', headers: { apikey: key, 'Content-Type': 'application/json' }, body: '{}',
       redirect: 'error', signal: AbortSignal.timeout(20000),
     });

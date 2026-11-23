@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, readFile, rm } from 'node:fs/promises';
 import { build } from 'esbuild';
 import { checkChangeAgainstSeries } from '../supabase/functions/_shared/asset-truth.ts';
 const directory = new URL('../.local/writer-tests/', import.meta.url);
@@ -41,6 +41,25 @@ test('same writer works both with forming bar and without live quote', () => {
   assert.equal(close.meta.previous_price, 3723.72756);
   assert.equal(close.row.change, -1.5269);
   assert.equal(checkChangeAgainstSeries(close.row).ok, true);
+});
+
+test('live Brent price and percent use the same contract and last closed daily base', () => {
+  const history = Array.from({ length: 9 }, (_, index) => ({
+    date: `2026-11-${12 + index}`,
+    value: index === 8 ? 92.57 : 90 + index,
+  }));
+  history.push({ date: '2026-11-23', value: 86.58 });
+  const result = makeAsset({
+    id: 'brent', name: 'Brent (фьючерс)', provider: 'Yahoo Finance',
+    instrument: 'BZ=F front-month futures', points: history,
+    currentPrice: 86.58, asOf: '2026-11-23T05:09:42Z',
+    formingBarDate: '2026-11-23', updatedAt: '2026-11-23T05:20:07Z',
+    format: value => `$${value.toFixed(2)}`,
+  });
+  assert.equal(result.row.price, '$86.58');
+  assert.equal(result.meta.previous_price, 92.57);
+  assert.equal(result.row.change, -6.4708);
+  assert.equal(checkChangeAgainstSeries(result.row).ok, true);
 });
 test('fresh quote equal to yesterday close is zero, not the preceding daily move', () => {
   const { row } = asset({ currentPrice: points.at(-1).value });
@@ -103,6 +122,16 @@ test('new gold writer: valid live quote works with zero history, no fake percent
   assert.ok(calls.some(([url,method])=>url.includes('record_gold_observation')&&method==='POST'));
   assert.ok(calls.every(([url])=>!url.includes('twelvedata')));
 });
+test('XAU retrieval migration keeps first fetch and advances latest retrieved_at on newer quotes', async () => {
+  const migration = await readFile(new URL('../supabase/migrations/20261123171000_gold_retrieval_timestamps.sql', import.meta.url), 'utf8');
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS first_retrieved_at/);
+  assert.match(migration, /first_retrieved_at\s*=\s*retrieved_at\s+WHERE instrument_id = 'gold_api_xau_observed_daily'/);
+  assert.match(migration, /retrieved_at=EXCLUDED\.retrieved_at/);
+  assert.match(migration, /first_retrieved_at=COALESCE\(old\.first_retrieved_at,old\.retrieved_at\)/);
+  assert.match(migration, /price=CASE WHEN old\.price_timestamp < EXCLUDED\.price_timestamp THEN EXCLUDED\.price ELSE old\.price END/);
+  assert.doesNotMatch(migration, /WHERE old\.price_timestamp < EXCLUDED\.price_timestamp/);
+});
+
 test('new gold shadow reads only; it never records observations', async (t) => {
   const previousDeno=globalThis.Deno;
   globalThis.Deno={env:{get:()=> 'fixture-service'}};

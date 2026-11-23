@@ -187,6 +187,12 @@ function cbrDateToIso(value) {
   return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
 }
 
+export function officialRateAsOfLabel(date, today) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date)) || !/^\d{4}-\d{2}-\d{2}$/.test(String(today))) return null;
+  const dayMonth = `${date.slice(8, 10)}.${date.slice(5, 7)}`;
+  return date > today ? `Курс, действующий с ${dayMonth}` : `Официальный курс на ${dayMonth}`;
+}
+
 function parseCbrRecords(xml) {
   const records = [];
   const pattern = /<Record\b[^>]*Date="([^"]+)"[^>]*>([\s\S]*?)<\/Record>/gi;
@@ -224,6 +230,7 @@ async function fetchCbrIndicator(currency) {
     unit: '₽',
     changePct: round(((latest.rate - previous.rate) / previous.rate) * 100, 3),
     asOf: latest.date,
+    asOfLabel: officialRateAsOfLabel(latest.date, moscowToday()),
     previousDate: previous.date,
     provider: 'Банк России',
     basis: 'Официальный курс',
@@ -578,6 +585,15 @@ function rowsToObjects(block) {
   );
 }
 
+/** Prefer the trading session date; SYSTIME is only a fallback clock. */
+export function moexAsOf(row) {
+  const tradeDate = String(row?.TRADEDATE ?? '').trim();
+  if (tradeDate) return tradeDate;
+  const systemTime = String(row?.SYSTIME ?? '').trim();
+  if (systemTime) return systemTime;
+  return String(row?.UPDATETIME ?? '').trim();
+}
+
 async function fetchMoexIndex(id, name, label) {
   const todayIso = moscowToday();
   const url = `https://iss.moex.com/iss/engines/stock/markets/index/securities/${id}.json?iss.meta=off`;
@@ -601,7 +617,7 @@ async function fetchMoexIndex(id, name, label) {
     value: round(value, 2),
     unit: 'пункта',
     changePct: base === null ? null : round(((value - base) / base) * 100, 3),
-    asOf: row.SYSTIME || `${row.TRADEDATE || ''} ${row.UPDATETIME || ''}`.trim(),
+    asOf: moexAsOf(row),
     previousDate: previous?.date ?? null,
     provider: 'Мосбиржа ISS',
     basis: base === null
@@ -664,7 +680,7 @@ async function fetchMoexGold() {
     value: round(value, 2),
     unit: '₽/г',
     changePct: base === null ? null : round(((value - base) / base) * 100, 3),
-    asOf: market.SYSTIME || `${market.TRADEDATE || ''} ${market.UPDATETIME || ''}`.trim(),
+    asOf: moexAsOf(market),
     previousDate: previous?.date ?? null,
     provider: 'Мосбиржа ISS',
     basis: !hasTrade
@@ -756,8 +772,8 @@ async function fetchMoexCny() {
     unit: '₽',
     changePct: hasTradeToday ? round(((value - previous) / previous) * 100, 3) : null,
     asOf: hasTradeToday
-      ? market.SYSTIME || market.UPDATETIME || ''
-      : security.PREVDATE || market.SYSTIME || '',
+      ? moexAsOf(market)
+      : security.PREVDATE || moexAsOf(market),
     previousDate: security.PREVDATE || null,
     provider: 'Мосбиржа ISS',
     basis: hasTradeToday

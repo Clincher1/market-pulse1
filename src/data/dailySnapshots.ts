@@ -9,6 +9,10 @@ export interface SnapshotAsset {
   /** Date paired with last, not the quote timestamp. Old snapshots may lack it. */
   lastDate?: string | null;
   updatedAt: string | null;
+  /** Явные роли значения цены и точки дневного ряда в утреннем архиве. */
+  priceLabel?: string | null;
+  lastLabel?: string | null;
+  sourceLabel?: string | null;
   /** Дата наблюдения от источника. Пусто — источник её не назвал. */
   asOf: string | null;
 }
@@ -21,6 +25,7 @@ export interface SnapshotRussiaMarket {
   unit: string;
   changePct: number | null;
   asOf: string | null;
+  asOfLabel?: string | null;
   provider: string;
 }
 
@@ -63,6 +68,9 @@ function normalizeAssets(value: unknown): SnapshotAsset[] {
     last: finiteNumber(row.last),
     lastDate: stringOrNull(row.last_date),
     updatedAt: stringOrNull(row.updated_at),
+    priceLabel: stringOrNull(row.price_label),
+    lastLabel: stringOrNull(row.last_label),
+    sourceLabel: stringOrNull(row.source_label),
     asOf: stringOrNull(row.as_of),
   })).filter((row) => row.id);
 }
@@ -84,6 +92,7 @@ function normalizeRussia(value: unknown): {
       unit: String(row.unit ?? ''),
       changePct: finiteNumber(row.changePct),
       asOf: stringOrNull(row.asOf),
+      asOfLabel: stringOrNull(row.asOfLabel),
       provider: String(row.provider ?? ''),
     })).filter((row) => row.id),
   };

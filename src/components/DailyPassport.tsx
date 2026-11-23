@@ -92,6 +92,15 @@ function MorningAssets({ assets }: { assets: PassportAsset[] }) {
           <div className="mt-1 text-lg font-bold tabular-nums text-text-primary">
             {asset.price || '—'}
           </div>
+          <div className="text-[10px] leading-relaxed text-text-secondary">
+            {asset.priceLabel ?? 'Цена, сохранённая в кэше на момент снимка'}
+          </div>
+          {asset.last !== null && asset.last !== undefined && (
+            <div className="mt-1 text-[10px] leading-relaxed text-text-secondary">
+              {asset.lastLabel ?? 'Последняя датированная точка ряда'}: {asset.last.toLocaleString('ru-RU', { maximumFractionDigits: 8 })}
+              {asset.lastDate ? ` · ${asset.lastDate}` : ''}
+            </div>
+          )}
           <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px]">
             <span
               className={`font-bold tabular-nums ${

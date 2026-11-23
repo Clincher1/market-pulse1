@@ -25,7 +25,7 @@ async function denied(label, path, method, body) {
   }
   console.log(`PASS ${label}: permission denied`);
 }
-const { response, data } = await request('rpc/export_static_snapshot_v1', 'POST', {});
+const { response, data } = await request('rpc/export_static_snapshot_v2', 'POST', {});
 if (!response.ok || data?.rows?.length !== 3
   || data.rows.map(row => row.symbol).sort().join(',') !== 'BZ=F,XAU,^GSPC'
   || !data.rows.every(row => typeof row.value === 'string' && row.sourceUrl)) {

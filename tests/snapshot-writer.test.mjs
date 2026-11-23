@@ -15,7 +15,7 @@ async function loadWriter(name) {
   });
   return import(output.href);
 }
-const { snapshotLastObservation } = await loadWriter('snapshot-morning');
+const { snapshotLastObservation, snapshotPriceLabels } = await loadWriter('snapshot-morning');
 const handler = globalThis.__snapshotHandler;
 delete globalThis.__snapshotHandler;
 test('snapshot value and date keep the original paired last index', () => {
@@ -25,13 +25,24 @@ test('snapshot value and date keep the original paired last index', () => {
   }
   assert.deepEqual(snapshotLastObservation([100, null], ['2026-11-18', '2026-11-19']), { last: null, last_date: null });
 });
+
+test('snapshot labels distinguish the cached quote from its dated daily-series point', () => {
+  const quote = snapshotPriceLabels('brent', '2026-11-23T16:30:00Z', '2026-11-23T16:31:00Z', 'Yahoo Finance');
+  assert.equal(quote.price_label, 'Цена Yahoo Finance, сохранённая в кэше на момент снимка');
+  assert.equal(quote.last_label, 'Последняя датированная точка дневного ряда');
+  assert.notEqual(quote.price_label, quote.last_label);
+  assert.match(snapshotPriceLabels('btc', '2026-11-23T16:47:00Z', '2026-11-23T16:47:05Z', 'Kraken').price_label, /Live-котировка Kraken/);
+  assert.match(snapshotPriceLabels('btc', '2026-11-23T00:00:00+00:00', '2026-11-23T05:20:00Z', 'Kraken').price_label, /live-котировка не подтверждена/);
+});
 function setupHandler(t, { duplicate = false, missingDate = false } = {}) {
   const previous = globalThis.Deno;
   globalThis.Deno = { env: { get: (key) => key === 'SUPABASE_SERVICE_ROLE_KEY' ? 'fixture-service' : undefined } };
   t.after(() => { if (previous === undefined) delete globalThis.Deno; else globalThis.Deno = previous; });
   const writes = [];
   const assets = ['usd-eur', 'sp500', 'brent', 'gold', 'btc'].map((id) => ({ id, name: id, price: '$110', change: 1,
-    sparkline: [100, 110], spark_dates: missingDate && id === 'gold' ? [] : ['2026-11-18', '2026-11-19'], as_of: '2026-11-20T03:55:00Z' }));
+    sparkline: [100, 110], spark_dates: missingDate && id === 'gold' ? [] : ['2026-11-18', '2026-11-19'],
+    as_of: '2026-11-20T03:55:00Z', updated_at: '2026-11-20T03:55:00Z',
+    source_label: id === 'btc' ? 'Kraken' : id === 'usd-eur' ? 'ECB' : id === 'gold' ? 'gold-api.com' : 'Yahoo Finance' }));
   const fetch = t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
     const path = new URL(url).pathname;
     if (path === '/api/russia-insights') return Response.json({ markets: [] });
@@ -54,6 +65,14 @@ test('full snapshot handler inserts five paired dates without forecasts', async 
   assert.equal(writes.length, 1);
   assert.equal(writes[0].assets.length, 5);
   assert.ok(writes[0].assets.every((a) => a.last === 110 && a.last_date === '2026-11-19'));
+  assert.ok(writes[0].assets.every((a) => a.price_label && a.last_label && a.price_label !== a.last_label));
+  const brent = writes[0].assets.find((a) => a.id === 'brent');
+  assert.equal(brent.price, '$110');
+  assert.equal(brent.last, 110);
+  assert.equal(brent.price_label, 'Цена Yahoo Finance, сохранённая в кэше на момент снимка');
+  assert.equal(brent.last_label, 'Последняя датированная точка дневного ряда');
+  const btc = writes[0].assets.find((a) => a.id === 'btc');
+  assert.equal(btc.price_label, 'Live-котировка Kraken на момент снимка');
   assert.equal('forecasts' in writes[0], false);
 });
 test('full handler never overwrites a first daily baseline on retry', async (t) => {
