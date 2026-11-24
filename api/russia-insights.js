@@ -97,9 +97,52 @@ function decodeBuffer(buffer, contentType = '') {
 const runOnMarketHost = hostQueue({ limit: 2 });
 const runOnFeedHost = hostQueue({ limit: 2 });
 
-async function timedFetch(url, init, timeoutMs) {
+function errorLogDetails(error, depth = 0) {
+  if (error instanceof Error) {
+    const details = { name: error.name, message: error.message };
+    for (const key of ['code', 'errno', 'syscall', 'hostname', 'address', 'port']) {
+      if (error[key] !== undefined) details[key] = error[key];
+    }
+    if (error.cause !== undefined && depth < 3) {
+      details.cause = errorLogDetails(error.cause, depth + 1);
+    }
+    return details;
+  }
+  if (error && typeof error === 'object') {
+    const details = {};
+    for (const key of ['name', 'message', 'code', 'errno', 'syscall', 'hostname', 'address', 'port']) {
+      if (error[key] !== undefined) details[key] = error[key];
+    }
+    if (error.cause !== undefined && depth < 3) {
+      details.cause = errorLogDetails(error.cause, depth + 1);
+    }
+    return details;
+  }
+  return { message: String(error) };
+}
+
+function logFetchFailure(url, init, attempt, startedAt, error) {
+  let endpoint = url;
+  try {
+    const parsed = new URL(url);
+    endpoint = `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    // Keep the original URL only when it cannot be parsed.
+  }
+  console.error('[russia-insights] upstream fetch failed', JSON.stringify({
+    endpoint,
+    method: init?.method ?? 'GET',
+    attempt,
+    elapsedMs: Date.now() - startedAt,
+    httpStatus: error?.httpStatus ?? null,
+    error: errorLogDetails(error),
+  }));
+}
+
+async function timedFetch(url, init, timeoutMs, attempt = 1) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
     if (!response.ok) {
@@ -108,10 +151,14 @@ async function timedFetch(url, init, timeoutMs) {
       const header = response.headers.get('retry-after');
       const seconds = header ? Number(header) : Number.NaN;
       const error = new Error(`HTTP ${response.status}${header ? ` retry-after=${header}` : ''}`);
+      error.httpStatus = response.status;
       if (Number.isFinite(seconds) && seconds > 0) error.retryAfterMs = seconds * 1000;
       throw error;
     }
     return response;
+  } catch (error) {
+    logFetchFailure(url, init, attempt, startedAt, error);
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -120,6 +167,7 @@ async function timedFetch(url, init, timeoutMs) {
 async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS, retryTimeouts = true) {
   // Один повтор на таймаут или сетевой сбой: источник на секунду задумался —
   // это не повод терять индикатор на весь час.
+  let attempt = 0;
   return withRetry(async () => {
     const response = await timedFetch(
       url,
@@ -130,6 +178,7 @@ async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS, retr
         },
       },
       timeoutMs,
+      ++attempt,
     );
     return parseResponse(response);
   }, { retryTimeouts });
@@ -156,6 +205,7 @@ async function fetchJson(url) {
  * ставка — только через DailyInfo.asmx, поэтому нужен отдельный вызов.
  */
 async function fetchTextPost(url, body, soapAction) {
+  let attempt = 0;
   return withRetry(async () => {
     const response = await timedFetch(
       url,
@@ -170,6 +220,7 @@ async function fetchTextPost(url, body, soapAction) {
         body,
       },
       SOAP_TIMEOUT_MS,
+      ++attempt,
     );
     const buffer = await response.arrayBuffer();
     return decodeBuffer(buffer, response.headers.get('content-type') || '');
