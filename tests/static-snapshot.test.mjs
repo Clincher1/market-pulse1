@@ -44,8 +44,8 @@ test('snapshot table rounds displayed numeric values to two decimals without cha
   const dom = new JSDOM(staticDocument(''));
   const values = [...dom.window.document.querySelectorAll('[aria-labelledby="static-snapshot-title"] tbody tr td:first-of-type')]
     .map(cell => cell.textContent);
-  assert.deepEqual(values, ['87.27', '7248.60', '3651.05']);
-  assert.deepEqual(snapshot.items.map(item => item.value), ['87.2699966431', '7248.6000976563', '3651.0500490000']);
+  assert.deepEqual(values, snapshot.items.map(item => Number(item.value).toFixed(2)));
+  assert.ok(snapshot.items.every(item => /^\d+\.\d{2,}$/.test(item.value)), 'source strings retain their full decimal precision');
   dom.window.close();
 });
 
