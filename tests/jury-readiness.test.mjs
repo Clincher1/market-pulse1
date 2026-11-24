@@ -86,7 +86,7 @@ test('snapshot Dataset JSON-LD matches HTML exactly, with original decimal strin
     assert.equal(data.variableMeasured.unitText, row.unit);
     assert.equal(data.citation.name, row.source.name);
     assert.equal(data.citation.url, row.source.url);
-    assert.ok(rows[i].textContent.includes(data.variableMeasured.value));
+    assert.ok(rows[i].textContent.includes(Number(data.variableMeasured.value).toFixed(2)));
     assert.equal(rows[i].querySelector('time').dateTime, data.temporalCoverage);
   });
   assert.equal(dataset.license, undefined, 'Do not invent a redistribution license for upstream data');
@@ -103,7 +103,8 @@ test('about page contains the shared methodology in source HTML, not only in Rea
       for (const text of section.paragraphs) assert.ok(node.textContent.includes(text));
       for (const link of section.links) assert.ok([...node.querySelectorAll('a')].some(a => a.href === link.url && a.textContent === link.label));
     }
-    assert.ok(doc.querySelector('main').textContent.includes('09:10 МСК (06:10 UTC)'));
+    assert.ok(doc.querySelector('main').textContent.includes('00:10, 06:10, 12:10 и 18:10 UTC'));
+    assert.ok(doc.querySelector('main').textContent.includes('03:10, 09:10, 15:10 и 21:10 МСК'));
     assert.ok(doc.querySelector('main').textContent.includes('(последнее значение / предыдущее значение − 1) × 100 %'));
     assert.ok(doc.querySelector('main').textContent.includes('exportedAt'));
     const react = await read('src/components/AboutProject.tsx');

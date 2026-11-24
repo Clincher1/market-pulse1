@@ -5,6 +5,7 @@ import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared
 import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
 import { politenessVerdict } from "../_shared/price-sources.ts";
 import { registryVerdict } from "../_shared/slots.ts";
+import { findForeignResourceHosts } from "../_shared/loaded-resource-hosts.mjs";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -1050,19 +1051,12 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
 
     check('no_third_party', async () => {
       const html = await (await fetch(SITE, { signal: AbortSignal.timeout(20000) })).text();
-      const hosts = [...new Set(
-        [...html.matchAll(/https?:\/\/([a-zA-Z0-9._-]+)/g)].map((m) => String(m[1]).toLowerCase()),
-      )];
-      // w3.org is an XML namespace in inline markup, not a request.
-      // Свой домен берётся из SITE: на новом хостинге проверка не должна
-      // объявлять чужой адрес «своим» по старой памяти.
-      const allowed = [new URL(SITE).hostname, 'supabase.co', 'w3.org'];
-      const foreign = hosts.filter((h) => !allowed.some((a) => h === a || h.endsWith(`.${a}`)));
+      const foreign = findForeignResourceHosts(html, SITE);
       return {
         ok: foreign.length === 0,
         detail: foreign.length
-          ? `в разметке чужие домены: ${foreign.join(', ')}`
-          : `в разметке только свои домены (${hosts.join(', ')})`,
+          ? `загружаемые ресурсы или inline-стили обращаются к чужим доменам: ${foreign.join(', ')}`
+          : 'в загружаемых ресурсах и inline-стилях чужих доменов нет',
       };
     }),
 

@@ -98,7 +98,7 @@ function renderSnapshot() {
   const rows = snapshot.items.map(row => `
               <tr>
                 <th scope="row">${escape(row.ticker)} — ${escape(row.instrument)}</th>
-                <td>${escape(row.value)}</td>
+                <td>${escape(Number(row.value).toFixed(2))}</td>
                 <td>${escape(row.unit)}</td>
                 <td><time datetime="${escape(row.observedAt)}">${escape(row.observedAt)}</time></td>
                 <td><a href="${escape(row.source.url)}">${escape(row.source.name)}</a></td>
@@ -219,7 +219,7 @@ export function staticDocument(route) {
         </section>
         <section aria-labelledby="initial-live">
           <h2 id="initial-live">Как посмотреть текущие значения?</h2>
-          <p>Интерактивные котировки, графики и публикации загружаются с помощью JavaScript. Если расширенный интерфейс не появился, проверьте, разрешён ли JavaScript, и обновите страницу. Статический снимок, если он показан выше, не обновляется автоматически внутри открытой страницы. Новая версия публикуется после ежедневного обновления в 09:10 МСК и проверок; чтобы увидеть её, перезагрузите страницу.</p>
+          <p>Интерактивные котировки, графики и публикации загружаются с помощью JavaScript. Если расширенный интерфейс не появился, проверьте, разрешён ли JavaScript, и обновите страницу. Статический снимок, если он показан выше, не обновляется автоматически внутри открытой страницы. Новая версия публикуется только при наличии изменений после проверок по расписанию 03:10, 09:10, 15:10 и 21:10 МСК (00:10, 06:10, 12:10 и 18:10 UTC); чтобы увидеть её, перезагрузите страницу.</p>
         </section>
       </main>
       <footer>
