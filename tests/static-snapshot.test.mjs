@@ -26,7 +26,7 @@ test('home snapshot preserves all supplied values, dates, units, source links an
     const row = rows[index];
     assert.equal(row.querySelector('th[scope="row"]').textContent, `${item.ticker} — ${item.instrument}`);
     const cells = row.querySelectorAll('td');
-    assert.equal(cells[0].textContent, item.value);
+    assert.equal(cells[0].textContent, Number(item.value).toFixed(2));
     assert.equal(cells[1].textContent, item.unit);
     assert.equal(cells[2].querySelector('time').getAttribute('datetime'), item.observedAt);
     assert.equal(cells[2].textContent, item.observedAt);
@@ -37,6 +37,15 @@ test('home snapshot preserves all supplied values, dates, units, source links an
   const region = section.querySelector('[role="region"]');
   assert.equal(region.getAttribute('tabindex'), '0');
   assert.ok(region.getAttribute('aria-label'));
+  dom.window.close();
+});
+
+test('snapshot table rounds displayed numeric values to two decimals without changing stored source precision', () => {
+  const dom = new JSDOM(staticDocument(''));
+  const values = [...dom.window.document.querySelectorAll('[aria-labelledby="static-snapshot-title"] tbody tr td:first-of-type')]
+    .map(cell => cell.textContent);
+  assert.deepEqual(values, ['87.27', '7248.60', '3651.05']);
+  assert.deepEqual(snapshot.items.map(item => item.value), ['87.2699966431', '7248.6000976563', '3651.0500490000']);
   dom.window.close();
 });
 
