@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
 import {
   evaluateAsset,
   latestCompletedNySessionDate,
@@ -42,16 +46,99 @@ test('overall verdict selects the worst asset and percent change is relative to 
   assert.equal(percentChange(101, 100), 1);
 });
 
-test('digest retries after its configured hour until sent, then suppresses duplicates', () => {
-  const source = readFileSync(new URL('../supabase/functions/scheduled-job-runner/index.ts', import.meta.url), 'utf8');
-  assert.match(source, /if \(now\.getUTCHours\(\) >= configuredDigestHour\)/);
+test('hourly digest retry sends a pending row after the configured hour and skips a sent row', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'scheduled-job-runner-'));
+  const bundle = join(directory, 'index.mjs');
+  await build({
+    entryPoints: ['supabase/functions/scheduled-job-runner/index.ts'],
+    outfile: bundle,
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    logLevel: 'silent',
+  });
 
-  const digestFlow = source.slice(source.indexOf('async function runDailyDigest('), source.indexOf('\nDeno.serve('));
-  const sentGuard = 'if (existing[0]?.delivery_status === "sent") return;';
-  assert.ok(digestFlow.includes(sentGuard), 'sent history must short-circuit');
-  const afterSentGuard = digestFlow.slice(digestFlow.indexOf(sentGuard) + sentGuard.length);
-  assert.match(afterSentGuard, /let historyId = existing\[0\]\?\.id;/);
-  assert.match(afterSentGuard, /if \(historyId\) \{[\s\S]*?delivery_status: "pending"[\s\S]*?\} else \{[\s\S]*?monitor_history\?select=id[\s\S]*?\}/);
-  assert.match(afterSentGuard, /await sendTelegram\(digest\.text\);/);
-  assert.match(source, /return json\(\{ status: "digest_sent", overall_status: overallVerdict\(verdicts\) \}\);/);
+  const NativeDate = globalThis.Date;
+  let nowMs = NativeDate.parse('2026-11-25T07:12:00.000Z');
+  globalThis.Date = class FrozenDate extends NativeDate {
+    constructor(...args) { super(...(args.length ? args : [nowMs])); }
+    static now() { return nowMs; }
+  };
+  const previousDeno = globalThis.Deno;
+  const historyUpdates = [];
+  const telegramMessages = [];
+  let historyStatus = 'pending';
+  let countCalls = 0;
+  globalThis.Deno = {
+    env: { get: (key) => ({
+      SUPABASE_URL: 'https://db.example.test',
+      SERVICE_KEY: 'fixture-service-key',
+      CRON_SECRET: 'fixture-cron-secret',
+      DIGEST_HOUR_UTC: '06',
+      TELEGRAM_BOT_TOKEN: 'fixture-token',
+      TELEGRAM_CHAT_ID: 'fixture-chat',
+    })[key] },
+    serve: (handler) => { globalThis.__scheduledJobRunnerHandler = handler; },
+  };
+  t.mock.method(globalThis, 'fetch', async (input, init = {}) => {
+    const url = new URL(String(input));
+    if (url.hostname === 'api.telegram.org') {
+      telegramMessages.push(JSON.parse(init.body).text);
+      return Response.json({ ok: true });
+    }
+    if (url.hostname !== 'db.example.test') throw new Error(`Unexpected fetch host: ${url.hostname}`);
+    if (url.pathname.endsWith('/cached_assets')) {
+      return Response.json([
+        { id: 'brent', price: '70.25', updated_at: '2026-11-25T07:00:00.000Z', as_of: '2026-11-25' },
+        { id: 'gold', price: '4000', updated_at: '2026-11-25T07:00:00.000Z', as_of: '2026-11-25' },
+        { id: 'sp500', price: '6800', updated_at: '2026-11-25T07:00:00.000Z', as_of: '2026-11-24' },
+      ]);
+    }
+    if (url.pathname.endsWith('/monitor_history')) {
+      if (init.method === 'PATCH') {
+        const update = JSON.parse(init.body);
+        historyUpdates.push(update);
+        historyStatus = update.delivery_status;
+        return new Response(null, { status: 204 });
+      }
+      if ((!init.method || init.method === 'GET') && url.searchParams.get('digest_date') === 'eq.2026-11-25') {
+        return Response.json([{ id: 17, delivery_status: historyStatus }]);
+      }
+      return Response.json([]);
+    }
+    if (url.pathname.endsWith('/rpc/monitor_cron_counts')) {
+      countCalls++;
+      return Response.json([{ succeeded: 3, failed: 0 }]);
+    }
+    throw new Error(`Unexpected REST route: ${url.pathname}`);
+  });
+
+  try {
+    await import(`${pathToFileURL(bundle).href}?retry-test`);
+    const handler = globalThis.__scheduledJobRunnerHandler;
+    const request = () => new Request('https://edge.example.test/functions/v1/scheduled-job-runner', {
+      method: 'POST',
+      headers: { 'x-cron-secret': 'fixture-cron-secret' },
+    });
+
+    const retryResponse = await handler(request());
+    assert.equal(retryResponse.status, 200);
+    assert.deepEqual(await retryResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
+    assert.equal(telegramMessages.length, 1, 'pending history retries delivery at 07:12 UTC');
+    assert.match(telegramMessages[0], /первый отчёт — сравнение за 24ч появится завтра/);
+    assert.deepEqual(historyUpdates.map((update) => update.delivery_status), ['pending', 'sent']);
+
+    nowMs = NativeDate.parse('2026-11-25T08:12:00.000Z');
+    const sentResponse = await handler(request());
+    assert.equal(sentResponse.status, 200);
+    assert.deepEqual(await sentResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
+    assert.equal(telegramMessages.length, 1, 'sent history must not be delivered twice');
+    assert.equal(countCalls, 1, 'sent history returns before another digest read/count');
+  } finally {
+    delete globalThis.__scheduledJobRunnerHandler;
+    if (previousDeno === undefined) delete globalThis.Deno;
+    else globalThis.Deno = previousDeno;
+    globalThis.Date = NativeDate;
+    await rm(directory, { recursive: true, force: true });
+  }
 });
