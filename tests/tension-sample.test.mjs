@@ -106,14 +106,26 @@ test('shared sample applies writer filters and URL/title/near-title deduplicatio
   assert.equal(result.sampleNewest, '2026-11-25T14:02:00.000Z');
 });
 
+test('tension_matches anchors the shared window to cached_tension.updated_at', async () => {
+  const selfcheck = await readFile(
+    new URL('../supabase/functions/selfcheck/index.ts', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(selfcheck, /cached_tension\?select=value,news_count,updated_at&id=eq\.1/);
+  assert.match(selfcheck, /const writerRunAt = new Date\(String\(published\[0\]\?\.updated_at \?\? ''\)\)/);
+  assert.match(selfcheck, /tensionNewsQueryParams\(writerRunAt\)/);
+});
+
 test('writer and tension_matches both call the same query, selection, and calculation helpers', async () => {
   const [writer, selfcheck] = await Promise.all([
     readFile(new URL('../supabase/functions/update-tension/index.ts', import.meta.url), 'utf8'),
     readFile(new URL('../supabase/functions/selfcheck/index.ts', import.meta.url), 'utf8'),
   ]);
 
+  assert.match(writer, /tensionNewsQueryParams\(now\)/);
+  assert.match(selfcheck, /tensionNewsQueryParams\(writerRunAt\)/);
   for (const source of [writer, selfcheck]) {
-    assert.match(source, /tensionNewsQueryParams\(now\)/);
     assert.match(source, /selectTensionNews\(rawNews\)/);
     assert.match(source, /calculateTensionIndex\((?:news|rows)\)/);
   }
