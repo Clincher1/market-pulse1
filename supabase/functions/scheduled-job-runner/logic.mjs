@@ -245,7 +245,7 @@ function validatedTimestamp(value, label, nowMs) {
   return timestamp;
 }
 
-function observationDate(value, label, nowMs) {
+function observationDate(value, label, nowMs, allowFutureDateOnly = false) {
   if (typeof value !== 'string' || !value.trim()) return null;
   const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
   if (!match) throw new Error(`Invalid ${label} date`);
@@ -257,7 +257,7 @@ function observationDate(value, label, nowMs) {
     throw new Error(`Invalid ${label} date`);
   }
   const futureToleranceMs = value === key ? 0 : FUTURE_TIMESTAMP_TOLERANCE_MS;
-  if (parsedValue > nowMs + futureToleranceMs) throw new Error(`Future ${label} date`);
+  if (parsedValue > nowMs + futureToleranceMs && !(allowFutureDateOnly && value === key)) throw new Error(`Future ${label} date`);
   return key;
 }
 
@@ -271,17 +271,20 @@ export function evaluateAsset(assetId, row, now = new Date()) {
     : validatedTimestamp(row.updated_at, `${assetId} updated_at`, nowMs);
   const asOfDate = row.as_of == null || row.as_of === ''
     ? null
-    : observationDate(row.as_of, `${assetId} as_of`, nowMs);
+    : observationDate(row.as_of, `${assetId} as_of`, nowMs, assetId === 'sp500');
 
   if (assetId === 'sp500') {
     if (price === null || asOfDate === null) {
       return { status: 'no_data', reason: 'price_or_as_of_missing', price, asOf: asOfDate, updatedAt: row.updated_at ?? null };
     }
+    const nyParts = zonedParts(now, 'America/New_York');
+    const currentNyDate = dateKey(nyParts.year, nyParts.month, nyParts.day);
+    if (asOfDate > currentNyDate) throw new Error(`Invalid sp500 as_of: ${asOfDate} is later than the current NY date ${currentNyDate}`);
     const expected = latestCompletedNySessionDate(now);
-    if (asOfDate > expected) throw new Error(`Invalid sp500 as_of: ${asOfDate} is later than the latest completed NY session ${expected}`);
+    const currentSessionQuote = asOfDate === currentNyDate;
     return {
-      status: asOfDate === expected ? 'ok' : 'stale',
-      reason: asOfDate === expected ? null : `session_date_${asOfDate}_expected_${expected}`,
+      status: currentSessionQuote || asOfDate === expected ? 'ok' : 'stale',
+      reason: currentSessionQuote || asOfDate === expected ? null : `session_date_${asOfDate}_expected_${expected}`,
       price,
       asOf: asOfDate,
       updatedAt: row.updated_at ?? null,
