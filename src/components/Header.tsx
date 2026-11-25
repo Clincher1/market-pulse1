@@ -11,7 +11,6 @@ import { PAGE_PATHS, type AppView } from '@/lib/routes';
 
 const HEADER_THEME_ORDER: SectionThemeId[] = [
   ...DASHBOARD_THEME_ORDER.slice(0, 5),
-  'memory',
   'guide',
   'about',
   'status',
