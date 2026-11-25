@@ -125,7 +125,7 @@ jobs:
           chmod 600 "$secret_file"
           printf 'TELEGRAM_BOT_TOKEN=%s\n' "$TELEGRAM_BOT_TOKEN" > "$secret_file"
           printf 'TELEGRAM_CHAT_ID=%s\n' "$TELEGRAM_CHAT_ID" >> "$secret_file"
-          supabase secrets set --env-file "$secret_file" --project-ref "$SUPABASE_PROJECT_REF"
+          supabase secrets set --env-file "$secret_file" --project-ref "$SUPABASE_PROJECT_REF" --yes
 
       # Журнал пишем в файл: без этого текст ошибки живёт только в логах
       # Actions, а они недоступны ни из закрытой сети, ни через коннектор.
