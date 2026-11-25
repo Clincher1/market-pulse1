@@ -62,14 +62,20 @@ test('timestamps up to ten minutes ahead tolerate clock skew; farther future val
     /Future gold as_of date/,
     'date-only observations do not get timestamp clock-skew tolerance',
   );
+  const intradaySp500 = evaluateAsset('sp500', {
+    price: 6800,
+    updated_at: '2026-11-25T18:00:00.000Z',
+    as_of: '2026-11-25T18:05:00.000Z',
+  }, now);
+  assert.equal(intradaySp500.status, 'ok', 'today’s NY session date is valid while the session is in progress');
   assert.throws(
     () => evaluateAsset('sp500', {
       price: 6800,
       updated_at: '2026-11-25T18:00:00.000Z',
-      as_of: '2026-11-25T18:05:00.000Z',
+      as_of: '2026-11-26',
     }, now),
-    /Invalid sp500 as_of: 2026-11-25 is later than the latest completed NY session 2026-11-24/,
-    'a tolerated timestamp never makes an unfinished S&P session valid',
+    /Invalid sp500 as_of: 2026-11-26 is later than the current NY date 2026-11-25/,
+    'dates strictly after the current NY calendar date remain invalid',
   );
 });
 
