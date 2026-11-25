@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   evaluateAsset,
   latestCompletedNySessionDate,
@@ -39,4 +40,18 @@ test('overall verdict selects the worst asset and percent change is relative to 
   assert.equal(overallVerdict({ a: { status: 'ok' }, b: { status: 'stale' } }), 'stale');
   assert.equal(overallVerdict({ a: { status: 'stale' }, b: { status: 'no_data' } }), 'no_data');
   assert.equal(percentChange(101, 100), 1);
+});
+
+test('digest retries after its configured hour until sent, then suppresses duplicates', () => {
+  const source = readFileSync(new URL('../supabase/functions/scheduled-job-runner/index.ts', import.meta.url), 'utf8');
+  assert.match(source, /if \(now\.getUTCHours\(\) >= configuredDigestHour\)/);
+
+  const digestFlow = source.slice(source.indexOf('async function runDailyDigest('), source.indexOf('\nDeno.serve('));
+  const sentGuard = 'if (existing[0]?.delivery_status === "sent") return;';
+  assert.ok(digestFlow.includes(sentGuard), 'sent history must short-circuit');
+  const afterSentGuard = digestFlow.slice(digestFlow.indexOf(sentGuard) + sentGuard.length);
+  assert.match(afterSentGuard, /let historyId = existing\[0\]\?\.id;/);
+  assert.match(afterSentGuard, /if \(historyId\) \{[\s\S]*?delivery_status: "pending"[\s\S]*?\} else \{[\s\S]*?monitor_history\?select=id[\s\S]*?\}/);
+  assert.match(afterSentGuard, /await sendTelegram\(digest\.text\);/);
+  assert.match(source, /return json\(\{ status: "digest_sent", overall_status: overallVerdict\(verdicts\) \}\);/);
 });

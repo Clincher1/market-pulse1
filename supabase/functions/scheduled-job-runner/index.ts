@@ -361,7 +361,8 @@ Deno.serve(async (req) => {
       if (verdicts[assetId].status !== "ok") await sendTargetedAlert(assetId, verdicts[assetId], nowMs);
     }
 
-    if (now.getUTCHours() === configuredDigestHour) {
+    // Retry the daily digest on each later hourly invocation until today's row is marked sent.
+    if (now.getUTCHours() >= configuredDigestHour) {
       const today = moscowDateKey(now);
       await runDailyDigest(now, today, rows, verdicts);
       return json({ status: "digest_sent", overall_status: overallVerdict(verdicts) });
