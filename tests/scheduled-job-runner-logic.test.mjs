@@ -8,6 +8,7 @@ import { build } from 'esbuild';
 import {
   evaluateAsset,
   latestCompletedNySessionDate,
+  moscowHourKey,
   overallVerdict,
   percentChange,
   shouldWarnForStagnation,
@@ -39,6 +40,11 @@ test('S&P 500 freshness follows the latest completed New York session', () => {
   }, new Date('2026-11-25T22:00:00.000Z'));
   assert.equal(stale.status, 'stale');
   assert.equal(stale.expectedSessionDate, '2026-11-25');
+});
+
+test('Moscow hour helper returns the hour for the digest timezone', () => {
+  assert.equal(moscowHourKey(new Date('2026-11-26T06:12:00.000Z')), 9);
+  assert.equal(moscowHourKey(new Date('2026-11-25T21:12:00.000Z')), 0);
 });
 
 test('overall verdict selects the worst asset and percent change is relative to yesterday', () => {
@@ -123,7 +129,7 @@ test('NYSE early-close sessions are complete from 13:00 local time', () => {
   assert.equal(latestCompletedNySessionDate(new Date('2025-12-24T18:01:00.000Z')), '2025-12-24');
 });
 
-test('hourly digest retry sends a pending row after the configured hour and skips a sent row', async (t) => {
+test('digest gate uses Moscow time and date, retries pending same-day rows, and skips sent rows', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'scheduled-job-runner-'));
   const bundle = join(directory, 'index.mjs');
   await build({
@@ -136,13 +142,14 @@ test('hourly digest retry sends a pending row after the configured hour and skip
   });
 
   const NativeDate = globalThis.Date;
-  let nowMs = NativeDate.parse('2026-11-25T07:12:00.000Z');
+  let nowMs = NativeDate.parse('2026-11-25T21:12:00.000Z'); // 00:12 MSK on Nov 26
   globalThis.Date = class FrozenDate extends NativeDate {
     constructor(...args) { super(...(args.length ? args : [nowMs])); }
     static now() { return nowMs; }
   };
   const previousDeno = globalThis.Deno;
   const historyUpdates = [];
+  const historyReadDates = [];
   const telegramMessages = [];
   let historyStatus = 'pending';
   let countCalls = 0;
@@ -151,7 +158,7 @@ test('hourly digest retry sends a pending row after the configured hour and skip
       SUPABASE_URL: 'https://db.example.test',
       SERVICE_KEY: 'fixture-service-key',
       CRON_SECRET: 'fixture-cron-secret',
-      DIGEST_HOUR_UTC: '06',
+      DIGEST_HOUR_MSK: '09',
       TELEGRAM_BOT_TOKEN: 'fixture-token',
       TELEGRAM_CHAT_ID: 'fixture-chat',
     })[key] },
@@ -165,10 +172,11 @@ test('hourly digest retry sends a pending row after the configured hour and skip
     }
     if (url.hostname !== 'db.example.test') throw new Error(`Unexpected fetch host: ${url.hostname}`);
     if (url.pathname.endsWith('/cached_assets')) {
+      const updatedAt = new NativeDate(nowMs - 30 * 60 * 1000).toISOString();
       return Response.json([
-        { id: 'brent', price: '70.25', updated_at: '2026-11-25T07:00:00.000Z', as_of: '2026-11-25' },
-        { id: 'gold', price: '4000', updated_at: '2026-11-25T07:00:00.000Z', as_of: '2026-11-25' },
-        { id: 'sp500', price: '6800', updated_at: '2026-11-25T07:00:00.000Z', as_of: '2026-11-24' },
+        { id: 'brent', price: '70.25', updated_at: updatedAt, as_of: '2026-11-25' },
+        { id: 'gold', price: '4000', updated_at: updatedAt, as_of: '2026-11-25' },
+        { id: 'sp500', price: '6800', updated_at: updatedAt, as_of: '2026-11-25' },
       ]);
     }
     if (url.pathname.endsWith('/monitor_history')) {
@@ -178,8 +186,12 @@ test('hourly digest retry sends a pending row after the configured hour and skip
         historyStatus = update.delivery_status;
         return new Response(null, { status: 204 });
       }
-      if ((!init.method || init.method === 'GET') && url.searchParams.get('digest_date') === 'eq.2026-11-25') {
-        return Response.json([{ id: 17, delivery_status: historyStatus }]);
+      if ((!init.method || init.method === 'GET') && url.searchParams.get('select') === 'id,delivery_status') {
+        const digestDate = url.searchParams.get('digest_date')?.replace(/^eq\./, '');
+        historyReadDates.push(digestDate);
+        if (digestDate === '2026-11-26') {
+          return Response.json([{ id: 17, delivery_status: historyStatus }]);
+        }
       }
       return Response.json([]);
     }
@@ -191,26 +203,42 @@ test('hourly digest retry sends a pending row after the configured hour and skip
   });
 
   try {
-    await import(`${pathToFileURL(bundle).href}?retry-test`);
+    await import(`${pathToFileURL(bundle).href}?moscow-digest-test`);
     const handler = globalThis.__scheduledJobRunnerHandler;
     const request = () => new Request('https://edge.example.test/functions/v1/scheduled-job-runner', {
       method: 'POST',
       headers: { 'x-cron-secret': 'fixture-cron-secret' },
     });
 
-    const retryResponse = await handler(request());
-    assert.equal(retryResponse.status, 200);
-    assert.deepEqual(await retryResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
-    assert.equal(telegramMessages.length, 1, 'pending history retries delivery at 07:12 UTC');
+    const beforeDigestHour = await handler(request());
+    assert.equal(beforeDigestHour.status, 200);
+    assert.deepEqual(await beforeDigestHour.json(), { status: 'fresh' });
+    assert.equal(telegramMessages.length, 0, '00:12 MSK must not send or retry a new-date digest');
+    assert.deepEqual(historyReadDates, [], 'the daily row is not read before the MSK digest hour');
+
+    nowMs = NativeDate.parse('2026-11-26T06:12:00.000Z'); // 09:12 MSK
+    const scheduledResponse = await handler(request());
+    assert.equal(scheduledResponse.status, 200);
+    assert.deepEqual(await scheduledResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
+    assert.deepEqual(historyReadDates, ['2026-11-26'], '09:12 MSK uses the current Moscow date');
+    assert.equal(telegramMessages.length, 1, 'the digest is sent at 09:12 MSK');
+    assert.match(telegramMessages[0], /Market Pulse — 26\.11/);
     assert.match(telegramMessages[0], /первый отчёт — сравнение за 24ч появится завтра/);
     assert.deepEqual(historyUpdates.map((update) => update.delivery_status), ['pending', 'sent']);
 
-    nowMs = NativeDate.parse('2026-11-25T08:12:00.000Z');
+    historyStatus = 'pending';
+    nowMs = NativeDate.parse('2026-11-26T07:12:00.000Z'); // 10:12 MSK; next hourly retry
+    const retryResponse = await handler(request());
+    assert.equal(retryResponse.status, 200);
+    assert.deepEqual(await retryResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
+    assert.equal(telegramMessages.length, 2, 'a pending row is retried on the next hourly run that same MSK day');
+
+    nowMs = NativeDate.parse('2026-11-26T08:12:00.000Z'); // 11:12 MSK
     const sentResponse = await handler(request());
     assert.equal(sentResponse.status, 200);
     assert.deepEqual(await sentResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
-    assert.equal(telegramMessages.length, 1, 'sent history must not be delivered twice');
-    assert.equal(countCalls, 1, 'sent history returns before another digest read/count');
+    assert.equal(telegramMessages.length, 2, 'sent history must not be delivered twice');
+    assert.equal(countCalls, 2, 'sent history returns before another previous-digest read/count');
   } finally {
     delete globalThis.__scheduledJobRunnerHandler;
     if (previousDeno === undefined) delete globalThis.Deno;

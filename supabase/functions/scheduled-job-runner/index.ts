@@ -2,6 +2,7 @@
 import {
   evaluateAsset,
   moscowDateKey,
+  moscowHourKey,
   overallVerdict,
   percentChange,
   shouldWarnForStagnation,
@@ -100,12 +101,12 @@ function json(body: AnyRecord, status = 200): Response {
   return Response.json(body, { status });
 }
 
-function digestHourUtc(): number {
-  const configured = Deno.env.get("DIGEST_HOUR_UTC")?.trim();
-  if (!configured) return 6;
-  if (!/^\d{1,2}$/.test(configured)) throw new HttpError("Invalid DIGEST_HOUR_UTC", 500);
+function digestHourMsk(): number {
+  const configured = Deno.env.get("DIGEST_HOUR_MSK")?.trim();
+  if (!configured) return 9;
+  if (!/^\d{1,2}$/.test(configured)) throw new HttpError("Invalid DIGEST_HOUR_MSK", 500);
   const hour = Number(configured);
-  if (hour < 0 || hour > 23) throw new HttpError("Invalid DIGEST_HOUR_UTC", 500);
+  if (hour < 0 || hour > 23) throw new HttpError("Invalid DIGEST_HOUR_MSK", 500);
   return hour;
 }
 
@@ -334,7 +335,7 @@ Deno.serve(async (req) => {
   try {
     const now = new Date();
     const nowMs = now.getTime();
-    const configuredDigestHour = digestHourUtc();
+    const configuredDigestHourMsk = digestHourMsk();
     const assets = await restJson(
       "cached_assets?select=id,price,updated_at,as_of&id=in.(brent,sp500,gold)",
     ) as CachedAsset[];
@@ -362,7 +363,7 @@ Deno.serve(async (req) => {
     }
 
     // Retry the daily digest on each later hourly invocation until today's row is marked sent.
-    if (now.getUTCHours() >= configuredDigestHour) {
+    if (Number(moscowHourKey(now)) >= configuredDigestHourMsk) {
       const today = moscowDateKey(now);
       await runDailyDigest(now, today, rows, verdicts);
       return json({ status: "digest_sent", overall_status: overallVerdict(verdicts) });

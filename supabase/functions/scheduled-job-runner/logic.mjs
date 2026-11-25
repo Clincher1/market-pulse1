@@ -216,6 +216,10 @@ export function moscowDateKey(date = new Date()) {
   return dateKey(parts.year, parts.month, parts.day);
 }
 
+export function moscowHourKey(date = new Date()) {
+  return Number(zonedParts(date, 'Europe/Moscow').hour);
+}
+
 export function parsePrice(value) {
   if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? value : null;
   if (typeof value !== 'string') return null;
