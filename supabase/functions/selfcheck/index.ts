@@ -6,6 +6,7 @@ import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, q
 import { politenessVerdict } from "../_shared/price-sources.ts";
 import { registryVerdict } from "../_shared/slots.ts";
 import { findForeignResourceHosts } from "../_shared/loaded-resource-hosts.mjs";
+import { backupTransitionNotification, getLatestBackupStatus } from "../_shared/backup-age.mjs";
 import {
   calculateTensionIndex,
   selectTensionNews,
@@ -432,15 +433,24 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
   return 'дайджест недели добавлен в Linear';
 }
 
-async function notifyTelegramFailure(results: Record<string, Check>, checkedAt: string): Promise<void> {
-  const failed = Object.entries(results).filter(([, value]) => !value.ok);
-  if (failed.length === 0) return;
+async function notifyTelegramFailure(
+  results: Record<string, Check>,
+  checkedAt: string,
+  previousChecks: Record<string, Check>,
+): Promise<void> {
+  const failed = Object.entries(results).filter(([name, value]) => name !== 'backup_history' && !value.ok);
+  const backupTransition = backupTransitionNotification(previousChecks.backup_history, results.backup_history);
+  if (failed.length === 0 && !backupTransition) return;
 
   const token = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? '';
   const chatId = Deno.env.get('TELEGRAM_CHAT_ID') ?? '';
   const lines = failed.map(([name, value]) => `• ${name}: ${value.detail}`);
+  if (backupTransition) lines.push(`• ${backupTransition}`);
   const maxLength = 3900;
-  let text = `🚨 Самопроверка Market Pulse завершилась с ошибками (${checkedAt}):\n${lines.join('\n')}`;
+  const heading = results.backup_history?.ok && previousChecks.backup_history?.ok === false && failed.length === 0
+    ? '✅ Резервная копия Market Pulse восстановлена'
+    : '🚨 Самопроверка Market Pulse завершилась с ошибками';
+  let text = `${heading} (${checkedAt}):\n${lines.join('\n')}`;
   if (text.length > maxLength) text = `${text.slice(0, maxLength - 24)}\n… список сокращён`;
 
   try {
@@ -563,6 +573,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     latest = [];
   }
   const lastAge = hoursAgo(String(latest[0]?.checked_at ?? ''));
+  const previousChecks = (latest[0]?.checks ?? {}) as Record<string, Check>;
 
   // A public caller gets the stored report back instead of a fresh run when the
   // previous check is recent: the button cannot be used to hammer the database.
@@ -586,6 +597,11 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
   const results: Record<string, Check> = {};
 
   for (const [name, value] of await Promise.all([
+    check('backup_history', async () => {
+      const backup = await getLatestBackupStatus();
+      return { ok: backup.ok, detail: backup.detail };
+    }),
+
     // 1. The index, recomputed here from raw rows, must match what is published.
     check('tension_matches', async () => {
       const published = (await restJson(
@@ -1342,9 +1358,10 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     }, 500);
   }
 
-  // Notify only red results, after site_health has been written. Telegram is
+  // Notify red results after writing site_health. Backup failures notify only
+  // on a state transition; recovery is one informational message. Telegram is
   // best-effort: delivery trouble must never change the recorded selfcheck.
-  if (!ok) await notifyTelegramFailure(results, checkedAt);
+  await notifyTelegramFailure(results, checkedAt, previousChecks);
 
   // One nudge, then the paperwork. The report is already written by now, so
   // nothing below is allowed to fail the run: a broken Linear or a missing view
