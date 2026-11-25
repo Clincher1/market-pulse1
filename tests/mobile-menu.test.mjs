@@ -65,8 +65,9 @@ test('header keeps primary routes in a compact top rail and secondary routes in 
     assert.ok(more, 'the secondary menu remains available');
     const moreLinks = [...more.querySelectorAll('.desktop-navigation__menu-item')];
     assert.deepEqual(moreLinks.map((link) => link.getAttribute('href')), [
-      '/memory', '/guide', '/about', '/status',
+      '/guide', '/about', '/status',
     ]);
+    assert.equal(moreLinks.some((link) => link.getAttribute('href') === '/memory'), false);
     assert.equal(moreLinks.find((link) => link.href.endsWith('/guide')).textContent.includes('Как читать сайт'), true);
     assert.equal(moreLinks.find((link) => link.href.endsWith('/about')).textContent.includes('О проекте'), true);
     assert.equal(moreLinks.find((link) => link.href.endsWith('/status')).textContent.includes('Состояние системы'), true);

@@ -22,8 +22,10 @@ test('secondary destinations are kept in More while existing primary pills stay 
   const header = readFileSync('src/components/Header.tsx', 'utf8');
   const routes = readFileSync('src/lib/routes.ts', 'utf8');
   assert.match(header, /desktopPrimaryThemeIds: SectionThemeId\[\] = \['brief', 'passport', 'russia', 'global', 'news'\]/);
-  assert.match(header, /'memory',[\s\S]*'guide',[\s\S]*'about',[\s\S]*'status'/);
+  assert.match(header, /'guide',[\s\S]*'about',[\s\S]*'status'/);
+  assert.doesNotMatch(header, /'memory'/);
   assert.match(header, /desktopMoreLinks = navLinks\.filter/);
   assert.match(header, /desktop-navigation__menu-title">\{link\.fullLabel\}/);
-  for (const path of ['/memory', '/guide', '/about', '/status']) assert.ok(routes.includes(`'${path}'`));
+  for (const path of ['/guide', '/about', '/status']) assert.ok(routes.includes(`'${path}'`));
+  assert.ok(routes.includes("'/memory'"), 'the legacy route remains configured separately from navigation');
 });
