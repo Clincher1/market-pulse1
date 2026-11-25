@@ -426,6 +426,40 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
   return 'дайджест недели добавлен в Linear';
 }
 
+async function notifyTelegramFailure(results: Record<string, Check>, checkedAt: string): Promise<void> {
+  const failed = Object.entries(results).filter(([, value]) => !value.ok);
+  if (failed.length === 0) return;
+
+  const token = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? '';
+  const chatId = Deno.env.get('TELEGRAM_CHAT_ID') ?? '';
+  const lines = failed.map(([name, value]) => `• ${name}: ${value.detail}`);
+  const maxLength = 3900;
+  let text = `🚨 Самопроверка Market Pulse завершилась с ошибками (${checkedAt}):\n${lines.join('\n')}`;
+  if (text.length > maxLength) text = `${text.slice(0, maxLength - 24)}\n… список сокращён`;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const responseText = await response.text();
+    let body: AnyRecord | null = null;
+    try {
+      body = JSON.parse(responseText) as AnyRecord;
+    } catch {
+      // A non-JSON response still gets logged in full below.
+    }
+    if (!response.ok || body?.ok !== true) {
+      console.error('[selfcheck] Telegram delivery failed; full Telegram response follows:', responseText || '(empty response body)');
+    }
+  } catch {
+    // Fetch errors may include the request URL; it contains the bot token.
+    console.error('[selfcheck] Telegram request failed before an HTTP response was received.');
+  }
+}
+
 serveWithErrorReporting("selfcheck", async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 
@@ -1306,6 +1340,10 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       checks: results,
     }, 500);
   }
+
+  // Notify only red results, after site_health has been written. Telegram is
+  // best-effort: delivery trouble must never change the recorded selfcheck.
+  if (!ok) await notifyTelegramFailure(results, checkedAt);
 
   // One nudge, then the paperwork. The report is already written by now, so
   // nothing below is allowed to fail the run: a broken Linear or a missing view

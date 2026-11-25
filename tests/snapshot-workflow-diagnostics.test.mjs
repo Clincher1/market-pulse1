@@ -78,7 +78,10 @@ test('four ordered stages retain read-only GITHUB_TOKEN and success gating', () 
   }
   assert.match(workflow, /\npermissions:\n  contents: read\n/);
   assert.match(workflow, /\n    permissions:\n      contents: read\n    steps:/);
-  assert.doesNotMatch(workflow, /pull-requests: write|actions: write|write-all|--admin|continue-on-error/);
+  assert.doesNotMatch(workflow, /pull-requests: write|actions: write|write-all|--admin/);
+  const notification = step('Notify Telegram if snapshot update failed');
+  assert.match(notification, /continue-on-error: true/);
+  assert.doesNotMatch(workflow.replace(notification, ''), /continue-on-error/);
   assert.match(step(names[0]), /id: snapshot_changes/);
   for (const name of names.slice(1)) {
     assert.match(step(name), /if: steps.snapshot_changes.outputs.has_changes == 'true'/);
