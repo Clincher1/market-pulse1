@@ -182,6 +182,36 @@ test('database static export excludes the current Yahoo daily bar but retains cu
   assert.match(migration, /timestamped live observation and is intentionally allowed on the current day/);
 });
 
+test('tracked v2 RPC reproduces the live definition, grants, and comment without changing ownership', async () => {
+  const migration = await readFile(
+    new URL('../supabase/migrations/20261125181705_track_static_snapshot_v2_rpc.sql', import.meta.url),
+    'utf8',
+  );
+  assert.match(migration, /create or replace function public\.export_static_snapshot_v2\(\)/);
+  assert.match(migration, /set search_path = ''/);
+  assert.match(migration, /set row_security = on/);
+  assert.match(migration, /p\.observation_date < \(pg_catalog\.statement_timestamp\(\) at time zone 'UTC'\)::date/);
+  assert.match(migration, /'value', s\.price::text/);
+  assert.match(migration, /'priceTimestamp'/);
+  assert.match(migration, /to anon, authenticated, service_role/);
+  assert.match(migration, /comment on function public\.export_static_snapshot_v2\(\)/);
+  assert.match(migration, /create temporary table _static_snapshot_v2_definition_before/);
+  assert.match(migration, /before_definition is distinct from after_definition/);
+  assert.match(migration, /owner changed from postgres/);
+  assert.match(migration, /Ownership and the postgres -> static_snapshot_reader membership are intentionally/);
+  assert.match(migration, /clean full-history replay could not be verified/);
+  assert.match(migration, /42c033e53b941349f8126766c4048a53/);
+  assert.match(migration, /excluding pg_temp_\* and pg_toast_temp_\*/);
+  assert.match(migration, /filtered digest cannot be reconstructed/);
+  assert.match(migration, /changes grants only on this target function/);
+  assert.match(migration, /After merge, recompute/);
+  assert.match(migration, /filtered ACL digest once/);
+  assert.match(migration, /confirm it equals the baseline above/);
+  assert.doesNotMatch(migration, /alter function public\.export_static_snapshot_v2\(\) owner to/);
+  assert.doesNotMatch(migration, /revoke static_snapshot_reader from postgres/);
+  assert.doesNotMatch(migration, /static_snapshot_v2_precheck/);
+});
+
 test('workflow gates main commits on candidate checks, permits only snapshot, never force pushes', async () => {
   const workflow = await readFile(new URL('../.github/workflows/update-static-snapshot.yml', import.meta.url), 'utf8');
   assert.match(workflow, /cron: '10 6 \* \* \*'/);
