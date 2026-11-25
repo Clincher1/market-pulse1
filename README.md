@@ -135,3 +135,36 @@ selfcheck. Функция отправляет сообщение только �
 `telegram_test`: придёт отдельное тестовое сообщение с временем UTC, запись `site_health`
 не меняется. Без этого флажка watchdog отправляет сообщение только при устаревшей или
 отсутствующей зелёной записи. Успешные проверки не отправляют heartbeat-сообщения.
+
+## Runbook: монитор и отчёты
+
+- Edge Function `scheduled-job-runner` вызывается каждый час в `:12` UTC; cron использует `net.http_post` асинхронно.
+- Ежедневный Telegram-дайджест отправляется при первом запуске в `DIGEST_HOUR_UTC` (по умолчанию `06`, то есть обычно в 06:12 UTC).
+- Для смены часа задайте секрет Edge Function `DIGEST_HOUR_UTC` числом от `00` до `23`; новые секреты токенов не нужны.
+- Проверить планировщик и недавние SQL-запуски:
+
+```sql
+select j.jobname, j.schedule, d.start_time, d.end_time, d.status, d.return_message
+from cron.job j
+left join lateral (
+  select * from cron.job_run_details r where r.jobid = j.jobid
+  order by r.start_time desc limit 5
+) d on true
+where j.jobname = 'scheduled-job-runner'
+order by d.start_time desc;
+```
+
+- `cron.job_run_details` показывает состояние SQL-вызова, а не HTTP-результат асинхронного `net.http_post`.
+- Проверить коды Edge Function и тело ответа (последние записи):
+
+```sql
+select created, status_code, timed_out, error_msg, content
+from net._http_response
+order by created desc limit 20;
+```
+
+- `200` с `{"status":"fresh"}` означает штатный часовой монитор; `digest_sent` — отчёт отправлен.
+- `401` означает отсутствующий/неверный секрет вызова; `503` — отсутствующий или некорректный Brent/временная метка.
+- `5xx` означает сбой чтения БД, записи истории или доставки Telegram (повтор Telegram выполняется один раз через 5 секунд).
+- При не-`2xx` сначала проверьте Supabase Function Logs и `net._http_response`; затем восстановите источник/доступность БД либо Telegram и повторите запрос авторизованно.
+- Не трактуйте успешный `cron.job_run_details` как доказательство успешного HTTP-ответа: проверяйте обе таблицы.
