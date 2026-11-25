@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-test('mobile menu accessible name includes its visible label and brand does not override its tagline', () => {
+test('mobile primary navigation remains in the header and the brand tagline stays descriptive', () => {
   const header = readFileSync('src/components/Header.tsx', 'utf8');
-  assert.match(header, /'Разделы — открыть меню'/);
+  assert.match(header, /aria-label="Основная навигация"/);
+  assert.match(header, /className="desktop-navigation__links"/);
+  assert.doesNotMatch(header, /mobile-quick-nav|mobile-navigation__link/);
   assert.doesNotMatch(header, /aria-label="Market Pulse — обзор"/);
 });
 
@@ -16,10 +18,12 @@ test('orbit links reset old opposing absolute edges before new positions', () =>
   assert.ok(width > 0 && width < 50, 'Both cards need a gap, not a hard-coded historical percentage');
 });
 
-test('system status stays available in footer, not in primary desktop or mobile navigation', () => {
+test('secondary destinations are kept in More while existing primary pills stay unchanged', () => {
   const header = readFileSync('src/components/Header.tsx', 'utf8');
-  const footer = readFileSync('src/components/Footer.tsx', 'utf8');
-  assert.doesNotMatch(header, /PAGE_PATHS\.status|Состояние системы|Система/);
-  assert.match(header, /activeView === 'status' \|\| mobileQuickLinks/);
-  assert.match(footer, /href="\/status"[\s\S]*?Состояние данных/);
+  const routes = readFileSync('src/lib/routes.ts', 'utf8');
+  assert.match(header, /desktopPrimaryThemeIds: SectionThemeId\[\] = \['brief', 'passport', 'russia', 'global', 'news'\]/);
+  assert.match(header, /'memory',[\s\S]*'guide',[\s\S]*'about',[\s\S]*'status'/);
+  assert.match(header, /desktopMoreLinks = navLinks\.filter/);
+  assert.match(header, /desktop-navigation__menu-title">\{link\.fullLabel\}/);
+  for (const path of ['/memory', '/guide', '/about', '/status']) assert.ok(routes.includes(`'${path}'`));
 });
