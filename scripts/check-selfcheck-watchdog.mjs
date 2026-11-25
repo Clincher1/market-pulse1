@@ -1,10 +1,13 @@
+import { backupAlertMessage, getLatestBackupStatus } from '../supabase/functions/_shared/backup-age.mjs';
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const readKey = process.env.SNAPSHOT_SUPABASE_READ_KEY;
+const githubToken = process.env.GITHUB_TOKEN;
 const outputPath = process.env.GITHUB_OUTPUT;
 const staleAfterMs = 26 * 60 * 60 * 1000;
 
-if (!supabaseUrl || !readKey || !outputPath) {
-  throw new Error('Watchdog requires its Supabase connection and GitHub output environment.');
+if (!supabaseUrl || !readKey || !githubToken || !outputPath) {
+  throw new Error('Watchdog requires its Supabase read connection, GitHub token, and GitHub output environment.');
 }
 
 const url = new URL('/rest/v1/site_health?select=checked_at&ok=eq.true&order=checked_at.desc&limit=1', supabaseUrl);
@@ -34,17 +37,22 @@ try {
 }
 if (!Array.isArray(rows)) throw new Error('Supabase site_health response had an unexpected format.');
 
-let message = '';
+const messages = [];
 if (rows.length === 0) {
-  message = 'selfcheck молчит: последняя зелёная запись отсутствует';
+  messages.push('selfcheck молчит: последняя зелёная запись отсутствует');
 } else {
   const checkedAt = Date.parse(rows[0]?.checked_at);
   if (!Number.isFinite(checkedAt)) throw new Error('Latest green site_health row has an invalid checked_at value.');
   if (Date.now() - checkedAt > staleAfterMs) {
     const dateUtc = new Date(checkedAt).toISOString();
-    message = `selfcheck молчит: последняя зелёная запись ${dateUtc} (старше 26 часов)`;
+    messages.push(`selfcheck молчит: последняя зелёная запись ${dateUtc} (старше 26 часов)`);
   }
 }
+
+const backupStatus = await getLatestBackupStatus({ token: githubToken });
+const backupMessage = backupAlertMessage(backupStatus);
+if (backupMessage) messages.push(backupMessage);
+const message = messages.join('\n');
 
 const delimiter = `WATCHDOG_ALERT_${Date.now()}`;
 const lines = [
@@ -57,5 +65,5 @@ const lines = [
 const { appendFile } = await import('node:fs/promises');
 await appendFile(outputPath, lines, 'utf8');
 
-if (message) console.log('Selfcheck watchdog found a stale or missing green record.');
-else console.log('Selfcheck watchdog found a fresh green record; no Telegram message is needed.');
+if (message) console.log('Selfcheck watchdog found a stale health record or backup.');
+else console.log('Selfcheck watchdog found fresh health and backup records; no Telegram message is needed.');
