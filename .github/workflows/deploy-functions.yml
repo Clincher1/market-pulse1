@@ -113,6 +113,20 @@ jobs:
         with:
           version: 3.1.0
 
+      - name: Sync Telegram bot credentials from repository secrets
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          secret_file="$(mktemp "$RUNNER_TEMP/telegram-secrets.XXXXXX")"
+          trap 'rm -f "$secret_file"' EXIT
+          chmod 600 "$secret_file"
+          printf 'TELEGRAM_BOT_TOKEN=%s\n' "$TELEGRAM_BOT_TOKEN" > "$secret_file"
+          printf 'TELEGRAM_CHAT_ID=%s\n' "$TELEGRAM_CHAT_ID" >> "$secret_file"
+          supabase secrets set --env-file "$secret_file" --project-ref "$SUPABASE_PROJECT_REF"
+
       # Журнал пишем в файл: без этого текст ошибки живёт только в логах
       # Actions, а они недоступны ни из закрытой сети, ни через коннектор.
       - name: Deploy all edge functions

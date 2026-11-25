@@ -2,10 +2,10 @@ name: Update static snapshot
 
 on:
   schedule:
-    - cron: '10 0 * * *'   # 03:10 МСК
-    - cron: '10 6 * * *'   # 09:10 МСК
-    - cron: '10 12 * * *'  # 15:10 МСК
-    - cron: '10 18 * * *'  # 21:10 МСК
+    - cron: '10 0 * * *'   # 00:10 UTC
+    - cron: '10 6 * * *'   # 06:10 UTC
+    - cron: '10 12 * * *'  # 12:10 UTC
+    - cron: '10 18 * * *'  # 18:10 UTC
   workflow_dispatch:
 
 permissions:
@@ -25,31 +25,45 @@ jobs:
       contents: read
     steps:
       - name: Check out current main without persisted credentials
+        id: checkout
         uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 1
           persist-credentials: false
       - name: Record base revision
+        id: record_base
         run: echo "SNAPSHOT_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v7
+        id: setup_node
         with:
           node-version: 22
           cache: npm
       - name: Fetch and atomically validate all three observations
+        id: fetch_snapshot
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SNAPSHOT_SUPABASE_READ_KEY: ${{ secrets.SNAPSHOT_SUPABASE_READ_KEY }}
         run: node scripts/update-static-snapshot.mjs
       - name: Install locked dependencies
+        id: install_dependencies
         run: npm ci
       # All checks remain before commit/push, even though App-authenticated pushes
       # may trigger downstream Actions and the Vercel Git integration.
-      - run: npm test
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run build
+      - name: Test repository
+        id: test_repository
+        run: npm test
+      - name: Type-check application
+        id: typecheck_app
+        run: npm run typecheck
+      - name: Lint repository
+        id: lint_repository
+        run: npm run lint
+      - name: Build application
+        id: build_app
+        run: npm run build
       - name: Type-check Supabase Edge Functions
+        id: typecheck_functions
         working-directory: supabase/functions
         run: npx -y deno@2 check */index.ts _shared/*.ts
       - name: Check changed files (snapshot only)
@@ -88,6 +102,7 @@ jobs:
           echo 'PASS: only data/snapshot.json changed.' | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Check main is still current
+        id: main_guard
         if: steps.snapshot_changes.outputs.has_changes == 'true'
         shell: bash
         run: |
@@ -113,6 +128,7 @@ jobs:
           echo 'PASS: main and local HEAD still match checkout base.' | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Commit validated snapshot locally
+        id: commit_snapshot
         if: steps.snapshot_changes.outputs.has_changes == 'true'
         shell: bash
         run: |
@@ -144,6 +160,7 @@ jobs:
           fi
 
       - name: Check approved snapshot App identity
+        id: app_identity
         if: steps.snapshot_changes.outputs.has_changes == 'true'
         env:
           SNAPSHOT_APP_ID: ${{ vars.SNAPSHOT_APP_ID }}
@@ -168,6 +185,7 @@ jobs:
           skip-token-revoke: 'false'
 
       - name: Push snapshot commit (approved App, no force)
+        id: push_snapshot
         if: steps.snapshot_changes.outputs.has_changes == 'true'
         env:
           SNAPSHOT_APP_TOKEN: ${{ steps.snapshot-app-token.outputs.token }}
@@ -205,3 +223,51 @@ jobs:
             echo "FAILED: push (exit $code). $reason" >> "$GITHUB_STEP_SUMMARY"
             exit "$code"
           fi
+
+      - name: Notify Telegram if snapshot update failed
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OUTCOME_CHECKOUT: ${{ steps.checkout.outcome }}
+          OUTCOME_BASE: ${{ steps.record_base.outcome }}
+          OUTCOME_SETUP_NODE: ${{ steps.setup_node.outcome }}
+          OUTCOME_FETCH: ${{ steps.fetch_snapshot.outcome }}
+          OUTCOME_INSTALL: ${{ steps.install_dependencies.outcome }}
+          OUTCOME_TEST: ${{ steps.test_repository.outcome }}
+          OUTCOME_TYPECHECK: ${{ steps.typecheck_app.outcome }}
+          OUTCOME_LINT: ${{ steps.lint_repository.outcome }}
+          OUTCOME_BUILD: ${{ steps.build_app.outcome }}
+          OUTCOME_DENO: ${{ steps.typecheck_functions.outcome }}
+          OUTCOME_CHANGED_GUARD: ${{ steps.snapshot_changes.outcome }}
+          OUTCOME_MAIN_GUARD: ${{ steps.main_guard.outcome }}
+          OUTCOME_COMMIT: ${{ steps.commit_snapshot.outcome }}
+          OUTCOME_APP_IDENTITY: ${{ steps.app_identity.outcome }}
+          OUTCOME_APP_TOKEN: ${{ steps['snapshot-app-token'].outcome }}
+          OUTCOME_PUSH: ${{ steps.push_snapshot.outcome }}
+        shell: bash
+        run: |
+          failed=()
+          [[ "$OUTCOME_CHECKOUT" == failure ]] && failed+=("checkout")
+          [[ "$OUTCOME_BASE" == failure ]] && failed+=("base revision")
+          [[ "$OUTCOME_SETUP_NODE" == failure ]] && failed+=("Node setup")
+          [[ "$OUTCOME_FETCH" == failure ]] && failed+=("fetch/validate observations")
+          [[ "$OUTCOME_INSTALL" == failure ]] && failed+=("npm ci")
+          [[ "$OUTCOME_TEST" == failure ]] && failed+=("npm test")
+          [[ "$OUTCOME_TYPECHECK" == failure ]] && failed+=("typecheck")
+          [[ "$OUTCOME_LINT" == failure ]] && failed+=("lint")
+          [[ "$OUTCOME_BUILD" == failure ]] && failed+=("build")
+          [[ "$OUTCOME_DENO" == failure ]] && failed+=("Deno typecheck")
+          [[ "$OUTCOME_CHANGED_GUARD" == failure ]] && failed+=("snapshot changed-file guard")
+          [[ "$OUTCOME_MAIN_GUARD" == failure ]] && failed+=("main revision guard")
+          [[ "$OUTCOME_COMMIT" == failure ]] && failed+=("local snapshot commit")
+          [[ "$OUTCOME_APP_IDENTITY" == failure ]] && failed+=("approved App identity")
+          [[ "$OUTCOME_APP_TOKEN" == failure ]] && failed+=("App token creation")
+          [[ "$OUTCOME_PUSH" == failure ]] && failed+=("push")
+          if ((${#failed[@]} == 0)); then
+            failed+=("step failure; inspect this run")
+          fi
+          error_summary="$(IFS=', '; echo "${failed[*]}")"
+          message="Бэкап/обновление снимка упали. Job: refresh. Краткая ошибка: ${error_summary}. Запуск: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          node scripts/send-telegram.js "$message"
