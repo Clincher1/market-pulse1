@@ -1,0 +1,41 @@
+name: Check MOEX certificate expiry
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # 06:00 UTC every Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-moex-certificate-expiry
+  cancel-in-progress: false
+
+jobs:
+  certificates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check notAfter for the MOEX chain and bundled CA certificates
+        id: expiry
+        run: bash scripts/check-moex-certificate-expiry.sh
+
+      - name: Notify Telegram about certificate warning
+        if: failure() && steps.expiry.outcome == 'failure'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CERTIFICATE_ALERT: ${{ steps.expiry.outputs.alert }}
+        run: |
+          message="Проверка сертификатов MOEX: обнаружен срок не более 30 дней или недоступная цепочка."
+          while IFS= read -r line; do
+            [[ -n "$line" ]] && message+=$'\n'"$line"
+          done <<< "$CERTIFICATE_ALERT"
+          node scripts/send-telegram.js "$message"

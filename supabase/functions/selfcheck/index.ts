@@ -5,6 +5,17 @@ import { checkChangeAgainstSeries, checkNameMatchesInstrument } from "../_shared
 import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, quoteLagVerdict } from "../_shared/data-contract.ts";
 import { politenessVerdict } from "../_shared/price-sources.ts";
 import { registryVerdict } from "../_shared/slots.ts";
+import { findForeignResourceHosts } from "../_shared/loaded-resource-hosts.mjs";
+import { backupTransitionNotification, getLatestBackupStatus } from "../_shared/backup-age.mjs";
+import {
+  calculateTensionIndex,
+  selectTensionNews,
+  tensionNewsQueryParams,
+  TENSION_BLOCKED_SOURCES,
+  TENSION_MIN_CONFIDENCE as MIN_CONFIDENCE,
+  TENSION_MIN_IMPORTANCE as MIN_IMPORTANCE,
+  TENSION_MIN_NEWS,
+} from "../_shared/tension-sample.mjs";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -40,9 +51,6 @@ const SITE = (Deno.env.get('SITE_URL') ?? 'https://market-pulse1-eta.vercel.app'
   .replace(/\/+$/, '');
 const MANUAL_COOLDOWN_MIN = 5;
 
-const MIN_IMPORTANCE = 3;
-const MIN_CONFIDENCE = 0.5;
-const BLOCKED_SOURCES = new Set(['GDELT (Global)', 'GDELT']);
 const FRESH_NEWS_HOURS = 6;
 const FRESH_ASSETS_MINUTES = 45;
 const FRESH_FEED_HOURS = 24;
@@ -425,6 +433,49 @@ async function weeklyDigest(ctx: LinearCtx | null, now: Date): Promise<string> {
   return 'дайджест недели добавлен в Linear';
 }
 
+async function notifyTelegramFailure(
+  results: Record<string, Check>,
+  checkedAt: string,
+  previousChecks: Record<string, Check>,
+): Promise<void> {
+  const failed = Object.entries(results).filter(([name, value]) => name !== 'backup_history' && !value.ok);
+  const backupTransition = backupTransitionNotification(previousChecks.backup_history, results.backup_history);
+  if (failed.length === 0 && !backupTransition) return;
+
+  const token = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? '';
+  const chatId = Deno.env.get('TELEGRAM_CHAT_ID') ?? '';
+  const lines = failed.map(([name, value]) => `• ${name}: ${value.detail}`);
+  if (backupTransition) lines.push(`• ${backupTransition}`);
+  const maxLength = 3900;
+  const heading = results.backup_history?.ok && previousChecks.backup_history?.ok === false && failed.length === 0
+    ? '✅ Резервная копия Market Pulse восстановлена'
+    : '🚨 Самопроверка Market Pulse завершилась с ошибками';
+  let text = `${heading} (${checkedAt}):\n${lines.join('\n')}`;
+  if (text.length > maxLength) text = `${text.slice(0, maxLength - 24)}\n… список сокращён`;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const responseText = await response.text();
+    let body: AnyRecord | null = null;
+    try {
+      body = JSON.parse(responseText) as AnyRecord;
+    } catch {
+      // A non-JSON response still gets logged in full below.
+    }
+    if (!response.ok || body?.ok !== true) {
+      console.error('[selfcheck] Telegram delivery failed; full Telegram response follows:', responseText || '(empty response body)');
+    }
+  } catch {
+    // Fetch errors may include the request URL; it contains the bot token.
+    console.error('[selfcheck] Telegram request failed before an HTTP response was received.');
+  }
+}
+
 serveWithErrorReporting("selfcheck", async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 
@@ -522,6 +573,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     latest = [];
   }
   const lastAge = hoursAgo(String(latest[0]?.checked_at ?? ''));
+  const previousChecks = (latest[0]?.checks ?? {}) as Record<string, Check>;
 
   // A public caller gets the stored report back instead of a fresh run when the
   // previous check is recent: the button cannot be used to hammer the database.
@@ -545,32 +597,32 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
   const results: Record<string, Check> = {};
 
   for (const [name, value] of await Promise.all([
+    check('backup_history', async () => {
+      const backup = await getLatestBackupStatus();
+      return { ok: backup.ok, detail: backup.detail };
+    }),
+
     // 1. The index, recomputed here from raw rows, must match what is published.
     check('tension_matches', async () => {
-      const news = (await restJson(
-        `cached_news?select=sentiment,importance,confidence,source,published_at` +
-          `&published_at=gte.${encodeURIComponent(since)}&limit=500`,
+      const published = (await restJson(
+        'cached_tension?select=value,news_count,updated_at&id=eq.1',
       )) as AnyRecord[];
-      const rows = news.filter(
-        (r) =>
-          Number(r.importance) >= MIN_IMPORTANCE &&
-          Number(r.confidence) >= MIN_CONFIDENCE &&
-          !BLOCKED_SOURCES.has(String(r.source ?? '')),
-      );
-      let negative = 0;
-      let total = 0;
-      for (const row of rows) {
-        const weight = Number(row.importance) * Number(row.confidence);
-        total += weight;
-        negative += Math.max(0, -Number(row.sentiment)) * weight;
+      const writerRunAt = new Date(String(published[0]?.updated_at ?? ''));
+      if (!Number.isFinite(writerRunAt.getTime())) {
+        throw new Error('cached_tension.updated_at is unavailable');
       }
-      const computed = total > 0 ? Math.round((negative / total) * 100) : 0;
-      const published = (await restJson('cached_tension?select=value,news_count&id=eq.1')) as AnyRecord[];
+      const params = tensionNewsQueryParams(writerRunAt);
+      const rawNews = (await restJson(`cached_news?${params.toString()}`)) as AnyRecord[];
+      const rows = selectTensionNews(rawNews);
+      const { index: computed } = calculateTensionIndex(rows);
       const value = Number(published[0]?.value ?? 0);
       const diff = Math.abs(value - computed);
+      const sampleIsPublishable = rows.length >= TENSION_MIN_NEWS;
       return {
-        ok: diff <= TENSION_TOLERANCE,
-        detail: `опубликовано ${value}, пересчитано ${computed}, расхождение ${diff}, выборка ${rows.length}`,
+        ok: sampleIsPublishable && diff <= TENSION_TOLERANCE,
+        detail: sampleIsPublishable
+          ? `опубликовано ${value}, пересчитано ${computed}, расхождение ${diff}, выборка ${rows.length}`
+          : `не хватает квалифицированных публикаций для пересчёта: ${rows.length} из ${TENSION_MIN_NEWS}`,
       };
     }),
 
@@ -595,7 +647,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         (r) =>
           Number(r.importance) >= MIN_IMPORTANCE &&
           Number(r.confidence) >= MIN_CONFIDENCE &&
-          !BLOCKED_SOURCES.has(String(r.source ?? '')),
+          !TENSION_BLOCKED_SOURCES.includes(String(r.source ?? '')),
       ).length;
       return { ok: n >= MIN_SAMPLE, detail: `подходящих материалов ${n}` };
     }),
@@ -1050,19 +1102,12 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
 
     check('no_third_party', async () => {
       const html = await (await fetch(SITE, { signal: AbortSignal.timeout(20000) })).text();
-      const hosts = [...new Set(
-        [...html.matchAll(/https?:\/\/([a-zA-Z0-9._-]+)/g)].map((m) => String(m[1]).toLowerCase()),
-      )];
-      // w3.org is an XML namespace in inline markup, not a request.
-      // Свой домен берётся из SITE: на новом хостинге проверка не должна
-      // объявлять чужой адрес «своим» по старой памяти.
-      const allowed = [new URL(SITE).hostname, 'supabase.co', 'w3.org'];
-      const foreign = hosts.filter((h) => !allowed.some((a) => h === a || h.endsWith(`.${a}`)));
+      const foreign = findForeignResourceHosts(html, SITE);
       return {
         ok: foreign.length === 0,
         detail: foreign.length
-          ? `в разметке чужие домены: ${foreign.join(', ')}`
-          : `в разметке только свои домены (${hosts.join(', ')})`,
+          ? `загружаемые ресурсы или inline-стили обращаются к чужим доменам: ${foreign.join(', ')}`
+          : 'в загружаемых ресурсах и inline-стилях чужих доменов нет',
       };
     }),
 
@@ -1312,6 +1357,11 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       checks: results,
     }, 500);
   }
+
+  // Notify red results after writing site_health. Backup failures notify only
+  // on a state transition; recovery is one informational message. Telegram is
+  // best-effort: delivery trouble must never change the recorded selfcheck.
+  await notifyTelegramFailure(results, checkedAt, previousChecks);
 
   // One nudge, then the paperwork. The report is already written by now, so
   // nothing below is allowed to fail the run: a broken Linear or a missing view

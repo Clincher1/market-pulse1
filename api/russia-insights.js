@@ -96,10 +96,108 @@ function decodeBuffer(buffer, contentType = '') {
  */
 const runOnMarketHost = hostQueue({ limit: 2 });
 const runOnFeedHost = hostQueue({ limit: 2 });
+const moexDiagnosticsByError = new WeakMap();
 
-async function timedFetch(url, init, timeoutMs) {
+function diagnosticText(value) {
+  return String(value ?? '').split(/\s+/).map((part) => {
+    const httpsIndex = part.indexOf('https://');
+    const httpIndex = part.indexOf('http://');
+    const startsAt = [httpsIndex, httpIndex].filter((index) => index >= 0).sort((a, b) => a - b)[0];
+    if (startsAt === undefined) return part;
+    const prefix = part.slice(0, startsAt);
+    let url = part.slice(startsAt);
+    const trailing = `.,;:)]}'\"`;
+    while (url && trailing.includes(url.at(-1))) url = url.slice(0, -1);
+    try {
+      const parsed = new URL(url);
+      return `${prefix}${parsed.origin}${parsed.pathname}`;
+    } catch {
+      return `${prefix}[redacted-url]`;
+    }
+  }).join(' ').slice(0, 180).replace(/\b(authorization|cookie|token|api[_-]?key|password)\s*[:=]\s*\S+/gi, '$1=[redacted]');
+}
+
+function diagnosticCode(error) {
+  let cause = error?.cause;
+  while (cause) {
+    if (cause.code !== undefined && cause.code !== null) return diagnosticText(cause.code);
+    if (!cause.cause) return diagnosticText(cause.message ?? cause);
+    cause = cause.cause;
+  }
+  return diagnosticText(error?.code ?? error?.message ?? error ?? 'unknown');
+}
+
+function recordMoexDiagnostics(url, error, elapsedMs) {
+  if (!error || (typeof error !== 'object' && typeof error !== 'function')) return;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== 'iss.moex.com') return;
+    moexDiagnosticsByError.set(error, {
+      code: error.httpStatus ? `HTTP_${error.httpStatus}` : diagnosticCode(error),
+      httpStatus: error.httpStatus ?? null,
+      elapsedMs,
+      endpoint: parsed.pathname,
+    });
+  } catch {
+    // Diagnostics must never change request behavior.
+  }
+}
+
+function moexFailureDiagnostics(error, endpoint, elapsedMs) {
+  return moexDiagnosticsByError.get(error) ?? {
+    code: error?.httpStatus ? `HTTP_${error.httpStatus}` : diagnosticCode(error),
+    httpStatus: error?.httpStatus ?? null,
+    elapsedMs,
+    endpoint,
+  };
+}
+
+function errorLogDetails(error, depth = 0) {
+  if (error instanceof Error) {
+    const details = { name: error.name, message: error.message };
+    for (const key of ['code', 'errno', 'syscall', 'hostname', 'address', 'port']) {
+      if (error[key] !== undefined) details[key] = error[key];
+    }
+    if (error.cause !== undefined && depth < 3) {
+      details.cause = errorLogDetails(error.cause, depth + 1);
+    }
+    return details;
+  }
+  if (error && typeof error === 'object') {
+    const details = {};
+    for (const key of ['name', 'message', 'code', 'errno', 'syscall', 'hostname', 'address', 'port']) {
+      if (error[key] !== undefined) details[key] = error[key];
+    }
+    if (error.cause !== undefined && depth < 3) {
+      details.cause = errorLogDetails(error.cause, depth + 1);
+    }
+    return details;
+  }
+  return { message: String(error) };
+}
+
+function logFetchFailure(url, init, attempt, startedAt, error) {
+  let endpoint = url;
+  try {
+    const parsed = new URL(url);
+    endpoint = `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    // Keep the original URL only when it cannot be parsed.
+  }
+  console.error('[russia-insights] upstream fetch failed', JSON.stringify({
+    endpoint,
+    method: init?.method ?? 'GET',
+    attempt,
+    elapsedMs: Date.now() - startedAt,
+    httpStatus: error?.httpStatus ?? null,
+    error: errorLogDetails(error),
+  }));
+}
+
+async function timedFetch(url, init, timeoutMs, attempt = 1) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
     if (!response.ok) {
@@ -108,10 +206,15 @@ async function timedFetch(url, init, timeoutMs) {
       const header = response.headers.get('retry-after');
       const seconds = header ? Number(header) : Number.NaN;
       const error = new Error(`HTTP ${response.status}${header ? ` retry-after=${header}` : ''}`);
+      error.httpStatus = response.status;
       if (Number.isFinite(seconds) && seconds > 0) error.retryAfterMs = seconds * 1000;
       throw error;
     }
     return response;
+  } catch (error) {
+    recordMoexDiagnostics(url, error, Date.now() - startedAt);
+    logFetchFailure(url, init, attempt, startedAt, error);
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -120,6 +223,7 @@ async function timedFetch(url, init, timeoutMs) {
 async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS, retryTimeouts = true) {
   // Один повтор на таймаут или сетевой сбой: источник на секунду задумался —
   // это не повод терять индикатор на весь час.
+  let attempt = 0;
   return withRetry(async () => {
     const response = await timedFetch(
       url,
@@ -130,6 +234,7 @@ async function fetchWithTimeout(url, parseResponse, timeoutMs = TIMEOUT_MS, retr
         },
       },
       timeoutMs,
+      ++attempt,
     );
     return parseResponse(response);
   }, { retryTimeouts });
@@ -156,6 +261,7 @@ async function fetchJson(url) {
  * ставка — только через DailyInfo.asmx, поэтому нужен отдельный вызов.
  */
 async function fetchTextPost(url, body, soapAction) {
+  let attempt = 0;
   return withRetry(async () => {
     const response = await timedFetch(
       url,
@@ -170,6 +276,7 @@ async function fetchTextPost(url, body, soapAction) {
         body,
       },
       SOAP_TIMEOUT_MS,
+      ++attempt,
     );
     const buffer = await response.arrayBuffer();
     return decodeBuffer(buffer, response.headers.get('content-type') || '');
@@ -874,14 +981,34 @@ export default async function handler(req, res) {
   // как очередь по хосту успеет их придержать.
   const marketTasks = [
     ...CBR_CURRENCIES.map((currency) => ({ host: 'www.cbr.ru', run: () => fetchCbrIndicator(currency) })),
-    { host: 'iss.moex.com', run: () => fetchMoexIndex('IMOEX', 'IMOEX', 'Индекс МосБиржи') },
-    { host: 'iss.moex.com', run: () => fetchMoexIndex('RGBI', 'RGBI', 'Индекс гособлигаций') },
-    { host: 'iss.moex.com', run: () => fetchMoexCny() },
+    {
+      host: 'iss.moex.com',
+      diagnosticEndpoint: '/iss/engines/stock/markets/index/securities/IMOEX.json',
+      run: () => fetchMoexIndex('IMOEX', 'IMOEX', 'Индекс МосБиржи'),
+    },
+    {
+      host: 'iss.moex.com',
+      diagnosticEndpoint: '/iss/engines/stock/markets/index/securities/RGBI.json',
+      run: () => fetchMoexIndex('RGBI', 'RGBI', 'Индекс гособлигаций'),
+    },
+    {
+      host: 'iss.moex.com',
+      diagnosticEndpoint: '/iss/engines/currency/markets/selt/securities/CNYRUB_TOM.json',
+      run: () => fetchMoexCny(),
+    },
     { host: 'www.cbr.ru', run: () => fetchCbrKeyRate() },
     { host: 'www.cbr.ru', run: () => fetchRuonia() },
     { host: 'www.cbr.ru', run: () => fetchReserves() },
-    { host: 'iss.moex.com', run: () => fetchMoexOfz10y() },
-    { host: 'iss.moex.com', run: () => fetchMoexGold() },
+    {
+      host: 'iss.moex.com',
+      diagnosticEndpoint: '/iss/engines/stock/zcyc.json',
+      run: () => fetchMoexOfz10y(),
+    },
+    {
+      host: 'iss.moex.com',
+      diagnosticEndpoint: '/iss/engines/currency/markets/selt/securities/GLDRUB_TOM.json',
+      run: () => fetchMoexGold(),
+    },
     { host: 'www.cbr.ru', run: () => fetchInflation() },
   ];
   const marketLabels = [
@@ -905,7 +1032,13 @@ export default async function handler(req, res) {
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const [marketResults, rssResults] = await Promise.all([
     Promise.allSettled(
-      marketTasks.map((task) => withinDeadline(runOnMarketHost(task.host, task.run), deadline)),
+      marketTasks.map((task) => withinDeadline(
+        runOnMarketHost(task.host, () => {
+          if (task.host === 'iss.moex.com') task.startedAt = Date.now();
+          return task.run();
+        }),
+        deadline,
+      )),
     ),
     Promise.allSettled(
       RSS_SOURCES.map((source) =>
@@ -915,9 +1048,21 @@ export default async function handler(req, res) {
   ]);
 
   const markets = [];
+  const diagnostics = {};
   marketResults.forEach((result, index) => {
-    if (result.status === 'fulfilled') markets.push(result.value);
-    else errors.push(`${marketLabels[index]}: ${result.reason?.message || 'недоступно'}`);
+    if (result.status === 'fulfilled') {
+      markets.push(result.value);
+    } else {
+      errors.push(`${marketLabels[index]}: ${result.reason?.message || 'недоступно'}`);
+      const task = marketTasks[index];
+      if (task.host === 'iss.moex.com') {
+        diagnostics[marketLabels[index]] = moexFailureDiagnostics(
+          result.reason,
+          task.diagnosticEndpoint,
+          task.startedAt === undefined ? null : Date.now() - task.startedAt,
+        );
+      }
+    }
   });
 
   const headlinesRaw = settledValues(
@@ -956,6 +1101,7 @@ export default async function handler(req, res) {
     markets,
     headlines,
     errors,
+    ...(Object.keys(diagnostics).length ? { diagnostics } : {}),
     notes: [
       'Курсы ЦБ являются официальными дневными значениями, а не биржевыми котировками в реальном времени.',
       'Значения Мосбиржи получены из публичного ISS и могут быть задержаны; рядом с индикатором показано время источника.',

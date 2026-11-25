@@ -6,9 +6,11 @@
       "maxDuration": 30
     },
     "api/russia-insights.js": {
+      "includeFiles": "certs/moex-ca-bundle.pem",
       "maxDuration": 30
     },
     "api/russia-history.js": {
+      "includeFiles": "certs/moex-ca-bundle.pem",
       "maxDuration": 30
     },
     "api/telegram-support.js": {

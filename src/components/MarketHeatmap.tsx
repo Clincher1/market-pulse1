@@ -347,6 +347,7 @@ function HeatTile({
   asset,
   horizonId,
   paletteId,
+  requestTimeMs,
   isFallback = false,
   isSelected = false,
   onSelect,
@@ -354,6 +355,7 @@ function HeatTile({
   asset: AssetData;
   horizonId: HorizonId;
   paletteId: PaletteId;
+  requestTimeMs: number | null;
   isFallback?: boolean;
   isSelected?: boolean;
   onSelect: (id: string) => void;
@@ -373,6 +375,9 @@ function HeatTile({
       : TrendingDown;
   const observed = observationLabel(asset.asOf);
   const asOf = moscowClock(asset.updatedAt);
+  const updatedAtMs = asset.updatedAt ? Date.parse(asset.updatedAt) : Number.NaN;
+  const isBrentStale = asset.id === "brent" && requestTimeMs !== null &&
+    (!Number.isFinite(updatedAtMs) || requestTimeMs - updatedAtMs > 15 * 60 * 1000);
   const provider = asset.sourceLabel || ASSET_SOURCE_META[asset.id]?.provider || '';
   const isYahooDaily = (asset.id === 'sp500' || asset.id === 'brent') && /yahoo finance/i.test(provider);
   const yahooLag = isYahooDaily ? observationLagLabel(asset.asOf) : '';
@@ -423,10 +428,21 @@ function HeatTile({
           <span className="text-sm font-extrabold tracking-wide">
             {asset.name}
           </span>
-          <DirectionIcon
-            className="h-4 w-4 shrink-0 opacity-90"
-            aria-hidden="true"
-          />
+          <div className="flex items-center gap-2">
+            {isBrentStale && (
+              <span
+                data-testid="brent-stale-status"
+                role="status"
+                className="rounded-full border border-amber-200/60 bg-amber-300/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-100"
+              >
+                Stale
+              </span>
+            )}
+            <DirectionIcon
+              className="h-4 w-4 shrink-0 opacity-90"
+              aria-hidden="true"
+            />
+          </div>
         </div>
         {isFallback && (
           <span className="mt-2 inline-flex w-fit rounded-full border border-amber-200/35 bg-amber-300/15 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100">
@@ -1504,6 +1520,14 @@ export default function MarketHeatmap({
   );
   const [horizonId, setHorizonId] = useState<HorizonId>("day");
   const [paletteId, setPaletteId] = useState<PaletteId>(readInitialPalette);
+  const [requestTimeMs, setRequestTimeMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateRequestTime = () => setRequestTimeMs(Date.now());
+    updateRequestTime();
+    const interval = window.setInterval(updateRequestTime, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   // Палитра — функциональная настройка доступности. Хранится только
   // локально в браузере и никуда не отправляется.
@@ -1646,6 +1670,7 @@ export default function MarketHeatmap({
                 asset={asset}
                 horizonId={horizonId}
                 paletteId={paletteId}
+                requestTimeMs={requestTimeMs}
                 isFallback={fallbackAssetIds.includes(asset.id)}
                 isSelected={selectedId === asset.id}
                 onSelect={handleSelect}
