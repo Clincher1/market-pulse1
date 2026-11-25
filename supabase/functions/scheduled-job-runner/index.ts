@@ -101,6 +101,27 @@ function json(body: AnyRecord, status = 200): Response {
   return Response.json(body, { status });
 }
 
+async function recordDigestAttempt(
+  attemptedAt: string,
+  outcome: "sent" | "skipped" | "failed",
+  reason: string | null,
+): Promise<void> {
+  try {
+    await restJson("monitor_digest_attempts", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        attempted_at: attemptedAt,
+        outcome,
+        reason: reason?.slice(0, 500) ?? null,
+      }),
+    });
+  } catch {
+    // Instrumentation must not change the monitor or Telegram delivery result.
+    console.error("Could not persist scheduled digest attempt.");
+  }
+}
+
 function digestHourMsk(): number {
   const configured = Deno.env.get("DIGEST_HOUR_MSK")?.trim();
   if (!configured) return 9;
@@ -254,14 +275,14 @@ async function runDailyDigest(
   today: string,
   rows: Record<AssetId, CachedAsset | undefined>,
   verdicts: Record<AssetId, Verdict>,
-): Promise<void> {
+): Promise<"sent" | "already_sent"> {
   const todayParams = new URLSearchParams({
     select: "id,delivery_status",
     digest_date: `eq.${today}`,
     limit: "1",
   });
   const existing = await restJson(`monitor_history?${todayParams.toString()}`) as Array<{ id: number; delivery_status: string }>;
-  if (existing[0]?.delivery_status === "sent") return;
+  if (existing[0]?.delivery_status === "sent") return "already_sent";
 
   const previousRows = await restJson(previousDigestQuery(today)) as Array<{ payload?: AnyRecord }>;
   const previousPayload = previousRows[0]?.payload ?? null;
@@ -326,14 +347,19 @@ async function runDailyDigest(
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify({ delivery_status: "sent", payload }),
   });
+  return "sent";
 }
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   if (!isAuthorizedCron(req)) return json({ error: "Unauthorized" }, 401);
 
+  const attemptedAt = new Date().toISOString();
+  const finishAttempt = (outcome: "sent" | "skipped" | "failed", reason: string | null) =>
+    recordDigestAttempt(attemptedAt, outcome, reason);
+
   try {
-    const now = new Date();
+    const now = new Date(attemptedAt);
     const nowMs = now.getTime();
     const configuredDigestHourMsk = digestHourMsk();
     const assets = await restJson(
@@ -366,11 +392,24 @@ Deno.serve(async (req) => {
     // Retry the daily digest on each later hourly invocation until today's row is marked sent.
     if (Number(moscowHourKey(now)) >= configuredDigestHourMsk) {
       const today = moscowDateKey(now);
-      await runDailyDigest(now, today, rows, verdicts);
+      const delivery = await runDailyDigest(now, today, rows, verdicts);
+      await finishAttempt(
+        delivery === "sent" ? "sent" : "skipped",
+        delivery === "sent" ? null : "daily_digest_already_sent",
+      );
       return json({ status: "digest_sent", overall_status: overallVerdict(verdicts) });
     }
 
-    if (overallVerdict(verdicts) === "ok") return json({ status: "fresh" });
+    if (overallVerdict(verdicts) === "ok") {
+      await finishAttempt("skipped", "digest_window_not_open");
+      return json({ status: "fresh" });
+    }
+
+    const staleAssets = ASSET_IDS
+      .filter((id) => verdicts[id].status !== "ok")
+      .map((id) => `${id}=${verdicts[id].status}`)
+      .join(", ");
+    await finishAttempt("skipped", `asset_freshness: ${staleAssets}`);
     return json({ status: overallVerdict(verdicts), assets: verdicts }, 503);
   } catch (error) {
     const status = error instanceof HttpError ? error.status : 500;
@@ -378,6 +417,9 @@ Deno.serve(async (req) => {
     const message = error instanceof HttpError && status === 503
       ? error.message
       : "Scheduled job failed";
+    const outcome = status === 503 ? "skipped" : "failed";
+    const reason = status === 503 ? `http_${status}: ${message}` : `http_${status}`;
+    await finishAttempt(outcome, reason);
     return json({ error: message }, status);
   }
 });

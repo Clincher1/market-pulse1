@@ -200,6 +200,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
   const previousDeno = globalThis.Deno;
   const historyUpdates = [];
   const historyReadDates = [];
+  const digestAttempts = [];
   const telegramMessages = [];
   let cachedAssetRowsOverride = null;
   let historyStatus = 'pending';
@@ -230,6 +231,11 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
         { id: 'gold', price: '4000', updated_at: updatedAt, as_of: '2026-11-25' },
         { id: 'sp500', price: '6800', updated_at: updatedAt, as_of: '2026-11-25' },
       ]);
+    }
+    if (url.pathname.endsWith('/monitor_digest_attempts')) {
+      assert.equal(init.method, 'POST');
+      digestAttempts.push(JSON.parse(init.body));
+      return new Response(null, { status: 204 });
     }
     if (url.pathname.endsWith('/monitor_history')) {
       if (init.method === 'PATCH') {
@@ -265,6 +271,11 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     const beforeDigestHour = await handler(request());
     assert.equal(beforeDigestHour.status, 200);
     assert.deepEqual(await beforeDigestHour.json(), { status: 'fresh' });
+    assert.deepEqual(digestAttempts[0], {
+      attempted_at: '2026-11-25T21:12:00.000Z',
+      outcome: 'skipped',
+      reason: 'digest_window_not_open',
+    });
     assert.equal(telegramMessages.length, 0, '00:12 MSK must not send or retry a new-date digest');
     assert.deepEqual(historyReadDates, [], 'the daily row is not read before the MSK digest hour');
 
@@ -277,6 +288,8 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.match(telegramMessages[0], /Market Pulse — 26\.11/);
     assert.match(telegramMessages[0], /первый отчёт — сравнение за 24ч появится завтра/);
     assert.deepEqual(historyUpdates.map((update) => update.delivery_status), ['pending', 'sent']);
+    assert.equal(digestAttempts[1].outcome, 'sent', 'successful Telegram delivery is recorded');
+    assert.equal(digestAttempts[1].reason, null);
 
     historyStatus = 'pending';
     nowMs = NativeDate.parse('2026-11-26T07:12:00.000Z'); // 10:12 MSK; next hourly retry
@@ -284,6 +297,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.equal(retryResponse.status, 200);
     assert.deepEqual(await retryResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
     assert.equal(telegramMessages.length, 2, 'a pending row is retried on the next hourly run that same MSK day');
+    assert.equal(digestAttempts[2].outcome, 'sent', 'a successful retry is recorded as sent');
 
     nowMs = NativeDate.parse('2026-11-26T08:12:00.000Z'); // 11:12 MSK
     const sentResponse = await handler(request());
@@ -291,16 +305,22 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.deepEqual(await sentResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
     assert.equal(telegramMessages.length, 2, 'sent history must not be delivered twice');
     assert.equal(countCalls, 2, 'sent history returns before another previous-digest read/count');
+    assert.deepEqual(
+      [digestAttempts[3].outcome, digestAttempts[3].reason],
+      ['skipped', 'daily_digest_already_sent'],
+    );
 
     cachedAssetRowsOverride = [
-      { id: 'brent', price: '70.25', updated_at: new NativeDate(nowMs + 11 * 60 * 1000).toISOString() },
+      { id: 'brent', price: '70.25', updated_at: new NativeDate(nowMs - 30 * 60 * 1000).toISOString(), as_of: '2026-11-26' },
       { id: 'gold', price: '4000', updated_at: new NativeDate(nowMs - 30 * 60 * 1000).toISOString(), as_of: '2026-11-26' },
-      { id: 'sp500', price: '6800', updated_at: new NativeDate(nowMs - 30 * 60 * 1000).toISOString(), as_of: '2026-11-25' },
+      { id: 'sp500', price: '6800', updated_at: new NativeDate(nowMs - 30 * 60 * 1000).toISOString(), as_of: '2026-11-27' },
     ];
     const invalidTimestampResponse = await handler(request());
     assert.equal(invalidTimestampResponse.status, 503);
-    assert.deepEqual(await invalidTimestampResponse.json(), { error: 'Future brent updated_at timestamp' });
+    assert.match((await invalidTimestampResponse.json()).error, /Invalid sp500 as_of/);
     assert.equal(telegramMessages.length, 2, 'timestamp validation failure must not send an alert or digest');
+    assert.equal(digestAttempts[4].outcome, 'skipped', 'asset validation failures count as skipped digest attempts');
+    assert.match(digestAttempts[4].reason, /http_503: Invalid sp500 as_of/);
   } finally {
     delete globalThis.__scheduledJobRunnerHandler;
     if (previousDeno === undefined) delete globalThis.Deno;
