@@ -1,5 +1,8 @@
 const INTRADAY_ASSETS = new Set(['brent', 'gold']);
 const MS_PER_HOUR = 60 * 60 * 1000;
+// Postgres and Edge Runtime clocks can differ briefly; allow small future skew,
+// but keep materially future-dated observations invalid.
+const FUTURE_TIMESTAMP_TOLERANCE_MS = 10 * 60 * 1000;
 
 function zonedParts(date, timeZone) {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -238,7 +241,7 @@ function validatedTimestamp(value, label, nowMs) {
   if (typeof value !== 'string' || !value.trim()) return null;
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) throw new Error(`Invalid ${label} timestamp`);
-  if (timestamp > nowMs) throw new Error(`Future ${label} timestamp`);
+  if (timestamp > nowMs + FUTURE_TIMESTAMP_TOLERANCE_MS) throw new Error(`Future ${label} timestamp`);
   return timestamp;
 }
 
@@ -253,7 +256,8 @@ function observationDate(value, label, nowMs) {
     || !Number.isFinite(parsedValue)) {
     throw new Error(`Invalid ${label} date`);
   }
-  if (parsedValue > nowMs) throw new Error(`Future ${label} date`);
+  const futureToleranceMs = value === key ? 0 : FUTURE_TIMESTAMP_TOLERANCE_MS;
+  if (parsedValue > nowMs + futureToleranceMs) throw new Error(`Future ${label} date`);
   return key;
 }
 
@@ -274,7 +278,7 @@ export function evaluateAsset(assetId, row, now = new Date()) {
       return { status: 'no_data', reason: 'price_or_as_of_missing', price, asOf: asOfDate, updatedAt: row.updated_at ?? null };
     }
     const expected = latestCompletedNySessionDate(now);
-    if (asOfDate > expected) throw new Error('S&P 500 as_of is later than the latest completed NY session');
+    if (asOfDate > expected) throw new Error(`Invalid sp500 as_of: ${asOfDate} is later than the latest completed NY session ${expected}`);
     return {
       status: asOfDate === expected ? 'ok' : 'stale',
       reason: asOfDate === expected ? null : `session_date_${asOfDate}_expected_${expected}`,

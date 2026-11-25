@@ -23,10 +23,54 @@ test('Brent and gold use the two-hour updated_at freshness limit', () => {
   assert.equal(stale.status, 'stale');
 });
 
-test('missing Brent updated_at and invalid/future timestamps are not considered fresh', () => {
+test('missing Brent updated_at and invalid/far-future timestamps are not considered fresh', () => {
   assert.equal(evaluateAsset('brent', { price: 70, updated_at: null }, now).status, 'no_data');
-  assert.throws(() => evaluateAsset('brent', { price: 70, updated_at: 'not-a-date' }, now), /Invalid/);
-  assert.throws(() => evaluateAsset('brent', { price: 70, updated_at: '2026-11-26T00:00:00Z' }, now), /Future/);
+  assert.throws(() => evaluateAsset('brent', { price: 70, updated_at: 'not-a-date' }, now), /Invalid brent updated_at timestamp/);
+  assert.throws(() => evaluateAsset('brent', { price: 70, updated_at: '2026-11-26T00:00:00Z' }, now), /Future brent updated_at timestamp/);
+});
+
+test('timestamps up to ten minutes ahead tolerate clock skew; farther future values name asset and field', () => {
+  const brent = evaluateAsset('brent', {
+    price: 70,
+    updated_at: '2026-11-25T18:10:00.000Z',
+  }, now);
+  const gold = evaluateAsset('gold', {
+    price: 4000,
+    updated_at: '2026-11-25T18:00:00.000Z',
+    as_of: '2026-11-25T18:10:00.000Z',
+  }, now);
+  assert.equal(brent.status, 'ok');
+  assert.equal(gold.status, 'ok');
+  assert.throws(
+    () => evaluateAsset('brent', { price: 70, updated_at: '2026-11-25T18:10:01.000Z' }, now),
+    /Future brent updated_at timestamp/,
+  );
+  assert.throws(
+    () => evaluateAsset('gold', {
+      price: 4000,
+      updated_at: '2026-11-25T18:00:00.000Z',
+      as_of: '2026-11-25T18:10:01.000Z',
+    }, now),
+    /Future gold as_of date/,
+  );
+  assert.throws(
+    () => evaluateAsset('gold', {
+      price: 4000,
+      updated_at: '2026-11-25T23:55:00.000Z',
+      as_of: '2026-11-26',
+    }, new Date('2026-11-25T23:55:00.000Z')),
+    /Future gold as_of date/,
+    'date-only observations do not get timestamp clock-skew tolerance',
+  );
+  assert.throws(
+    () => evaluateAsset('sp500', {
+      price: 6800,
+      updated_at: '2026-11-25T18:00:00.000Z',
+      as_of: '2026-11-25T18:05:00.000Z',
+    }, now),
+    /Invalid sp500 as_of: 2026-11-25 is later than the latest completed NY session 2026-11-24/,
+    'a tolerated timestamp never makes an unfinished S&P session valid',
+  );
 });
 
 test('S&P 500 freshness follows the latest completed New York session', () => {
@@ -151,6 +195,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
   const historyUpdates = [];
   const historyReadDates = [];
   const telegramMessages = [];
+  let cachedAssetRowsOverride = null;
   let historyStatus = 'pending';
   let countCalls = 0;
   globalThis.Deno = {
@@ -172,6 +217,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     }
     if (url.hostname !== 'db.example.test') throw new Error(`Unexpected fetch host: ${url.hostname}`);
     if (url.pathname.endsWith('/cached_assets')) {
+      if (cachedAssetRowsOverride) return Response.json(cachedAssetRowsOverride);
       const updatedAt = new NativeDate(nowMs - 30 * 60 * 1000).toISOString();
       return Response.json([
         { id: 'brent', price: '70.25', updated_at: updatedAt, as_of: '2026-11-25' },
@@ -239,6 +285,16 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.deepEqual(await sentResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
     assert.equal(telegramMessages.length, 2, 'sent history must not be delivered twice');
     assert.equal(countCalls, 2, 'sent history returns before another previous-digest read/count');
+
+    cachedAssetRowsOverride = [
+      { id: 'brent', price: '70.25', updated_at: new NativeDate(nowMs + 11 * 60 * 1000).toISOString() },
+      { id: 'gold', price: '4000', updated_at: new NativeDate(nowMs - 30 * 60 * 1000).toISOString(), as_of: '2026-11-26' },
+      { id: 'sp500', price: '6800', updated_at: new NativeDate(nowMs - 30 * 60 * 1000).toISOString(), as_of: '2026-11-25' },
+    ];
+    const invalidTimestampResponse = await handler(request());
+    assert.equal(invalidTimestampResponse.status, 503);
+    assert.deepEqual(await invalidTimestampResponse.json(), { error: 'Future brent updated_at timestamp' });
+    assert.equal(telegramMessages.length, 2, 'timestamp validation failure must not send an alert or digest');
   } finally {
     delete globalThis.__scheduledJobRunnerHandler;
     if (previousDeno === undefined) delete globalThis.Deno;
