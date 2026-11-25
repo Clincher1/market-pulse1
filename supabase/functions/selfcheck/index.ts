@@ -6,6 +6,15 @@ import { ASSET_CONTRACTS, contractFor, freshnessVerdict, labelMatchesContract, q
 import { politenessVerdict } from "../_shared/price-sources.ts";
 import { registryVerdict } from "../_shared/slots.ts";
 import { findForeignResourceHosts } from "../_shared/loaded-resource-hosts.mjs";
+import {
+  calculateTensionIndex,
+  selectTensionNews,
+  tensionNewsQueryParams,
+  TENSION_BLOCKED_SOURCES,
+  TENSION_MIN_CONFIDENCE as MIN_CONFIDENCE,
+  TENSION_MIN_IMPORTANCE as MIN_IMPORTANCE,
+  TENSION_MIN_NEWS,
+} from "../_shared/tension-sample.mjs";
 //
 // Two ways in:
 //   • pg_cron job 20 calls it every hour at :25 with the shared cron secret;
@@ -41,9 +50,6 @@ const SITE = (Deno.env.get('SITE_URL') ?? 'https://market-pulse1-eta.vercel.app'
   .replace(/\/+$/, '');
 const MANUAL_COOLDOWN_MIN = 5;
 
-const MIN_IMPORTANCE = 3;
-const MIN_CONFIDENCE = 0.5;
-const BLOCKED_SOURCES = new Set(['GDELT (Global)', 'GDELT']);
 const FRESH_NEWS_HOURS = 6;
 const FRESH_ASSETS_MINUTES = 45;
 const FRESH_FEED_HOURS = 24;
@@ -582,30 +588,19 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
   for (const [name, value] of await Promise.all([
     // 1. The index, recomputed here from raw rows, must match what is published.
     check('tension_matches', async () => {
-      const news = (await restJson(
-        `cached_news?select=sentiment,importance,confidence,source,published_at` +
-          `&published_at=gte.${encodeURIComponent(since)}&limit=500`,
-      )) as AnyRecord[];
-      const rows = news.filter(
-        (r) =>
-          Number(r.importance) >= MIN_IMPORTANCE &&
-          Number(r.confidence) >= MIN_CONFIDENCE &&
-          !BLOCKED_SOURCES.has(String(r.source ?? '')),
-      );
-      let negative = 0;
-      let total = 0;
-      for (const row of rows) {
-        const weight = Number(row.importance) * Number(row.confidence);
-        total += weight;
-        negative += Math.max(0, -Number(row.sentiment)) * weight;
-      }
-      const computed = total > 0 ? Math.round((negative / total) * 100) : 0;
+      const params = tensionNewsQueryParams(now);
+      const rawNews = (await restJson(`cached_news?${params.toString()}`)) as AnyRecord[];
+      const rows = selectTensionNews(rawNews);
+      const { index: computed } = calculateTensionIndex(rows);
       const published = (await restJson('cached_tension?select=value,news_count&id=eq.1')) as AnyRecord[];
       const value = Number(published[0]?.value ?? 0);
       const diff = Math.abs(value - computed);
+      const sampleIsPublishable = rows.length >= TENSION_MIN_NEWS;
       return {
-        ok: diff <= TENSION_TOLERANCE,
-        detail: `опубликовано ${value}, пересчитано ${computed}, расхождение ${diff}, выборка ${rows.length}`,
+        ok: sampleIsPublishable && diff <= TENSION_TOLERANCE,
+        detail: sampleIsPublishable
+          ? `опубликовано ${value}, пересчитано ${computed}, расхождение ${diff}, выборка ${rows.length}`
+          : `не хватает квалифицированных публикаций для пересчёта: ${rows.length} из ${TENSION_MIN_NEWS}`,
       };
     }),
 
@@ -630,7 +625,7 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
         (r) =>
           Number(r.importance) >= MIN_IMPORTANCE &&
           Number(r.confidence) >= MIN_CONFIDENCE &&
-          !BLOCKED_SOURCES.has(String(r.source ?? '')),
+          !TENSION_BLOCKED_SOURCES.includes(String(r.source ?? '')),
       ).length;
       return { ok: n >= MIN_SAMPLE, detail: `подходящих материалов ${n}` };
     }),
