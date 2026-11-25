@@ -1094,7 +1094,7 @@
 }
 
 .desktop-navigation {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 0.22rem;
   padding: 0.32rem;
@@ -1106,7 +1106,7 @@
   backdrop-filter: blur(18px);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .desktop-navigation {
     display: flex;
   }

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, ArrowUpRight, BookOpen, HeartPulse, Sparkles } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 const DailyBrief = lazy(() => import('@/components/DailyBrief'));
 const RussiaBusiness = lazy(() => import('@/components/RussiaBusiness'));
@@ -15,7 +15,8 @@ import PageSignalIntro from '@/components/PageSignalIntro';
 const BusinessMoney = lazy(() => import('@/components/BusinessMoney'));
 const WhatChanged = lazy(() => import('@/components/WhatChanged'));
 const MarketDesk = lazy(() => import('@/components/MarketDesk'));
-import { DASHBOARD_THEME_ORDER, SECTION_THEMES, type SectionThemeId } from '@/components/sectionThemes.data';
+import type { SectionThemeId } from '@/components/sectionThemes.data';
+import OverviewTopics from '@/components/OverviewTopics';
 import { SectionFallback } from '@/components/SectionFallback';
 import { SectionBoundary } from '@/components/SectionBoundary';
 import PAGE_DESCRIPTIONS from '@/lib/pageDescriptions.json';
@@ -96,7 +97,7 @@ function DashboardPage() {
 
   return (
     <>
-      <section id="dashboard" className="overview-hero mb-12 scroll-mt-24 lg:mb-16">
+      <section id="dashboard" className="overview-hero overview-hero--compact mb-5 scroll-mt-24 lg:mb-6">
         <div className="overview-hero__backdrop" aria-hidden="true" />
         <div className="overview-hero__copy">
           <motion.div className="overview-hero__eyebrow" {...appear(0.04)}>
@@ -141,74 +142,14 @@ function DashboardPage() {
         </motion.div>
       </section>
 
+      <OverviewTopics />
+
       <SectionBoundary title="Обзор и мои ориентиры">
         <Suspense fallback={<SectionFallback title="Главное за минуту" minHeightClass="min-h-[520px]" />}>
           <MarketDesk summary />
         </Suspense>
       </SectionBoundary>
 
-      <section aria-labelledby="page-links-title" className="overview-topics mb-10 lg:mb-14">
-        <div className="overview-topics__heading">
-          <div>
-            <p className="overview-section-kicker">ВЫБЕРИТЕ СВОЙ МАРШРУТ</p>
-            <h2 id="page-links-title" className="overview-topics__title">С чего начнём?</h2>
-          </div>
-          <p className="overview-topics__intro">
-            Одна тема — одна страница. Ничего лишнего не нужно прокручивать.
-          </p>
-        </div>
-
-        <nav aria-label="Страницы Market Pulse" className="overview-topics__grid">
-          {DASHBOARD_THEME_ORDER.map((themeId, index) => {
-            const theme = SECTION_THEMES[themeId];
-            const Icon = theme.icon;
-            return (
-              <motion.a
-                key={theme.id}
-                href={theme.href}
-                className={`overview-topic-card group ${theme.cardClass}`}
-                initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.985 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { duration: 0.42, delay: 0.08 + index * 0.045, ease: 'easeOut' }
-                }
-                whileHover={reduceMotion ? undefined : { y: -5, scale: 1.012 }}
-                whileTap={reduceMotion ? undefined : { scale: 0.99 }}
-              >
-                <span className="overview-topic-card__topline">
-                  <span className={`overview-topic-card__icon ${theme.iconClass}`} aria-hidden="true">
-                    <Icon className="h-[19px] w-[19px]" />
-                  </span>
-                  <span className="overview-topic-card__index" aria-hidden="true">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                </span>
-                <span className="overview-topic-card__copy">
-                  <span className={`overview-topic-card__title ${theme.textClass}`}>{theme.label}</span>
-                  <span className="overview-topic-card__description">{theme.description}</span>
-                </span>
-                <span className="overview-topic-card__open">
-                  Перейти
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </motion.a>
-            );
-          })}
-        </nav>
-
-        <a href={PAGE_PATHS.status} className="overview-status-link">
-          <span className="overview-status-link__icon" aria-hidden="true">
-            <HeartPulse className="h-[18px] w-[18px]" />
-          </span>
-          <span className="overview-status-link__text">
-            <span className="overview-status-link__title">Состояние системы</span>
-            <span className="overview-status-link__description">Источники, котировки и проверки</span>
-          </span>
-          <ArrowRight className="overview-status-link__arrow" aria-hidden="true" />
-        </a>
-      </section>
     </>
   );
 }
