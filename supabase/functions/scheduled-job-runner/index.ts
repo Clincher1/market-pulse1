@@ -4,6 +4,7 @@ import {
   moscowDateKey,
   overallVerdict,
   percentChange,
+  shouldWarnForStagnation,
 } from "./logic.mjs";
 
 const ASSET_IDS = ["brent", "sp500", "gold"] as const;
@@ -239,8 +240,7 @@ function digestText(
   if (!hasYesterday) lines.push("первый отчёт — сравнение за 24ч появится завтра");
 
   const warnings: string[] = [];
-  if (changes.brent !== null && changes.gold !== null
-    && Math.abs(changes.brent) < 0.01 && Math.abs(changes.gold) < 0.01) {
+  if (shouldWarnForStagnation(today, changes.brent, changes.gold)) {
     const warning = "⚠️ Движения нет — проверьте источник данных";
     lines.push(warning);
     warnings.push("stagnation: Brent and gold moved less than 0.01% over 24h");

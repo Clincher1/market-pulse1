@@ -10,6 +10,7 @@ import {
   latestCompletedNySessionDate,
   overallVerdict,
   percentChange,
+  shouldWarnForStagnation,
 } from '../supabase/functions/scheduled-job-runner/logic.mjs';
 
 const now = new Date('2026-11-25T18:00:00.000Z');
@@ -44,6 +45,82 @@ test('overall verdict selects the worst asset and percent change is relative to 
   assert.equal(overallVerdict({ a: { status: 'ok' }, b: { status: 'stale' } }), 'stale');
   assert.equal(overallVerdict({ a: { status: 'stale' }, b: { status: 'no_data' } }), 'no_data');
   assert.equal(percentChange(101, 100), 1);
+});
+
+test('gold uses the 2-hour limit while open and latest-session freshness while shut', () => {
+  const freshOpen = evaluateAsset('gold', {
+    price: 4000, updated_at: '2026-11-25T18:45:00.000Z',
+  }, new Date('2026-11-25T20:30:00.000Z')); // 23:30 MSK, session still open
+  const staleOpen = evaluateAsset('gold', {
+    price: 4000, updated_at: '2026-11-25T18:20:00.000Z',
+  }, new Date('2026-11-25T20:30:00.000Z'));
+  const freshPreopen = evaluateAsset('gold', {
+    price: 4000, updated_at: '2026-11-25T20:45:00.000Z',
+  }, new Date('2026-11-26T05:30:00.000Z')); // 08:30 MSK, before open
+  const staleBeforeLastOpen = evaluateAsset('gold', {
+    price: 4000, updated_at: '2026-11-25T05:50:00.000Z',
+  }, new Date('2026-11-26T05:30:00.000Z'));
+  assert.equal(freshOpen.status, 'ok');
+  assert.equal(staleOpen.status, 'stale');
+  assert.equal(freshPreopen.status, 'ok');
+  assert.equal(staleBeforeLastOpen.status, 'stale');
+});
+
+test('Brent uses the 2-hour limit while open and the last weekly session when closed', () => {
+  const staleOpen = evaluateAsset('brent', {
+    price: 70, updated_at: '2026-11-20T20:00:00.000Z',
+  }, new Date('2026-11-20T22:30:00.000Z')); // Friday 17:30 ET
+  const freshAfterClose = evaluateAsset('brent', {
+    price: 70, updated_at: '2026-11-20T22:30:00.000Z',
+  }, new Date('2026-11-21T00:30:00.000Z')); // Friday 19:30 ET
+  const freshSundayPreopen = evaluateAsset('brent', {
+    price: 70, updated_at: '2026-11-20T22:30:00.000Z',
+  }, new Date('2026-11-23T00:00:00.000Z')); // Sunday 19:00 ET
+  const freshAfterOpen = evaluateAsset('brent', {
+    price: 70, updated_at: '2026-11-23T01:00:00.000Z',
+  }, new Date('2026-11-23T01:30:00.000Z')); // Sunday 20:30 ET
+  assert.equal(staleOpen.status, 'stale');
+  assert.equal(freshAfterClose.status, 'ok');
+  assert.equal(freshSundayPreopen.status, 'ok');
+  assert.equal(freshAfterOpen.status, 'ok');
+});
+
+test('weekend gold and Brent updates remain fresh if they occurred after the last session opened', () => {
+  const gold = evaluateAsset('gold', {
+    price: 4000, updated_at: '2026-11-27T08:00:00.000Z',
+  }, new Date('2026-11-28T09:00:00.000Z')); // Saturday 12:00 MSK
+  const goldOld = evaluateAsset('gold', {
+    price: 4000, updated_at: '2026-11-26T20:00:00.000Z',
+  }, new Date('2026-11-28T09:00:00.000Z'));
+  const brent = evaluateAsset('brent', {
+    price: 70, updated_at: '2026-11-20T22:30:00.000Z',
+  }, new Date('2026-11-21T17:00:00.000Z')); // Saturday 12:00 ET
+  const brentOld = evaluateAsset('brent', {
+    price: 70, updated_at: '2026-11-16T00:30:00.000Z',
+  }, new Date('2026-11-21T17:00:00.000Z'));
+  assert.equal(gold.status, 'ok');
+  assert.equal(goldOld.status, 'stale');
+  assert.equal(brent.status, 'ok');
+  assert.equal(brentOld.status, 'stale');
+});
+
+test('gold holiday approximation shifts weekend holidays and skips them as sessions', () => {
+  const gold = evaluateAsset('gold', {
+    price: 4000, updated_at: '2026-03-06T07:00:00.000Z',
+  }, new Date('2026-03-09T07:00:00.000Z')); // Monday 10:00 MSK, observed March 8 holiday
+  assert.equal(gold.status, 'ok');
+});
+
+test('Sunday digest suppresses the stagnation warning for unchanged prices', () => {
+  assert.equal(shouldWarnForStagnation('2026-11-29', 0, 0), false);
+  assert.equal(shouldWarnForStagnation('2026-11-30', 0, 0), true);
+});
+
+test('NYSE early-close sessions are complete from 13:00 local time', () => {
+  assert.equal(latestCompletedNySessionDate(new Date('2026-11-27T17:59:00.000Z')), '2026-11-25');
+  assert.equal(latestCompletedNySessionDate(new Date('2026-11-27T18:01:00.000Z')), '2026-11-27');
+  assert.equal(latestCompletedNySessionDate(new Date('2025-07-03T17:01:00.000Z')), '2025-07-03');
+  assert.equal(latestCompletedNySessionDate(new Date('2025-12-24T18:01:00.000Z')), '2025-12-24');
 });
 
 test('hourly digest retry sends a pending row after the configured hour and skips a sent row', async (t) => {

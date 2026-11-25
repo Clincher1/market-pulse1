@@ -8,6 +8,7 @@ function zonedParts(date, timeZone) {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
+    minute: '2-digit',
     hourCycle: 'h23',
   }).formatToParts(date);
   return Object.fromEntries(parts.filter((part) => part.type !== 'literal').map(({ type, value }) => [type, value]));
@@ -91,14 +92,123 @@ function isTradingWeekday(key) {
   return day !== 0 && day !== 6 && !isNyseHoliday(key);
 }
 
-/** Latest completed NYSE session date, accounting for NY local close, weekends and standard US exchange holidays. */
+function earlyCloseDaysAt1300(year) {
+  const candidates = [
+    dateKey(year, 7, 3),
+    shiftDate(nthWeekday(year, 11, 4, 4), 1),
+    dateKey(year, 12, 24),
+  ];
+  return new Set(candidates.filter(isTradingWeekday));
+}
+
+/** Convert a local wall-clock time to UTC using the zone offset on that date. */
+function localTimeToUtcMs(key, hour, minute, timeZone) {
+  const probe = new Date(`${key}T12:00:00.000Z`);
+  const parts = zonedParts(probe, timeZone);
+  const localAsUtcMs = Date.UTC(
+    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+    Number(parts.hour), Number(parts.minute),
+  );
+  const offsetMs = localAsUtcMs - probe.getTime();
+  const [year, month, day] = key.split('-').map(Number);
+  return Date.UTC(year, month - 1, day, hour, minute) - offsetMs;
+}
+
+/** Latest completed NYSE session date, accounting for NY-local regular and 13:00 early closes. */
 export function latestCompletedNySessionDate(now = new Date()) {
   const parts = zonedParts(now, 'America/New_York');
   const today = dateKey(parts.year, parts.month, parts.day);
+  const closeHour = earlyCloseDaysAt1300(Number(parts.year)).has(today) ? 13 : 16;
   let candidate = today;
-  if (!isTradingWeekday(today) || Number(parts.hour) < 16) candidate = shiftDate(today, -1);
+  if (!isTradingWeekday(today) || Number(parts.hour) < closeHour) candidate = shiftDate(today, -1);
   while (!isTradingWeekday(candidate)) candidate = shiftDate(candidate, -1);
   return candidate;
+}
+
+// Schedule approximation for GLDRUB_TOM: this repo records ISS trades near
+// 23:50 MSK but does not load official session segments. Assume Mon-Fri
+// 09:00-23:50 MSK; Russian holidays below are deliberately simplified, not
+// the exchange's full annual transfer calendar.
+function russianHolidaysForYear(year) {
+  const holidays = new Set();
+  for (let day = 1; day <= 8; day++) {
+    const key = dateKey(year, 1, day);
+    holidays.add(key);
+    holidays.add(observedFixedDate(year, 1, day));
+  }
+  for (const [month, day] of [[2, 23], [3, 8], [5, 1], [5, 9], [6, 12], [11, 4]]) {
+    holidays.add(dateKey(year, month, day));
+    holidays.add(observedFixedDate(year, month, day));
+  }
+  return holidays;
+}
+
+function isRussianHoliday(key) {
+  const year = Number(key.slice(0, 4));
+  return [year - 1, year, year + 1].some((candidateYear) => russianHolidaysForYear(candidateYear).has(key));
+}
+
+function isGoldSessionDay(key) {
+  const day = weekday(key);
+  return day !== 0 && day !== 6 && !isRussianHoliday(key);
+}
+
+function previousGoldSessionDate(key) {
+  let candidate = shiftDate(key, -1);
+  while (!isGoldSessionDay(candidate)) candidate = shiftDate(candidate, -1);
+  return candidate;
+}
+
+function goldSessionAt(now) {
+  const parts = zonedParts(now, 'Europe/Moscow');
+  const today = dateKey(parts.year, parts.month, parts.day);
+  const minuteOfDay = Number(parts.hour) * 60 + Number(parts.minute);
+  if (isGoldSessionDay(today) && minuteOfDay >= 9 * 60 && minuteOfDay < 23 * 60 + 50) {
+    return { open: true, latestOpenMs: null };
+  }
+
+  let latestSessionDate = today;
+  if (isGoldSessionDay(today) && minuteOfDay < 9 * 60) {
+    latestSessionDate = previousGoldSessionDate(today);
+  } else {
+    while (!isGoldSessionDay(latestSessionDate)) latestSessionDate = shiftDate(latestSessionDate, -1);
+  }
+  return {
+    open: false,
+    latestOpenMs: localTimeToUtcMs(latestSessionDate, 9, 0, 'Europe/Moscow'),
+  };
+}
+
+// ICE Brent's continuous weekly session is assumed open Sun 20:00-Fri 18:00
+// America/New_York (DST-aware). ICE holiday calendars are not encoded; a
+// mid-week early close can therefore cause a rare false stale alert.
+function brentSessionAt(now) {
+  const parts = zonedParts(now, 'America/New_York');
+  const today = dateKey(parts.year, parts.month, parts.day);
+  const minuteOfDay = Number(parts.hour) * 60 + Number(parts.minute);
+  const day = weekday(today);
+  const open = (day === 0 && minuteOfDay >= 20 * 60)
+    || (day >= 1 && day <= 4)
+    || (day === 5 && minuteOfDay < 18 * 60);
+  if (open) return { open: true, latestOpenMs: null };
+
+  const daysSinceSunday = day;
+  const sessionSunday = shiftDate(today, -(day === 0 ? 7 : daysSinceSunday));
+  return {
+    open: false,
+    latestOpenMs: localTimeToUtcMs(sessionSunday, 20, 0, 'America/New_York'),
+  };
+}
+
+export function isWeekendDateKey(key) {
+  const day = weekday(key);
+  return day === 0 || day === 6;
+}
+
+export function shouldWarnForStagnation(digestDate, brentChange, goldChange) {
+  if (isWeekendDateKey(digestDate)) return false;
+  return brentChange !== null && goldChange !== null
+    && Math.abs(brentChange) < 0.01 && Math.abs(goldChange) < 0.01;
 }
 
 export function moscowDateKey(date = new Date()) {
@@ -176,10 +286,17 @@ export function evaluateAsset(assetId, row, now = new Date()) {
     return { status: 'no_data', reason: 'price_or_updated_at_missing', price, asOf: asOfDate, updatedAt: row.updated_at ?? null };
   }
   const ageMs = nowMs - updatedMs;
-  const status = ageMs <= 2 * MS_PER_HOUR ? 'ok' : 'stale';
+  const session = assetId === 'gold' ? goldSessionAt(now) : brentSessionAt(now);
+  const fresh = session.open
+    ? ageMs <= 2 * MS_PER_HOUR
+    : updatedMs >= session.latestOpenMs;
   return {
-    status,
-    reason: status === 'ok' ? null : `cache_age_minutes_${Math.floor(ageMs / 60_000)}`,
+    status: fresh ? 'ok' : 'stale',
+    reason: fresh
+      ? null
+      : session.open
+      ? `cache_age_minutes_${Math.floor(ageMs / 60_000)}`
+      : `not_updated_since_latest_session_open_${new Date(session.latestOpenMs).toISOString()}`,
     price,
     asOf: asOfDate,
     updatedAt: row.updated_at,
