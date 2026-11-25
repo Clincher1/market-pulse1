@@ -344,8 +344,9 @@ Deno.serve(async (req) => {
     let verdicts: Record<AssetId, Verdict>;
     try {
       verdicts = Object.fromEntries(ASSET_IDS.map((id) => [id, evaluateAsset(id, rows[id], now)])) as Record<AssetId, Verdict>;
-    } catch {
-      throw new HttpError("Invalid or future asset timestamp", 503);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Asset timestamp validation failed";
+      throw new HttpError(detail, 503);
     }
 
     // A missing Brent row/update timestamp is a monitor failure, not a successful no_data response.
