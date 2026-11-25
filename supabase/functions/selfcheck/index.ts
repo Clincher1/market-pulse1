@@ -588,11 +588,17 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
   for (const [name, value] of await Promise.all([
     // 1. The index, recomputed here from raw rows, must match what is published.
     check('tension_matches', async () => {
-      const params = tensionNewsQueryParams(now);
+      const published = (await restJson(
+        'cached_tension?select=value,news_count,updated_at&id=eq.1',
+      )) as AnyRecord[];
+      const writerRunAt = new Date(String(published[0]?.updated_at ?? ''));
+      if (!Number.isFinite(writerRunAt.getTime())) {
+        throw new Error('cached_tension.updated_at is unavailable');
+      }
+      const params = tensionNewsQueryParams(writerRunAt);
       const rawNews = (await restJson(`cached_news?${params.toString()}`)) as AnyRecord[];
       const rows = selectTensionNews(rawNews);
       const { index: computed } = calculateTensionIndex(rows);
-      const published = (await restJson('cached_tension?select=value,news_count&id=eq.1')) as AnyRecord[];
       const value = Number(published[0]?.value ?? 0);
       const diff = Math.abs(value - computed);
       const sampleIsPublishable = rows.length >= TENSION_MIN_NEWS;
