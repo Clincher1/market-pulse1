@@ -79,3 +79,7 @@ verify_jwt = false
 # no secrets involved.
 [functions.proxy]
 verify_jwt = false
+
+# Cron target: no gateway JWT, x-cron-secret checked in code.
+[functions.scheduled-job-runner]
+verify_jwt = false
