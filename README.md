@@ -130,7 +130,8 @@ selfcheck. Функция отправляет сообщение только �
    приходит сообщение с датой последней зелёной записи в UTC; при свежей записи — тишина.
 
 Для чтения `site_health` watchdog использует `SUPABASE_URL` из repository variables и
-`SNAPSHOT_SUPABASE_READ_KEY` из repository secrets. Рабочие workflow можно запускать
-вручную через **Actions → нужный workflow → Run workflow**; уведомление появится только
-если соответствующее условие сбоя действительно наступило. Уведомления не отправляют
-успешные heartbeat-сообщения.
+`SNAPSHOT_SUPABASE_READ_KEY` из repository secrets. Для ручной проверки доставки без
+искусственного сбоя откройте **Actions → Selfcheck watchdog → Run workflow** и включите
+`telegram_test`: придёт отдельное тестовое сообщение с временем UTC, запись `site_health`
+не меняется. Без этого флажка watchdog отправляет сообщение только при устаревшей или
+отсутствующей зелёной записи. Успешные проверки не отправляют heartbeat-сообщения.
