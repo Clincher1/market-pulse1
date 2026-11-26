@@ -1,5 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/telegram/channel/daily",
+      "schedule": "0 6 * * *"
+    }
+  ],
   "functions": {
     "api/brief-image.js": {
       "includeFiles": "api/assets/**",
@@ -20,6 +26,9 @@
       "maxDuration": 30
     },
     "api/telegram/channel/trigger.js": {
+      "maxDuration": 30
+    },
+    "api/telegram/channel/daily.js": {
       "maxDuration": 30
     }
   },

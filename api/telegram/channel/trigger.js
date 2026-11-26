@@ -60,14 +60,22 @@ function figureLines(now = new Date()) {
   return lines;
 }
 
-export function testPostText(now = new Date()) {
+function postText(greeting, now = new Date()) {
   const figures = figureLines(now);
   return [
-    'Здравствуйте! Это тестовая публикация Market Pulse.',
+    greeting,
     ...(figures.length ? ['Ключевые значения из последнего снимка:', ...figures] : ['Актуальный снимок с ключевыми значениями пока недоступен.']),
     SITE_URL,
     DISCLAIMER,
   ].join('\n');
+}
+
+export function testPostText(now = new Date()) {
+  return postText('Здравствуйте! Это тестовая публикация Market Pulse.', now);
+}
+
+export function dailyPostText(now = new Date()) {
+  return postText('Доброе утро! Ежедневный дайджест Market Pulse.', now);
 }
 
 async function telegramCall(fetchImpl, token, method, body) {
