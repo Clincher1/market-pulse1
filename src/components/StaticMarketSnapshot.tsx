@@ -51,7 +51,9 @@ export default function StaticMarketSnapshot() {
       })}
     </div>
     <div className="table-scroll-affordance" data-scrollable="true" data-more-right="true">
-      <div className="initial-document__snapshot table-scroll-affordance__scroller" role="region" aria-label="Таблица статического снимка" tabIndex={0}>
+      <p className="table-scroll-affordance__hint">← таблица прокручивается вбок →</p>
+      <div className="table-scroll-affordance__frame">
+        <div className="initial-document__snapshot table-scroll-affordance__scroller" role="region" aria-label="Таблица статического снимка" tabIndex={0}>
         <table>
         <caption>Рыночные наблюдения из сохранённого снимка</caption>
         <thead><tr>
@@ -71,6 +73,7 @@ export default function StaticMarketSnapshot() {
           <td>{item.basis}</td>
         </tr>)}</tbody>
         </table>
+        </div>
       </div>
       <p className="table-scroll-affordance__hint">← таблица прокручивается вбок →</p>
     </div>

@@ -161,8 +161,10 @@ function renderSnapshot() {
             Данные могут поступать с задержкой.</p>
           ${renderSnapshotCharts(snapshot)}
           <div class="table-scroll-affordance" data-scrollable="true" data-more-right="true">
-            <div class="initial-document__snapshot table-scroll-affordance__scroller"
-              role="region" aria-label="Таблица статического снимка" tabindex="0">
+            <p class="table-scroll-affordance__hint">← таблица прокручивается вбок →</p>
+            <div class="table-scroll-affordance__frame">
+              <div class="initial-document__snapshot table-scroll-affordance__scroller"
+                role="region" aria-label="Таблица статического снимка" tabindex="0">
               <table>
               <caption>Рыночные наблюдения из сохранённого снимка</caption>
               <thead>
@@ -178,6 +180,7 @@ function renderSnapshot() {
               <tbody>${rows}
               </tbody>
               </table>
+              </div>
             </div>
             <p class="table-scroll-affordance__hint">← таблица прокручивается вбок →</p>
           </div>
