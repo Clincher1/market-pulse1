@@ -7,11 +7,12 @@ import type { AssetData } from '@/data/marketTypes';
 import { assetObservations, compareAssets, dateLabel, DESK_ASSET_IDS, DESK_UNITS, deskValue, latestMove, validDate } from '@/lib/marketDesk';
 import { formatPercent } from '@/lib/percent';
 import { observationLabel, observationLagLabel } from '@/lib/asOf';
+import FreshnessDot from './FreshnessDot';
 import { formatPriceText } from '@/lib/price';
 import { niceTicks, formatTick, tickStep } from '@/lib/chartAxis';
 import './market-desk.css';
 
-const COLORS = ['#0369a1', '#a21caf', '#b45309', '#047857', '#be123c'];
+const COLORS = ['#0369a1', '#a21caf', '#b45309', '#0e7490', '#6d28d9'];
 const DASHES = ['none', '8 4', '3 3', '12 3 3 3', '2 5'];
 
 function MinuteSummary({ assets }: { assets: AssetData[] }) {
@@ -48,7 +49,7 @@ function MinuteSummary({ assets }: { assets: AssetData[] }) {
           <h3>{russian.name} <span>{formatPercent(russian.changePct)}</span></h3>
           <p className="market-desk__muted">Значение: {deskValue(russian.value)} {russian.unit} · изменение к указанной дате сравнения</p>
           <p>{dateLabel(russian.previousDate!.slice(0, 10))} → {dateLabel(russian.asOf.slice(0, 10))}</p>
-          <p className="market-desk__muted">{russian.provider} · {russian.basis}</p>
+          <p className="market-desk__muted market-source"><FreshnessDot asOf={russian.asOf} />{russian.provider} · {russian.basis}</p>
         </> : <p role="status">{loading ? 'Загружаем российские ориентиры…' : 'Датированное изменение не получено. Значения не подставляем.'}</p>}
         <a href="/russia">Россия и источники <ArrowUpRight size={14} aria-hidden="true" /></a>
       </article>
@@ -58,11 +59,12 @@ function MinuteSummary({ assets }: { assets: AssetData[] }) {
           <h3>{world.asset.name} <span>{formatPercent(world.change)}</span></h3>
           <p className="market-desk__muted">{deskValue(world.first)} → {deskValue(world.last)} {DESK_UNITS[world.asset.id]}</p>
           <p>{dateLabel(world.from)} → {dateLabel(world.till)}</p>
-          <p className="market-desk__muted">{world.asset.sourceLabel || 'Источник не указан в кэше'} · два последних датированных наблюдения · (последнее / предыдущее − 1) × 100 %</p>
+          <p className="market-desk__muted market-source"><FreshnessDot asOf={world.asset.asOf} />{world.asset.sourceLabel || 'Источник не указан в кэше'} · два последних датированных наблюдения · (последнее / предыдущее − 1) × 100 %</p>
         </> : <p>Датированное изменение пока недоступно. Смотрите состояние загрузки ниже.</p>}
         <a href="/world">Котировки и сравнение <ArrowUpRight size={14} aria-hidden="true" /></a>
       </article>
     </div>
+    <p className="freshness-legend">Точка перед источником: зелёная — live-котировка; серая — дневное закрытие; янтарная — дата отстаёт на день и более.</p>
   </section>;
 }
 

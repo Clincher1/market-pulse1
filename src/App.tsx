@@ -98,7 +98,7 @@ function DashboardPage() {
 
   return (
     <>
-      <section id="dashboard" className="overview-hero overview-hero--compact dashboard-section-container mb-5 scroll-mt-24 lg:mb-6">
+      <section id="dashboard" className="overview-hero overview-hero--compact dashboard-section-container mb-[var(--space-3)] scroll-mt-[var(--space-6)] lg:mb-[var(--space-3)]">
         <div className="overview-hero__backdrop" aria-hidden="true" />
         <div className="overview-hero__copy">
           <motion.div className="overview-hero__eyebrow" {...appear(0.04)}>
@@ -136,6 +136,7 @@ function DashboardPage() {
             <span className="overview-hero__note-mark" aria-hidden="true">01</span>
             <p>Без прогнозов и рекомендаций. Источники и даты — рядом с числами.</p>
           </motion.div>
+          <p className="page-signal-intro__route-legend">Цвет маршрута — цвет раздела. Заполненный узел — вы здесь.</p>
         </div>
 
         <motion.div className="overview-hero__visual" {...appear(0.14)}>
@@ -188,13 +189,13 @@ function SectionPage({ view }: { view: SectionPageView }) {
           <section
             id="global-economy"
             aria-labelledby="global-economy-title"
-            className="deferred-market-layout mb-10 scroll-mt-24 rounded-[28px] border border-cyan-200/80 bg-linear-to-br from-cyan-50/80 via-white to-blue-50/70 p-3 shadow-sm sm:p-5 lg:mb-12 lg:p-6"
+            className="deferred-market-layout mb-[var(--space-5)] scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-cyan-200/80 p-[var(--space-2)] shadow-sm sm:p-[var(--space-3)] lg:mb-[var(--space-6)] lg:p-[var(--space-3)]"
           >
-            <div className="mb-6 px-1 pt-1 sm:px-2">
+            <div className="mb-[var(--space-3)] px-[var(--space-1)] pt-[var(--space-1)] sm:px-[var(--space-1)]">
               <h2 id="global-economy-title" className="text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
                 Глобальная экономика
               </h2>
-              <p className="mt-2 max-w-4xl text-sm leading-relaxed text-text-secondary sm:text-base">
+              <p className="mt-[var(--space-1)] max-w-4xl text-sm leading-relaxed text-text-secondary sm:text-base">
                 Мировые котировки и графики с датами наблюдений. Рубль и Мосбиржа находятся на отдельной странице российского контура.
               </p>
             </div>
@@ -220,7 +221,7 @@ function SectionPage({ view }: { view: SectionPageView }) {
                 title="Глобальные новости"
                 message="Готовим фильтры, источники и последние заголовки…"
                 minHeightClass="min-h-[560px]"
-                className="mb-10 lg:mb-12"
+                className="mb-[var(--space-5)] lg:mb-[var(--space-6)]"
               />
             }
           >
@@ -242,17 +243,17 @@ function SectionPage({ view }: { view: SectionPageView }) {
                 title="О проекте"
                 message="Загружаем архитектуру, правила честности и ограничения проекта…"
                 minHeightClass="min-h-[460px]"
-                className="mb-10 lg:mb-12"
+                className="mb-[var(--space-5)] lg:mb-[var(--space-6)]"
               />
             }
           >
             <SectionBoundary title="О проекте"><AboutProject /></SectionBoundary>
           </Suspense>
-          <details className="mb-10 rounded-2xl border border-border-subtle bg-bg-card p-4 shadow-sm lg:mb-12">
-            <summary className="min-h-11 cursor-pointer py-3 text-sm font-extrabold text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent">
+          <details className="mb-[var(--space-5)] rounded-2xl border border-border-subtle bg-bg-card p-[var(--space-2)] shadow-sm lg:mb-[var(--space-6)]">
+            <summary className="min-h-11 cursor-pointer py-[var(--space-2)] text-sm font-extrabold text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent">
               Как собираем и проверяем данные
             </summary>
-            <div className="mt-4">
+            <div className="mt-[var(--space-2)]">
               <HowWeKnow />
             </div>
           </details>
@@ -386,7 +387,7 @@ function App() {
   }, [currentHash, view]);
 
   return (
-    <div className="site-shell min-h-screen pb-20 text-text-primary lg:pb-0" data-view={view}>
+    <div className="site-shell min-h-screen pb-[var(--space-6)] text-text-primary lg:pb-0" data-view={view}>
       <a
         href="#main"
         onClick={(event) => {
@@ -396,7 +397,7 @@ function App() {
           main.focus({ preventScroll: true });
           main.scrollIntoView({ block: 'start' });
         }}
-        className="sr-only rounded-full bg-accent-strong px-4 py-2 text-sm font-extrabold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+        className="sr-only rounded-full bg-accent-strong px-[var(--space-2)] py-[var(--space-1)] text-sm font-extrabold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
       >
         Перейти к содержанию
       </a>
@@ -404,7 +405,7 @@ function App() {
       <main
         id="main"
         tabIndex={-1}
-        className="site-container pb-8 pt-24 outline-hidden lg:pt-28"
+        className="site-container pb-[var(--space-4)] pt-[var(--space-6)] outline-hidden lg:pt-[var(--space-6)]"
       >
         <motion.div
           key={view}
@@ -421,7 +422,7 @@ function App() {
                     title="Состояние системы"
                     message="Читаем отчёт самопроверки: источники, котировки, даты и историю…"
                     minHeightClass="min-h-[60vh]"
-                    className="rounded-[28px]"
+                    className="rounded-[var(--radius)]"
                   />
                 }
               >
@@ -438,7 +439,7 @@ function App() {
                     title="Методология Market Pulse"
                     message="Загружаем полный гид: источники, формулы и ограничения…"
                     minHeightClass="min-h-[70vh]"
-                    className="rounded-[28px]"
+                    className="rounded-[var(--radius)]"
                   />
                 }
               >

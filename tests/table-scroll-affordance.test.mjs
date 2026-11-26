@@ -69,7 +69,7 @@ test('pre-rendered top and bottom hints are reused and dismissed together withou
   dom.window.close();
 });
 
-test('mobile CSS keeps both bold 14px accent hints, their gentle pulse, and the non-interactive edge fade', async () => {
+test('mobile CSS keeps readable scroll hints and a solid, non-interactive edge marker', async () => {
   const css = await readFile(new URL('../src/lib/table-scroll-affordance.css', import.meta.url), 'utf8');
   assert.match(css, /@media\s*\(max-width:\s*767px\)/);
   assert.match(css, /font-size:\s*0\.875rem/);
@@ -79,7 +79,8 @@ test('mobile CSS keeps both bold 14px accent hints, their gentle pulse, and the 
   assert.match(css, /animation:\s*table-scroll-hint-pulse\s+3\.2s/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?animation:\s*none/);
   assert.match(css, /pointer-events:\s*none/);
-  assert.match(css, /linear-gradient\(90deg/);
+  assert.match(css, /background-color:\s*var\(--card-bg\)/);
+  assert.doesNotMatch(css, /linear-gradient|radial-gradient/);
   assert.match(css, /\.table-scroll-affordance\[data-more-right="true"\].*\.table-scroll-affordance__frame::after/);
   assert.match(css, /\.table-scroll-affordance\[data-scrollable="true"\].*\.table-scroll-affordance__hint/);
   assert.match(css, /\.table-scroll-affordance__hint\[data-dismissed="true"\]\s*\{[^}]*opacity:\s*0/s);

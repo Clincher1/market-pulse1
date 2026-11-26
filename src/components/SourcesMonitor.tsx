@@ -51,16 +51,16 @@ export default function SourcesMonitor() {
   }, []);
 
   if (!loaded) {
-    return <div className="mb-5 min-h-[120px] animate-pulse rounded-xl2 border border-border-subtle bg-bg-card p-5" />;
+    return <div className="mb-[var(--space-3)] min-h-[120px] animate-pulse rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)]" />;
   }
 
   if (!slots.length) {
     return (
-      <div className="mb-5 flex items-start gap-3 rounded-xl2 border border-amber-200 bg-amber-50 p-5 text-amber-900">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
+      <div className="mb-[var(--space-3)] flex items-start gap-[var(--space-2)] rounded-[var(--radius)] border border-amber-200 bg-amber-50 p-[var(--space-3)] text-amber-900">
+        <AlertTriangle className="mt-[var(--space-1)] h-5 w-5 shrink-0 text-amber-800" />
         <div>
           <div className="font-bold">Реестр слотов пока пуст</div>
-          <p className="mt-1 text-sm text-amber-900">
+          <p className="mt-[var(--space-1)] text-sm text-amber-900">
             Реестр заполняется писателем цен при каждом запуске. Пустая таблица означает, что
             синхронизация ещё не проходила — это же проверяет самопроверка, проверка
             «Слоты и источники совпадают с реестром».
@@ -77,17 +77,17 @@ export default function SourcesMonitor() {
   );
 
   return (
-    <div className="mb-5 rounded-xl2 border border-border-subtle bg-bg-card p-5">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+    <div className="mb-[var(--space-3)] rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)]">
+      <div className="mb-[var(--space-2)] flex flex-wrap items-center gap-[var(--space-1)]">
         <Database className="h-4 w-4 text-cyan-800" />
         <span className="text-xs font-bold uppercase tracking-widest text-text-secondary">
           Слоты и источники
         </span>
-        <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[11px] font-bold text-text-secondary">
+        <span className="rounded-full border border-border-subtle px-[var(--space-1)] py-[var(--space-1)] text-[11px] font-bold text-text-secondary">
           {slots.length} слотов
         </span>
       </div>
-      <p className="mb-4 max-w-3xl text-sm leading-relaxed text-text-secondary">
+      <p className="mb-[var(--space-2)] max-w-3xl text-sm leading-relaxed text-text-secondary">
         Реестр описывает настроенный порядок источников, а не гарантирует, кто ответил
         последним: при отказе основного может ответить запасной. Для мировых цен отдельно
         показан источник последнего значения из кэша. Внутренние и архивные процессы
@@ -98,7 +98,7 @@ export default function SourcesMonitor() {
       </p>
 
       {withoutSource.length > 0 && (
-        <p className="mb-3 text-sm text-amber-900">
+        <p className="mb-[var(--space-2)] text-sm text-amber-900">
           Без источника сейчас: слоты {withoutSource.join(', ')} — в реестре нет включённого источника; это состояние настройки, а не проверка доступности API.
         </p>
       )}
@@ -112,12 +112,12 @@ export default function SourcesMonitor() {
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="text-xs uppercase tracking-wide text-text-secondary">
             <tr>
-              <th className="pb-2 pr-3 font-bold">№</th>
-              <th className="pb-2 pr-3 font-bold">Слот</th>
-              <th className="pb-2 pr-3 font-bold">Настроенный источник</th>
-              <th className="pb-2 pr-3 font-bold">Расход за сутки</th>
-              <th className="pb-2 pr-3 font-bold">Журнал источника</th>
-              <th className="pb-2 font-bold">Последний ответ</th>
+              <th className="pb-[var(--space-1)] pr-[var(--space-2)] font-bold">№</th>
+              <th className="pb-[var(--space-1)] pr-[var(--space-2)] font-bold">Слот</th>
+              <th className="pb-[var(--space-1)] pr-[var(--space-2)] font-bold">Настроенный источник</th>
+              <th className="pb-[var(--space-1)] pr-[var(--space-2)] font-bold">Расход за сутки</th>
+              <th className="pb-[var(--space-1)] pr-[var(--space-2)] font-bold">Журнал источника</th>
+              <th className="pb-[var(--space-1)] font-bold">Последний ответ</th>
             </tr>
           </thead>
           <tbody>
@@ -130,44 +130,44 @@ export default function SourcesMonitor() {
               return (
                 <Fragment key={slot.number}>
                 {(index === 0 || isInternalSlot(slot.slotId) !== isInternalSlot(slots[index - 1].slotId)) && (
-                  <tr><th colSpan={6} className="py-3 text-xs font-bold text-text-secondary">
+                  <tr><th colSpan={6} className="py-[var(--space-2)] text-xs font-bold text-text-secondary">
                     {isInternalSlot(slot.slotId) ? 'Внутренние и архивные процессы · не публичные блоки сайта' : 'Публичные данные и их обслуживание'}
                   </th></tr>
                 )}
                 <tr className="border-t border-border-subtle/60 align-top">
-                  <td className="py-2 pr-3 font-mono text-xs text-text-secondary">{slot.number}</td>
-                  <td className="py-2 pr-3">
+                  <td className="py-[var(--space-1)] pr-[var(--space-2)] font-mono text-xs text-text-secondary">{slot.number}</td>
+                  <td className="py-[var(--space-1)] pr-[var(--space-2)]">
                     <div className="font-semibold text-text-primary">{slot.title}</div>
                     <div className="text-[11px] text-text-secondary">{slot.section}</div>
                   </td>
-                  <td className="py-2 pr-3">
-                    <div className="flex items-center gap-1.5">
+                  <td className="py-[var(--space-1)] pr-[var(--space-2)]">
+                    <div className="flex items-center gap-[var(--space-1)]">
                       <Radio className="h-3.5 w-3.5 shrink-0 text-cyan-800" />
                       <span className="font-semibold">{primary?.id ?? '—'}</span>
                     </div>
                     <div className="text-[11px] text-text-secondary">{primary?.why ?? 'нет включённого источника'}</div>
-                    {actual && <div className="mt-1 text-[11px] text-text-secondary">
+                    {actual && <div className="mt-[var(--space-1)] text-[11px] text-text-secondary">
                       Источник показанного значения: {actual.sourceLabel || 'не указан'}
                       {actual.asOf ? ` · наблюдение ${formatObservationTimestamp(actual.asOf)}` : ' · дата не указана'}
                     </div>}
                     {backup.length > 0 && (
-                      <div className="mt-0.5 text-[11px] text-text-secondary">
+                      <div className="mt-[var(--space-1)] text-[11px] text-text-secondary">
                         следующие в очереди: {backup.map((source) => source.id).join(', ')}
                       </div>
                     )}
                     {disabled.length > 0 && <div className="text-[11px] text-text-secondary">Отключены: {disabled.map((source) => source.id).join(', ')}</div>}
                   </td>
-                  <td className="py-2 pr-3 font-mono text-xs">
+                  <td className="py-[var(--space-1)] pr-[var(--space-2)] font-mono text-xs">
                     {usageLabel(primary?.state ?? null, primary ? SOURCE_BUDGETS[primary.id] ?? null : null)}
                   </td>
-                  <td className={`py-2 pr-3 text-xs font-semibold ${stateClass(primary?.state?.verdict ?? null)}`}>
+                  <td className={`py-[var(--space-1)] pr-[var(--space-2)] text-xs font-semibold ${stateClass(primary?.state?.verdict ?? null)}`}>
                     {verdictLabel(primary?.state?.verdict ?? null)}
                     {pause ? ` · ещё ${pause}` : ''}
                     {primary?.state && primary.state.consecutive_failures
                       ? ` · отказов подряд: ${primary.state.consecutive_failures}`
                       : ''}
                   </td>
-                  <td className="py-2 text-[11px] text-text-secondary">
+                  <td className="py-[var(--space-1)] text-[11px] text-text-secondary">
                     {primary?.state?.last_ok_at
                       ? formatObservationTimestamp(primary.state.last_ok_at)
                       : 'нет записи'}
@@ -180,7 +180,7 @@ export default function SourcesMonitor() {
         </table>
       </div>
 
-      <div className="mt-4 space-y-2 text-[12px] leading-relaxed text-text-secondary">
+      <div className="mt-[var(--space-2)] space-y-[var(--space-1)] text-[12px] leading-relaxed text-text-secondary">
         <p>
           Настройки источников меняются владельцем через проверяемую миграцию,
           без изменения исторических котировок. Очередь определяет порядок попыток;

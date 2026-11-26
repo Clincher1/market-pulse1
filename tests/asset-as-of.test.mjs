@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { moscowClock, observationLabel, observationLagDays, observationLagLabel } from '../src/lib/asOf.ts';
+import { moscowClock, observationLabel, observationLagDays, observationLagLabel, freshnessTone } from '../src/lib/asOf.ts';
 
 /**
  * Подпись к цене — единственное место, где сайт говорит, НА КАКОЙ МОМЕНТ
@@ -52,6 +52,14 @@ test('календарное отставание Yahoo считается по 
   // UTC still says Oct 29, but 22:30 UTC is already Oct 30 in Moscow.
   assert.equal(observationLagDays('2026-10-29T22:30:00Z', now), 0);
   assert.equal(observationLagDays('2026-10-31', now), 0);
+});
+
+test('freshness tone follows the same observed date and lag labels', () => {
+  const now = new Date('2026-10-30T00:30:00Z');
+  assert.equal(freshnessTone('2026-10-30T05:45:00Z', now), 'live');
+  assert.equal(freshnessTone('2026-10-30', now), 'closed');
+  assert.equal(freshnessTone('2026-10-29', now), 'stale');
+  assert.equal(freshnessTone(null, now), 'closed');
 });
 
 test('Yahoo lag label names calendar lag and stays blank for unknown dates', () => {

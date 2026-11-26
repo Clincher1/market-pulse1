@@ -71,7 +71,7 @@ function indicatorsWord(count: number): string {
 function MorningAssets({ assets }: { assets: PassportAsset[] }) {
   if (assets.length === 0) {
     return (
-      <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+      <p className="mt-[var(--space-2)] text-xs leading-relaxed text-text-secondary">
         В этом снимке цен мировых индикаторов нет: он сделан до того, как их
         начали сохранять. Подставить сегодняшние цены нельзя — тогда запись
         перестала бы быть утренней.
@@ -80,28 +80,28 @@ function MorningAssets({ assets }: { assets: PassportAsset[] }) {
   }
 
   return (
-    <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="mt-[var(--space-2)] grid gap-[var(--space-1)] sm:grid-cols-3 lg:grid-cols-5">
       {assets.map((asset) => (
         <div
           key={asset.id}
-          className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+          className="rounded-2xl border border-slate-200 bg-white p-[var(--space-2)] shadow-sm"
         >
           <div className="truncate text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
             {asset.name}
           </div>
-          <div className="mt-1 text-lg font-bold tabular-nums text-text-primary">
+          <div className="mt-[var(--space-1)] text-lg font-bold tabular-nums text-text-primary">
             {asset.price || '—'}
           </div>
           <div className="text-[10px] leading-relaxed text-text-secondary">
             {asset.priceLabel ?? 'Цена, сохранённая в кэше на момент снимка'}
           </div>
           {asset.last !== null && asset.last !== undefined && (
-            <div className="mt-1 text-[10px] leading-relaxed text-text-secondary">
+            <div className="mt-[var(--space-1)] text-[10px] leading-relaxed text-text-secondary">
               {asset.lastLabel ?? 'Последняя датированная точка ряда'}: {asset.last.toLocaleString('ru-RU', { maximumFractionDigits: 8 })}
               {asset.lastDate ? ` · ${asset.lastDate}` : ''}
             </div>
           )}
-          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px]">
+          <div className="mt-[var(--space-1)] flex flex-wrap items-baseline gap-x-[var(--space-1)] text-[11px]">
             <span
               className={`font-bold tabular-nums ${
                 asset.change === null
@@ -119,7 +119,7 @@ function MorningAssets({ assets }: { assets: PassportAsset[] }) {
               <span className="text-text-secondary">{observationLabel(asset.asOf)}</span>
             )}
           </div>
-          {asset.goldAudit && <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+          {asset.goldAudit && <p className="mt-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
             {asset.goldAudit.baseDate ? `Проверено: цена снимка к закрытию ${asset.goldAudit.baseValue?.toLocaleString('ru-RU')} от ${asset.goldAudit.baseDate}.` : 'Золото исключено из выбора лидера: нет подтверждённой базы.'}
           </p>}
         </div>
@@ -155,14 +155,14 @@ export default function DailyPassport() {
         id="daily-passport"
         aria-busy="true"
         aria-label="Загрузка паспорта дня"
-        className="mb-10 scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-5 lg:mb-12 lg:p-6"
+        className="mb-[var(--space-5)] scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)] lg:mb-[var(--space-6)] lg:p-[var(--space-3)]"
       >
         <div className="h-4 w-40 animate-pulse rounded-sm bg-slate-200" />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="mt-[var(--space-2)] grid gap-[var(--space-2)] sm:grid-cols-2 lg:grid-cols-12">
           <div className="h-40 animate-pulse rounded-3xl bg-slate-100 lg:col-span-6" />
           <div className="h-40 animate-pulse rounded-3xl bg-slate-100 lg:col-span-6" />
         </div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-[var(--space-1)] grid gap-[var(--space-1)] sm:grid-cols-3 lg:grid-cols-5">
           {[0, 1, 2, 3, 4].map((i) => (
             <div key={i} className="h-[86px] animate-pulse rounded-2xl bg-slate-100" />
           ))}
@@ -173,7 +173,7 @@ export default function DailyPassport() {
 
   if (failed) {
     return (
-      <div className="mb-10 lg:mb-12">
+      <div className="mb-[var(--space-5)] lg:mb-[var(--space-6)]">
         <ErrorNotice
           title="Паспорт дня недоступен"
           message="Не удалось прочитать архив дневных записей. Это не значит, что записей нет: показать их сейчас нечем, а придумывать значения вместо них мы не будем."
@@ -191,13 +191,13 @@ export default function DailyPassport() {
     return (
       <section
         id="daily-passport"
-        className="mb-10 scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-5 lg:mb-12 lg:p-6"
+        className="mb-[var(--space-5)] scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)] lg:mb-[var(--space-6)] lg:p-[var(--space-3)]"
       >
-        <h2 className="flex items-center gap-2 text-lg font-extrabold text-text-primary">
+        <h2 className="flex items-center gap-[var(--space-1)] text-lg font-extrabold text-text-primary">
           <CalendarCheck className="h-5 w-5 text-emerald-700" aria-hidden="true" />
           Паспорт дня
         </h2>
-        <p className="mt-2 max-w-[72ch] text-sm leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] max-w-[72ch] text-sm leading-relaxed text-text-secondary">
           Утренняя запись ещё не сделана. Паспорт создаётся один раз в начале дня по
           московскому времени и больше не переписывается.
         </p>
@@ -209,12 +209,12 @@ export default function DailyPassport() {
     <section
       id="daily-passport"
       aria-labelledby="daily-passport-title"
-      className="mb-10 scroll-mt-24 rounded-xl2 border border-emerald-200 bg-linear-to-br from-emerald-50/70 via-white to-white p-4 shadow-sm lg:mb-12 lg:p-6"
+      className="mb-[var(--space-5)] scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-emerald-200 p-[var(--space-2)] shadow-sm lg:mb-[var(--space-6)] lg:p-[var(--space-3)]"
     >
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <div className="flex flex-wrap items-baseline gap-x-[var(--space-2)] gap-y-[var(--space-1)]">
         <h2
           id="daily-passport-title"
-          className="flex items-center gap-2 text-lg font-extrabold text-text-primary lg:text-xl"
+          className="flex items-center gap-[var(--space-1)] text-lg font-extrabold text-text-primary lg:text-xl"
         >
           <CalendarCheck className="h-5 w-5 text-emerald-700" aria-hidden="true" />
           Паспорт дня
@@ -225,14 +225,14 @@ export default function DailyPassport() {
         </span>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+      <div className="mt-[var(--space-2)] grid gap-[var(--space-2)] sm:grid-cols-2 lg:grid-cols-12">
         {/* Самое сильное движение дня. */}
-        <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm motion-safe:animate-fade-in lg:col-span-6 lg:p-5">
+        <article className="rounded-3xl border border-slate-200 bg-white p-[var(--space-2)] shadow-sm motion-safe:animate-fade-in lg:col-span-6 lg:p-[var(--space-3)]">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Сильнейшее изменение снимка
           </div>
           <div
-            className={`mt-3 text-4xl leading-none font-normal tracking-[-0.03em] tabular-nums lg:text-5xl ${
+            className={`mt-[var(--space-2)] text-4xl leading-none font-normal tracking-[-0.03em] tabular-nums lg:text-5xl ${
               today.topMover === null || today.topMover.change === 0
                 ? 'text-text-primary'
                 : today.topMover.change > 0
@@ -242,7 +242,7 @@ export default function DailyPassport() {
           >
             {today.topMover ? changeWord(today.topMover.change) : '—'}
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+          <p className="mt-[var(--space-2)] text-xs leading-relaxed text-text-secondary">
             {today.topMover
               ? `${today.topMover.name} — среди доступных изменений мировых индикаторов${priceAsOf(today.topMover.asOf)}`
               : 'в снимке нет движений за день'}
@@ -250,11 +250,11 @@ export default function DailyPassport() {
         </article>
 
         {/* Официальный курс — снимок утра, не текущий курс. */}
-        <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm motion-safe:animate-fade-in sm:col-span-2 lg:col-span-6 lg:p-5">
+        <article className="rounded-3xl border border-slate-200 bg-white p-[var(--space-2)] shadow-sm motion-safe:animate-fade-in sm:col-span-2 lg:col-span-6 lg:p-[var(--space-3)]">
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Курс USD/RUB на утро
           </div>
-          <div className="mt-3 text-4xl leading-none font-normal tracking-[-0.03em] tabular-nums text-text-primary">
+          <div className="mt-[var(--space-2)] text-4xl leading-none font-normal tracking-[-0.03em] tabular-nums text-text-primary">
             {today.usdRub === null
               ? '—'
               : // Через ru-RU: на той же странице курс уже напечатан как
@@ -264,7 +264,7 @@ export default function DailyPassport() {
                   maximumFractionDigits: 4,
                 }).format(today.usdRub)} ₽`}
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+          <p className="mt-[var(--space-2)] text-xs leading-relaxed text-text-secondary">
             {today.usdRub === null
               ? 'курс не попал в утренний снимок'
               : 'Банк России, курс дня'}
@@ -272,7 +272,7 @@ export default function DailyPassport() {
         </article>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3">
+      <div className="mt-[var(--space-2)] flex flex-wrap items-baseline justify-between gap-x-[var(--space-2)]">
         <h3 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
           Мировые индикаторы на утро
         </h3>
@@ -284,8 +284,8 @@ export default function DailyPassport() {
       </div>
       <MorningAssets assets={today.assets} />
 
-      <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
-        <Database className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <p className="mt-[var(--space-2)] flex items-start gap-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
+        <Database className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span>
           Запись создаётся первой вставкой дня: повторный запуск её не перезаписывает.
           Поэтому сюда нельзя «подтянуть» более удачные цифры задним числом — можно
@@ -293,7 +293,7 @@ export default function DailyPassport() {
         </span>
       </p>
 
-      <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+      <p className="mt-[var(--space-2)] text-xs leading-relaxed text-text-secondary">
         Процент золота рассчитан заново из цены именно этого снимка и подтверждённого
         закрытия XAU/USD; другие проценты сохранены как в записи. Это не текущая цена.
         Если база золота не подтверждена, процент не показывается и не участвует в выборе лидера.
@@ -301,27 +301,27 @@ export default function DailyPassport() {
       </p>
 
       {archive.length > 0 ? (
-        <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <summary className="min-h-11 cursor-pointer py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+        <details className="mt-[var(--space-2)] rounded-xl border border-slate-200 bg-slate-50 px-[var(--space-2)] py-[var(--space-1)]">
+          <summary className="min-h-11 cursor-pointer py-[var(--space-2)] text-xs font-extrabold uppercase tracking-[0.12em] text-text-secondary">
             Архив · {archive.length} {movingWord(archive.length)} до сегодня
           </summary>
-          <div className="mt-2 overflow-x-auto">
+          <div className="mt-[var(--space-1)] overflow-x-auto">
             <table className="w-full min-w-[320px] text-left text-xs tabular-nums">
               <thead className="text-text-secondary">
                 <tr>
-                  <th scope="col" className="py-1 pr-3 font-bold">Дата</th>
-                  <th scope="col" className="py-1 pr-3 font-bold">Фиксация</th>
-                  <th scope="col" className="py-1 font-bold">Сильнейшее движение</th>
+                  <th scope="col" className="py-[var(--space-1)] pr-[var(--space-2)] font-bold">Дата</th>
+                  <th scope="col" className="py-[var(--space-1)] pr-[var(--space-2)] font-bold">Фиксация</th>
+                  <th scope="col" className="py-[var(--space-1)] font-bold">Сильнейшее движение</th>
                 </tr>
               </thead>
               <tbody className="text-text-secondary">
                 {archive.map((day) => (
                   <tr key={day.date} className="border-t border-slate-200">
-                    <td className="py-1 pr-3 font-bold text-text-primary">
+                    <td className="py-[var(--space-1)] pr-[var(--space-2)] font-bold text-text-primary">
                       {passportDateShort(day.date)}
                     </td>
-                    <td className="py-1 pr-3">{formatObservationTimestamp(day.capturedAt)}</td>
-                    <td className="py-1">
+                    <td className="py-[var(--space-1)] pr-[var(--space-2)]">{formatObservationTimestamp(day.capturedAt)}</td>
+                    <td className="py-[var(--space-1)]">
                       {day.topMover
                         ? `${day.topMover.name} ${changeWord(day.topMover.change)}${archivePriceAsOf(day.topMover.asOf)}`
                         : '—'}
@@ -331,8 +331,8 @@ export default function DailyPassport() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-text-secondary">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <p className="mt-[var(--space-1)] flex items-start gap-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
+            <Info className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
               Архив начинается с {passportDate(days[days.length - 1]?.date ?? today.date)}:
               раньше снимки не сохранялись, и дорисовать пропущенные дни нельзя.
@@ -343,7 +343,7 @@ export default function DailyPassport() {
           </p>
         </details>
       ) : (
-        <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-2)] text-xs leading-relaxed text-text-secondary">
           Это первая запись в архиве. Предыдущих дней нет: снимки начали сохраняться
           только сейчас, и заполнить их задним числом невозможно.
         </p>

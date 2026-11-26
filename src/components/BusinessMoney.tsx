@@ -5,6 +5,7 @@ import { useLiveAssets } from '@/hooks/useLiveAssets';
 import { startPolling } from '@/lib/polling';
 import { formatPriceText } from '@/lib/price';
 import { formatObservationTimestamp } from '@/lib/dateDisplay.mjs';
+import FreshnessDot from './FreshnessDot';
 
 /**
  * «Деньги бизнеса сегодня» — четыре ориентира, с которыми сверяются договоры
@@ -42,6 +43,7 @@ interface Fact {
   changeTone: 'up' | 'down' | 'flat';
   /** Дата наблюдения. Пусто — значит источник её не отдаёт, и сайт молчит. */
   asOf: string | null;
+  freshnessAsOf?: string | null;
   provider: string;
   sourceUrl: string;
   check: string;
@@ -122,6 +124,7 @@ function brentFact(
     change: typeof asset?.change === 'number' && Number.isFinite(asset.change) ? pctText(asset.change) : null,
     changeTone: toneOf(asset?.change),
     asOf: observed ?? (asset ? 'дата наблюдения не сохранена' : null),
+    freshnessAsOf: asset?.asOf ?? null,
     provider: 'Yahoo Finance · фьючерс BZ=F',
     sourceUrl: 'https://finance.yahoo.com/quote/BZ%3DF',
     check: 'если продаёте сырьё или покупаете топливо — цена в договоре считается от такого ориентира',
@@ -174,6 +177,7 @@ function factsFrom(
       change: null,
       changeTone: 'flat',
       asOf: keyRate ? `с ${shortDate(keyRate.asOf)}` : shortDate(ruonia?.asOf),
+      freshnessAsOf: keyRate?.asOf ?? ruonia?.asOf ?? null,
       provider: 'Банк России',
       sourceUrl: keyRate?.sourceUrl ?? ruonia?.sourceUrl ?? 'https://www.cbr.ru/hd_base/KeyRate/',
       check: 'если ставка в вашем кредите плавающая, она привязана к одной из этих двух',
@@ -192,6 +196,7 @@ function factsFrom(
         usd?.changePct !== null && usd?.changePct !== undefined ? pctText(usd.changePct) : null,
       changeTone: toneOf(usd?.changePct),
       asOf: shortDate(usd?.asOf),
+      freshnessAsOf: usd?.asOf ?? null,
       provider: usd?.provider ?? 'Банк России',
       sourceUrl: usd?.sourceUrl ?? 'https://www.cbr.ru/currency_base/daily/',
       check: 'сверьте валюту и дату фиксации курса в контракте на поставку',
@@ -214,6 +219,7 @@ function factsFrom(
           : null,
       changeTone: toneOf(reserves?.changeAbs),
       asOf: shortDate(reserves?.asOf),
+      freshnessAsOf: reserves?.asOf ?? null,
       provider: 'Банк России',
       sourceUrl: reserves?.sourceUrl ?? 'https://www.cbr.ru/hd_base/mrrf/mrrf_7d/',
       check: 'на ваш договор не влияет напрямую — это запас, из которого ЦБ действует на курсе',
@@ -222,8 +228,8 @@ function factsFrom(
 }
 
 const TONE_CLASS: Record<'up' | 'down' | 'flat', string> = {
-  up: 'text-emerald-800',
-  down: 'text-red-800',
+  up: 'text-positive',
+  down: 'text-negative',
   flat: 'text-text-secondary',
 };
 
@@ -260,9 +266,9 @@ export default function BusinessMoney() {
 
   if (loading && markets.length === 0) {
     return (
-      <section aria-busy="true" aria-label="Деньги бизнеса сегодня" className="mb-10 scroll-mt-24">
+      <section aria-busy="true" aria-label="Деньги бизнеса сегодня" className="mb-[var(--space-5)] scroll-mt-[var(--space-6)]">
         <div className="h-6 w-56 animate-pulse rounded bg-slate-200" />
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-[var(--space-2)] grid grid-cols-1 gap-[var(--space-2)] sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="h-44 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
           ))}
@@ -280,22 +286,22 @@ export default function BusinessMoney() {
       id="business-money"
       data-testid="business-money"
       aria-labelledby="business-money-title"
-      className="mb-10 scroll-mt-24"
+      className="mb-[var(--space-5)] scroll-mt-[var(--space-6)]"
     >
-      <div className="mb-4 px-1">
+      <div className="mb-[var(--space-2)] px-[var(--space-1)]">
         <h2
           id="business-money-title"
           className="text-xl font-extrabold tracking-tight text-text-primary sm:text-2xl"
         >
           Деньги бизнеса сегодня
         </h2>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] max-w-3xl text-sm leading-relaxed text-text-secondary">
           Четыре ориентира, с которыми сверяются договоры и платежи. У каждого — дата и
           первоисточник: число можно открыть и проверить самому. Это не рекомендации и не прогноз.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-[var(--space-2)] sm:grid-cols-2 lg:grid-cols-4">
         {facts.map((fact) => {
           const Icon = fact.icon;
           return (
@@ -305,9 +311,9 @@ export default function BusinessMoney() {
               target="_blank"
               rel="noopener noreferrer"
               data-testid={`business-money-${fact.id}`}
-              className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+              className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-[var(--space-2)] shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-[var(--space-1)]">
                 <Icon className="h-4 w-4 shrink-0 text-blue-700" aria-hidden="true" />
                 <span className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-blue-800">
                   {fact.title}
@@ -315,7 +321,7 @@ export default function BusinessMoney() {
                 <ArrowUpRight className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-800" />
               </div>
 
-              <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <div className="mt-[var(--space-2)] flex flex-wrap items-baseline gap-x-[var(--space-1)] gap-y-[var(--space-1)]">
                 <span className="text-2xl font-extrabold tabular-nums text-text-primary">
                   {fact.value ?? '—'}
                 </span>
@@ -327,10 +333,10 @@ export default function BusinessMoney() {
                   </span>
                 )}
               </div>
-              <div className="mt-1 text-[11px] leading-snug text-text-secondary">{fact.unit}</div>
+              <div className="mt-[var(--space-1)] text-[11px] leading-snug text-text-secondary">{fact.unit}</div>
 
               {fact.secondary && (
-                <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[11px] text-text-secondary">
+                <div className="mt-[var(--space-1)] flex flex-wrap items-baseline gap-x-[var(--space-1)] text-[11px] text-text-secondary">
                   <span>{fact.secondary.label}:</span>
                   <span className="font-bold tabular-nums text-text-primary">
                     {fact.secondary.value}
@@ -350,12 +356,13 @@ export default function BusinessMoney() {
                 </div>
               )}
 
-              <div className="mt-3 border-t border-slate-200 pt-2 text-[11px] leading-snug text-text-secondary">
+              <div className="market-source mt-[var(--space-2)] border-t border-slate-200 pt-[var(--space-1)] text-[11px] leading-snug text-text-secondary">
+                <FreshnessDot asOf={fact.freshnessAsOf} />
                 <span className="font-bold text-slate-700">{fact.provider}</span>
                 {fact.asOf && <> · {formatObservationTimestamp(fact.asOf) || fact.asOf}</>}
               </div>
 
-              <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+              <p className="mt-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
                 <span className="font-bold text-slate-700">Что сверить:</span> {fact.check}.
               </p>
             </a>

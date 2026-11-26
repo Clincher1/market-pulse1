@@ -42,11 +42,11 @@
   }
 
   .table-scroll-affordance > .table-scroll-affordance__hint:first-child {
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--space-1);
   }
 
   .table-scroll-affordance > .table-scroll-affordance__hint:last-child {
-    margin-top: 0.35rem;
+    margin-top: var(--space-1);
   }
 
   .table-scroll-affordance__scroller {
@@ -61,7 +61,7 @@
     width: 0.875rem;
     content: "";
     pointer-events: none;
-    background: linear-gradient(90deg, rgb(248 250 252 / 0), rgb(248 250 252 / 0.3));
+    background-color: var(--card-bg);
   }
 }
 

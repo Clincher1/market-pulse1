@@ -318,7 +318,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
 
         {active && (
           <div
-            className="pointer-events-none absolute z-10 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-center shadow-lg"
+            className="pointer-events-none absolute z-10 rounded-xl border border-slate-200 bg-white/95 px-[var(--space-2)] py-[var(--space-1)] text-center shadow-lg"
             style={{ left: tooltipLeft, top: tooltipTop, transform: `translate(${tooltipShift}, calc(-100% - 12px))` }}
           >
             <div className="whitespace-nowrap text-[11px] font-semibold text-text-secondary">{ruDate(active.date)}</div>
@@ -334,7 +334,7 @@ export function Chart({ series, window }: { series: HistorySeries; window: Russi
         )}
       </div>
 
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] font-medium text-text-secondary">
+      <div className="mt-[var(--space-1)] flex flex-wrap items-center justify-between gap-x-[var(--space-2)] gap-y-[var(--space-1)] text-[11px] font-medium text-text-secondary">
         <span>Наведите курсор или коснитесь графика — дата и значение появятся в подсказке.</span>
         <span>Отметки шкалы — круглые числа; пропущенные дни не заполняются.</span>
       </div>
@@ -381,8 +381,8 @@ export default function RussiaHistory() {
   }, [series]);
 
   return (
-    <div className="mt-5">
-      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+    <div className="mt-[var(--space-3)]">
+      <div className="mb-[var(--space-1)] flex flex-wrap items-baseline justify-between gap-[var(--space-1)]">
         <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
           Динамика за 3 месяца — из первоисточников
         </div>
@@ -394,14 +394,14 @@ export default function RussiaHistory() {
       </div>
 
       {loading && (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-text-secondary">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-[var(--space-2)] text-xs text-text-secondary">
           Загружаем историю из Мосбиржи и Банка России. Пока ответа нет — чисел здесь не будет.
         </div>
       )}
 
       {!loading && data && data.series.length === 0 && (
-        <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <div className="flex items-start gap-[var(--space-1)] rounded-2xl border border-amber-200 bg-amber-50 px-[var(--space-2)] py-[var(--space-1)] text-xs leading-relaxed text-amber-900">
+          <AlertTriangle className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0" />
           <span>
             Историю получить не удалось, поэтому графиков нет.
             {data.errors.length > 0 ? ` Причина: ${data.errors.join('; ')}.` : ''}
@@ -410,8 +410,8 @@ export default function RussiaHistory() {
       )}
 
       {!loading && data && data.series.length > 0 && series && stats && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-[var(--space-2)] shadow-sm">
+          <div className="flex flex-wrap items-center gap-[var(--space-1)]">
             {data.series.map((item) => {
               const active = item.id === series.id;
               return (
@@ -420,7 +420,7 @@ export default function RussiaHistory() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setSelectedId(item.id)}
-                  className={`min-h-11 rounded-full border px-3 py-2 text-xs font-semibold transition-colors ${
+                  className={`min-h-11 rounded-full border px-[var(--space-2)] py-[var(--space-1)] text-xs font-semibold transition-colors ${
                     active
                       ? 'border-blue-300 bg-blue-50 text-blue-800'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
@@ -432,7 +432,7 @@ export default function RussiaHistory() {
             })}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
+          <div className="mt-[var(--space-2)] flex flex-wrap items-baseline gap-x-[var(--space-2)] gap-y-[var(--space-1)] text-sm">
             <span className="text-lg font-extrabold tabular-nums text-text-primary">
               {formatValue(stats.last.value, series.unit)}
             </span>
@@ -449,13 +449,13 @@ export default function RussiaHistory() {
             </span>
           </div>
 
-          <div className="mt-2">
+          <div className="mt-[var(--space-1)]">
             <Chart series={series} window={data.window} />
           </div>
 
-          <div className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-text-secondary">
-            <div className="flex items-start gap-1.5">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-800" />
+          <div className="mt-[var(--space-1)] flex flex-col gap-[var(--space-1)] text-[11px] leading-relaxed text-text-secondary">
+            <div className="flex items-start gap-[var(--space-1)]">
+              <Info className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0 text-blue-800" />
               <span>
                 {series.note} Точек: {series.points.length}. Источник — {series.provider};{' '}
                 <a
@@ -472,20 +472,20 @@ export default function RussiaHistory() {
             {/* Четыре абзаца методики подряд закрывали сам график. Первый —
                 про пропущенные дни — остаётся на виду, остальные раскрываются. */}
             {data.notes.slice(0, 1).map((note) => (
-              <div key={note} className="flex items-start gap-1.5">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+              <div key={note} className="flex items-start gap-[var(--space-1)]">
+                <Info className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0 text-slate-500" />
                 <span>{note}</span>
               </div>
             ))}
             {data.notes.length > 1 && (
-              <details className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
-                <summary className="text-xs min-h-11 cursor-pointer select-none py-3 font-bold text-text-secondary transition-colors hover:text-text-primary">
+              <details className="rounded-lg border border-slate-200 bg-slate-50 px-[var(--space-1)] py-[var(--space-1)]">
+                <summary className="text-xs min-h-11 cursor-pointer select-none py-[var(--space-2)] font-bold text-text-secondary transition-colors hover:text-text-primary">
                   Как читать график
                 </summary>
-                <div className="mt-1.5 flex flex-col gap-1.5">
+                <div className="mt-[var(--space-1)] flex flex-col gap-[var(--space-1)]">
                   {data.notes.slice(1).map((note) => (
-                    <span key={note} className="flex items-start gap-1.5">
-                      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                    <span key={note} className="flex items-start gap-[var(--space-1)]">
+                      <Info className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0 text-slate-500" />
                       <span>{note}</span>
                     </span>
                   ))}
@@ -494,22 +494,22 @@ export default function RussiaHistory() {
             )}
           </div>
 
-          <details className="mt-2 text-[11px] text-text-secondary">
-            <summary className="text-xs min-h-11 cursor-pointer select-none py-3 font-semibold text-text-secondary">
+          <details className="mt-[var(--space-1)] text-[11px] text-text-secondary">
+            <summary className="text-xs min-h-11 cursor-pointer select-none py-[var(--space-2)] font-semibold text-text-secondary">
               Все {series.points.length} значений ряда
             </summary>
-            <div className="mt-2 max-h-64 overflow-auto focus-visible:outline-2 focus-visible:outline-cyan-600" tabIndex={0} role="region" aria-label={`Таблица наблюдений ${series.name}`}>
+            <div className="mt-[var(--space-1)] max-h-64 overflow-auto focus-visible:outline-2 focus-visible:outline-cyan-600" tabIndex={0} role="region" aria-label={`Таблица наблюдений ${series.name}`}>
               <table className="w-full text-left tabular-nums">
                 <thead>
                   <tr className="text-text-secondary">
-                    <th scope="col" className="py-1 pr-3 font-medium">
+                    <th scope="col" className="py-[var(--space-1)] pr-[var(--space-2)] font-medium">
                       Дата
                     </th>
-                    <th scope="col" className="py-1 pr-3 font-medium">
+                    <th scope="col" className="py-[var(--space-1)] pr-[var(--space-2)] font-medium">
                       Значение
                     </th>
                     {series.kind === 'step' && (
-                      <th scope="col" className="py-1 font-medium">
+                      <th scope="col" className="py-[var(--space-1)] font-medium">
                         Действует с
                       </th>
                     )}
@@ -518,10 +518,10 @@ export default function RussiaHistory() {
                 <tbody>
                   {series.points.map((point) => (
                     <tr key={point.date}>
-                      <td className="py-0.5 pr-3">{ruDate(point.date)}</td>
-                      <td className="py-0.5 pr-3">{formatValue(point.value, series.unit)}</td>
+                      <td className="py-[var(--space-1)] pr-[var(--space-2)]">{ruDate(point.date)}</td>
+                      <td className="py-[var(--space-1)] pr-[var(--space-2)]">{formatValue(point.value, series.unit)}</td>
                       {series.kind === 'step' && (
-                        <td className="py-0.5">
+                        <td className="py-[var(--space-1)]">
                           {point.since ? ruDate(point.since) : '—'}
                         </td>
                       )}
@@ -533,7 +533,7 @@ export default function RussiaHistory() {
           </details>
 
           {data.errors.length > 0 && (
-            <div className="mt-2 text-[11px] font-medium text-amber-800">
+            <div className="mt-[var(--space-1)] text-[11px] font-medium text-amber-800">
               Не получено: {data.errors.join('; ')}. Ряд без данных не рисуется и не заменяется
               похожим.
             </div>

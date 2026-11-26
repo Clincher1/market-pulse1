@@ -47,14 +47,14 @@ function GuideSection({ id, eyebrow, title, icon: Icon, children }: GuideSection
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
-      className="scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-6 shadow-lg lg:p-8"
+      className="scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)] shadow-lg lg:p-[var(--space-4)]"
     >
-      <div className="mb-5 flex items-start gap-4">
+      <div className="mb-[var(--space-3)] flex items-start gap-[var(--space-2)]">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300/25 bg-rose-400/10 text-rose-800">
           <Icon className="h-5 w-5" />
         </div>
         <div>
-          <div className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-rose-800">
+          <div className="mb-[var(--space-1)] text-xs font-bold uppercase tracking-[0.14em] text-rose-800">
             {eyebrow}
           </div>
           <h2 className="text-2xl font-extrabold tracking-tight text-text-primary sm:text-[28px]">
@@ -62,7 +62,7 @@ function GuideSection({ id, eyebrow, title, icon: Icon, children }: GuideSection
           </h2>
         </div>
       </div>
-      <div className="space-y-4">{children}</div>
+      <div className="space-y-[var(--space-2)]">{children}</div>
     </motion.section>
   );
 }
@@ -78,21 +78,21 @@ function GuideBlocks({
   limits: ReactNode;
 }) {
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
-      <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.06] p-4">
-        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-cyan-800">
+    <div className="grid gap-[var(--space-2)] lg:grid-cols-3">
+      <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.06] p-[var(--space-2)]">
+        <div className="mb-[var(--space-1)] flex items-center gap-[var(--space-1)] text-xs font-extrabold uppercase tracking-[0.1em] text-cyan-800">
           <Eye className="h-4 w-4" aria-hidden="true" /> Что видно
         </div>
         <div className="text-sm leading-relaxed text-text-secondary">{see}</div>
       </div>
-      <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.06] p-4">
-        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
+      <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.06] p-[var(--space-2)]">
+        <div className="mb-[var(--space-1)] flex items-center gap-[var(--space-1)] text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
           <Info className="h-4 w-4" aria-hidden="true" /> Что значит
         </div>
         <div className="text-sm leading-relaxed text-text-secondary">{means}</div>
       </div>
-      <div className="rounded-xl border border-amber-300/20 bg-amber-400/[0.06] p-4">
-        <div className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-amber-900">
+      <div className="rounded-xl border border-amber-300/20 bg-amber-400/[0.06] p-[var(--space-2)]">
+        <div className="mb-[var(--space-1)] flex items-center gap-[var(--space-1)] text-xs font-extrabold uppercase tracking-[0.1em] text-amber-900">
           <TriangleAlert className="h-4 w-4" aria-hidden="true" /> Чего не утверждаем
         </div>
         <div className="text-sm leading-relaxed text-text-secondary">{limits}</div>
@@ -117,59 +117,59 @@ export default function AnalyticsGuide() {
     // id="guide" — адрес экрана гида: по нему ведут ссылки «Гид» из шапки,
     // подвала и карточки-тизера. Без самого элемента такой переход работает
     // только через hashchange-роутер, а как якорь ведёт в никуда.
-    <div id="guide" className="scroll-mt-24 space-y-6 lg:space-y-8">
+    <div id="guide" className="scroll-mt-[var(--space-6)] space-y-[var(--space-3)] lg:space-y-[var(--space-4)]">
       <section
         id="guide-start"
         aria-labelledby="guide-start-title"
-        className="scroll-mt-24 rounded-xl2 border border-border-subtle bg-bg-card p-6 shadow-lg lg:p-8"
+        className="scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)] shadow-lg lg:p-[var(--space-4)]"
       >
         <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-rose-800">
           Руководство
         </div>
-        <h2 id="guide-start-title" className="mt-2 text-3xl font-extrabold tracking-tight text-text-primary sm:text-4xl">
+        <h2 id="guide-start-title" className="mt-[var(--space-1)] text-3xl font-extrabold tracking-tight text-text-primary sm:text-4xl">
           Как читать этот сайт за две минуты
         </h2>
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-2)] max-w-3xl text-base leading-relaxed text-text-secondary">
           Сайт фиксирует то, что происходит на рынках, и показывает источник у каждого
           числа. Он не предсказывает цены и не даёт рекомендаций. Раздел «Что меняется»
           показывает факты о движении рядов, которые можно проверить по графику.
         </p>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] p-4">
+        <div className="mt-[var(--space-3)] grid gap-[var(--space-2)] sm:grid-cols-3">
+          <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] p-[var(--space-2)]">
             <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-cyan-800">
               1 · Факт
             </div>
-            <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
+            <p className="mt-[var(--space-1)] text-sm leading-relaxed text-text-secondary">
               Цена, время, источник. Курсы ЦБ, Мосбиржа, мировые котировки.
             </p>
           </div>
-          <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/[0.07] p-4">
+          <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/[0.07] p-[var(--space-2)]">
             <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
               2 · Измерение
             </div>
-            <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
+            <p className="mt-[var(--space-1)] text-sm leading-relaxed text-text-secondary">
               Арифметические изменения в опубликованных рядах. Рядом показаны точки
               сравнения и способ расчёта.
             </p>
           </div>
-          <div className="rounded-xl border border-slate-300/25 bg-slate-400/[0.07] p-4">
+          <div className="rounded-xl border border-slate-300/25 bg-slate-400/[0.07] p-[var(--space-2)]">
             <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-700">
               3 · Проверка
             </div>
-            <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
+            <p className="mt-[var(--space-1)] text-sm leading-relaxed text-text-secondary">
               Источники, даты наблюдений и формулы доступны рядом с числами.
               Состояние источников и результаты самопроверки — на странице системы.
             </p>
           </div>
         </div>
 
-        <nav aria-label="Разделы руководства" className="mt-6 flex flex-wrap gap-2">
+        <nav aria-label="Разделы руководства" className="mt-[var(--space-3)] flex flex-wrap gap-[var(--space-1)]">
           {navItems.map(({ label, href, icon: Icon }) => (
             <a
               key={href}
               href={href}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-text-secondary transition-colors hover:border-slate-200 hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300"
+              className="inline-flex min-h-11 items-center gap-[var(--space-1)] rounded-full border border-slate-200 bg-slate-50 px-[var(--space-2)] py-[var(--space-1)] text-xs font-bold text-text-secondary transition-colors hover:border-slate-200 hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-300"
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               {label}
@@ -197,26 +197,26 @@ export default function AnalyticsGuide() {
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="text-xs uppercase tracking-wider text-text-secondary">
               <tr>
-                <th scope="col" className="py-2 pr-3 font-bold">Слой</th>
-                <th scope="col" className="py-2 pr-3 font-bold">Где на сайте</th>
-                <th scope="col" className="py-2 font-bold">Что можно утверждать</th>
+                <th scope="col" className="py-[var(--space-1)] pr-[var(--space-2)] font-bold">Слой</th>
+                <th scope="col" className="py-[var(--space-1)] pr-[var(--space-2)] font-bold">Где на сайте</th>
+                <th scope="col" className="py-[var(--space-1)] font-bold">Что можно утверждать</th>
               </tr>
             </thead>
             <tbody className="text-text-secondary">
               <tr className="border-t border-slate-200">
-                <td className="py-2 pr-3 font-bold text-cyan-800">Факт</td>
-                <td className="py-2 pr-3">Россия и бизнес, Мировые рынки, Новости</td>
-                <td className="py-2">«Такое значение было в такое время у такого источника»</td>
+                <td className="py-[var(--space-1)] pr-[var(--space-2)] font-bold text-cyan-800">Факт</td>
+                <td className="py-[var(--space-1)] pr-[var(--space-2)]">Россия и бизнес, Мировые рынки, Новости</td>
+                <td className="py-[var(--space-1)]">«Такое значение было в такое время у такого источника»</td>
               </tr>
               <tr className="border-t border-slate-200">
-                <td className="py-2 pr-3 font-bold text-emerald-800">Измерение</td>
-                <td className="py-2 pr-3">Что меняется, бриф, графики с датами</td>
-                <td className="py-2">«Вот как мы это посчитали, вот формула»</td>
+                <td className="py-[var(--space-1)] pr-[var(--space-2)] font-bold text-emerald-800">Измерение</td>
+                <td className="py-[var(--space-1)] pr-[var(--space-2)]">Что меняется, бриф, графики с датами</td>
+                <td className="py-[var(--space-1)]">«Вот как мы это посчитали, вот формула»</td>
               </tr>
               <tr className="border-t border-slate-200">
-                <td className="py-2 pr-3 font-bold text-text-secondary">Проверка</td>
-                <td className="py-2 pr-3">Источники и состояние системы</td>
-                <td className="py-2">«Данные прошли указанные проверки на момент отчёта»</td>
+                <td className="py-[var(--space-1)] pr-[var(--space-2)] font-bold text-text-secondary">Проверка</td>
+                <td className="py-[var(--space-1)] pr-[var(--space-2)]">Источники и состояние системы</td>
+                <td className="py-[var(--space-1)]">«Данные прошли указанные проверки на момент отчёта»</td>
               </tr>
             </tbody>
           </table>
@@ -290,7 +290,7 @@ export default function AnalyticsGuide() {
             </>
           }
         />
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-text-secondary">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-[var(--space-2)] text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">Что именно нарисовано на графике.</strong>{' '}
           Ось X линейна по календарным датам источника и подписана четырьмя датами.
           На графике <strong className="text-text-primary">дневные наблюдения</strong>: у золота — последнее полученное нами значение gold-api.com за завершённые UTC-сутки (не официальный close), у остальных — закрытия источника;
@@ -299,7 +299,7 @@ export default function AnalyticsGuide() {
           значение точки показывается при наведении или касании. Цвет линии означает знак
           изменения за период, а не силу движения.
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-text-secondary">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-[var(--space-2)] text-sm leading-relaxed text-text-secondary">
           <strong className="text-text-primary">Нажмите на плитку</strong> — откроется
           панель: график за 30, 90 или 180 календарных дней, изменение периода, минимум и
           максимум с датами, источник и блок «Проверить данные». В нём — те самые точки, из
@@ -307,13 +307,13 @@ export default function AnalyticsGuide() {
           ряда и провайдер. Показаны последние 30 записей выбранного периода; если их
           больше, под таблицей сказано, сколько всего.
         </div>
-        <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] p-4 text-sm leading-relaxed text-cyan-800">
+        <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.07] p-[var(--space-2)] text-sm leading-relaxed text-cyan-800">
           Сегодняшний незакрытый день на график не попадает: он ещё меняется, а закрытый —
           нет. Где это сработало, под графиком есть отдельная пометка с датой последнего
           закрытия. Если датированной истории по активу нет, вместо неё показывается
           график по последним сохранённым наблюдениям без оси дат, и это подписано.
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-text-secondary">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-[var(--space-2)] text-sm leading-relaxed text-text-secondary">
           Горизонты плитки — это <strong className="text-text-primary">наблюдения, а не
           календарные дни</strong>: неделя — пять переходов, месяц — до 29.
           День — цена к предыдущему закрытию (у золота — к последнему нашему наблюдению завершённых UTC-суток; без базы процент не показывается),
@@ -429,7 +429,7 @@ export default function AnalyticsGuide() {
         title="Почему у разных чисел разная дата"
         icon={RefreshCw}
       >
-        <div className="space-y-3 text-sm leading-relaxed text-text-secondary">
+        <div className="space-y-[var(--space-2)] text-sm leading-relaxed text-text-secondary">
           <p>
             Источники обновляются с разной скоростью: официальный курс — раз в день,
             биржа — в течение сессии, криптовалюта — круглосуточно. Поэтому у каждого
@@ -475,7 +475,7 @@ export default function AnalyticsGuide() {
         title="Вопросы, которые возникают почти у всех"
         icon={ShieldQuestion}
       >
-        <div className="space-y-3">
+        <div className="space-y-[var(--space-2)]">
           {[
             {
               q: 'Сайт предсказывает цены?',
@@ -508,36 +508,36 @@ export default function AnalyticsGuide() {
           ].map(({ q, a }) => (
             <details
               key={q}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-[var(--space-2)] py-[var(--space-2)]"
             >
-              <summary className="min-h-11 cursor-pointer py-3 text-sm font-extrabold text-text-primary">
+              <summary className="min-h-11 cursor-pointer py-[var(--space-2)] text-sm font-extrabold text-text-primary">
                 {q}
               </summary>
-              <p className="mt-2 text-sm leading-relaxed text-text-secondary">{a}</p>
+              <p className="mt-[var(--space-1)] text-sm leading-relaxed text-text-secondary">{a}</p>
             </details>
           ))}
         </div>
       </GuideSection>
 
-      <section className="rounded-xl2 border border-emerald-300/25 bg-emerald-400/[0.06] p-6 lg:p-8">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-800" aria-hidden="true" />
+      <section className="rounded-[var(--radius)] border border-emerald-300/25 bg-emerald-400/[0.06] p-[var(--space-3)] lg:p-[var(--space-4)]">
+        <div className="flex items-start gap-[var(--space-2)]">
+          <CheckCircle2 className="mt-[var(--space-1)] h-5 w-5 shrink-0 text-emerald-800" aria-hidden="true" />
           <div>
             <h2 className="text-lg font-extrabold text-text-primary">
               Короткая памятка перед выводом
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
+            <p className="mt-[var(--space-1)] max-w-3xl text-sm leading-relaxed text-text-secondary">
               Сначала посмотрите на время и источник числа — это факт. Потом на то, как
               оно посчитано — это измерение. И только потом на наблюдения о движении,
               помня, что это описание прошедших дней, а не обещание будущих. Если
               чего-то не хватает, сайт должен сказать об этом прямо, а не заполнить
               пробел догадкой.
             </p>
-            <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-secondary">
-              <span className="inline-flex items-center gap-1.5">
+            <p className="mt-[var(--space-2)] flex flex-wrap items-center gap-x-[var(--space-2)] gap-y-[var(--space-1)] text-xs text-text-secondary">
+              <span className="inline-flex items-center gap-[var(--space-1)]">
                 <Clock className="h-3.5 w-3.5" aria-hidden="true" /> Время — по Москве
               </span>
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-[var(--space-1)]">
                 <Database className="h-3.5 w-3.5" aria-hidden="true" /> Источник указан у
                 каждого числа
               </span>

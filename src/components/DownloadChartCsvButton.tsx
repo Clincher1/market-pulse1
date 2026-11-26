@@ -24,12 +24,12 @@ export default function DownloadChartCsvButton({ input }: { input: ChartCsvInput
       if (url) { const createdUrl = url; window.setTimeout(() => URL.revokeObjectURL(createdUrl), 1000); }
     }
   }
-  return <div className="mt-3 text-xs text-text-secondary">
+  return <div className="mt-[var(--space-2)] text-xs text-text-secondary">
     <button type="button" disabled={!canExportChart(input)} onClick={download}
-      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 font-bold text-cyan-900 hover:bg-cyan-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-60">
+      className="inline-flex min-h-11 items-center gap-[var(--space-1)] rounded-xl border border-slate-300 bg-white px-[var(--space-2)] py-[var(--space-1)] font-bold text-cyan-900 hover:bg-cyan-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-60">
       <Download className="h-4 w-4" aria-hidden="true" />Скачать точки графика · CSV
     </button>
-    <p className="mt-1">Только точки выбранного диапазона, с датами, единицей и источником. Без заполнения пропусков.</p>
+    <p className="mt-[var(--space-1)]">Только точки выбранного диапазона, с датами, единицей и источником. Без заполнения пропусков.</p>
     <p role="status">{error ? 'Не удалось начать скачивание CSV. Попробуйте ещё раз в браузере с поддержкой загрузки файлов.' : ''}</p>
   </div>;
 }

@@ -41,7 +41,7 @@ export default function PageSignalIntro({ page }: PageSignalIntroProps) {
         </div>
       </div>
 
-      <div className="page-signal-intro__art" aria-hidden="true">
+      <div className="page-signal-intro__art">
         <svg viewBox="0 0 480 300" fill="none" xmlns="http://www.w3.org/2000/svg">
           <ellipse
             className="page-signal-intro__orbit page-signal-intro__orbit--wide"
@@ -70,11 +70,15 @@ export default function PageSignalIntro({ page }: PageSignalIntroProps) {
           />
           <circle className="page-signal-intro__node page-signal-intro__node--quiet" cx="40" cy="174" r="5" />
           <circle className="page-signal-intro__node" cx="185" cy="134" r="6" />
-          <circle className="page-signal-intro__node page-signal-intro__node--bright" cx="293" cy="188" r="7" />
+          <g role="img" aria-label="Вы здесь">
+            <title>Вы здесь</title>
+            <circle className="page-signal-intro__node page-signal-intro__node--bright" cx="293" cy="188" r="7" />
+          </g>
           <circle className="page-signal-intro__node page-signal-intro__node--quiet" cx="438" cy="104" r="5" />
           <circle className="page-signal-intro__core" cx="240" cy="150" r="8" />
         </svg>
         <span className="page-signal-intro__art-caption">МАРШРУТ ПРОВЕРКИ</span>
+        <p className="page-signal-intro__route-legend">Цвет маршрута — цвет раздела. Заполненный узел — вы здесь.</p>
       </div>
     </header>
   );
