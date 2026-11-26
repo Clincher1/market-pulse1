@@ -46,11 +46,17 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       assert.ok(doc.querySelector('main').textContent.trim().length > 500);
       assert.ok(doc.querySelector('main').textContent.includes('не обновляется автоматически'));
       assert.equal(doc.querySelectorAll('.initial-document__snapshot').length, route === '' ? 1 : 0);
-      assert.equal(doc.querySelectorAll('.table-scroll-affordance__hint').length, route === '' ? 1 : 0);
+      assert.equal(doc.querySelectorAll('.table-scroll-affordance__hint').length, route === '' ? 2 : 0);
       if (route === '') {
         const scroller = doc.querySelector('.table-scroll-affordance__scroller');
-        assert.ok(scroller.closest('.table-scroll-affordance'));
-        assert.equal(scroller.nextElementSibling.textContent, '← таблица прокручивается вбок →');
+        const shell = scroller.closest('.table-scroll-affordance');
+        assert.ok(shell);
+        assert.equal(scroller.parentElement.className, 'table-scroll-affordance__frame');
+        const hints = [...shell.querySelectorAll(':scope > .table-scroll-affordance__hint')];
+        assert.equal(hints.length, 2);
+        assert.ok(hints.every(hint => hint.textContent === '← таблица прокручивается вбок →'));
+        assert.equal(hints[0].nextElementSibling, scroller.parentElement);
+        assert.equal(scroller.parentElement.nextElementSibling, hints[1]);
         const fullTimestamps = [...doc.querySelectorAll('.static-snapshot__date time[datetime*="T"], .static-snapshot__updated time')];
         assert.ok(fullTimestamps.length > 0);
         for (const time of fullTimestamps) {
