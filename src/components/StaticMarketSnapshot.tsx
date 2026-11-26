@@ -16,7 +16,7 @@ function dateLabel(value: string) {
 }
 
 export default function StaticMarketSnapshot() {
-  return <section className="static-snapshot" aria-labelledby="static-snapshot-title">
+  return <section className="static-snapshot dashboard-section-container" aria-labelledby="static-snapshot-title">
     <div className="static-snapshot__intro">
       <p className="market-desk__eyebrow">Датированные наблюдения</p>
       <h2 id="static-snapshot-title">Статический снимок данных</h2>

@@ -259,7 +259,7 @@
   min-height: clamp(550px, calc(100vh - 142px), 670px);
   padding: clamp(2rem, 4vw, 4.25rem);
   border: 1px solid rgb(119 169 255 / 0.22);
-  border-radius: 34px;
+  border-radius: var(--radius-xl2);
   background:
     radial-gradient(ellipse at 17% 47%, rgb(14 187 202 / 0.19), transparent 34%),
     radial-gradient(ellipse at 92% 4%, rgb(97 82 245 / 0.22), transparent 34%),
@@ -933,7 +933,7 @@
   .overview-hero {
     gap: 0.25rem;
     padding: 1.45rem 1.1rem 1.6rem;
-    border-radius: 27px;
+    border-radius: var(--radius-xl2);
   }
 
   .overview-hero__title {
@@ -1281,7 +1281,7 @@
 
 .overview-topics--compact {
   padding: 1rem 1.1rem;
-  border-radius: 22px;
+  border-radius: var(--radius-xl2);
 }
 
 .overview-topics--compact .overview-topics__heading {
@@ -1398,7 +1398,7 @@
 
   .overview-topics--compact {
     padding: 0.7rem;
-    border-radius: 18px;
+    border-radius: var(--radius-xl2);
   }
 
   .overview-topics--compact .overview-topics__heading {
