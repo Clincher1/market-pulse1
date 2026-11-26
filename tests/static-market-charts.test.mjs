@@ -14,8 +14,14 @@ test('static SVG sparklines show only sourced observations and mark their latest
   assert.match(svg, /<polyline[^>]+points="/);
   assert.match(svg, /r="8" fill="#0284c7"/);
   assert.match(svg, /25\.11/);
-  assert.equal((svg.match(/<circle /g) ?? []).length, 8);
+  assert.equal((svg.match(/<circle /g) ?? []).length, source.series[item.ticker].length + 1);
   assert.equal(renderSparkline(item, source.series[item.ticker].slice(-2)), null);
+  for (const points of Object.values(source.series)) {
+    assert.ok(points.every(point => point.observedAt >= '2026-11-20' && point.observedAt <= '2026-11-26'));
+  }
+  assert.equal(source.series['BZ=F'].length, 4);
+  assert.equal(source.series['^GSPC'].length, 4);
+  assert.equal(source.series.XAU.length, 6);
 });
 
 test('chart workflow writes SVGs for histories with at least three observations and removes unavailable charts', async () => {
@@ -27,7 +33,12 @@ test('chart workflow writes SVGs for histories with at least three observations 
     assert.deepEqual((await buildStaticCharts({ snapshotPath, outputDir })).sort(), ['brent.svg', 'gold.svg', 'sp500.svg']);
     const gold = await readFile(join(outputDir, 'gold.svg'), 'utf8');
     assert.match(gold, /Золото, спот XAU\/USD/);
-    assert.match(gold.replaceAll('\u00a0', ' '), /3 567,80/);
+    assert.match(gold.replaceAll('\u00a0', ' '), /3 570,00/);
+
+    const outOfWindow = structuredClone(source);
+    outOfWindow.series['BZ=F'].unshift({ observedAt: '2026-11-19', value: '90.0000000000' });
+    await writeFile(snapshotPath, JSON.stringify(outOfWindow));
+    await assert.rejects(buildStaticCharts({ snapshotPath, outputDir }), /out-of-window/);
 
     const sparse = structuredClone(source);
     sparse.series.XAU = sparse.series.XAU.slice(-2);

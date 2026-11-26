@@ -223,6 +223,26 @@ test('missing history is not filled with invented points; current quote remains 
   assert.deepEqual(series.XAU, [{ observedAt: '2026-11-22', value: '3539.0000000000' }]);
 });
 
+test('history export keeps only genuine observations in the seven-calendar-day window', async () => {
+  const { fetchSnapshotHistory } = await import('../scripts/update-static-snapshot.mjs');
+  const latest = build(payload());
+  const responses = [
+    [...historyFixtures.brent_yahoo_bzf,
+      { instrument_id: 'brent_yahoo_bzf', observation_date: '2026-11-15', price: '88.1000000000' }],
+    historyFixtures.sp500_yahoo_gspc,
+    historyFixtures.gold_api_xau_observed_daily,
+  ];
+  let request = 0;
+  const series = await fetchSnapshotHistory({ url: config.url, key: config.key, snapshot: latest,
+    fetchImpl: async () => jsonResponse(responses[request++]) });
+  assert.equal(request, 3);
+  for (const points of Object.values(series)) {
+    assert.ok(points.every(point => point.observedAt >= '2026-11-16' && point.observedAt <= '2026-11-22'));
+  }
+  assert.ok(!series['BZ=F'].some(point => point.observedAt === '2026-11-15'));
+  assert.equal(series.XAU.length, 3);
+});
+
 test('rejects wrong project and privileged/missing keys before any HTTP request', async () => {
   for (const override of [{ url: 'https://other.supabase.co' }, { url: '' }, { key: '' },
     { key: 'sb_secret_rejected' }, { key: 'eyJ.service_role.rejected' }]) {
