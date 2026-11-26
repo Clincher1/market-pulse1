@@ -83,6 +83,13 @@ test('header keeps primary routes in a compact top rail and secondary routes in 
     assert.equal(more.open, false);
     assert.equal(document.activeElement, summary, 'Escape closes More and restores focus');
 
+    const headerSource = readFileSync(new URL('../src/components/Header.tsx', import.meta.url), 'utf8');
+    assert.match(
+      headerSource,
+      /<details[\s\S]*?hidden=\{desktopMoreLinks\.length === 0\}/,
+      'the More disclosure is hidden when it has no links',
+    );
+
     const css = readFileSync(new URL('../src/brand-refresh.css', import.meta.url), 'utf8');
     assert.match(css, /@media \(max-width: 1279px\)[\s\S]*?\.desktop-navigation__links \{[\s\S]*?overflow-x: auto/);
     assert.doesNotMatch(css, /grid-template-columns:\s*repeat\([35],\s*minmax\(0,\s*1fr\)\)/);
