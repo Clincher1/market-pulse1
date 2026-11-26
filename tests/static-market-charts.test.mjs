@@ -33,7 +33,12 @@ test('chart workflow writes SVGs for histories with at least three observations 
     assert.deepEqual((await buildStaticCharts({ snapshotPath, outputDir })).sort(), ['brent.svg', 'gold.svg', 'sp500.svg']);
     const gold = await readFile(join(outputDir, 'gold.svg'), 'utf8');
     assert.match(gold, /Золото, спот XAU\/USD/);
-    assert.match(gold.replaceAll('\u00a0', ' '), /3 570,00/);
+    const goldValue = Number(source.items.find(item => item.ticker === 'XAU').value);
+    const expectedGold = new Intl.NumberFormat('ru-RU', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(goldValue).replaceAll('\u00a0', ' ');
+    assert.ok(gold.replaceAll('\u00a0', ' ').includes(expectedGold), `expected chart to show current snapshot gold value ${expectedGold}`);
 
     const outOfWindow = structuredClone(source);
     outOfWindow.series['BZ=F'].unshift({ observedAt: '2026-11-19', value: '90.0000000000' });
