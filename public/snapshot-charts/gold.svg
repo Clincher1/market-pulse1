@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 150" role="img" aria-labelledby="chart-title chart-desc">
-  <title id="chart-title">Золото, спот XAU/USD: 3 570,00, наблюдение 26.11</title>
+  <title id="chart-title">Золото, спот XAU/USD: 3 566,20, наблюдение 26.11</title>
   <desc id="chart-desc">Линейный график 6 фактических наблюдений за период 21.11 — 26.11. Последняя точка выделена.</desc>
   <line x1="16" x2="404" y1="124" y2="124" stroke="#cbd5e1" stroke-width="1" />
-  <polyline fill="none" stroke="#b7791f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="16.00,113.35 93.60,63.24 171.20,24.65 248.80,99.03 326.40,71.76 404.00,80.71" />
+  <polyline fill="none" stroke="#b7791f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="16.00,113.35 93.60,63.24 171.20,24.65 248.80,99.03 326.40,71.76 404.00,84.72" />
   <circle cx="16.00" cy="113.35" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
   <circle cx="93.60" cy="63.24" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
   <circle cx="171.20" cy="24.65" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
   <circle cx="248.80" cy="99.03" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
   <circle cx="326.40" cy="71.76" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
-  <circle cx="404.00" cy="80.71" r="8" fill="#b7791f" fill-opacity=".18" />
-  <circle cx="404.00" cy="80.71" r="4.5" fill="#b7791f" stroke="white" stroke-width="2" />
+  <circle cx="404.00" cy="84.72" r="8" fill="#b7791f" fill-opacity=".18" />
+  <circle cx="404.00" cy="84.72" r="4.5" fill="#b7791f" stroke="white" stroke-width="2" />
   <text x="16" y="143" fill="#475569" font-family="Arial, sans-serif" font-size="12">21.11</text>
   <text x="404" y="143" text-anchor="end" fill="#475569" font-family="Arial, sans-serif" font-size="12">26.11</text>
 </svg>
