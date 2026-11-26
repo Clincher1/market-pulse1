@@ -1,4 +1,5 @@
 const TELEGRAM_API = 'https://api.telegram.org';
+export const SNAPSHOT_HEARTBEAT_STALE_AFTER_MS = 6 * 60 * 60 * 1000;
 const INSTRUMENTS = [
   { name: 'Brent', identifiers: ['BZ=F', 'brent_yahoo_bzf', 'Brent'] },
   { name: 'S&P 500', identifiers: ['^GSPC', 'sp500_yahoo_gspc', 'S&P 500'] },
@@ -7,6 +8,14 @@ const INSTRUMENTS = [
 
 function clean(value, limit = 240) {
   return String(value ?? '').replace(/[\r\n\t\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, limit);
+}
+
+export function isCatchUpRun(lastSuccessfulHeartbeatAt, now = new Date()) {
+  const nowMs = now instanceof Date ? now.getTime() : Number(now);
+  const lastSuccessMs = Date.parse(lastSuccessfulHeartbeatAt ?? '');
+  return !Number.isFinite(nowMs) || !Number.isFinite(lastSuccessMs)
+    || lastSuccessMs > nowMs
+    || nowMs - lastSuccessMs > SNAPSHOT_HEARTBEAT_STALE_AFTER_MS;
 }
 
 function identifyFailures(error) {
@@ -43,20 +52,22 @@ export function createSnapshotHeartbeatReport({ snapshot, error, durationSeconds
   };
 }
 
-export function formatSnapshotHeartbeat(report, { timestamp } = {}) {
+export function formatSnapshotHeartbeat(report, { timestamp, catchUp = false } = {}) {
   const date = new Date(timestamp || report.exportedAt);
   if (!Number.isFinite(date.getTime())) throw new Error('A valid actual run timestamp is required for the heartbeat');
   const time = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).format(date);
   const seconds = Math.max(0, Math.round(Number(report.durationSeconds) || 0));
+  let message;
   if (report.outcome === 'ok') {
-    return `✅ Snapshot OK — ${time} MSK. Instruments: ${report.okCount}/${report.totalCount}. Took ${seconds}s.`;
+    message = `✅ Snapshot OK — ${time} MSK. Instruments: ${report.okCount}/${report.totalCount}. Took ${seconds}s.`;
+  } else if (report.outcome === 'partial') {
+    message = `⚠️ Snapshot partial — ${time} MSK. ${report.instrument} failed (${report.error}). Other instruments OK. Took ${seconds}s.`;
+  } else {
+    message = `❌ Snapshot failed — ${time} MSK. All instruments failed. Error: ${report.error}. Took ${seconds}s.`;
   }
-  if (report.outcome === 'partial') {
-    return `⚠️ Snapshot partial — ${time} MSK. ${report.instrument} failed (${report.error}). Other instruments OK. Took ${seconds}s.`;
-  }
-  return `❌ Snapshot failed — ${time} MSK. All instruments failed. Error: ${report.error}. Took ${seconds}s.`;
+  return catchUp ? `${message}\nДогоняющий прогон: предыдущий слот пропущен шедулером` : message;
 }
 
 export async function sendSnapshotHeartbeat({
@@ -103,6 +114,7 @@ export async function runSnapshotWithHeartbeat({
   refresh,
   notify = sendSnapshotHeartbeat,
   now = () => new Date(),
+  catchUp = false,
   logger = text => console.log(text),
 } = {}) {
   const startedAt = now();
@@ -117,7 +129,7 @@ export async function runSnapshotWithHeartbeat({
   const endedAt = now();
   const durationSeconds = Math.max(0, Math.round((endedAt.getTime() - startMs) / 1000));
   const report = createSnapshotHeartbeatReport({ snapshot, error, durationSeconds });
-  const message = formatSnapshotHeartbeat(report, { timestamp: startedAt });
+  const message = formatSnapshotHeartbeat(report, { timestamp: startedAt, catchUp });
   let notification;
   try {
     notification = await notify({ message });

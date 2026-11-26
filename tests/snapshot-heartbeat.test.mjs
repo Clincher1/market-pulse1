@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { runSnapshotWithHeartbeat, sendSnapshotHeartbeat } from '../scripts/snapshot-heartbeat.mjs';
+import { isCatchUpRun, runSnapshotWithHeartbeat, sendSnapshotHeartbeat } from '../scripts/snapshot-heartbeat.mjs';
 
 const snapshot = { exportedAt: '2026-10-28T06:10:12.000Z', items: [{}, {}, {}] };
 
@@ -17,6 +17,34 @@ test('full success uses exact template, actual MSK run time, count, and elapsed 
   });
   assert.equal(sent, '✅ Snapshot OK — 09:10 MSK. Instruments: 3/3. Took 12s.');
   assert.equal(result.report.outcome, 'ok');
+});
+
+test('stale heartbeat adds only the catch-up line; fresh heartbeat keeps the normal message', async () => {
+  const startedAt = new Date('2026-10-28T12:10:00.000Z');
+  const staleHeartbeat = '2026-10-28T06:09:59.999Z';
+  const freshHeartbeat = '2026-10-28T07:10:00.000Z';
+  const catchUpLine = 'Догоняющий прогон: предыдущий слот пропущен шедулером';
+  const expectedNormal = '✅ Snapshot OK — 15:10 MSK. Instruments: 3/3. Took 12s.';
+
+  assert.equal(isCatchUpRun(staleHeartbeat, startedAt), true);
+  assert.equal(isCatchUpRun(freshHeartbeat, startedAt), false);
+  assert.equal(isCatchUpRun('2026-10-28T06:10:00.000Z', startedAt), false);
+  assert.equal(isCatchUpRun(null, startedAt), true);
+
+  async function messageFor(lastHeartbeat) {
+    const moments = [startedAt, new Date(startedAt.getTime() + 12000)];
+    let message;
+    await runSnapshotWithHeartbeat({
+      refresh: async () => snapshot,
+      notify: async ({ message: value }) => { message = value; return { ok: true }; },
+      now: () => moments.shift(),
+      catchUp: isCatchUpRun(lastHeartbeat, startedAt),
+    });
+    return message;
+  }
+
+  assert.equal(await messageFor(staleHeartbeat), `${expectedNormal}\n${catchUpLine}`);
+  assert.equal(await messageFor(freshHeartbeat), expectedNormal);
 });
 
 test('Brent partial failure identifies the instrument by human name', async () => {
