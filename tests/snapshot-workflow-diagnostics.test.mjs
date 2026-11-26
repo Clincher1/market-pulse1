@@ -7,9 +7,9 @@ import { spawnSync } from 'node:child_process';
 
 const workflow = await readFile(new URL('../.github/workflows/update-static-snapshot.yml', import.meta.url), 'utf8');
 const names = [
-  'Check changed files (snapshot only)',
+  'Check changed files (snapshot and generated charts only)',
   'Check main is still current',
-  'Commit validated snapshot locally',
+  'Commit validated snapshot and charts locally',
   'Push snapshot commit (approved App, no force)',
 ];
 function step(name) {
@@ -37,8 +37,8 @@ else if (command === 'fetch origin main') { out(e.MOCK_REMOTE_OUTPUT); process.e
 else if (command === 'rev-parse FETCH_HEAD') out(e.MOCK_REMOTE_SHA);
 else if (command === 'rev-parse HEAD') out(e.MOCK_LOCAL_SHA);
 else if (command === "config user.name Clincher1" || command === 'config user.email 88886535+Clincher1@users.noreply.github.com') {}
-else if (command === 'add -- data/snapshot.json') fs.writeFileSync(e.MOCK_ADDED, 'yes');
-else if (args[0] === 'commit' && args[1] === '-m' && args[2] === 'Refresh validated static market snapshot') process.exit(Number(e.MOCK_COMMIT_EXIT || 0));
+else if (command === 'add -A -- data/snapshot.json public/snapshot-charts/brent.svg public/snapshot-charts/sp500.svg public/snapshot-charts/gold.svg') fs.writeFileSync(e.MOCK_ADDED, 'yes');
+else if (args[0] === 'commit' && args[1] === '-m' && args[2] === 'Refresh validated static market snapshot and charts') process.exit(Number(e.MOCK_COMMIT_EXIT || 0));
 else if (command === 'push origin HEAD:main') {
   fs.writeFileSync(e.MOCK_AUTH, JSON.stringify({count:e.GIT_CONFIG_COUNT,key:e.GIT_CONFIG_KEY_0,value:e.GIT_CONFIG_VALUE_0}));
   out(e.MOCK_REMOTE_OUTPUT); process.exit(Number(e.MOCK_PUSH_EXIT || 0));
@@ -94,7 +94,7 @@ test('only snapshot is accepted and empty changes skip commit/push', async () =>
   await fixture({}, async run => {
     const r = await run(names[0]);
     assert.equal(r.status, 0); assert.match(r.output, /has_changes=true/);
-    assert.match(r.summary, /PASS: only data\/snapshot.json changed/);
+    assert.match(r.summary, /PASS: only snapshot data and generated chart assets changed/);
     assert.ok(!r.commands.some(args => ['commit', 'push'].includes(args[0])));
   });
   await fixture({ MOCK_CHANGED: '' }, async run => {
@@ -138,7 +138,7 @@ test('fetch failure preserves exit code and withholds remote output', async () =
 test('commit stages only snapshot, reports local SHA, never pushes', async () => fixture({}, async run => {
   const r = await run(names[2]); assert.equal(r.status, 0);
   assert.match(r.summary, /local snapshot commit a{40}. Not yet pushed/);
-  assert.deepEqual(r.commands.filter(args => args[0] === 'add'), [['add', '--', 'data/snapshot.json']]);
+  assert.deepEqual(r.commands.filter(args => args[0] === 'add'), [['add', '-A', '--', 'data/snapshot.json', 'public/snapshot-charts/brent.svg', 'public/snapshot-charts/sp500.svg', 'public/snapshot-charts/gold.svg']]);
   assert.ok(!r.commands.some(args => args[0] === 'push'));
 }));
 for (const overrides of [
@@ -185,7 +185,7 @@ test('App write token is scoped, pinned, minted after commit and revoked by the 
   const token = step('Create short-lived snapshot App write token');
   const identity = step('Check approved snapshot App identity');
   assert.ok(workflow.indexOf('      - name: Create short-lived snapshot App write token')
-    > workflow.indexOf('      - name: Commit validated snapshot locally'));
+    > workflow.indexOf('      - name: Commit validated snapshot and charts locally'));
   assert.match(token, /if: steps.snapshot_changes.outputs.has_changes == 'true'/);
   assert.match(identity, /if: steps.snapshot_changes.outputs.has_changes == 'true'/);
   assert.match(token, /uses: actions\/create-github-app-token@[a-f0-9]{40}/);

@@ -79,6 +79,20 @@ function readSnapshot() {
       return false;
     }
   };
+  const validHistory = (ticker, item) => {
+    const points = snapshot.series?.[ticker];
+    if (!Array.isArray(points) || points.length < 1 || points.length > 7) return false;
+    let previous = '';
+    for (const point of points) {
+      if (!point || typeof point.value !== 'string' || !/^\d+(?:\.\d+)?$/.test(point.value)
+        || !Number.isFinite(Number(point.value)) || Number(point.value) <= 0
+        || typeof point.observedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(point.observedAt)
+        || !validDate(point.observedAt) || point.observedAt <= previous) return false;
+      previous = point.observedAt;
+    }
+    return points.at(-1).observedAt === item.observedAt.slice(0, 10)
+      && points.at(-1).value === item.value;
+  };
   if (snapshot?.schemaVersion !== 1
     || !validDate(snapshot.exportedAt)
     || !snapshot.exportedAt.includes('T')
@@ -87,10 +101,42 @@ function readSnapshot() {
     || snapshot.items.length > 5
     || !snapshot.items.every(validRow)
     || new Set(snapshot.items.map(row => row.ticker)).size
-      !== snapshot.items.length) {
-    throw new Error('Invalid data/snapshot.json: expected 3–5 complete observations');
+      !== snapshot.items.length
+    || !snapshot.items.every(row => validHistory(row.ticker, row))) {
+    throw new Error('Invalid data/snapshot.json: expected 3–5 complete observations and validated daily histories');
   }
   return snapshot;
+}
+
+const SNAPSHOT_CHART_FILES = { 'BZ=F': 'brent.svg', '^GSPC': 'sp500.svg', XAU: 'gold.svg' };
+const snapshotNumberFormat = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const snapshotDateFormat = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Moscow',
+});
+const snapshotDateLabel = value => snapshotDateFormat.format(new Date(`${value.slice(0, 10)}T12:00:00Z`));
+
+function renderSnapshotCharts(snapshot) {
+  const figures = snapshot.items.flatMap(row => {
+    const observations = snapshot.series?.[row.ticker];
+    const file = SNAPSHOT_CHART_FILES[row.ticker];
+    if (!file || !Array.isArray(observations) || observations.length < 3) return [];
+    const first = observations[0]?.observedAt;
+    const last = observations.at(-1)?.observedAt;
+    return [`<figure class="static-snapshot__chart">
+      <img src="/snapshot-charts/${file}" width="420" height="150" loading="eager"
+        alt="${escape(row.instrument)}. ${escape(snapshotNumberFormat.format(Number(row.value)))} ${escape(row.unit)}, наблюдение ${escape(snapshotDateLabel(row.observedAt))}. Выделенная точка — последнее наблюдение." />
+      <figcaption>
+        <strong>${escape(row.instrument)}</strong>
+        <span class="static-snapshot__latest">${escape(snapshotNumberFormat.format(Number(row.value)))} ${escape(row.unit)}</span>
+        <span>Наблюдение: <time datetime="${escape(row.observedAt)}">${escape(snapshotDateLabel(row.observedAt))}</time></span>
+        <span>Источник: <a href="${escape(row.source.url)}">${escape(row.source.name)}</a></span>
+        ${observations.length < 7 && first && last
+          ? `<span class="static-snapshot__coverage">Период: ${escape(snapshotDateLabel(first))} — ${escape(snapshotDateLabel(last))} · ${observations.length} наблюдений</span>`
+          : ''}
+      </figcaption>
+    </figure>`];
+  }).join('');
+  return figures ? `<div class="static-snapshot__charts" aria-label="Динамика последних дневных наблюдений">${figures}</div>` : '';
 }
 
 function renderSnapshot() {
@@ -112,6 +158,7 @@ function renderSnapshot() {
           <p>Снимок выгружен:
             <time datetime="${escape(snapshot.exportedAt)}">${escape(snapshot.exportedAt)}</time>.
             Данные могут поступать с задержкой.</p>
+          ${renderSnapshotCharts(snapshot)}
           <div class="initial-document__snapshot"
             role="region" aria-label="Таблица статического снимка" tabindex="0">
             <table>

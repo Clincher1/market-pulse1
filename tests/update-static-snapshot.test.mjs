@@ -123,20 +123,48 @@ async function withFile(callback) {
 }
 const config = { url: 'https://hekzplfftannlzwvgwwm.supabase.co', key: 'sb_publishable_test_only', now: () => now };
 const jsonResponse = data => new Response(JSON.stringify(data), { status: 200 });
+const historyFixtures = {
+  brent_yahoo_bzf: [
+    { instrument_id: 'brent_yahoo_bzf', observation_date: '2026-11-20', price: '89.9499969482' },
+    { instrument_id: 'brent_yahoo_bzf', observation_date: '2026-11-19', price: '91.9800033569' },
+    { instrument_id: 'brent_yahoo_bzf', observation_date: '2026-11-18', price: '91.9499969482' },
+  ],
+  sp500_yahoo_gspc: [
+    { instrument_id: 'sp500_yahoo_gspc', observation_date: '2026-11-20', price: '6910.3901367188' },
+    { instrument_id: 'sp500_yahoo_gspc', observation_date: '2026-11-19', price: '7175.8300781250' },
+    { instrument_id: 'sp500_yahoo_gspc', observation_date: '2026-11-18', price: '7323.6298828125' },
+  ],
+  gold_api_xau_observed_daily: [
+    { instrument_id: 'gold_api_xau_observed_daily', observation_date: '2026-11-22', price: '3539.0000000000' },
+    { instrument_id: 'gold_api_xau_observed_daily', observation_date: '2026-11-21', price: '3529.0000000000' },
+    { instrument_id: 'gold_api_xau_observed_daily', observation_date: '2026-11-20', price: '3510.0000000000' },
+  ],
+};
+const fetchAll = async (url, options) => {
+  if (url === `${config.url}/rest/v1/rpc/export_static_snapshot_v2`) return jsonResponse(payload());
+  assert.equal(options.method, 'GET');
+  assert.equal(options.headers.apikey, config.key);
+  assert.equal(options.headers.Authorization, undefined);
+  assert.equal(options.redirect, 'error');
+  assert.ok(options.signal instanceof AbortSignal);
+  const query = new URL(url).searchParams;
+  const id = query.get('instrument_id')?.slice(3);
+  assert.ok(historyFixtures[id], `unexpected history instrument ${id}`);
+  assert.equal(query.get('limit'), '7');
+  assert.equal(query.get('select'), 'instrument_id,observation_date,price');
+  return jsonResponse(historyFixtures[id]);
+};
 
-test('atomic success sends parameterless RPC with apikey and timeout, never Authorization/service key', async () => {
+test('atomic success fetches the validated snapshot and 7-row histories with publishable apikey only', async () => {
   await withFile(async ({ dir, file }) => {
-    await updateSnapshot({ ...config, file, fetchImpl: async (url, options) => {
-      assert.equal(url, `${config.url}/rest/v1/rpc/export_static_snapshot_v2`);
-      assert.equal(options.method, 'POST');
-      assert.equal(options.body, '{}');
-      assert.equal(options.headers.apikey, config.key);
-      assert.equal(options.headers.Authorization, undefined);
-      assert.equal(options.redirect, 'error');
-      assert.ok(options.signal instanceof AbortSignal);
-      return jsonResponse(payload());
-    } });
-    assert.deepEqual(JSON.parse(await readFile(file, 'utf8')), build(payload()));
+    const result = await updateSnapshot({ ...config, file, fetchImpl: fetchAll });
+    const saved = JSON.parse(await readFile(file, 'utf8'));
+    assert.deepEqual(saved, result);
+    assert.deepEqual(saved.items, build(payload()).items);
+    assert.deepEqual(Object.keys(saved.series), ['BZ=F', '^GSPC', 'XAU']);
+    assert.deepEqual(saved.series['BZ=F'].map(point => point.observedAt), ['2026-11-18', '2026-11-19', '2026-11-20']);
+    assert.equal(saved.series['BZ=F'].at(-1).value, '89.9499969482');
+    assert.equal(saved.series.XAU.at(-1).value, '3539.0000000000');
     assert.deepEqual(await readdir(dir), ['snapshot.json']);
   });
 });
@@ -164,6 +192,37 @@ for (const [name, fetchImpl] of [
     assert.equal(await readFile(file, 'utf8'), bytes);
   }));
 }
+
+test('history failure or malformed rows preserve the previous complete snapshot', async () => {
+  await withFile(async ({ file, bytes }) => {
+    let calls = 0;
+    await assert.rejects(updateSnapshot({ ...config, file, fetchImpl: async () => {
+      calls += 1;
+      if (calls === 1) return jsonResponse(payload());
+      return new Response('sensitive details', { status: 503 });
+    } }), /history query failed: HTTP 503/);
+    assert.equal(await readFile(file, 'utf8'), bytes);
+  });
+  await withFile(async ({ file, bytes }) => {
+    let calls = 0;
+    await assert.rejects(updateSnapshot({ ...config, file, fetchImpl: async () => {
+      calls += 1;
+      if (calls === 1) return jsonResponse(payload());
+      return jsonResponse([{ ...historyFixtures.brent_yahoo_bzf[0], observation_date: '2026-11-21' }]);
+    } }), /invalid or future history date/);
+    assert.equal(await readFile(file, 'utf8'), bytes);
+  });
+});
+
+test('missing history is not filled with invented points; current quote remains one actual observation', async () => {
+  const { fetchSnapshotHistory } = await import('../scripts/update-static-snapshot.mjs');
+  const latest = build(payload());
+  const series = await fetchSnapshotHistory({ url: config.url, key: config.key,
+    snapshot: latest, fetchImpl: async () => jsonResponse([]) });
+  assert.deepEqual(series['BZ=F'], [{ observedAt: '2026-11-20', value: '89.9499969482' }]);
+  assert.deepEqual(series.XAU, [{ observedAt: '2026-11-22', value: '3539.0000000000' }]);
+});
+
 test('rejects wrong project and privileged/missing keys before any HTTP request', async () => {
   for (const override of [{ url: 'https://other.supabase.co' }, { url: '' }, { key: '' },
     { key: 'sb_secret_rejected' }, { key: 'eyJ.service_role.rejected' }]) {
@@ -220,8 +279,9 @@ test('workflow gates main commits on candidate checks, permits only snapshot, ne
   for (const command of ['npm ci', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run build', 'deno@2 check']) {
     assert.ok(workflow.indexOf(command) < workflow.indexOf('git commit -m'));
   }
-  assert.match(workflow, /git diff --name-only\)" != 'data\/snapshot.json'/);
-  assert.match(workflow, /git diff --cached --name-only\)" != 'data\/snapshot.json'/);
+  assert.match(workflow, /public\/snapshot-charts\/brent\.svg\|public\/snapshot-charts\/sp500\.svg\|public\/snapshot-charts\/gold\.svg/);
+  assert.match(workflow, /git add -A -- data\/snapshot\.json public\/snapshot-charts\/brent\.svg/);
+  assert.match(workflow, /node scripts\/build-static-market-charts\.mjs/);
   assert.match(workflow, /git rev-parse FETCH_HEAD/);
   assert.match(workflow, /git push origin HEAD:main/);
   assert.doesNotMatch(workflow, /git push[^\n]*(?:--force|-f\b)|gh pr merge|pull_request_target/);

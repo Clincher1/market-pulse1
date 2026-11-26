@@ -46,6 +46,7 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       assert.ok(doc.querySelector('main').textContent.trim().length > 500);
       assert.ok(doc.querySelector('main').textContent.includes('не обновляется автоматически'));
       assert.equal(doc.querySelectorAll('.initial-document__snapshot').length, route === '' ? 1 : 0);
+      assert.equal(doc.querySelectorAll('.static-snapshot__chart').length, route === '' ? 3 : 0);
       for (const link of doc.querySelectorAll('a[href]')) {
         const href = link.getAttribute('href');
         if (href.startsWith('#')) assert.ok(doc.getElementById(href.slice(1)));
@@ -60,7 +61,7 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       assert.equal(doc.querySelectorAll('script[type="module"][src]').length, 1);
       assert.equal(doc.querySelectorAll('script:not([src]):not([type="application/ld+json"])').length, 0);
       assert.equal(doc.querySelectorAll('[style], [hidden], noscript').length, 0);
-      assert.equal(doc.querySelectorAll('time').length, route === '' ? 4 : 0);
+      assert.equal(doc.querySelectorAll('time').length, route === '' ? 7 : 0);
       dom.window.close();
     }
   } finally { await rm(dir, { recursive: true, force: true }); }

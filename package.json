@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit -p tsconfig.app.json && vite build && node scripts/build-pages.mjs",
+    "build": "tsc --noEmit -p tsconfig.app.json && node scripts/build-static-market-charts.mjs && vite build && node scripts/build-pages.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",

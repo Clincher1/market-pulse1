@@ -17,6 +17,18 @@ test('home snapshot preserves all supplied values, dates, units, source links an
   assert.equal(section.querySelector('h2').textContent, 'Статический снимок данных');
   assert.ok(section.textContent.includes('Данные актуальны на момент сборки'));
   assert.ok(section.textContent.includes(snapshot.exportedAt));
+  const charts = [...section.querySelectorAll('.static-snapshot__chart')];
+  assert.equal(charts.length, snapshot.items.filter(item => snapshot.series[item.ticker].length >= 3).length);
+  assert.equal(charts.length, 3);
+  charts.forEach((figure, index) => {
+    const item = snapshot.items[index];
+    assert.equal(figure.querySelector('img').getAttribute('src'), `/snapshot-charts/${['brent.svg', 'sp500.svg', 'gold.svg'][index]}`);
+    assert.match(figure.querySelector('img').getAttribute('alt'), new RegExp(item.instrument));
+    assert.ok(figure.textContent.includes(item.source.name));
+    assert.ok(figure.textContent.includes(Number(item.value).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })));
+  });
+  assert.match(charts[2].textContent, /Период: .* наблюдений/);
+  assert.equal(dom.window.document.querySelector('script'), null, 'the chart markup needs no client-side JavaScript');
   assert.equal(section.querySelectorAll('thead th[scope="col"]').length, 6);
   assert.ok(section.querySelector('caption').textContent.trim());
   const rows = [...section.querySelectorAll('tbody tr')];
@@ -126,6 +138,10 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
         ...snapshot,
         exportedAt: observedAt.includes('T') ? observedAt : snapshot.exportedAt,
         items: [{ ...snapshot.items[0], observedAt }, ...snapshot.items.slice(1)],
+        series: {
+          ...snapshot.series,
+          'BZ=F': [{ observedAt: observedAt.slice(0, 10), value: snapshot.items[0].value }],
+        },
       };
       await writeFile(`${dir}/data/snapshot.json`, JSON.stringify(valid));
       await writeFile(`${dir}/dist/index.html`, originalHtml);
@@ -136,6 +152,7 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
     escaped.items[0].instrument = '<img src=x onerror=alert(1)> & "test"';
     escaped.items[0].basis = '</td><script>alert(1)</script>';
     escaped.items[0].value = '123.4567890123456789';
+    escaped.series['BZ=F'].at(-1).value = escaped.items[0].value;
     escaped.exportedAt = '2026-11-23T03:00:01.123456Z';
     await writeFile(`${dir}/data/snapshot.json`, JSON.stringify(escaped));
     await writeFile(`${dir}/dist/index.html`, originalHtml);
