@@ -9,6 +9,7 @@ const chartSpecs = [
   { ticker: 'XAU', file: 'gold.svg', color: '#b7791f' },
 ];
 const numberFormat = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const DAY = 86400000;
 
 function escapeXml(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;')
@@ -20,10 +21,13 @@ function dateLabel(value) {
   return new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(date);
 }
 
-function validateSeries(item, observations) {
+function validateSeries(item, observations, exportDay) {
   if (!item || typeof item.instrument !== 'string' || typeof item.value !== 'string'
     || !/^\d+(?:\.\d+)?$/.test(item.value) || !Array.isArray(observations)
     || observations.length > 7) throw new Error('Invalid static snapshot chart contract');
+  const windowStart = exportDay
+    ? new Date(Date.parse(`${exportDay}T00:00:00Z`) - 6 * DAY).toISOString().slice(0, 10)
+    : null;
   let previous = '';
   for (const point of observations) {
     const date = typeof point?.observedAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(point.observedAt)
@@ -31,7 +35,10 @@ function validateSeries(item, observations) {
     if (!point || typeof point.value !== 'string' || !/^\d+(?:\.\d+)?$/.test(point.value)
       || !Number.isFinite(Number(point.value)) || Number(point.value) <= 0
       || !date || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== point.observedAt
-      || point.observedAt <= previous) throw new Error(`${item.ticker}: invalid or unordered chart observations`);
+      || point.observedAt <= previous
+      || (windowStart && (point.observedAt < windowStart || point.observedAt > exportDay))) {
+      throw new Error(`${item.ticker}: invalid, unordered, or out-of-window chart observations`);
+    }
     previous = point.observedAt;
   }
   const latestDate = item.observedAt.slice(0, 10);
@@ -87,7 +94,7 @@ export async function buildStaticCharts({ snapshotPath = resolve(root, 'data/sna
   for (const spec of chartSpecs) {
     const item = snapshot.items.find(row => row.ticker === spec.ticker);
     const observations = snapshot.series[spec.ticker];
-    validateSeries(item, observations);
+    validateSeries(item, observations, snapshot.exportedAt.slice(0, 10));
     const svg = renderSparkline(item, observations, spec.color);
     const path = resolve(outputDir, spec.file);
     if (svg) {

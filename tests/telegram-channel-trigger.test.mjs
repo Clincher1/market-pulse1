@@ -147,7 +147,7 @@ test('test post contains current snapshot figures when available', () => {
   const text = testPostText(now());
   assert.match(text, /Brent: 94,61/);
   assert.match(text, /S&P 500: 7\s?182,78/);
-  assert.match(text, /Золото XAU\/USD: 3\s?567,80/);
+  assert.match(text, /Золото XAU\/USD: 3\s?570,00/);
   assert.match(text, /Не является инвестиционной рекомендацией/);
 });
 

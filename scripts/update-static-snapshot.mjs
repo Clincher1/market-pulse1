@@ -92,6 +92,7 @@ export function buildSnapshot(payload, previous, now = new Date()) {
 
 function buildHistory(rows, item, exportDay) {
   requireThat(Array.isArray(rows) && rows.length <= 7, `${item.ticker}: history response must contain at most seven rows`);
+  const windowStart = new Date(Date.parse(`${exportDay}T00:00:00Z`) - 6 * DAY).toISOString().slice(0, 10);
   const byDate = new Map();
   for (const row of rows) {
     requireThat(row && typeof row === 'object' && calendar(row.observation_date)
@@ -112,8 +113,8 @@ function buildHistory(rows, item, exportDay) {
     value: item.value,
   });
   return [...byDate.values()]
-    .sort((a, b) => a.observedAt.localeCompare(b.observedAt))
-    .slice(-7);
+    .filter(point => point.observedAt >= windowStart && point.observedAt <= exportDay)
+    .sort((a, b) => a.observedAt.localeCompare(b.observedAt));
 }
 
 async function readJsonResponse(response, label) {
