@@ -139,6 +139,7 @@ export default function Header({ activeView }: HeaderProps) {
 
           <details
             ref={moreMenuRef}
+            hidden={desktopMoreLinks.length === 0}
             className={`desktop-navigation__more ${moreIsActive ? 'is-active' : ''}`}
           >
             <summary className="desktop-navigation__more-trigger">
