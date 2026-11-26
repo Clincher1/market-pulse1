@@ -4,6 +4,7 @@ import { fetchRussiaInsightsShared, type RussiaMarketIndicator } from '@/data/ru
 import { useLiveAssets } from '@/hooks/useLiveAssets';
 import { startPolling } from '@/lib/polling';
 import { formatPriceText } from '@/lib/price';
+import { formatObservationTimestamp } from '@/lib/dateDisplay.mjs';
 
 /**
  * «Деньги бизнеса сегодня» — четыре ориентира, с которыми сверяются договоры
@@ -351,7 +352,7 @@ export default function BusinessMoney() {
 
               <div className="mt-3 border-t border-slate-200 pt-2 text-[11px] leading-snug text-text-secondary">
                 <span className="font-bold text-slate-700">{fact.provider}</span>
-                {fact.asOf && <> · {fact.asOf}</>}
+                {fact.asOf && <> · {formatObservationTimestamp(fact.asOf) || fact.asOf}</>}
               </div>
 
               <p className="mt-2 text-xs leading-relaxed text-text-secondary">

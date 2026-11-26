@@ -1,4 +1,5 @@
 import snapshot from '../../data/snapshot.json';
+import { formatObservationTimestamp } from '@/lib/dateDisplay.mjs';
 
 const chartFiles: Record<string, string> = {
   'BZ=F': 'brent.svg',
@@ -20,7 +21,7 @@ export default function StaticMarketSnapshot() {
       <p className="market-desk__eyebrow">Датированные наблюдения</p>
       <h2 id="static-snapshot-title">Статический снимок данных</h2>
       <p>Данные актуальны на момент сборки; это сохранённый снимок, а не котировки в реальном времени. Источник и дата наблюдения указаны отдельно.</p>
-      <p className="static-snapshot__updated">Снимок выгружен: <time dateTime={snapshot.exportedAt}>{snapshot.exportedAt}</time></p>
+      <p className="static-snapshot__updated">Снимок выгружен: <time dateTime={snapshot.exportedAt}>{formatObservationTimestamp(snapshot.exportedAt)}</time></p>
     </div>
     <div className="static-snapshot__charts" aria-label="Динамика последних дневных наблюдений">
       {snapshot.items.map(item => {
@@ -65,7 +66,7 @@ export default function StaticMarketSnapshot() {
           <th scope="row">{item.ticker} — {item.instrument}</th>
           <td>{Number(item.value).toFixed(2)}</td>
           <td>{item.unit}</td>
-          <td><time dateTime={item.observedAt}>{item.observedAt}</time></td>
+          <td className="static-snapshot__date"><time dateTime={item.observedAt}>{formatObservationTimestamp(item.observedAt)}</time></td>
           <td><a href={item.source.url} rel="noreferrer">{item.source.name}</a></td>
           <td>{item.basis}</td>
         </tr>)}</tbody>

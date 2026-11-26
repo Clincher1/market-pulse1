@@ -15,6 +15,7 @@ import { startPolling } from '@/lib/polling';
 import { instrumentChanged } from '@/lib/snapshotIdentity';
 import { briefDelta, lastSeriesMove, lastSeriesObservation, snapshotSeriesDateLabel, orderBriefComparisons } from '@/lib/briefComparison';
 import { safeHttpUrl } from '@/lib/safeUrl';
+import { formatObservationTimestamp } from '@/lib/dateDisplay.mjs';
 
 /**
  * Сводка содержит только значения из публичных рыночных рядов и прозрачные
@@ -56,20 +57,10 @@ function formatDateOnly(value?: string | null): string | null {
 }
 
 function formatStamp(values: Array<string | undefined>): string | null {
-  const timestamps = values
-    .map((value) => (value ? new Date(value).getTime() : Number.NaN))
-    .filter((value) => Number.isFinite(value));
-  if (!timestamps.length) return null;
-  const latest = new Date(Math.max(...timestamps));
-  return (
-    new Intl.DateTimeFormat('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Moscow',
-    }).format(latest) + ' МСК'
-  );
+  const latest = values
+    .filter((value): value is string => Boolean(value) && Number.isFinite(new Date(value!).getTime()))
+    .sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+  return latest ? formatObservationTimestamp(latest) || null : null;
 }
 
 function formatSeriesValue(value: number, sample: string): string {
@@ -215,7 +206,8 @@ export default function DailyBrief() {
       )[0] ?? null;
 
     if (strongestRussia) {
-      const observedAt = formatDateOnly(strongestRussia.asOf) ?? strongestRussia.asOf;
+      const observedAt = formatDateOnly(strongestRussia.asOf)
+        ?? (formatObservationTimestamp(strongestRussia.asOf) || strongestRussia.asOf);
       facts.push({
         id: 'russia-move',
         href: '/russia',
@@ -324,8 +316,10 @@ export default function DailyBrief() {
       comparable += 1;
       const delta = briefDelta(base, current, indicator.unit);
       if (!delta) return;
-      const baselineDate = formatDateOnly(baseline.asOf) ?? baseline.asOf;
-      const currentDate = formatDateOnly(indicator.asOf) ?? indicator.asOf;
+      const baselineDate = formatDateOnly(baseline.asOf)
+        ?? (formatObservationTimestamp(baseline.asOf) || baseline.asOf);
+      const currentDate = formatDateOnly(indicator.asOf)
+        ?? (formatObservationTimestamp(indicator.asOf) || indicator.asOf);
       candidates.push({
         magnitude: delta.magnitude,
         kind: delta.kind,

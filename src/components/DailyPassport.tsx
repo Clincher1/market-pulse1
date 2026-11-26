@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarCheck, Database, Info } from 'lucide-react';
 import {
   fetchDailyPassports,
-  moscowTime,
   passportDate,
   passportDateShort,
   type PassportAsset,
   type PassportDay,
 } from '@/data/dailyPassports';
 import { observationLabel } from '@/lib/asOf';
+import { formatObservationTimestamp } from '@/lib/dateDisplay.mjs';
 import { ErrorNotice } from './SectionFallback';
 
 /**
@@ -221,7 +221,7 @@ export default function DailyPassport() {
         </h2>
         <span className="text-sm font-bold text-text-secondary">{passportDate(today.date)}</span>
         <span className="text-xs text-text-secondary">
-          цены зафиксированы в {moscowTime(today.capturedAt)} МСК
+          цены зафиксированы: {formatObservationTimestamp(today.capturedAt)}
         </span>
       </div>
 
@@ -320,7 +320,7 @@ export default function DailyPassport() {
                     <td className="py-1 pr-3 font-bold text-text-primary">
                       {passportDateShort(day.date)}
                     </td>
-                    <td className="py-1 pr-3">{moscowTime(day.capturedAt)} МСК</td>
+                    <td className="py-1 pr-3">{formatObservationTimestamp(day.capturedAt)}</td>
                     <td className="py-1">
                       {day.topMover
                         ? `${day.topMover.name} ${changeWord(day.topMover.change)}${archivePriceAsOf(day.topMover.asOf)}`

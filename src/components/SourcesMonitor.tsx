@@ -3,6 +3,7 @@ import { AlertTriangle, Database, Radio } from 'lucide-react';
 import { SOURCE_BUDGETS, fetchSlotSources, fetchSourceStates } from '@/data/sourceMonitor';
 import { fetchLiveAssets } from '@/data/liveAssets';
 import type { AssetData } from '@/data/marketTypes';
+import { formatObservationTimestamp } from '@/lib/dateDisplay.mjs';
 import {
   isInternalSlot,
   groupSlotRows,
@@ -147,7 +148,7 @@ export default function SourcesMonitor() {
                     <div className="text-[11px] text-text-secondary">{primary?.why ?? 'нет включённого источника'}</div>
                     {actual && <div className="mt-1 text-[11px] text-text-secondary">
                       Источник показанного значения: {actual.sourceLabel || 'не указан'}
-                      {actual.asOf ? ` · наблюдение ${actual.asOf}` : ' · дата не указана'}
+                      {actual.asOf ? ` · наблюдение ${formatObservationTimestamp(actual.asOf)}` : ' · дата не указана'}
                     </div>}
                     {backup.length > 0 && (
                       <div className="mt-0.5 text-[11px] text-text-secondary">
@@ -168,13 +169,7 @@ export default function SourcesMonitor() {
                   </td>
                   <td className="py-2 text-[11px] text-text-secondary">
                     {primary?.state?.last_ok_at
-                      ? new Date(primary.state.last_ok_at).toLocaleString('ru-RU', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          timeZone: 'Europe/Moscow',
-                        })
+                      ? formatObservationTimestamp(primary.state.last_ok_at)
                       : 'нет записи'}
                   </td>
                 </tr>

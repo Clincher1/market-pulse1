@@ -18,6 +18,7 @@ import { SectionThemeBadge } from './sectionThemes';
 import { formatPercent as formatPercentShared } from '@/lib/percent';
 import { startPolling } from '@/lib/polling';
 import { buildMoneySpreads } from '@/lib/spreads';
+import { formatObservationTimestamp } from '@/lib/dateDisplay.mjs';
 import {
   fetchRussiaInsights,
   RussiaHeadline,
@@ -87,21 +88,12 @@ function formatAsOf(indicator: RussiaMarketIndicator): string {
       timeZone: 'Europe/Moscow',
     }).format(new Date(`${indicator.asOf}T12:00:00+03:00`));
   }
+  if (indicator.asOf.includes('T')) return formatObservationTimestamp(indicator.asOf);
   return indicator.provider.includes('Мосбиржа') ? `${indicator.asOf} МСК` : indicator.asOf;
 }
 
 function formatMoscowDateTime(value: string | undefined): string {
-  if (!value) return 'время публикации не указано';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'время публикации не указано';
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Moscow',
-  }).format(date) + ' МСК';
+  return (value && formatObservationTimestamp(value)) || 'время публикации не указано';
 }
 
 function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {

@@ -16,10 +16,10 @@ const sourceUrl = 'https://finance.yahoo.com/quote/BZ%3DF';
 
 test('copy preserves instrument, precision, observation date, unit and source, never cache refresh time', () => {
   const text = quoteCopyText(asset, sourceUrl);
-  for (const part of ['Brent (фьючерс)', '$92,57', '$ за баррель', '2026-10-27', 'Yahoo Finance', sourceUrl]) assert.ok(text.includes(part));
+  for (const part of ['Brent (фьючерс)', '$92,57', '$ за баррель', '27.10.2026', 'Yahoo Finance', sourceUrl]) assert.ok(text.includes(part));
   assert.ok(!text.includes(asset.updatedAt));
   assert.ok(!text.includes('0,00'));
-  assert.ok(quoteCopyText({ ...asset, asOf: '2026-10-27T20:00:00+03:00' }, sourceUrl).includes('20:00:00+03:00'));
+  assert.ok(quoteCopyText({ ...asset, asOf: '2026-10-27T20:00:00+03:00' }, sourceUrl).includes('27.10.2026 17:00 UTC'));
 });
 test('copy refuses fallback, missing observations, invalid dates, prices or unsafe links', () => {
   assert.equal(quoteCopyText(asset, sourceUrl, true), null);
