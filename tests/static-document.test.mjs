@@ -46,6 +46,12 @@ test('built pages expose useful, distinct semantic HTML and working links withou
       assert.ok(doc.querySelector('main').textContent.trim().length > 500);
       assert.ok(doc.querySelector('main').textContent.includes('не обновляется автоматически'));
       assert.equal(doc.querySelectorAll('.initial-document__snapshot').length, route === '' ? 1 : 0);
+      assert.equal(doc.querySelectorAll('.table-scroll-affordance__hint').length, route === '' ? 1 : 0);
+      if (route === '') {
+        const scroller = doc.querySelector('.table-scroll-affordance__scroller');
+        assert.ok(scroller.closest('.table-scroll-affordance'));
+        assert.equal(scroller.nextElementSibling.textContent, '← таблица прокручивается вбок →');
+      }
       assert.equal(doc.querySelectorAll('.static-snapshot__chart').length, route === '' ? 3 : 0);
       for (const link of doc.querySelectorAll('a[href]')) {
         const href = link.getAttribute('href');
