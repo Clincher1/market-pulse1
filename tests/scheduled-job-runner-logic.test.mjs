@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import {
+  applyObservationFreshness,
   evaluateAsset,
   latestCompletedNySessionDate,
   moscowHourKey,
@@ -95,6 +96,24 @@ test('S&P 500 freshness follows the latest completed New York session', () => {
 test('Moscow hour helper returns the hour for the digest timezone', () => {
   assert.equal(moscowHourKey(new Date('2026-11-26T06:12:00.000Z')), 9);
   assert.equal(moscowHourKey(new Date('2026-11-25T21:12:00.000Z')), 0);
+});
+
+test('a recent cache write cannot mask a stale shared observation in the digest', () => {
+  const recentlyWritten = evaluateAsset('brent', {
+    price: 70,
+    updated_at: '2026-11-25T17:59:00.000Z',
+    as_of: '2026-11-20',
+  }, now);
+  const sharedFreshness = {
+    ok: false,
+    ageMinutes: 7 * 24 * 60,
+    allowedMinutes: 3 * 24 * 60,
+    note: 'brent: 7 суток, допустимо 3',
+  };
+  const combined = applyObservationFreshness(recentlyWritten, sharedFreshness);
+  assert.equal(recentlyWritten.status, 'ok');
+  assert.equal(combined.status, 'stale');
+  assert.match(combined.reason, /brent: 7 суток/);
 });
 
 test('overall verdict selects the worst asset and percent change is relative to yesterday', () => {
@@ -228,7 +247,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
       const updatedAt = new NativeDate(nowMs - 30 * 60 * 1000).toISOString();
       return Response.json([
         { id: 'brent', price: '70.25', updated_at: updatedAt, as_of: '2026-11-25' },
-        { id: 'gold', price: '4000', updated_at: updatedAt, as_of: '2026-11-25' },
+        { id: 'gold', price: '4000', updated_at: updatedAt, as_of: '2026-11-25T18:30:00.000Z' },
         { id: 'sp500', price: '6800', updated_at: updatedAt, as_of: '2026-11-25' },
       ]);
     }
@@ -288,6 +307,12 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.match(telegramMessages[0], /Market Pulse — 26\.11/);
     assert.match(telegramMessages[0], /первый отчёт — сравнение за 24ч появится завтра/);
     assert.deepEqual(historyUpdates.map((update) => update.delivery_status), ['pending', 'sent']);
+    const digestAssets = historyUpdates[0].payload.assets;
+    assert.equal(digestAssets.brent.as_of, '2026-11-25');
+    assert.equal(digestAssets.gold.as_of, '2026-11-25T18:30:00.000Z', 'digest preserves the original observation timestamp');
+    assert.equal(digestAssets.brent.freshness_verdict.ok, true);
+    assert.equal(digestAssets.brent.freshness_verdict.allowed_minutes, 3 * 24 * 60);
+    assert.equal(historyUpdates[0].payload.freshness.brent, 'ok');
     assert.equal(digestAttempts[1].outcome, 'sent', 'successful Telegram delivery is recorded');
     assert.equal(digestAttempts[1].reason, null);
 

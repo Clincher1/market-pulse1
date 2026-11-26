@@ -1271,35 +1271,6 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
       };
     }),
 
-    // 14. «Память рынка» — исследовательский раздел, который читает три
-    //     публичных представления. Пустое представление не роняет страницу:
-    //     раздел просто тихо показывает меньше, поэтому пустоту надо ловить.
-    check('market_memory', async () => {
-      const [stats, events, analogues] = await Promise.all([
-        restJson('market_memory_stats_v1?select=*&limit=1'),
-        restJson('market_memory_events_v1?select=latest_published_at&order=latest_published_at.desc&limit=1'),
-        restJson('market_memory_analogues_v1?select=sample_size&order=sample_size.desc&limit=1'),
-      ]) as [AnyRecord[], AnyRecord[], AnyRecord[]];
-      const missing: string[] = [];
-      if (!Array.isArray(stats) || stats.length === 0) missing.push('нет итоговой статистики');
-      if (!Array.isArray(events) || events.length === 0) missing.push('нет событий');
-      if (!Array.isArray(analogues) || analogues.length === 0) missing.push('нет аналогов');
-      if (missing.length) return { ok: false, detail: missing.join(', ') };
-      const eventAge = hoursAgo(String(events[0]?.latest_published_at ?? ''));
-      const stale: string[] = [];
-      // Аналоги считаются по накопленной истории и не обязаны обновляться каждый
-      // день; события — обязаны. Прогнозы из проверки убраны вместе с выдачей:
-      // сайт больше их не делает, и требовать свежих значило бы требовать
-      // невозможного.
-      if (eventAge === null || eventAge > 72) stale.push(`последнее событие ${eventAge?.toFixed(0) ?? '—'} ч назад`);
-      return {
-        ok: stale.length === 0,
-        detail: stale.length
-          ? `раздел отстал: ${stale.join(', ')}`
-          : `событие ${eventAge!.toFixed(0)} ч назад, аналоги ${analogues.length ? 'есть' : 'нет'}`,
-      };
-    }),
-
     // 15. Отчёты об ошибках действительно доходят. Без этой проверки «Sentry
     //     настроен» — обещание, а не факт: ключ мог быть сохранён с лишним
     //     пробелом, а отправка в этом случае молча выключается, и на странице

@@ -45,12 +45,12 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
   },
   assets_asof: {
     title: 'Дата наблюдения не застряла',
-    hint: 'Кэш может обновиться, а цена остаться за прошлый день: проверяется as_of каждого ряда против его собственного допуска — у кавычки часы, у курса ЕЦБ трое суток',
+    hint: 'Кэш может обновиться, а наблюдение остаться старым: as_of каждого ряда сверяется с контрактом, включая дату дневной сессии Brent и публикационный день ЕЦБ',
     cadence: 'у каждого ряда свой допуск, он записан в контракте данных',
   },
   asset_quote_lag: {
     title: 'Текущая цена действительно текущая',
-    hint: 'Пока рынок открыт, цена на плитке не может отставать больше двух-трёх часов; выходные и пауза биржи в допуск не входят',
+    hint: 'Brent сверяется по дате последней завершённой дневной сессии; у Gold допуск живой котировки — 180 минут, у BTC — 120 минут. Закрытие S&P 500 и официальный курс ЕЦБ не проверяются как внутридневные котировки',
     cadence: 'писатель цен ходит за котировкой раз в 5 минут',
   },
   asset_contract: {
@@ -125,11 +125,6 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
     hint: 'Последний успешный GitHub Actions backup истории завершился не более 26 часов назад',
     cadence: 'ежедневная резервная копия; самопроверка сверяет возраст каждый час',
   },
-  market_memory: {
-    title: '«Память рынка» наполнена',
-    hint: 'События и исторические аналоги читаются из своих представлений',
-    cadence: 'события — не реже раза в 1–2 суток; аналоги считаются по накопленной истории',
-  },
   sentry: {
     title: 'Отчёты об ошибках доходят',
     hint: 'Пробное событие отправляется тем же кодом, что и настоящие отчёты, и Sentry должен его принять',
@@ -146,7 +141,7 @@ export const CHECK_LABELS: Record<string, { title: string; hint: string; cadence
  * Внутренние исторические проверки остаются в `site_health` для аудита,
  * но их результаты больше не относятся к публичным проверкам продукта.
  */
-export const HIDDEN_PUBLIC_CHECKS = new Set(['tension_matches', 'sample_size', 'market_memory']);
+export const HIDDEN_PUBLIC_CHECKS = new Set(['tension_matches', 'sample_size']);
 export const PUBLIC_CHECK_NAMES = Object.keys(CHECK_LABELS).filter(
   (name) => !HIDDEN_PUBLIC_CHECKS.has(name),
 );

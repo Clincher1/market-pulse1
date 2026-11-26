@@ -315,6 +315,19 @@ export function evaluateAsset(assetId, row, now = new Date()) {
   };
 }
 
+/** Combine the monitor's cache/session checks with the shared observation-age contract. */
+export function applyObservationFreshness(verdict, observationFreshness) {
+  const missing = verdict.status === 'no_data';
+  const observationStale = observationFreshness?.ok === false;
+  return {
+    ...verdict,
+    status: missing ? 'no_data' : observationStale ? 'stale' : verdict.status,
+    reason: observationStale && !missing
+      ? `observation_stale: ${observationFreshness.note}`
+      : verdict.reason,
+  };
+}
+
 export function overallVerdict(verdicts) {
   if (Object.values(verdicts).some((verdict) => verdict.status === 'no_data')) return 'no_data';
   if (Object.values(verdicts).some((verdict) => verdict.status === 'stale')) return 'stale';
