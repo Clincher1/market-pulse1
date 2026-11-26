@@ -1506,6 +1506,7 @@
 }
 .initial-document__snapshot caption { text-align: left; }
 .initial-document__snapshot td:last-child { min-width: 18rem; }
+.initial-document__snapshot .static-snapshot__date { white-space: nowrap; }
 .initial-document__snapshot th,
 .initial-document__snapshot td {
   padding: 0.75rem;

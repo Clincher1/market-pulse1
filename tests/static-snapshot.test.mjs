@@ -5,6 +5,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { JSDOM } from 'jsdom';
 import { staticDocument } from '../scripts/static-document.mjs';
+import { formatObservationTimestamp } from '../src/lib/dateDisplay.mjs';
 
 const exec = promisify(execFile);
 const root = new URL('../', import.meta.url);
@@ -16,7 +17,9 @@ test('home snapshot preserves all supplied values, dates, units, source links an
   const section = doc.querySelector('[aria-labelledby="static-snapshot-title"]');
   assert.equal(section.querySelector('h2').textContent, 'Статический снимок данных');
   assert.ok(section.textContent.includes('Данные актуальны на момент сборки'));
-  assert.ok(section.textContent.includes(snapshot.exportedAt));
+  const exportedAt = [...section.querySelectorAll('time')].find(time => time.dateTime === snapshot.exportedAt);
+  assert.equal(exportedAt.dateTime, snapshot.exportedAt);
+  assert.equal(exportedAt.textContent, formatObservationTimestamp(snapshot.exportedAt));
   const charts = [...section.querySelectorAll('.static-snapshot__chart')];
   assert.equal(charts.length, snapshot.items.filter(item => snapshot.series[item.ticker].length >= 3).length);
   assert.equal(charts.length, 3);
@@ -41,7 +44,7 @@ test('home snapshot preserves all supplied values, dates, units, source links an
     assert.equal(cells[0].textContent, Number(item.value).toFixed(2));
     assert.equal(cells[1].textContent, item.unit);
     assert.equal(cells[2].querySelector('time').getAttribute('datetime'), item.observedAt);
-    assert.equal(cells[2].textContent, item.observedAt);
+    assert.equal(cells[2].textContent, formatObservationTimestamp(item.observedAt));
     assert.equal(cells[3].querySelector('a').getAttribute('href'), item.source.url);
     assert.equal(cells[3].textContent, item.source.name);
     assert.equal(cells[4].textContent, item.basis);
@@ -79,7 +82,7 @@ test('build fails closed for missing, malformed or invalid snapshot; supplied co
   const dir = await mkdtemp(new URL('.local/snapshot-test-', root));
   try {
     for (const path of ['scripts', 'src/lib', 'data', 'dist', 'public']) await mkdir(`${dir}/${path}`, { recursive: true });
-    for (const path of ['scripts/static-document.mjs', 'scripts/build-pages.mjs', 'src/lib/pageDescriptions.json', 'src/lib/methodology.json', 'src/lib/pageTitles.json', 'public/robots.txt']) {
+    for (const path of ['scripts/static-document.mjs', 'scripts/build-pages.mjs', 'src/lib/pageDescriptions.json', 'src/lib/methodology.json', 'src/lib/pageTitles.json', 'src/lib/dateDisplay.mjs', 'public/robots.txt']) {
       await copyFile(new URL(path, root), `${dir}/${path}`);
     }
     const originalHtml = await readFile(new URL('index.html', root), 'utf8');

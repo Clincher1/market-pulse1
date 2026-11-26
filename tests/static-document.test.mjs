@@ -51,6 +51,17 @@ test('built pages expose useful, distinct semantic HTML and working links withou
         const scroller = doc.querySelector('.table-scroll-affordance__scroller');
         assert.ok(scroller.closest('.table-scroll-affordance'));
         assert.equal(scroller.nextElementSibling.textContent, '← таблица прокручивается вбок →');
+        const fullTimestamps = [...doc.querySelectorAll('.static-snapshot__date time[datetime*="T"], .static-snapshot__updated time')];
+        assert.ok(fullTimestamps.length > 0);
+        for (const time of fullTimestamps) {
+          assert.match(time.textContent, /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2} UTC$/);
+          assert.match(time.dateTime, /^\d{4}-\d{2}-\d{2}T/);
+        }
+        assert.ok([...doc.querySelectorAll('.static-snapshot__date')].every(cell =>
+          /^\d{2}\.\d{2}\.\d{4}(?: \d{2}:\d{2} UTC)?$/.test(cell.textContent.trim()),
+        ));
+        const indexCss = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
+        assert.match(indexCss, /\.initial-document__snapshot \.static-snapshot__date\s*\{\s*white-space:\s*nowrap;/);
       }
       assert.equal(doc.querySelectorAll('.static-snapshot__chart').length, route === '' ? 3 : 0);
       for (const link of doc.querySelectorAll('a[href]')) {

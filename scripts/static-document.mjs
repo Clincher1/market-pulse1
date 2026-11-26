@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import descriptions from '../src/lib/pageDescriptions.json' with { type: 'json' };
 import methodology from '../src/lib/methodology.json' with { type: 'json' };
+import { formatObservationTimestamp } from '../src/lib/dateDisplay.mjs';
 
 export const origin = 'https://market-pulse1-eta.vercel.app';
 export const routes = {
@@ -146,7 +147,7 @@ function renderSnapshot() {
                 <th scope="row">${escape(row.ticker)} — ${escape(row.instrument)}</th>
                 <td>${escape(Number(row.value).toFixed(2))}</td>
                 <td>${escape(row.unit)}</td>
-                <td><time datetime="${escape(row.observedAt)}">${escape(row.observedAt)}</time></td>
+                <td class="static-snapshot__date"><time datetime="${escape(row.observedAt)}">${escape(formatObservationTimestamp(row.observedAt))}</time></td>
                 <td><a href="${escape(row.source.url)}">${escape(row.source.name)}</a></td>
                 <td>${escape(row.basis)}</td>
               </tr>`).join('');
@@ -156,7 +157,7 @@ function renderSnapshot() {
           <p>Данные актуальны на момент сборки. Это сохранённый снимок доступных данных,
           а не котировки в реальном времени; даты наблюдений указаны отдельно.</p>
           <p>Снимок выгружен:
-            <time datetime="${escape(snapshot.exportedAt)}">${escape(snapshot.exportedAt)}</time>.
+            <time datetime="${escape(snapshot.exportedAt)}">${escape(formatObservationTimestamp(snapshot.exportedAt))}</time>.
             Данные могут поступать с задержкой.</p>
           ${renderSnapshotCharts(snapshot)}
           <div class="table-scroll-affordance" data-scrollable="true" data-more-right="true">

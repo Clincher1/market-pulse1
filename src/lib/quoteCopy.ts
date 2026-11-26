@@ -2,6 +2,7 @@ import type { AssetData } from '@/data/marketTypes';
 import { WORLD_ASSET_UNITS } from './marketUnits';
 import { formatPriceText } from './price';
 import { validDate } from './marketDesk';
+import { formatObservationTimestamp } from './dateDisplay.mjs';
 
 /** Copy an observation, never the cache refresh time or a fabricated fallback. */
 export function quoteCopyText(asset: AssetData, sourceUrl: string, unavailable = false): string | null {
@@ -15,11 +16,13 @@ export function quoteCopyText(asset: AssetData, sourceUrl: string, unavailable =
     const url = new URL(sourceUrl);
     if (url.protocol !== 'https:' || url.username || url.password) return null;
   } catch { return null; }
+  const displayedAsOf = formatObservationTimestamp(asOf);
+  if (!displayedAsOf) return null;
   return [
     asset.name,
     `Значение: ${formatPriceText(asset.price)}`,
     `Единица: ${unit}`,
-    `Дата наблюдения${asOf.length === 10 ? '' : ' и время (часовой пояс указан в записи)'}: ${asOf}`,
+    `Дата наблюдения${asOf.length === 10 ? '' : ' и время (UTC)'}: ${displayedAsOf}`,
     `Источник: ${asset.sourceLabel}`,
     `Ссылка источника: ${sourceUrl}`,
     'Market Pulse · сохранённое наблюдение, не обещание цены прямо сейчас.',
