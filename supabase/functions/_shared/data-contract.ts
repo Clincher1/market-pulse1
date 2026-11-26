@@ -153,10 +153,10 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     historyInstrumentId: 'brent_yahoo_bzf',
     displayUnit: 'usd_per_barrel',
     rationale: 'фьючерс без официального бесплатного интерфейса; выходные и праздники NYMEX дают до трёх суток',
-    // График Yahoo — дневной: полночь UTC в `as_of` — начало даты бара,
-    // а не время получения котировки. Проверяем ожидаемую дату сессии.
+    // Дата дневного бара проверяется как дата сессии; только если Yahoo
+    // действительно отдаёт timestamp живой котировки, применяется допуск 180 мин.
     quoteLagMode: 'session-date',
-    quoteLagMinutes: null,
+    quoteLagMinutes: 180,
     trading: { closeDay: 5, closeHourUtc: 21, openDay: 0, openHourUtc: 22 },
     crossCheck: null,
   },
@@ -493,29 +493,39 @@ export interface LagVerdict {
 }
 
 /** Последняя завершённая сессия Brent по локальной дате Нью-Йорка. */
-function latestCompletedBrentSessionDate(now: Date): string {
+function brentNewYorkParts(now: Date): Record<string, string> {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', hourCycle: 'h23',
   }).formatToParts(now);
-  const fields = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map(({ type, value }) => [type, value]));
-  let key = `${fields.year}-${fields.month}-${fields.day}`;
-  const weekday = new Date(`${key}T12:00:00Z`).getUTCDay();
-  if (weekday === 0 || weekday === 6 || (weekday >= 1 && weekday <= 5 && Number(fields.hour) < 17)) {
-    do {
-      key = new Date(Date.parse(`${key}T12:00:00Z`) - DAY * 60_000).toISOString().slice(0, 10);
-    } while ([0, 6].includes(new Date(`${key}T12:00:00Z`).getUTCDay()));
+  return Object.fromEntries(parts.filter((part) => part.type !== 'literal').map(({ type, value }) => [type, value]));
+}
+
+function previousWeekday(key: string): string {
+  let candidate = new Date(Date.parse(`${key}T12:00:00Z`) - DAY * 60_000).toISOString().slice(0, 10);
+  while ([0, 6].includes(new Date(`${candidate}T12:00:00Z`).getUTCDay())) {
+    candidate = new Date(Date.parse(`${candidate}T12:00:00Z`) - DAY * 60_000).toISOString().slice(0, 10);
   }
-  return key;
+  return candidate;
+}
+
+/** Latest completed daily series date, accounting for the NY session close. */
+function latestCompletedBrentSessionDate(now: Date): string {
+  const fields = brentNewYorkParts(now);
+  const today = `${fields.year}-${fields.month}-${fields.day}`;
+  const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
+  return weekday === 0 || weekday === 6 || (weekday >= 1 && weekday <= 5 && Number(fields.hour) < 17)
+    ? previousWeekday(today)
+    : today;
 }
 
 /**
  * Не отстала ли цена, которая называет себя текущей.
  *
  * Это отдельная проверка от `freshnessVerdict`: она применяет явную политику
- * контракта — дату ожидаемой сессии для дневного Brent или минутный допуск
- * временной метки у живой котировки Gold/BTC. У S&P 500 и ECB внутридневной
- * котировки нет, поэтому проверка к ним неприменима.
+ * контракта — сессионную дату для date-only дневного Brent или минутный
+ * допуск для настоящей timestamp-котировки (180 мин у Brent/Gold, 120 у BTC).
+ * У S&P 500 и ECB внутридневной котировки нет, поэтому проверка неприменима.
  */
 export function quoteLagVerdict(
   row: { id: string; as_of?: string | null },
@@ -526,29 +536,44 @@ export function quoteLagVerdict(
     return { id: String(row.id ?? ''), applicable: false, open: false, ok: false, ageMinutes: null, allowedMinutes: null, note: `${row.id ?? '—'}: ряд не описан контрактом` };
   }
   if (contract.quoteLagMode === 'session-date') {
-    const asOf = typeof row.as_of === 'string' ? row.as_of : '';
-    const observed = asOf.slice(0, 10);
-    const parsedDate = Date.parse(`${observed}T00:00:00.000Z`);
-    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(observed)
-      && Number.isFinite(Date.parse(asOf))
-      && Number.isFinite(parsedDate)
-      && new Date(parsedDate).toISOString().slice(0, 10) === observed;
-    const expected = latestCompletedBrentSessionDate(now);
-    const open = isTradingOpen(contract, now);
-    const ok = validDate && observed === expected;
-    return {
-      id: contract.id,
-      applicable: true,
-      open,
-      ok,
-      ageMinutes: asOfAgeMinutes(row.as_of, now, contract.dateOnlyAsOfTime),
-      allowedMinutes: null,
-      note: ok
-        ? `${contract.id}: дата дневной серии ${observed} совпадает с последней завершённой сессией`
-        : `${contract.id}: дата дневной серии ${observed || 'не указана'}, ожидалась сессия ${expected}`,
-    };
+    const asOf = typeof row.as_of === 'string' ? row.as_of.trim() : '';
+    const dateOnly = DATE_ONLY.test(asOf) || UTC_MIDNIGHT.test(asOf);
+    if (dateOnly) {
+      const observed = (DATE_ONLY.exec(asOf) ?? UTC_MIDNIGHT.exec(asOf))?.[1] ?? '';
+      const parsedDate = Date.parse(`${observed}T00:00:00.000Z`);
+      const validDate = /^\d{4}-\d{2}-\d{2}$/.test(observed)
+        && Number.isFinite(parsedDate)
+        && new Date(parsedDate).toISOString().slice(0, 10) === observed;
+      const fields = brentNewYorkParts(now);
+      const today = `${fields.year}-${fields.month}-${fields.day}`;
+      const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
+      const candidates = new Set([latestCompletedBrentSessionDate(now)]);
+      // A date-only bar may be labelled for the current weekday before the
+      // exchange close (and on exchange holidays); it is not a quote timestamp.
+      if (weekday >= 1 && weekday <= 5) candidates.add(today);
+      if (weekday === 0 && Number(fields.hour) >= 18) {
+        let nextDay = new Date(Date.parse(`${today}T12:00:00Z`) + DAY * 60_000).toISOString().slice(0, 10);
+        while ([0, 6].includes(new Date(`${nextDay}T12:00:00Z`).getUTCDay())) {
+          nextDay = new Date(Date.parse(`${nextDay}T12:00:00Z`) + DAY * 60_000).toISOString().slice(0, 10);
+        }
+        candidates.add(nextDay);
+      }
+      const open = isTradingOpen(contract, now);
+      const ok = validDate && candidates.has(observed);
+      return {
+        id: contract.id,
+        applicable: true,
+        open,
+        ok,
+        ageMinutes: asOfAgeMinutes(row.as_of, now, contract.dateOnlyAsOfTime),
+        allowedMinutes: null,
+        note: ok
+          ? `${contract.id}: дата дневной серии ${observed} совпадает с текущей или последней завершённой сессией`
+          : `${contract.id}: дата дневной серии ${observed || 'не указана'}, ожидалась текущая или последняя завершённая сессия ${[...candidates].join('/')}`,
+      };
+    }
   }
-  if (contract.quoteLagMode !== 'timestamp' || contract.quoteLagMinutes === null || contract.trading === null) {
+  if (!['timestamp', 'session-date'].includes(contract.quoteLagMode ?? '') || contract.quoteLagMinutes === null || contract.trading === null) {
     return {
       id: contract.id,
       applicable: false,

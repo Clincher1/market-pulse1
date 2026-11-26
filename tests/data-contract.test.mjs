@@ -291,6 +291,7 @@ test('BTC: текущая цена из тикера, история из све
 test('контракт: смысл as_of у Brent и BTC различает сессию и момент котировки', () => {
   assert.equal(contractFor('brent')?.asOfKind, 'close-date');
   assert.equal(contractFor('brent')?.quoteLagMode, 'session-date');
+  assert.equal(contractFor('brent')?.quoteLagMinutes, 180, 'only real timestamp quotes use the Brent minute threshold');
   assert.equal(contractFor('btc')?.asOfKind, 'quote');
   assert.equal(contractFor('btc')?.cadenceMinutes, 5);
 });
@@ -353,6 +354,19 @@ test('задержка: Brent проверяется по дате заверш�
   assert.match(brentFriday.note, /последней завершённой сессией/);
   assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-12' }, beforeClose).ok, false);
   assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-16' }, afterClose).ok, true);
+  const holidayMorning = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-26T00:00:00+00:00' },
+    new Date('2026-11-26T07:25:00Z'),
+  );
+  assert.equal(holidayMorning.ok, true, 'a date-only Yahoo session label is not compared as a quote timestamp');
+  assert.equal(holidayMorning.allowedMinutes, null);
+
+  const liveQuote = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-11T03:49:00Z' },
+    new Date('2026-11-11T06:50:00Z'),
+  );
+  assert.equal(liveQuote.ok, false, 'a real Brent quote timestamp still uses the 180-minute limit');
+  assert.equal(liveQuote.allowedMinutes, 180);
 
   const gold = contractFor('gold');
   const btc = contractFor('btc');
