@@ -49,8 +49,9 @@ export default function StaticMarketSnapshot() {
         </figure> : null;
       })}
     </div>
-    <div className="initial-document__snapshot" role="region" aria-label="Таблица статического снимка" tabIndex={0}>
-      <table>
+    <div className="table-scroll-affordance" data-scrollable="true" data-more-right="true">
+      <div className="initial-document__snapshot table-scroll-affordance__scroller" role="region" aria-label="Таблица статического снимка" tabIndex={0}>
+        <table>
         <caption>Рыночные наблюдения из сохранённого снимка</caption>
         <thead><tr>
           <th scope="col">Тикер и инструмент</th>
@@ -68,7 +69,9 @@ export default function StaticMarketSnapshot() {
           <td><a href={item.source.url} rel="noreferrer">{item.source.name}</a></td>
           <td>{item.basis}</td>
         </tr>)}</tbody>
-      </table>
+        </table>
+      </div>
+      <p className="table-scroll-affordance__hint">← таблица прокручивается вбок →</p>
     </div>
     <p className="static-snapshot__disclaimer">Значения могут поступать с задержкой. Проверяйте первоисточник и дату наблюдения. Не является инвестиционной рекомендацией.</p>
   </section>;
