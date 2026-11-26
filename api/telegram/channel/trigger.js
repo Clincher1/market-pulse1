@@ -75,7 +75,7 @@ export function testPostText(now = new Date()) {
 }
 
 export function dailyPostText(now = new Date()) {
-  return postText('Доброе утро! Ежедневный дайджест Market Pulse.', now);
+  return postText('📊 Дайджест Market Pulse', now);
 }
 
 async function telegramCall(fetchImpl, token, method, body) {
