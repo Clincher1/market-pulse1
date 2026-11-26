@@ -39,12 +39,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Fetch and atomically validate all three observations
+      - name: Fetch and atomically validate snapshot plus daily history
         id: fetch_snapshot
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SNAPSHOT_SUPABASE_READ_KEY: ${{ secrets.SNAPSHOT_SUPABASE_READ_KEY }}
         run: node scripts/update-static-snapshot.mjs
+      - name: Generate static market SVG charts
+        id: generate_charts
+        run: node scripts/build-static-market-charts.mjs
       - name: Install locked dependencies
         id: install_dependencies
         run: npm ci
@@ -66,12 +69,12 @@ jobs:
         id: typecheck_functions
         working-directory: supabase/functions
         run: npx -y deno@2 check */index.ts _shared/*.ts
-      - name: Check changed files (snapshot only)
+      - name: Check changed files (snapshot and generated charts only)
         id: snapshot_changes
         shell: bash
         run: |
           set -euo pipefail
-          changed_files="$(git diff --name-only)"
+          changed_files="$(git diff --name-only | LC_ALL=C sort)"
           staged_files="$(git diff --cached --name-only)"
           untracked_files="$(git ls-files --others --exclude-standard)"
           {
@@ -90,16 +93,21 @@ jobs:
           fi
           if test -z "$changed_files"; then
             echo 'has_changes=false' >> "$GITHUB_OUTPUT"
-            echo 'Snapshot unchanged; commit and push will be skipped.' | tee -a "$GITHUB_STEP_SUMMARY"
+            echo 'Snapshot and chart assets unchanged; commit and push will be skipped.' | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          if test "$changed_files" != 'data/snapshot.json'; then
-            echo '::error::Changed-file guard failed: only data/snapshot.json may change. No commit or push.'
-            echo 'FAILED: unexpected tracked changes; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
+          while IFS= read -r path; do
+            case "$path" in
+              data/snapshot.json|public/snapshot-charts/brent.svg|public/snapshot-charts/sp500.svg|public/snapshot-charts/gold.svg) ;;
+              *)
+                echo '::error::Changed-file guard failed: unexpected tracked path. No commit or push.'
+                echo 'FAILED: unexpected tracked path; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+                exit 1
+                ;;
+            esac
+          done <<< "$changed_files"
           echo 'has_changes=true' >> "$GITHUB_OUTPUT"
-          echo 'PASS: only data/snapshot.json changed.' | tee -a "$GITHUB_STEP_SUMMARY"
+          echo 'PASS: only snapshot data and generated chart assets changed.' | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Check main is still current
         id: main_guard
@@ -127,30 +135,51 @@ jobs:
           fi
           echo 'PASS: main and local HEAD still match checkout base.' | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit validated snapshot locally
+      - name: Commit validated snapshot and charts locally
         id: commit_snapshot
         if: steps.snapshot_changes.outputs.has_changes == 'true'
         shell: bash
         run: |
           set -euo pipefail
           echo '### Snapshot: local commit' >> "$GITHUB_STEP_SUMMARY"
-          # Recheck the allowlist immediately before staging; never git add all.
-          if test "$(git diff --name-only)" != 'data/snapshot.json' \
-            || test -n "$(git diff --cached --name-only)" \
+          changed_files="$(git diff --name-only | LC_ALL=C sort)"
+          # Recheck the narrow output allowlist immediately before staging.
+          if test -n "$(git diff --cached --name-only)" \
             || test -n "$(git ls-files --others --exclude-standard)"; then
             echo '::error::Pre-commit changed-file guard failed. No commit or push.'
             echo 'FAILED: pre-commit changed-file guard; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+          while IFS= read -r path; do
+            case "$path" in
+              data/snapshot.json|public/snapshot-charts/brent.svg|public/snapshot-charts/sp500.svg|public/snapshot-charts/gold.svg) ;;
+              *)
+                echo '::error::Pre-commit changed-file guard failed. No commit or push.'
+                echo 'FAILED: unexpected pre-commit path guard; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+                exit 1
+                ;;
+            esac
+          done <<< "$changed_files"
           git config user.name 'Clincher1'
           git config user.email '88886535+Clincher1@users.noreply.github.com'
-          git add -- data/snapshot.json
-          if test "$(git diff --cached --name-only)" != 'data/snapshot.json'; then
-            echo '::error::Staged-file guard failed: only data/snapshot.json may be committed.'
-            echo 'FAILED: staged-file guard; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+          git add -A -- data/snapshot.json public/snapshot-charts/brent.svg public/snapshot-charts/sp500.svg public/snapshot-charts/gold.svg
+          staged_files="$(git diff --cached --name-only | LC_ALL=C sort)"
+          while IFS= read -r path; do
+            case "$path" in
+              data/snapshot.json|public/snapshot-charts/brent.svg|public/snapshot-charts/sp500.svg|public/snapshot-charts/gold.svg) ;;
+              *)
+                echo '::error::Staged-file guard failed: unexpected staged path.'
+                echo 'FAILED: staged-file guard; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
+                exit 1
+                ;;
+            esac
+          done <<< "$staged_files"
+          if test -z "$staged_files"; then
+            echo '::error::Staged-file guard failed: no allowed generated changes staged.'
+            echo 'FAILED: no generated changes staged; no commit or push.' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          if git commit -m 'Refresh validated static market snapshot'; then
+          if git commit -m 'Refresh validated static market snapshot and charts'; then
             echo "PASS: local snapshot commit $(git rev-parse HEAD). Not yet pushed." | tee -a "$GITHUB_STEP_SUMMARY"
           else
             code=$?
@@ -234,6 +263,7 @@ jobs:
           OUTCOME_BASE: ${{ steps.record_base.outcome }}
           OUTCOME_SETUP_NODE: ${{ steps.setup_node.outcome }}
           OUTCOME_FETCH: ${{ steps.fetch_snapshot.outcome }}
+          OUTCOME_CHARTS: ${{ steps.generate_charts.outcome }}
           OUTCOME_INSTALL: ${{ steps.install_dependencies.outcome }}
           OUTCOME_TEST: ${{ steps.test_repository.outcome }}
           OUTCOME_TYPECHECK: ${{ steps.typecheck_app.outcome }}
@@ -252,7 +282,8 @@ jobs:
           [[ "$OUTCOME_CHECKOUT" == failure ]] && failed+=("checkout")
           [[ "$OUTCOME_BASE" == failure ]] && failed+=("base revision")
           [[ "$OUTCOME_SETUP_NODE" == failure ]] && failed+=("Node setup")
-          [[ "$OUTCOME_FETCH" == failure ]] && failed+=("fetch/validate observations")
+          [[ "$OUTCOME_FETCH" == failure ]] && failed+=("fetch/validate snapshot and daily history")
+          [[ "$OUTCOME_CHARTS" == failure ]] && failed+=("generate static SVG charts")
           [[ "$OUTCOME_INSTALL" == failure ]] && failed+=("npm ci")
           [[ "$OUTCOME_TEST" == failure ]] && failed+=("npm test")
           [[ "$OUTCOME_TYPECHECK" == failure ]] && failed+=("typecheck")

@@ -8,6 +8,7 @@ const KeyAssets = lazy(() => import('@/components/KeyAssets'));
 import Footer from '@/components/Footer';
 import PAGE_TITLES from '@/lib/pageTitles.json';
 import MarketTicker from '@/components/MarketTicker';
+import StaticMarketSnapshot from '@/components/StaticMarketSnapshot';
 import TrustStrip from '@/components/TrustStrip';
 import HowWeKnow from '@/components/HowWeKnow';
 import PulseOrbit from '@/components/PulseOrbit';
@@ -142,6 +143,7 @@ function DashboardPage() {
         </motion.div>
       </section>
 
+      <StaticMarketSnapshot />
       <OverviewTopics />
 
       <SectionBoundary title="Обзор и мои ориентиры">

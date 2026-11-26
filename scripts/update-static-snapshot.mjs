@@ -4,6 +4,11 @@ import { pathToFileURL } from 'node:url';
 
 const DAY = 86400000;
 const PROJECT_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
+const historyContracts = [
+  { id: 'brent_yahoo_bzf', ticker: 'BZ=F' },
+  { id: 'sp500_yahoo_gspc', ticker: '^GSPC' },
+  { id: 'gold_api_xau_observed_daily', ticker: 'XAU' },
+];
 const contracts = [
   { id: 'brent_yahoo_bzf', symbol: 'BZ=F', provider: 'Yahoo Finance',
     instrumentType: 'commodity_future', unit: 'usd_per_barrel',
@@ -85,6 +90,70 @@ export function buildSnapshot(payload, previous, now = new Date()) {
   return { schemaVersion: 1, exportedAt: payload.exportedAt, items };
 }
 
+function buildHistory(rows, item, exportDay) {
+  requireThat(Array.isArray(rows) && rows.length <= 7, `${item.ticker}: history response must contain at most seven rows`);
+  const byDate = new Map();
+  for (const row of rows) {
+    requireThat(row && typeof row === 'object' && calendar(row.observation_date)
+      && row.observation_date <= item.observedAt.slice(0, 10)
+      && row.observation_date <= exportDay,
+    `${item.ticker}: invalid or future history date`);
+    const value = typeof row.price === 'string' ? row.price : String(row.price);
+    requireThat(/^\d+(?:\.\d+)?$/.test(value) && Number.isFinite(Number(value)) && Number(value) > 0,
+      `${item.ticker}: invalid history price`);
+    requireThat(!byDate.has(row.observation_date), `${item.ticker}: duplicate history date`);
+    byDate.set(row.observation_date, { observedAt: row.observation_date, value });
+  }
+  // The validated current snapshot row is the final observation. It also supplies
+  // today's XAU quote because the public historical view intentionally omits the
+  // still-open UTC day. Same-date history is replaced, never duplicated.
+  byDate.set(item.observedAt.slice(0, 10), {
+    observedAt: item.observedAt.slice(0, 10),
+    value: item.value,
+  });
+  return [...byDate.values()]
+    .sort((a, b) => a.observedAt.localeCompare(b.observedAt))
+    .slice(-7);
+}
+
+async function readJsonResponse(response, label) {
+  requireThat(response.ok, `${label} failed: HTTP ${response.status}`);
+  let raw;
+  try { raw = await response.text(); } catch { throw new Error(`${label} response read failed`); }
+  requireThat(raw.length <= 65536, `${label} response is too large`);
+  try { return JSON.parse(raw); } catch { throw new Error(`${label} returned invalid JSON`); }
+}
+
+export async function fetchSnapshotHistory({ url, key, fetchImpl, snapshot }) {
+  const exportDay = snapshot.exportedAt.slice(0, 10);
+  const series = {};
+  for (const contract of historyContracts) {
+    const item = snapshot.items.find(candidate => candidate.ticker === contract.ticker);
+    requireThat(item, `${contract.ticker}: current snapshot row is missing`);
+    const query = new URLSearchParams({
+      select: 'instrument_id,observation_date,price',
+      instrument_id: `eq.${contract.id}`,
+      observation_date: `lte.${item.observedAt.slice(0, 10)}`,
+      order: 'observation_date.desc',
+      limit: '7',
+    });
+    let response;
+    try {
+      response = await fetchImpl(`${url.replace(/\/$/, '')}/rest/v1/asset_price_history_v1?${query}`, {
+        method: 'GET', headers: { apikey: key, Accept: 'application/json' },
+        redirect: 'error', signal: AbortSignal.timeout(20000),
+      });
+    } catch {
+      throw new Error(`${contract.ticker}: history request failed or timed out; original file unchanged`);
+    }
+    const rows = await readJsonResponse(response, `${contract.ticker} history query`);
+    requireThat(Array.isArray(rows) && rows.every(row => row?.instrument_id === contract.id),
+      `${contract.ticker}: history response contains an unexpected instrument`);
+    series[contract.ticker] = buildHistory(rows, item, exportDay);
+  }
+  return series;
+}
+
 export async function updateSnapshot({
   file = new URL('../data/snapshot.json', import.meta.url),
   url = process.env.SUPABASE_URL, key = process.env.SNAPSHOT_SUPABASE_READ_KEY,
@@ -111,7 +180,9 @@ export async function updateSnapshot({
   requireThat(raw.length <= 65536, 'Snapshot RPC response is too large');
   let payload;
   try { payload = JSON.parse(raw); } catch { throw new Error('Snapshot RPC returned invalid JSON'); }
-  const snapshot = buildSnapshot(payload, previous, now());
+  const latest = buildSnapshot(payload, previous, now());
+  const series = await fetchSnapshotHistory({ url: PROJECT_URL, key, fetchImpl, snapshot: latest });
+  const snapshot = { ...latest, series };
   const temp = new URL(`.snapshot-${randomUUID()}.tmp`, pathToFileURL(
     typeof file === 'string' ? file : file.pathname,
   ));
