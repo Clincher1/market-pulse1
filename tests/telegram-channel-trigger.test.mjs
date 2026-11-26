@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import trigger, { createTelegramChannelTrigger, testPostText } from '../api/telegram/channel/trigger.js';
+
+const snapshot = JSON.parse(await readFile(new URL('../data/snapshot.json', import.meta.url), 'utf8'));
 
 const now = () => new Date('2026-11-26T11:15:00+03:00');
 const validEnv = {
@@ -147,7 +150,14 @@ test('test post contains current snapshot figures when available', () => {
   const text = testPostText(now());
   assert.match(text, /Brent: 94,61/);
   assert.match(text, /S&P 500: 7\s?182,78/);
-  assert.match(text, /Золото XAU\/USD: 3\s?570,00/);
+  const goldValue = Number(snapshot.items.find(item => item.ticker === 'XAU').value);
+  const expectedGold = new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(goldValue);
+  const normalizeSpaces = value => value.replace(/[\u00a0\u202f]/g, ' ');
+  assert.ok(normalizeSpaces(text).includes(`Золото XAU/USD: ${normalizeSpaces(expectedGold)}`),
+    `expected test post to show snapshot gold value ${expectedGold}`);
   assert.match(text, /Не является инвестиционной рекомендацией/);
 });
 
