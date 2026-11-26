@@ -6,7 +6,6 @@ import {
   Clock3,
   Code2,
   Database,
-  ExternalLink,
   Newspaper,
   ShieldCheck,
   TriangleAlert,
@@ -101,16 +100,6 @@ export default function AboutProject() {
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
                 Методология
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
-              <a
-                href="https://github.com/Clincher1/market-pulse1/tree/main"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-5 py-2.5 text-sm font-extrabold text-text-primary transition-colors hover:border-cyan-300/50 hover:bg-cyan-400/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
-              >
-                <Code2 className="h-4 w-4 text-cyan-800" aria-hidden="true" />
-                Код в GitHub · main
-                <ExternalLink className="h-3.5 w-3.5 text-text-secondary" aria-hidden="true" />
               </a>
             </div>
           </div>
