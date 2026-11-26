@@ -117,7 +117,8 @@ test('свежесть: дата-only Yahoo/ECB считается от закр
   // Никакого общего сдвига для всех рядов: без времени в контракте дата и
   // обычные timestamp по-прежнему разбираются как раньше.
   assert.equal(asOfAgeMinutes('2026-11-13', now), 83 * 60 + 37);
-  assert.equal(freshnessVerdict({ id: 'brent', as_of: '2026-11-13' }, now).ageMinutes, 83 * 60 + 37);
+  // Brent’s daily-series date is interpreted at the NY session close (17:00 EST).
+  assert.equal(freshnessVerdict({ id: 'brent', as_of: '2026-11-13' }, now).ageMinutes, 61 * 60 + 37);
   assert.equal(
     freshnessVerdict({ id: 'sp500', as_of: '2026-11-13T00:01:00Z' }, now).ageMinutes,
     83 * 60 + 36,
@@ -287,7 +288,9 @@ test('BTC: текущая цена из тикера, история из све
   assert.match(source, /OHLC\?pair=XBTUSD&interval=1440/, 'история свечей пропала');
 });
 
-test('контракт: у BTC смысл даты — момент котировки, а не начало свечи', () => {
+test('контракт: смысл as_of у Brent и BTC различает сессию и момент котировки', () => {
+  assert.equal(contractFor('brent')?.asOfKind, 'close-date');
+  assert.equal(contractFor('brent')?.quoteLagMode, 'session-date');
   assert.equal(contractFor('btc')?.asOfKind, 'quote');
   assert.equal(contractFor('btc')?.cadenceMinutes, 5);
 });
@@ -322,12 +325,12 @@ test('задержка: на открытом рынке одиннадцать 
   assert.match(gold.note, /отстала на 10,8 ч/);
 });
 
-test('задержка: в выходные то же отставание — не дефект', () => {
+test('задержка: дневная дата Brent сверяется с последней завершённой сессией и в выходные', () => {
   const sunday = new Date('2026-11-08T12:00:00Z');
-  const brent = quoteLagVerdict({ id: 'brent', as_of: '2026-11-06T20:00:00Z' }, sunday);
+  const brent = quoteLagVerdict({ id: 'brent', as_of: '2026-11-06' }, sunday);
   assert.equal(brent.ok, true);
   assert.equal(brent.open, false);
-  assert.match(brent.note, /рынок закрыт/);
+  assert.match(brent.note, /последней завершённой сессией/);
 });
 
 test('задержка: свежая котировка проходит, ряд без «сейчас» не проверяется', () => {
@@ -338,6 +341,27 @@ test('задержка: свежая котировка проходит, ряд
   assert.match(sp500.note, /не претендует на текущую/);
   const fx = quoteLagVerdict({ id: 'usd-eur', as_of: '2026-11-10T00:00:00Z' }, now);
   assert.equal(fx.applicable, false);
+});
+
+test('задержка: Brent проверяется по дате завершённой дневной сессии, Gold остаётся живой котировкой', () => {
+  const beforeClose = new Date('2026-11-16T12:00:00Z'); // 07:00 EST
+  const afterClose = new Date('2026-11-16T23:00:00Z'); // 18:00 EST
+  const brentFriday = quoteLagVerdict({ id: 'brent', as_of: '2026-11-13' }, beforeClose);
+  assert.equal(brentFriday.applicable, true);
+  assert.equal(brentFriday.ok, true);
+  assert.equal(brentFriday.allowedMinutes, null);
+  assert.match(brentFriday.note, /последней завершённой сессией/);
+  assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-12' }, beforeClose).ok, false);
+  assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-16' }, afterClose).ok, true);
+
+  const gold = contractFor('gold');
+  const btc = contractFor('btc');
+  assert.equal(gold?.quoteLagMode, 'timestamp');
+  assert.equal(gold?.quoteLagMinutes, 180);
+  assert.equal(btc?.quoteLagMode, 'timestamp');
+  assert.equal(btc?.quoteLagMinutes, 120);
+  assert.equal(contractFor('sp500')?.quoteLagMode, null);
+  assert.equal(contractFor('usd-eur')?.quoteLagMode, null);
 });
 
 test('задержка: ряд без даты на открытом рынке — красный, а не пропущенный', () => {

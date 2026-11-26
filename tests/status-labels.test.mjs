@@ -55,7 +55,6 @@ test('расписание подписано у проверок, которы�
     'feeds_fresh',
     'ru_history_api',
     'asset_history_panel',
-    'market_memory',
     'brief_image',
   ];
   const withoutCadence = scheduled.filter((name) => !CHECK_LABELS[name]?.cadence);
@@ -69,11 +68,13 @@ test('у каждой подписи есть заголовок и поясне
   }
 });
 
-// The public memory page is a forecast archive, not the legacy event/analogy engine.
-test('legacy event memory does not certify the public forecast archive', async () => {
+test('retired market_memory check and label are absent', async () => {
   const { HIDDEN_PUBLIC_CHECKS, PUBLIC_CHECK_NAMES } = await import('../src/lib/checkLabels.ts');
-  assert.equal(HIDDEN_PUBLIC_CHECKS.has('market_memory'), true);
+  assert.equal(serverChecks().includes('market_memory'), false);
+  assert.equal(Object.hasOwn(CHECK_LABELS, 'market_memory'), false);
+  assert.equal(HIDDEN_PUBLIC_CHECKS.has('market_memory'), false);
   assert.equal(PUBLIC_CHECK_NAMES.includes('market_memory'), false);
+  assert.doesNotMatch(source, /market_memory_(?:stats|events|analogues)_v1/);
 });
 
 test('price truth description covers all five assets and distinguishes quote from close', () => {

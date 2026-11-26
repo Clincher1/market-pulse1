@@ -1,5 +1,6 @@
 // Hourly market monitor and once-daily Telegram digest.
 import {
+  applyObservationFreshness,
   evaluateAsset,
   moscowDateKey,
   moscowHourKey,
@@ -7,6 +8,7 @@ import {
   percentChange,
   shouldWarnForStagnation,
 } from "./logic.mjs";
+import { freshnessVerdict } from "../_shared/data-contract.ts";
 
 const ASSET_IDS = ["brent", "sp500", "gold"] as const;
 const ALERT_DEDUPLICATION_MS = 15 * 60 * 1000;
@@ -18,7 +20,8 @@ const MESSAGE_TYPE: Record<(typeof ASSET_IDS)[number], string> = {
 
 type AnyRecord = Record<string, unknown>;
 type AssetId = (typeof ASSET_IDS)[number];
-type Verdict = ReturnType<typeof evaluateAsset>;
+type ObservationFreshness = ReturnType<typeof freshnessVerdict>;
+type Verdict = ReturnType<typeof evaluateAsset> & { observationFreshness: ObservationFreshness };
 type CachedAsset = {
   id: string;
   price: string | number | null;
@@ -300,9 +303,15 @@ async function runDailyDigest(
     assets: Object.fromEntries(ASSET_IDS.map((id) => [id, {
       price: verdicts[id].price,
       display_price: rows[id]?.price ?? null,
-      as_of: verdicts[id].asOf,
+      as_of: rows[id]?.as_of ?? null,
       updated_at: verdicts[id].updatedAt,
       freshness: verdicts[id].status,
+      freshness_verdict: {
+        ok: verdicts[id].observationFreshness.ok,
+        age_minutes: verdicts[id].observationFreshness.ageMinutes,
+        allowed_minutes: verdicts[id].observationFreshness.allowedMinutes,
+        note: verdicts[id].observationFreshness.note,
+      },
       reason: verdicts[id].reason,
       change_24h_pct: digest.changes[id],
     }])),
@@ -369,7 +378,14 @@ Deno.serve(async (req) => {
 
     let verdicts: Record<AssetId, Verdict>;
     try {
-      verdicts = Object.fromEntries(ASSET_IDS.map((id) => [id, evaluateAsset(id, rows[id], now)])) as Record<AssetId, Verdict>;
+      verdicts = Object.fromEntries(ASSET_IDS.map((id) => {
+        const observationFreshness = freshnessVerdict({ id, as_of: rows[id]?.as_of }, now);
+        const monitorVerdict = evaluateAsset(id, rows[id], now);
+        return [id, {
+          ...applyObservationFreshness(monitorVerdict, observationFreshness),
+          observationFreshness,
+        }];
+      })) as Record<AssetId, Verdict>;
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Asset timestamp validation failed";
       throw new HttpError(detail, 503);

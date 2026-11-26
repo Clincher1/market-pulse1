@@ -68,8 +68,8 @@ export type SourceTier = 'first-party' | 'undocumented-api' | 'commercial-api';
  *
  * `weekday-window` — непрерывная сессия с воскресенья по пятницу:
  * окно [openDay openHourUtc, closeDay closeHourUtc) внутри недели, дни от
- * воскресенья (0). Ежедневный час паузы им не описывается — он укладывается
- * в допуск `quoteLagMinutes`.
+ * воскресенья (0). Ежедневный час паузы им не описывается — для живой
+ * котировки он укладывается в минутный допуск.
  */
 export type TradingCalendar =
   | 'always'
@@ -103,13 +103,11 @@ export interface AssetContract {
   maxAsOfAgeMinutes: number;
   /** Почему порог именно такой. Печатается в отчёте проверки. */
   rationale: string;
+  /** Как измерять отставание цены, которая претендует на «сейчас». */
+  quoteLagMode: 'session-date' | 'timestamp' | null;
   /**
-   * Допустимое отставание самой цены, минуты, пока рынок открыт. `null` —
-   * цена не претендует на «сейчас» (закрытие дня, курс на дату), и проверка
-   * задержки к такому ряду не применяется.
-   *
-   * Это отдельное число, а не `cadenceMinutes × k`: допуск задержки — решение
-   * о качестве, и он должен быть записан явно, а не выведен из расписания.
+   * Допустимое отставание истинной временной метки котировки, минуты. `null`
+   * для дневной серии, где важна дата сессии, или ряда без текущей цены.
    */
   quoteLagMinutes: number | null;
   /** Календарь рынка: отличает «источник отстал» от «биржа закрыта». */
@@ -144,17 +142,21 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     provider: 'Yahoo Finance',
     tier: 'undocumented-api',
     endpoint: 'https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?range=3mo&interval=1d',
-    asOfKind: 'quote',
+    asOfKind: 'close-date',
     cadenceMinutes: 5,
     // Три дня: пятничное закрытие в воскресенье ещё законно, а в понедельник
     // вечером — уже нет. Спот EIA сюда не подставляется: это другой инструмент.
     maxAsOfAgeMinutes: 3 * DAY,
+    // Дневная дата Yahoo относится к сессии Brent; полуночь UTC не есть
+    // момент котировки. Возраст date-only считаем от закрытия в Нью-Йорке.
+    dateOnlyAsOfTime: { timeZone: 'America/New_York', hour: 17, minute: 0 },
     historyInstrumentId: 'brent_yahoo_bzf',
     displayUnit: 'usd_per_barrel',
     rationale: 'фьючерс без официального бесплатного интерфейса; выходные и праздники NYMEX дают до трёх суток',
-    // Час паузы CME (21:00–22:00 UTC) укладывается в три часа с запасом на
-    // редкий день, когда Yahoo отдаёт котировку реже обычного.
-    quoteLagMinutes: 180,
+    // График Yahoo — дневной: полночь UTC в `as_of` — начало даты бара,
+    // а не время получения котировки. Проверяем ожидаемую дату сессии.
+    quoteLagMode: 'session-date',
+    quoteLagMinutes: null,
     trading: { closeDay: 5, closeHourUtc: 21, openDay: 0, openHourUtc: 22 },
     crossCheck: null,
   },
@@ -177,6 +179,7 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     rationale: 'индекс лицензирован S&P; бесплатный документированный интерфейс отсутствует, выходные — до трёх суток',
     // Плитка показывает закрытие, а не «сейчас»: задержку цены тут проверять
     // не к чему — иначе проверка красная каждую ночь по построению.
+    quoteLagMode: null,
     quoteLagMinutes: null,
     trading: null,
     crossCheck: {
@@ -205,6 +208,7 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     historyInstrumentId: 'eurusd_ecb_daily',
     displayUnit: 'usd_per_eur',
     rationale: 'официальный курс ЕЦБ на дату; выходные и праздники TARGET дают до трёх суток',
+    quoteLagMode: null,
     quoteLagMinutes: null,
     trading: null,
     crossCheck: null,
@@ -230,6 +234,7 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     rationale: 'круглосуточный рынок; при отказе тикера — закрытие суточной свечи, не старше суток',
     // Два часа: тикер обновляется на каждой сделке, а откат на свечу честно
     // виден как отставание, а не прячется под подписью «сейчас».
+    quoteLagMode: 'timestamp',
     quoteLagMinutes: 120,
     trading: 'always',
     crossCheck: {
@@ -257,6 +262,7 @@ export const ASSET_CONTRACTS: AssetContract[] = [
     historyInstrumentId: 'gold_api_xau_observed_daily',
     displayUnit: 'usd_per_troy_ounce',
     rationale: 'единый источник спот XAU/USD; история накапливается как наши наблюдения, не официальный close; при отказе сохраняется прежняя дата',
+    quoteLagMode: 'timestamp',
     quoteLagMinutes: 180,
     trading: { closeDay: 5, closeHourUtc: 21, openDay: 0, openHourUtc: 22 },
     crossCheck: null,
@@ -476,7 +482,7 @@ export function isTradingOpen(contract: AssetContract, at: Date): boolean {
 
 export interface LagVerdict {
   id: string;
-  /** Проверка применима: ряд претендует на «текущую» цену и рынок ему знаком. */
+  /** Проверка применима: у ряда есть политика отставания. */
   applicable: boolean;
   /** Рынок открыт — значит, отставание уже дефект, а не календарь. */
   open: boolean;
@@ -486,16 +492,30 @@ export interface LagVerdict {
   note: string;
 }
 
+/** Последняя завершённая сессия Brent по локальной дате Нью-Йорка. */
+function latestCompletedBrentSessionDate(now: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', hourCycle: 'h23',
+  }).formatToParts(now);
+  const fields = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map(({ type, value }) => [type, value]));
+  let key = `${fields.year}-${fields.month}-${fields.day}`;
+  const weekday = new Date(`${key}T12:00:00Z`).getUTCDay();
+  if (weekday === 0 || weekday === 6 || (weekday >= 1 && weekday <= 5 && Number(fields.hour) < 17)) {
+    do {
+      key = new Date(Date.parse(`${key}T12:00:00Z`) - DAY * 60_000).toISOString().slice(0, 10);
+    } while ([0, 6].includes(new Date(`${key}T12:00:00Z`).getUTCDay()));
+  }
+  return key;
+}
+
 /**
  * Не отстала ли цена, которая называет себя текущей.
  *
- * Это отдельная проверка от `freshnessVerdict`, и вот почему. Допуск свежести
- * (`maxAsOfAgeMinutes`) отвечает на вопрос «ряд ещё жив»: у золота это трое
- * суток на выходные. А здесь вопрос другой — «цена, подписанная как текущая,
- * действительно текущая»: два часа на открытом рынке. Один порог на оба
- * вопроса давал ровно тот дефект, ради которого этот файл написан: золото с
- * одиннадцатью часами отставания проходило проверку, потому что было младше
- * трёх суток.
+ * Это отдельная проверка от `freshnessVerdict`: она применяет явную политику
+ * контракта — дату ожидаемой сессии для дневного Brent или минутный допуск
+ * временной метки у живой котировки Gold/BTC. У S&P 500 и ECB внутридневной
+ * котировки нет, поэтому проверка к ним неприменима.
  */
 export function quoteLagVerdict(
   row: { id: string; as_of?: string | null },
@@ -505,7 +525,30 @@ export function quoteLagVerdict(
   if (!contract) {
     return { id: String(row.id ?? ''), applicable: false, open: false, ok: false, ageMinutes: null, allowedMinutes: null, note: `${row.id ?? '—'}: ряд не описан контрактом` };
   }
-  if (contract.quoteLagMinutes === null || contract.trading === null) {
+  if (contract.quoteLagMode === 'session-date') {
+    const asOf = typeof row.as_of === 'string' ? row.as_of : '';
+    const observed = asOf.slice(0, 10);
+    const parsedDate = Date.parse(`${observed}T00:00:00.000Z`);
+    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(observed)
+      && Number.isFinite(Date.parse(asOf))
+      && Number.isFinite(parsedDate)
+      && new Date(parsedDate).toISOString().slice(0, 10) === observed;
+    const expected = latestCompletedBrentSessionDate(now);
+    const open = isTradingOpen(contract, now);
+    const ok = validDate && observed === expected;
+    return {
+      id: contract.id,
+      applicable: true,
+      open,
+      ok,
+      ageMinutes: asOfAgeMinutes(row.as_of, now, contract.dateOnlyAsOfTime),
+      allowedMinutes: null,
+      note: ok
+        ? `${contract.id}: дата дневной серии ${observed} совпадает с последней завершённой сессией`
+        : `${contract.id}: дата дневной серии ${observed || 'не указана'}, ожидалась сессия ${expected}`,
+    };
+  }
+  if (contract.quoteLagMode !== 'timestamp' || contract.quoteLagMinutes === null || contract.trading === null) {
     return {
       id: contract.id,
       applicable: false,
