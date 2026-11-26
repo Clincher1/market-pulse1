@@ -54,39 +54,46 @@ export function buildSnapshot(payload, previous, now = new Date()) {
     && new Set(payload.rows.map(row => row?.id)).size === 3,
   'Export must contain exactly three unique instruments');
   const exportDay = payload.exportedAt.slice(0, 10);
+  const instrumentFailures = [];
   const items = contracts.map(contract => {
-    const row = payload.rows.find(row => row?.id === contract.id);
-    const label = contract.symbol;
-    requireThat(row && ['symbol', 'provider', 'instrumentType', 'unit', 'sourceUrl']
-      .every(field => row[field] === contract[field])
-      && row.currency === 'USD' && row.frequency === 'daily', `${label}: instrument metadata mismatch`);
-    requireThat(typeof row.value === 'string' && /^\d+(?:\.\d+)?$/.test(row.value)
-      && Number.isFinite(Number(row.value)) && Number(row.value) > 0,
-    `${label}: missing or invalid numeric string`);
-    requireThat(calendar(row.observationDate), `${label}: invalid observation calendar date`);
-    const age = (Date.parse(exportDay) - Date.parse(row.observationDate)) / DAY;
-    requireThat(age >= 0 && age <= 7, `${label}: observation is future-dated or older than seven UTC calendar days`);
-    if (contract.id === 'brent_yahoo_bzf' || contract.id === 'sp500_yahoo_gspc') {
-      requireThat(row.observationDate < exportDay,
-        `${label}: current daily bar is incomplete and must not enter the static snapshot`);
+    try {
+      const row = payload.rows.find(row => row?.id === contract.id);
+      const label = contract.symbol;
+      requireThat(row && ['symbol', 'provider', 'instrumentType', 'unit', 'sourceUrl']
+        .every(field => row[field] === contract[field])
+        && row.currency === 'USD' && row.frequency === 'daily', `${label}: instrument metadata mismatch`);
+      requireThat(typeof row.value === 'string' && /^\d+(?:\.\d+)?$/.test(row.value)
+        && Number.isFinite(Number(row.value)) && Number(row.value) > 0,
+      `${label}: missing or invalid numeric string`);
+      requireThat(calendar(row.observationDate), `${label}: invalid observation calendar date`);
+      const age = (Date.parse(exportDay) - Date.parse(row.observationDate)) / DAY;
+      requireThat(age >= 0 && age <= 7, `${label}: observation is future-dated or older than seven UTC calendar days`);
+      if (contract.id === 'brent_yahoo_bzf' || contract.id === 'sp500_yahoo_gspc') {
+        requireThat(row.observationDate < exportDay,
+          `${label}: current daily bar is incomplete and must not enter the static snapshot`);
+      }
+      if (row.priceTimestamp !== null) {
+        requireThat(timestamp(row.priceTimestamp)
+          && row.priceTimestamp.slice(0, 10) === row.observationDate
+          && Date.parse(row.priceTimestamp) <= exportedTime,
+        `${label}: invalid or future price timestamp`);
+      }
+      requireThat(label !== 'XAU' || timestamp(row.priceTimestamp), `${label}: exact observation time is required`);
+      const old = previous.items.find(item => item.ticker === label);
+      requireThat(old?.instrument === contract.instrument && old.unit === contract.displayUnit
+        && old.source?.name === contract.provider && old.source.url === contract.sourceUrl
+        && typeof old.basis === 'string' && old.basis.trim(), `${label}: existing display contract changed`);
+      return {
+        ticker: label, instrument: old.instrument, value: row.value, unit: old.unit,
+        observedAt: label === 'XAU' ? row.priceTimestamp : row.observationDate,
+        basis: contract.basis ?? old.basis, source: { name: contract.provider, url: row.sourceUrl },
+      };
+    } catch (error) {
+      instrumentFailures.push(error.message);
+      return null;
     }
-    if (row.priceTimestamp !== null) {
-      requireThat(timestamp(row.priceTimestamp)
-        && row.priceTimestamp.slice(0, 10) === row.observationDate
-        && Date.parse(row.priceTimestamp) <= exportedTime,
-      `${label}: invalid or future price timestamp`);
-    }
-    requireThat(label !== 'XAU' || timestamp(row.priceTimestamp), `${label}: exact observation time is required`);
-    const old = previous.items.find(item => item.ticker === label);
-    requireThat(old?.instrument === contract.instrument && old.unit === contract.displayUnit
-      && old.source?.name === contract.provider && old.source.url === contract.sourceUrl
-      && typeof old.basis === 'string' && old.basis.trim(), `${label}: existing display contract changed`);
-    return {
-      ticker: label, instrument: old.instrument, value: row.value, unit: old.unit,
-      observedAt: label === 'XAU' ? row.priceTimestamp : row.observationDate,
-      basis: contract.basis ?? old.basis, source: { name: contract.provider, url: row.sourceUrl },
-    };
   });
+  requireThat(instrumentFailures.length === 0, instrumentFailures.join('; '));
   return { schemaVersion: 1, exportedAt: payload.exportedAt, items };
 }
 
@@ -128,30 +135,36 @@ async function readJsonResponse(response, label) {
 export async function fetchSnapshotHistory({ url, key, fetchImpl, snapshot }) {
   const exportDay = snapshot.exportedAt.slice(0, 10);
   const series = {};
+  const failures = [];
   for (const contract of historyContracts) {
-    const item = snapshot.items.find(candidate => candidate.ticker === contract.ticker);
-    requireThat(item, `${contract.ticker}: current snapshot row is missing`);
-    const query = new URLSearchParams({
-      select: 'instrument_id,observation_date,price',
-      instrument_id: `eq.${contract.id}`,
-      observation_date: `lte.${item.observedAt.slice(0, 10)}`,
-      order: 'observation_date.desc',
-      limit: '7',
-    });
-    let response;
     try {
-      response = await fetchImpl(`${url.replace(/\/$/, '')}/rest/v1/asset_price_history_v1?${query}`, {
-        method: 'GET', headers: { apikey: key, Accept: 'application/json' },
-        redirect: 'error', signal: AbortSignal.timeout(20000),
+      const item = snapshot.items.find(candidate => candidate.ticker === contract.ticker);
+      requireThat(item, `${contract.ticker}: current snapshot row is missing`);
+      const query = new URLSearchParams({
+        select: 'instrument_id,observation_date,price',
+        instrument_id: `eq.${contract.id}`,
+        observation_date: `lte.${item.observedAt.slice(0, 10)}`,
+        order: 'observation_date.desc',
+        limit: '7',
       });
-    } catch {
-      throw new Error(`${contract.ticker}: history request failed or timed out; original file unchanged`);
+      let response;
+      try {
+        response = await fetchImpl(`${url.replace(/\/$/, '')}/rest/v1/asset_price_history_v1?${query}`, {
+          method: 'GET', headers: { apikey: key, Accept: 'application/json' },
+          redirect: 'error', signal: AbortSignal.timeout(20000),
+        });
+      } catch {
+        throw new Error('history request failed or timed out');
+      }
+      const rows = await readJsonResponse(response, `${contract.ticker} history query`);
+      requireThat(Array.isArray(rows) && rows.every(row => row?.instrument_id === contract.id),
+        `${contract.ticker}: history response contains an unexpected instrument`);
+      series[contract.ticker] = buildHistory(rows, item, exportDay);
+    } catch (error) {
+      failures.push(`${contract.ticker}: ${error.message}`);
     }
-    const rows = await readJsonResponse(response, `${contract.ticker} history query`);
-    requireThat(Array.isArray(rows) && rows.every(row => row?.instrument_id === contract.id),
-      `${contract.ticker}: history response contains an unexpected instrument`);
-    series[contract.ticker] = buildHistory(rows, item, exportDay);
   }
+  requireThat(failures.length === 0, `${failures.join('; ')}; original file unchanged`);
   return series;
 }
 

@@ -44,7 +44,9 @@ jobs:
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SNAPSHOT_SUPABASE_READ_KEY: ${{ secrets.SNAPSHOT_SUPABASE_READ_KEY }}
-        run: node scripts/update-static-snapshot.mjs
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_OWNER_CHAT_ID: ${{ secrets.TG_OWNER_CHAT_ID }}
+        run: node scripts/run-static-snapshot.mjs
       - name: Generate static market SVG charts
         id: generate_charts
         run: node scripts/build-static-market-charts.mjs
