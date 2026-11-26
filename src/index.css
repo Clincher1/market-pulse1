@@ -95,6 +95,7 @@
    Inner card padding and vertical section spacing remain component-owned. */
 :root {
   --layout-max-width: 1400px;
+  --layout-content-max-width: 76rem;
   --layout-gutter: 16px;
 }
 
@@ -111,6 +112,13 @@
   max-width: var(--layout-max-width);
   margin-inline: auto;
   padding-inline: var(--layout-gutter);
+}
+
+/* Shared inner content width, extracted from the existing snapshot-card cap. */
+.dashboard-section-container {
+  width: 100%;
+  max-width: var(--layout-content-max-width);
+  margin-inline: auto;
 }
 
 @utility scrollbar-hide {
@@ -218,7 +226,7 @@
   overflow: hidden;
   padding: clamp(1.5rem, 4.4vw, 3.5rem);
   border: 1px solid #dce8f5;
-  border-radius: 34px;
+  border-radius: var(--radius-xl2);
   background:
     radial-gradient(ellipse at 84% 8%, rgb(186 230 253 / 0.7), transparent 34%),
     radial-gradient(ellipse at 20% 100%, rgb(204 251 241 / 0.48), transparent 36%),
@@ -665,7 +673,7 @@
 .overview-topics {
   padding: clamp(1.25rem, 3vw, 2.2rem);
   border: 1px solid rgb(219 228 239 / 0.86);
-  border-radius: 30px;
+  border-radius: var(--radius-xl2);
   background: rgb(255 255 255 / 0.72);
   box-shadow: 0 16px 48px rgb(15 23 42 / 0.045);
 }
@@ -938,7 +946,7 @@
   .overview-hero {
     gap: 0.25rem;
     padding: 1.3rem 1.1rem 1.55rem;
-    border-radius: 27px;
+    border-radius: var(--radius-xl2);
   }
 
   .overview-hero__eyebrow {
@@ -1457,11 +1465,11 @@
 
 .static-snapshot {
   min-width: 0;
-  max-width: 76rem;
+  max-width: var(--layout-content-max-width);
   margin: 1.5rem auto 2.5rem;
   padding: clamp(1rem, 3vw, 1.75rem);
   border: 1px solid #cbd5e1;
-  border-radius: 1.5rem;
+  border-radius: var(--radius-xl2);
   background: #fff;
   color: #0f172a;
 }
