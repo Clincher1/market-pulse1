@@ -1393,7 +1393,7 @@
 
   .overview-hero--compact .overview-hero__visual .pulse-orbit {
     width: min(100%, 190px);
-    aspect-ratio: 1.55;
+    aspect-ratio: 1;
   }
 
   .overview-topics--compact {
@@ -1455,7 +1455,7 @@
 
   .overview-hero--compact .overview-hero__visual .pulse-orbit {
     width: min(100%, 160px);
-    aspect-ratio: 1.65;
+    aspect-ratio: 1;
   }
 
   .overview-hero--compact .pulse-orbit__link {
