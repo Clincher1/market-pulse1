@@ -45,6 +45,13 @@ test('the midnight blue treatment carries from the dashboard hero across the sit
     'navigation cards appear immediately after the hero banner');
 });
 
+test('hero brand mark is centered, unclipped, and pulses in sync with the primary CTA', () => {
+  assert.match(css, /#root \.overview-hero \.pulse-orbit__center\s*\{[\s\S]*?overflow: visible !important/);
+  assert.match(css, /#root \.overview-hero \.pulse-orbit__brand\s*\{[\s\S]*?animation: hero-mark-breathe 3\.2s ease-in-out infinite/);
+  assert.match(css, /#root \.overview-hero \.overview-hero__primary-action\s*\{\s*animation: hero-action-breathe 3\.2s ease-in-out infinite/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?#root \.overview-hero \.pulse-orbit__center\s*\{[^}]*left: 50% !important/);
+});
+
 test('hero body copy and CTA foregrounds retain WCAG AA contrast across their gradients', () => {
   for (const background of ['#0B1830', '#102243', '#111D3C']) {
     for (const foreground of ['#F5F8FF', '#C7D4E9']) {

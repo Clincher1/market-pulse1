@@ -2246,3 +2246,101 @@ body {
     transform: none !important;
   }
 }
+
+/* Center the banner mark inside the orbit, give it room to breathe, and sync
+   its glow with the primary hero CTA. Keep both fully inside the artwork. */
+#root .overview-hero .pulse-orbit__center {
+  width: clamp(138px, 40%, 178px) !important;
+  aspect-ratio: 1;
+  overflow: visible !important;
+  padding: 12px;
+  border: 1px solid rgb(139 226 247 / 0.74) !important;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 36%, #214C78, #102341 74%) !important;
+  box-shadow: 0 0 0 8px rgb(82 176 222 / 0.08), 0 0 42px rgb(64 191 227 / 0.32),
+    inset 0 1px 0 rgb(229 248 255 / 0.18) !important;
+}
+
+#root .overview-hero .pulse-orbit__brand {
+  display: block !important;
+  width: clamp(68px, 54%, 96px) !important;
+  height: auto !important;
+  max-width: 100%;
+  flex: 0 0 auto;
+  overflow: visible !important;
+  transform-origin: center;
+  animation: hero-mark-breathe 3.2s ease-in-out infinite;
+}
+
+#root .overview-hero .pulse-orbit__mobile-mark {
+  display: none !important;
+}
+
+#root .overview-hero .pulse-orbit__center-halo {
+  inset: -12%;
+  pointer-events: none;
+}
+
+#root .overview-hero .overview-hero__primary-action {
+  animation: hero-action-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes hero-mark-breathe {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 7px rgb(77 229 212 / 0.28));
+  }
+  50% {
+    transform: scale(1.055);
+    filter: drop-shadow(0 0 15px rgb(77 229 212 / 0.66));
+  }
+}
+
+@keyframes hero-action-breathe {
+  0%, 100% {
+    box-shadow: 0 8px 22px rgb(90 196 230 / 0.2), inset 0 1px 0 rgb(255 255 255 / 0.4);
+  }
+  50% {
+    box-shadow: 0 11px 32px rgb(90 196 230 / 0.38), 0 0 20px rgb(90 196 230 / 0.2),
+      inset 0 1px 0 rgb(255 255 255 / 0.58);
+  }
+}
+
+@media (max-width: 760px) {
+  #root .overview-hero .pulse-orbit__center {
+    top: 49% !important;
+    left: 50% !important;
+    width: clamp(132px, 48vw, 156px) !important;
+    aspect-ratio: 1 !important;
+    padding: 10px;
+    overflow: visible !important;
+    border: 1px solid rgb(139 226 247 / 0.72) !important;
+    border-radius: 50%;
+    background: radial-gradient(circle at 45% 36%, #214C78, #102341 74%) !important;
+    box-shadow: 0 0 0 7px rgb(82 176 222 / 0.08), 0 0 34px rgb(64 191 227 / 0.3),
+      inset 0 1px 0 rgb(229 248 255 / 0.18) !important;
+  }
+
+  #root .overview-hero .pulse-orbit__brand {
+    display: block !important;
+    width: clamp(68px, 23vw, 82px) !important;
+  }
+
+  #root .overview-hero .pulse-orbit__center-label {
+    margin-bottom: 5px;
+    font-size: 0.46rem;
+  }
+
+  #root .overview-hero .pulse-orbit__center-caption {
+    margin-top: 5px;
+    font-size: 0.44rem;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .overview-hero .pulse-orbit__brand,
+  #root .overview-hero .overview-hero__primary-action {
+    animation: none !important;
+  }
+}
