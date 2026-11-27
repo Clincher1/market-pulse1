@@ -19,8 +19,9 @@ const files = await Promise.all([
 ].map(path => readFile(path, 'utf8')));
 
 test('mobile reveal copy is opaque in CSS and motion never starts reveal content transparent', () => {
-  const visibleState = css.match(/\.overview-hero__eyebrow,[\s\S]*?#news\s*\{\s*opacity:\s*1;/);
-  assert.ok(visibleState, 'hero, orbit links, topics and revealed sections have an opaque CSS base state');
+  assert.match(css, /\.overview-hero__eyebrow,[\s\S]*?\{\s*opacity:\s*1;/);
+  assert.match(css, /\.pulse-orbit__link,[\s\S]*?\{\s*opacity:\s*1;/);
+  assert.match(css, /#news,[\s\S]*?\{\s*opacity:\s*1;/);
   for (const source of files) {
     assert.doesNotMatch(source, /initial=\{\{\s*opacity:\s*0/);
     assert.doesNotMatch(source, /whileInView=\{\{\s*opacity:/);
