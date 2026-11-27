@@ -80,13 +80,16 @@ test('four ordered stages retain read-only GITHUB_TOKEN and success gating', () 
   assert.match(workflow, /\n    permissions:\n      contents: read\n    steps:/);
   assert.doesNotMatch(workflow, /pull-requests: write|actions: write|write-all|--admin/);
   const notification = step('Notify Telegram if snapshot update failed');
+  assert.match(notification, /if: failure\(\) && steps\.notify_success\.outcome != 'failure'/);
   assert.match(notification, /continue-on-error: true/);
   assert.doesNotMatch(workflow.replace(notification, ''), /continue-on-error/);
-  const heartbeat = step('Send Better Stack heartbeat after scheduled refresh');
-  assert.match(heartbeat, /if: success\(\) && github\.event_name == 'schedule'/);
+  const heartbeat = step('Send Better Stack heartbeat after successful refresh');
+  assert.ok(heartbeat.includes("if: success() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')"));
   assert.match(heartbeat, /BETTERSTACK_HEARTBEAT_URL: \$\{\{ secrets\.BETTERSTACK_HEARTBEAT_URL \}\}/);
   const successNotification = step('Notify Telegram on successful snapshot update');
+  assert.match(successNotification, /id: notify_success/);
   assert.match(successNotification, /if: success\(\)/);
+  assert.match(successNotification, /timeout-minutes: 2/);
   assert.match(successNotification, /steps\.betterstack_heartbeat\.outputs\.result/);
   assert.match(step(names[0]), /id: snapshot_changes/);
   for (const name of names.slice(1)) {

@@ -2,10 +2,7 @@ name: Update static snapshot
 
 on:
   schedule:
-    - cron: '10 0 * * *'   # 00:10 UTC
-    - cron: '10 6 * * *'   # 06:10 UTC
-    - cron: '10 12 * * *'  # 12:10 UTC
-    - cron: '10 18 * * *'  # 18:10 UTC
+    - cron: '12 * * * *'  # Every hour at :12 UTC
   workflow_dispatch:
 
 permissions:
@@ -276,15 +273,17 @@ jobs:
             exit "$code"
           fi
 
-      - name: Send Better Stack heartbeat after scheduled refresh
+      - name: Send Better Stack heartbeat after successful refresh
         id: betterstack_heartbeat
-        if: success() && github.event_name == 'schedule'
+        if: success() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         env:
           BETTERSTACK_HEARTBEAT_URL: ${{ secrets.BETTERSTACK_HEARTBEAT_URL }}
         run: node scripts/send-betterstack-heartbeat.mjs
 
       - name: Notify Telegram on successful snapshot update
+        id: notify_success
         if: success()
+        timeout-minutes: 2
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -292,12 +291,12 @@ jobs:
         shell: bash
         run: |
           timestamp="$(TZ=Europe/Moscow date '+%Y-%m-%d %H:%M MSK')"
-          heartbeat_result="${BETTERSTACK_RESULT:-not sent for workflow_dispatch}"
+          heartbeat_result="${BETTERSTACK_RESULT:-not sent}"
           message="✅ Static snapshot job finished successfully — ${timestamp}. Snapshot validation, tests, type checks and build passed. Better Stack heartbeat: ${heartbeat_result}. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           node scripts/send-telegram.js "$message"
 
       - name: Notify Telegram if snapshot update failed
-        if: failure()
+        if: failure() && steps.notify_success.outcome != 'failure'
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
