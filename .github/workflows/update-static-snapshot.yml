@@ -278,6 +278,7 @@ jobs:
         if: success() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         env:
           BETTERSTACK_HEARTBEAT_URL: ${{ secrets.BETTERSTACK_HEARTBEAT_URL }}
+        continue-on-error: true
         run: node scripts/send-betterstack-heartbeat.mjs
 
       - name: Notify Telegram on successful snapshot update
