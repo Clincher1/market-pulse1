@@ -83,3 +83,7 @@ verify_jwt = false
 # Cron target: no gateway JWT, x-cron-secret checked in code.
 [functions.scheduled-job-runner]
 verify_jwt = false
+
+# GitHub Actions fallback dispatcher: no gateway JWT; x-cron-secret checked in code.
+[functions.dispatch-snapshot-workflow]
+verify_jwt = false
