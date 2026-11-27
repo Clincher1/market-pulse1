@@ -35,8 +35,9 @@ export async function sendBetterStackHeartbeat({
   outputFile = process.env.GITHUB_OUTPUT,
 } = {}) {
   if (!url?.trim()) {
-    const result = { ok: false, skipped: true, status: null };
-    logger(`Better Stack heartbeat skipped: BETTERSTACK_HEARTBEAT_URL is not configured (${now().toISOString()}).`);
+    const skippedAt = now().toISOString();
+    const result = { ok: false, skipped: true, status: null, requestedAt: null, respondedAt: null };
+    logger(`Better Stack heartbeat skipped: BETTERSTACK_HEARTBEAT_URL is not configured (${skippedAt}).`);
     await writeActionOutput(outputFile, result);
     return result;
   }
@@ -45,8 +46,9 @@ export async function sendBetterStackHeartbeat({
   try {
     safeUrl = redactBetterStackUrl(url.trim());
   } catch {
-    const result = { ok: false, skipped: false, status: null };
-    logger(`Better Stack heartbeat skipped: invalid HTTPS endpoint (${now().toISOString()}).`);
+    const skippedAt = now().toISOString();
+    const result = { ok: false, skipped: false, status: null, requestedAt: null, respondedAt: null };
+    logger(`Better Stack heartbeat skipped: invalid HTTPS endpoint (${skippedAt}).`);
     await writeActionOutput(outputFile, result);
     return result;
   }
@@ -62,11 +64,11 @@ export async function sendBetterStackHeartbeat({
     });
     const respondedAt = now().toISOString();
     logger(`Better Stack heartbeat HTTP ${response.status} for ${safeUrl} at ${respondedAt}`);
-    result = { ok: response.ok, skipped: false, status: response.status };
+    result = { ok: response.ok, skipped: false, status: response.status, requestedAt, respondedAt };
   } catch (error) {
     const failedAt = now().toISOString();
     logger(`Better Stack heartbeat GET failed for ${safeUrl} at ${failedAt} (${error?.name ?? 'network error'}).`);
-    result = { ok: false, skipped: false, status: null };
+    result = { ok: false, skipped: false, status: null, requestedAt, respondedAt: failedAt };
   }
 
   await writeActionOutput(outputFile, result);
