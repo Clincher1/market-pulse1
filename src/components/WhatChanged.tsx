@@ -247,13 +247,16 @@ export default function WhatChanged() {
             семь переходов между точками и насколько — за семь предыдущих переходов. Никаких выводов «хорошо/плохо»:
             только два факта и их разница в процентных пунктах.
           </p>
-          {/* Таблица шире экрана на телефоне: без tabIndex прокрутить её
-              клавиатурой нечем, а мышь для этого недоступна. */}
+          {/* Mobile users need a visible cue because the final columns extend beyond the viewport. */}
+          <p aria-hidden="true" className="mt-[var(--space-2)] mb-[var(--space-1)] flex items-center justify-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-text-secondary md:hidden">
+            <span>←</span> Проведите пальцем, чтобы увидеть все столбцы <span>→</span>
+          </p>
+          {/* Таблица шире экрана: tabIndex also makes horizontal keyboard scrolling available. */}
           <div
-            className="mt-[var(--space-2)] overflow-x-auto rounded-xl border border-slate-200 bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
+            className="overflow-x-auto rounded-xl border border-slate-200 bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-200"
             tabIndex={0}
             role="group"
-            aria-label="Сравнение неделя к неделе: таблица прокручивается по горизонтали стрелками."
+            aria-label="Сравнение неделя к неделе. Проведите пальцем влево или вправо либо используйте клавиши со стрелками, чтобы увидеть все столбцы."
           >
             <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
@@ -272,6 +275,9 @@ export default function WhatChanged() {
               </tbody>
             </table>
           </div>
+          <p aria-hidden="true" className="mt-[var(--space-1)] flex items-center justify-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-text-secondary md:hidden">
+            <span>←</span> Проведите пальцем, чтобы увидеть все столбцы <span>→</span>
+          </p>
           <p className="mt-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
             «Последние 7» — семь переходов между восемью наблюдениями; для двух смежных окон нужны
             15 точек. Это не обязательно календарные недели. У ставок и доходностей изменения подписаны в
