@@ -293,7 +293,7 @@ test('tracked v2 RPC reproduces the live definition, grants, and comment without
 
 test('workflow gates main commits on candidate checks, permits only snapshot, never force pushes', async () => {
   const workflow = await readFile(new URL('../.github/workflows/update-static-snapshot.yml', import.meta.url), 'utf8');
-  assert.match(workflow, /cron: '12 \* \* \* \*'/);
+  assert.match(workflow, /cron: '\*\/30 \* \* \* \*'/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /if: github.ref == 'refs\/heads\/main'/);
   for (const command of ['npm ci', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run build', 'deno@2 check']) {

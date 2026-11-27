@@ -2,7 +2,7 @@ name: Update static snapshot
 
 on:
   schedule:
-    - cron: '12 * * * *'  # Every hour at :12 UTC
+    - cron: '*/30 * * * *'  # Every 30 minutes
   workflow_dispatch:
 
 permissions:
