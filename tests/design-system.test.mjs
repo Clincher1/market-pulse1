@@ -29,11 +29,12 @@ test('live quote effect is an opacity-only 200ms animation and respects reduced 
   assert.match(heatmap, /key=\{value\}/);
 });
 
-test('readability styles soften dense weights and preserve the pale heatmap fill', async () => {
+test('readability styles soften dense weights and keep the heatmap in the navy theme', async () => {
   const visual = await readFile('src/visual-refresh.css', 'utf8');
   assert.match(visual, /#root \.font-extrabold,[\s\S]*?font-weight:\s*650 !important/);
   assert.match(visual, /#root \.font-bold\s*\{\s*font-weight:\s*600 !important/);
-  assert.match(visual, /\.market-heatmap \.heat-tile[\s\S]*?background-color:\s*var\(--heat-tile-bg, #FFFFFF\) !important/);
+  assert.match(visual, /\.market-heatmap \.heat-tile[\s\S]*?background-color:\s*var\(--heat-tile-bg, #0C1E37\) !important/);
+  assert.match(visual, /--bg-page:\s*#07162D/);
   assert.match(visual, /\.heat-tile__price[\s\S]*?font-size:\s*clamp\(1\.5rem, 5vw, 2rem\)/);
 });
 

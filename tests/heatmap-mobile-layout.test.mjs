@@ -21,7 +21,7 @@ await build({
 });
 const MarketHeatmap = createRequire(import.meta.url)(output).default;
 
-function contrastAgainstInk(background) {
+function contrastAgainstLightText(background) {
   const match = background.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
   assert.ok(match, `expected a rendered RGB tile fill, received: ${background}`);
   const luminance = channels => {
@@ -32,8 +32,8 @@ function contrastAgainstInk(background) {
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
   const light = luminance(match.slice(1).map(Number));
-  const dark = luminance([23, 32, 51]);
-  return (Math.max(light, dark) + 0.05) / (Math.min(light, dark) + 0.05);
+  const lightText = luminance([242, 247, 255]);
+  return (Math.max(light, lightText) + 0.05) / (Math.min(light, lightText) + 0.05);
 }
 
 test('heatmap change and scale wrap independently instead of clipping the scale in narrow mobile tiles', () => {
@@ -58,8 +58,8 @@ test('heatmap change and scale wrap independently instead of clipping the scale 
   const tiles = [...dom.window.document.querySelectorAll('.heat-tile')];
   assert.equal(tiles.length, 2);
   for (const coloredTile of tiles) {
-    assert.ok(contrastAgainstInk(coloredTile.getAttribute('style') ?? '') >= 4.5,
-      'positive and negative fills keep dark text at WCAG AA contrast');
+    assert.ok(contrastAgainstLightText(coloredTile.getAttribute('style') ?? '') >= 4.5,
+      'positive and negative dark fills keep light text at WCAG AA contrast');
   }
   assert.ok(dom.window.document.querySelector('.heat-tile__price'));
   assert.match(html, /grid-cols-1[^\"]*min-\[520px\]:grid-cols-2/,

@@ -147,8 +147,8 @@ function DashboardPage() {
         </motion.div>
       </section>
 
-      <StaticMarketSnapshot />
       <OverviewTopics />
+      <StaticMarketSnapshot />
 
       <SectionBoundary title="Обзор и мои ориентиры">
         <Suspense fallback={<SectionFallback title="Главное за минуту" minHeightClass="min-h-[520px]" />}>

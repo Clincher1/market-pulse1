@@ -24,7 +24,7 @@ function contrast(a, b) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-test('the midnight treatment is scoped to the dashboard hero, not the light site shell', () => {
+test('the midnight blue treatment carries from the dashboard hero across the site', () => {
   assert.match(css, /#root \.overview-hero\s*\{[^}]*background-color:\s*#0C1932 !important;[\s\S]*?linear-gradient\(128deg, #0B1830 0%, #102243 54%, #111D3C 100%\)/);
   assert.match(css, /#root \.overview-hero \.overview-hero__title span\s*\{[^}]*linear-gradient\(100deg, #6BE3E5 0%, #76CFF3 48%, #B2A0FF 100%\)/);
   assert.match(css, /#root \.overview-hero \.overview-hero__primary-action\s*\{[^}]*linear-gradient\(105deg, #73E4E1 0%, #76D4F0 47%, #A79AFF 100%\)/);
@@ -39,8 +39,10 @@ test('the midnight treatment is scoped to the dashboard hero, not the light site
     'tablet orbit has enough width for its three destination labels');
   assert.match(app, /<motion\.div className="overview-hero__visual"[^>]*>\s*<PulseOrbit \/>\s*<p className="page-signal-intro__route-legend">/,
     'the route legend sits with the orbit and does not collide with the hero copy');
-  assert.match(css, /:root\s*\{\s*color-scheme: light;\s*--bg-page: #FAFAF7;/,
-    'the rest of the site retains the existing light palette');
+  assert.match(css, /--bg-page:\s*#07162D;[\s\S]*?--card-bg:\s*#0D2140;/,
+    'the site uses the same deep-navy palette as the dashboard hero');
+  assert.match(app, /<OverviewTopics \/>\s*<StaticMarketSnapshot \/>/,
+    'navigation cards appear immediately after the hero banner');
 });
 
 test('hero body copy and CTA foregrounds retain WCAG AA contrast across their gradients', () => {
