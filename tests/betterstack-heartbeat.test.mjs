@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { redactBetterStackUrl, sendBetterStackHeartbeat } from '../scripts/betterstack-heartbeat.mjs';
 
 const privateUrl = 'https://uptime.betterstack.com/api/v1/heartbeat/example-secret-token?auth=another-secret';
@@ -21,7 +22,7 @@ test('Better Stack GET logs a redacted URL, HTTP status and request/response tim
       logger: line => logs.push(line),
       outputFile,
     });
-    assert.deepEqual(result, { ok: true, skipped: false, status: 200 });
+    assert.deepEqual(result, { ok: true, skipped: false, status: 200, requestedAt: '2026-11-27T08:15:00.000Z', respondedAt: '2026-11-27T08:15:01.000Z' });
     assert.equal(request[0], privateUrl, 'the original private endpoint is used only for the request');
     assert.equal(request[1].method, 'GET');
     assert.equal(request[1].redirect, 'error');
@@ -45,7 +46,7 @@ test('Better Stack heartbeat reports missing configuration without making a requ
     now: () => new Date('2026-11-27T08:15:00.000Z'),
     logger: line => logs.push(line),
   });
-  assert.deepEqual(result, { ok: false, skipped: true, status: null });
+  assert.deepEqual(result, { ok: false, skipped: true, status: null, requestedAt: null, respondedAt: null });
   assert.equal(called, false);
   assert.match(logs[0], /BETTERSTACK_HEARTBEAT_URL is not configured/);
 });
@@ -53,6 +54,16 @@ test('Better Stack heartbeat reports missing configuration without making a requ
 test('Better Stack rejects non-HTTPS or foreign endpoints before sending', async () => {
   assert.throws(() => redactBetterStackUrl('http://uptime.betterstack.com/api/v1/heartbeat/token'));
   assert.throws(() => redactBetterStackUrl('https://example.com/api/v1/heartbeat/token'));
+});
+
+test('Better Stack CLI exits unsuccessfully and emits a safe annotation when its secret is absent', () => {
+  const result = spawnSync(process.execPath, ['scripts/send-betterstack-heartbeat.mjs'], {
+    env: { ...process.env, BETTERSTACK_HEARTBEAT_URL: '', GITHUB_OUTPUT: '' },
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /::error title=Better Stack heartbeat failed::GET \(not configured\); heartbeat configuration missing or invalid/);
+  assert.doesNotMatch(result.stdout, /heartbeat\/[^\s)]+/);
 });
 
 test('Better Stack non-2xx responses and transport errors are logged as failed pings', async () => {
@@ -73,8 +84,8 @@ test('Better Stack non-2xx responses and transport errors are logged as failed p
     now: () => times.shift(),
     logger: line => logs.push(line),
   });
-  assert.deepEqual(statuses, { ok: false, skipped: false, status: 503 });
-  assert.deepEqual(network, { ok: false, skipped: false, status: null });
+  assert.deepEqual(statuses, { ok: false, skipped: false, status: 503, requestedAt: '2026-11-27T08:15:00.000Z', respondedAt: '2026-11-27T08:15:01.000Z' });
+  assert.deepEqual(network, { ok: false, skipped: false, status: null, requestedAt: '2026-11-27T08:16:00.000Z', respondedAt: '2026-11-27T08:16:01.000Z' });
   assert.ok(logs.some(line => line.includes('HTTP 503')));
   assert.ok(logs.some(line => line.includes('GET failed') && line.includes('TypeError')));
   assert.ok(logs.every(line => !line.includes('example-secret-token')));
