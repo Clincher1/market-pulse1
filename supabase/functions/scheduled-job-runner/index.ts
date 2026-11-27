@@ -104,6 +104,19 @@ function json(body: AnyRecord, status = 200): Response {
   return Response.json(body, { status });
 }
 
+async function pingHealthcheck(outcome: "success" | "failure"): Promise<void> {
+  const configured = Deno.env.get("HEALTHCHECK_PING_URL")?.trim();
+  if (!configured) return;
+  try {
+    const target = new URL(configured);
+    if (target.protocol !== "https:") return;
+    if (outcome === "failure") target.pathname = `${target.pathname.replace(/\/$/, "")}/fail`;
+    await fetch(target, { method: "GET", signal: AbortSignal.timeout(5_000) });
+  } catch {
+    // Healthchecks is optional and must never change the scheduled-job result.
+  }
+}
+
 async function recordDigestAttempt(
   attemptedAt: string,
   outcome: "sent" | "skipped" | "failed",
@@ -413,6 +426,9 @@ Deno.serve(async (req) => {
         delivery === "sent" ? "sent" : "skipped",
         delivery === "sent" ? null : "daily_digest_already_sent",
       );
+      if (delivery === "sent" && overallVerdict(verdicts) === "ok") {
+        await pingHealthcheck("success");
+      }
       return json({ status: "digest_sent", overall_status: overallVerdict(verdicts) });
     }
 
@@ -436,6 +452,7 @@ Deno.serve(async (req) => {
     const outcome = status === 503 ? "skipped" : "failed";
     const reason = status === 503 ? `http_${status}: ${message}` : `http_${status}`;
     await finishAttempt(outcome, reason);
+    if (status === 500 || status === 502) await pingHealthcheck("failure");
     return json({ error: message }, status);
   }
 });
