@@ -1343,9 +1343,12 @@ select optgroup {
 }
 
 #root .market-desk button,
-#root .market-desk .desk-next,
-#root .overview-topics a {
+#root .market-desk .desk-next {
   border-radius: 999px;
+}
+
+#root .overview-topics .overview-topic-card {
+  border-radius: 18px !important;
 }
 
 #root .market-desk button[aria-pressed="true"] {
