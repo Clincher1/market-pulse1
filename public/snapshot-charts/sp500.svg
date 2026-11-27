@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 150" role="img" aria-labelledby="chart-title chart-desc">
   <title id="chart-title">Индекс S&amp;P 500: 7 182,78, наблюдение 25.11</title>
-  <desc id="chart-desc">Линейный график 4 фактических наблюдений за период 20.11 — 25.11. Последняя точка выделена.</desc>
-  <line x1="16" x2="404" y1="124" y2="124" stroke="#cbd5e1" stroke-width="1" />
-  <polyline fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="16.00,113.35 145.33,24.65 274.67,34.44 404.00,39.41" />
-  <circle cx="16.00" cy="113.35" r="3.5" fill="white" stroke="#7c3aed" stroke-width="2" />
-  <circle cx="145.33" cy="24.65" r="3.5" fill="white" stroke="#7c3aed" stroke-width="2" />
-  <circle cx="274.67" cy="34.44" r="3.5" fill="white" stroke="#7c3aed" stroke-width="2" />
-  <circle cx="404.00" cy="39.41" r="8" fill="#7c3aed" fill-opacity=".18" />
-  <circle cx="404.00" cy="39.41" r="4.5" fill="#7c3aed" stroke="white" stroke-width="2" />
-  <text x="16" y="143" fill="#475569" font-family="Arial, sans-serif" font-size="12">20.11</text>
-  <text x="404" y="143" text-anchor="end" fill="#475569" font-family="Arial, sans-serif" font-size="12">25.11</text>
+  <desc id="chart-desc">Линейный график 4 фактических наблюдений за период 20.11 — 25.11. Подписаны шкалы значений и дат; последняя точка показывает 7 182,78.</desc>
+  <defs><linearGradient id="area-GSPC" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16C784" stop-opacity=".38"/><stop offset="100%" stop-color="#16C784" stop-opacity=".025"/></linearGradient></defs>
+  <line x1="96" x2="402" y1="18.00" y2="18.00" stroke="#536174" stroke-width="1"/><text x="88" y="23.00" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">7 276,38</text>
+  <line x1="96" x2="402" y1="68.00" y2="68.00" stroke="#536174" stroke-width="1"/><text x="88" y="73.00" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">7 073,78</text>
+  <line x1="96" x2="402" y1="118.00" y2="118.00" stroke="#536174" stroke-width="1"/><text x="88" y="123.00" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">6 871,18</text>
+  <line x1="96" x2="96" y1="18" y2="118" stroke="#64748B" stroke-width="1.5" />
+  <line x1="96" x2="402" y1="118" y2="118" stroke="#64748B" stroke-width="1.5" />
+  <polygon points="96,118 96.00,108.32 198.00,27.68 300.00,36.58 402.00,41.10 402,118" fill="url(#area-GSPC)" />
+  <polyline fill="none" stroke="#16C784" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="96.00,108.32 198.00,27.68 300.00,36.58 402.00,41.10" />
+  <circle cx="96.00" cy="108.32" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
+  <circle cx="198.00" cy="27.68" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
+  <circle cx="300.00" cy="36.58" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
+  <circle cx="402.00" cy="41.10" r="8" fill="#16C784" fill-opacity=".18" />
+  <circle cx="402.00" cy="41.10" r="4.5" fill="#16C784" stroke="#F0F6FC" stroke-width="2" />
+  <text x="402" y="31.10" text-anchor="end" fill="#16C784" font-family="Arial, sans-serif" font-size="20" font-weight="700">7 182,78</text>
+  <text x="96" y="143" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">20.11</text>
+  <text x="402" y="143" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">25.11</text>
 </svg>

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 const css = await readFile('src/brand-refresh.css', 'utf8');
 const design = await readFile('src/design-system.css', 'utf8');
+const night = await readFile('src/night-market.css', 'utf8');
 const vectorArtwork = await Promise.all(['src/components/PulseOrbit.tsx', 'src/components/BrandMark.tsx', 'src/components/MarketHeatmap.tsx'].map(path => readFile(path, 'utf8')));
 test('active routes retain section accent labels on a neutral surface without gradients', () => {
   for (const id of ['dashboard', 'brief', 'passport', 'russia', 'global', 'news']) {
@@ -17,14 +18,15 @@ test('active routes retain section accent labels on a neutral surface without gr
   const visualCss = navFade ? css.replace(navFade, '') : css;
   assert.doesNotMatch(`${visualCss}\n${design}\n${vectorArtwork.join('\n')}`, /linear-gradient|radial-gradient|<linearGradient|<radialGradient/);
 });
-test('small path label uses a readable neutral on white and the page surface', () => {
-  const block = css.match(/\.page-signal-intro__path-label\s*\{([^}]+)\}/)?.[1];
-  const color = block.match(/color:\s*(#[0-9a-f]{6})/)[1];
+test('small path label keeps WCAG AA contrast on dark page and card surfaces', () => {
+  const blocks = [...night.matchAll(/#root\s+:where\(\.page-signal-intro__path-label\)\s*\{([^}]+)\}/g)];
+  const color = blocks.at(-1)?.[1].match(/color:\s*(#[0-9a-f]{6})/i)?.[1];
+  assert.ok(color, 'the dark theme explicitly assigns the label a high-contrast color');
   const rgb = hex => hex.replace('#', '').match(/../g).map(c => parseInt(c, 16));
   const luminance = channels => {
     const [r, g, b] = channels.map(c => { const v = c / 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
     return .2126 * r + .7152 * g + .0722 * b;
   };
   const ratio = (a, b) => (Math.max(luminance(a), luminance(b)) + .05) / (Math.min(luminance(a), luminance(b)) + .05);
-  for (const background of ['#ffffff', '#fafaf7']) assert.ok(ratio(rgb(color), rgb(background)) >= 4.5);
+  for (const background of ['#0D1117', '#151B23']) assert.ok(ratio(rgb(color), rgb(background)) >= 4.5);
 });

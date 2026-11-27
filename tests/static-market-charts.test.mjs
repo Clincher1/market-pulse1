@@ -42,7 +42,11 @@ test('static SVG sparklines show only sourced observations and mark their latest
   assert.ok(path, 'SVG contains the observed series path');
   assert.equal(path[1].trim().split(/\s+/).length, observations.length,
     'the path has exactly one point per supplied source observation');
-  assert.match(svg, /r="8" fill="#0284c7"/);
+  assert.match(svg, /<defs><linearGradient/);
+  assert.match(svg, /<polygon points="[^"]+" fill="url\(#area-/);
+  assert.match(svg, /stroke="#536174"/);
+  assert.match(svg, /font-size="20"/);
+  assert.match(svg, /r="8" fill="#16C784"/);
   const latestDate = observations.at(-1).observedAt;
   const latestLabel = new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit', month: '2-digit', timeZone: 'UTC',
@@ -62,7 +66,8 @@ test('sparkline renderer places exactly one path point per sourced observation a
   const points = svg.match(/<polyline[^>]+points="([^"]+)"/)[1].trim().split(/\s+/);
   assert.equal(points.length, observations.length);
   assert.equal((svg.match(/<circle /g) ?? []).length, observations.length + 1);
-  assert.match(svg, /r="8" fill="#0284c7"/);
+  assert.match(svg, /r="8" fill="#16C784"/);
+  assert.match(svg, /<text[^>]*>13,00<\/text>/);
   assert.match(svg, /02\.12/);
 });
 

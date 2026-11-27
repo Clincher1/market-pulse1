@@ -1,0 +1,383 @@
+/* Dark, high-contrast market palette. Colors are intentionally opaque so the
+   interface remains crisp on OLED/mobile screens and under reduced contrast. */
+:root {
+  color-scheme: dark;
+  --bg-page: #0D1117;
+  --ink: #F0F6FC;
+  --ink-muted: #C1CAD4;
+  --ink-faint: #A1ACB8;
+  --line: #536174;
+  --card-bg: #151B23;
+  --pos: #16C784;
+  --neg: #EA3943;
+  --accent-live: #16C784;
+  --accent-closed: #A1ACB8;
+  --accent-stale: #F0B84B;
+  --shadow-card: 0 0 0 1px rgb(59 70 84 / 0.35);
+  --color-bg-card-hover: #1C2530;
+  --color-accent: #86AEFF;
+  --color-accent-strong: #86AEFF;
+  --color-accent-strong-hover: #A6C4FF;
+  --color-positive: #16C784;
+  --color-negative: #EA3943;
+  --color-text-primary: #F0F6FC;
+  --color-text-secondary: #C1CAD4;
+  --color-text-muted: #C1CAD4;
+  --color-ink: #F0F6FC;
+  --color-ink-muted: #C1CAD4;
+  --color-line: #536174;
+}
+
+html,
+body,
+.site-shell,
+#root {
+  min-height: 100%;
+  background: #0D1117 !important;
+  color: #F0F6FC;
+}
+
+body {
+  color: #F0F6FC !important;
+  color-scheme: dark;
+}
+
+select,
+select option,
+select optgroup {
+  color-scheme: dark;
+  background-color: #151B23;
+  color: #F0F6FC;
+}
+
+::selection {
+  color: #0D1117;
+  background: #86AEFF;
+}
+
+#root :where(h1, h2, h3, h4, strong, b, th, caption) {
+  color: #F0F6FC;
+}
+
+#root :where(p, li, small, dt, dd, label, figcaption, .market-desk__muted,
+  .overview-hero__description, .overview-hero__note, .brand-tagline,
+  .freshness-legend, .period-basis-note, .static-snapshot__updated,
+  .static-snapshot__coverage, .static-snapshot__disclaimer) {
+  color: #C1CAD4 !important;
+}
+
+#root a,
+#root a:visited {
+  color: #86AEFF;
+}
+
+#root a:hover {
+  color: #B1CBFF;
+}
+
+#root :where(button, [role="button"], input, select, textarea) {
+  border: 1px solid #536174;
+  background-color: #1A222C;
+  color: #F0F6FC;
+}
+
+/* Normalize utility-class surfaces that still carried the former pale theme. */
+#root [class*="bg-white"],
+#root [class*="bg-slate-50"],
+#root [class*="bg-gray-50"],
+#root [class*="bg-slate-100"],
+#root [class*="bg-gray-100"],
+#root [class*="bg-neutral-50"],
+#root [class*="bg-neutral-100"] {
+  background-color: #151B23 !important;
+}
+
+#root [class*="bg-green-"],
+#root [class*="bg-emerald-"],
+#root [class*="bg-teal-"] {
+  background-color: #103025 !important;
+}
+
+#root [class*="bg-red-"],
+#root [class*="bg-rose-"] {
+  background-color: #351B22 !important;
+}
+
+#root [class*="bg-blue-"],
+#root [class*="bg-indigo-"],
+#root [class*="bg-sky-"] {
+  background-color: #17263C !important;
+}
+
+#root [class*="bg-amber-"],
+#root [class*="bg-yellow-"] {
+  background-color: #332713 !important;
+}
+
+#root [class*="bg-violet-"],
+#root [class*="bg-purple-"] {
+  background-color: #291D3E !important;
+}
+
+#root [class*="border"] {
+  border-color: #536174 !important;
+}
+
+#root [class*="border-slate-"],
+#root [class*="border-gray-"],
+#root [class*="border-neutral-"] {
+  border-color: #536174 !important;
+}
+
+#root [class*="border-green-"],
+#root [class*="border-emerald-"],
+#root [class*="border-teal-"] {
+  border-color: #16C784 !important;
+}
+
+#root [class*="border-red-"],
+#root [class*="border-rose-"] {
+  border-color: #EA3943 !important;
+}
+
+#root [class*="text-slate-900"],
+#root [class*="text-slate-800"],
+#root [class*="text-gray-900"],
+#root [class*="text-gray-800"],
+#root [class*="text-neutral-900"],
+#root [class*="text-neutral-800"] {
+  color: #F0F6FC !important;
+}
+
+#root [class*="text-slate-700"],
+#root [class*="text-slate-600"],
+#root [class*="text-slate-500"],
+#root [class*="text-slate-400"],
+#root [class*="text-gray-700"],
+#root [class*="text-gray-600"],
+#root [class*="text-gray-500"],
+#root [class*="text-gray-400"],
+#root [class*="text-neutral-700"],
+#root [class*="text-neutral-600"],
+#root [class*="text-neutral-500"],
+#root [class*="text-neutral-400"] {
+  color: #C1CAD4 !important;
+}
+
+#root [class*="text-blue-"],
+#root [class*="text-indigo-"],
+#root [class*="text-sky-"] {
+  color: #86AEFF !important;
+}
+
+#root [class*="text-green-"],
+#root [class*="text-emerald-"],
+#root [class*="text-teal-"] {
+  color: #16C784 !important;
+}
+
+#root [class*="text-red-"],
+#root [class*="text-rose-"] {
+  color: #FF6670 !important;
+}
+
+#root [class*="text-amber-"],
+#root [class*="text-yellow-"] {
+  color: #F0B84B !important;
+}
+
+#root [class*="text-violet-"],
+#root [class*="text-purple-"] {
+  color: #C4A4FF !important;
+}
+
+#root .desktop-navigation__menu,
+#root .desktop-navigation__menu-item,
+#root .site-footer__panel {
+  border-color: #536174 !important;
+  background-color: #151B23 !important;
+  color: #F0F6FC;
+}
+
+#root .desktop-navigation__menu-item:hover,
+#root .desktop-navigation__menu-item.is-active {
+  border-color: #536174 !important;
+  background-color: #202B38 !important;
+}
+
+#root svg.lucide {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 1.8 !important;
+  flex-shrink: 0;
+}
+
+#root :where(button, [role="button"], input, select, textarea):focus-visible,
+#root a:focus-visible,
+#root [tabindex="0"]:focus-visible {
+  outline: 3px solid #86AEFF;
+  outline-offset: 3px;
+}
+
+#root :where(button, [role="button"]):hover {
+  border-color: #86AEFF;
+  background-color: #202B38;
+}
+
+/* Solid surfaces and clear 1px boundaries unify cards, charts, and tables. */
+#root :where(.site-header, .site-header.is-scrolled, .desktop-navigation,
+  .desktop-navigation__more-trigger, .overview-hero, .page-signal-intro,
+  .overview-topics, .overview-topic-card, .overview-status-link,
+  .market-desk, .minute-grid article, .desk-watchlist article, .desk-empty,
+  .static-snapshot, .static-snapshot__chart, .daily-brief, .daily-passport,
+  .market-heatmap, .market-ticker, .trust-strip, .system-status,
+  .news-feed, .guide-teaser, .about-project, .section-boundary,
+  [class*="__card"], [class*="__panel"], [class*="-card"] ) {
+  border-color: #536174 !important;
+  background-color: #151B23 !important;
+  color: #F0F6FC;
+  box-shadow: 0 0 0 1px rgb(59 70 84 / 0.35) !important;
+}
+
+#root :where(.site-header, .site-header.is-scrolled) {
+  background-color: #10161E !important;
+}
+
+#root :where(.overview-hero, .page-signal-intro, .market-desk,
+  .static-snapshot, .daily-brief, .daily-passport, .market-heatmap,
+  .section-boundary, [class*="__card"], [class*="__panel"], [class*="-card"]) {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 16px;
+}
+
+#root :where(.static-snapshot__chart, .minute-grid article, .desk-watchlist article,
+  .period-basis-note, .desk-empty) {
+  border: 1px solid #536174 !important;
+  background-color: #1A222C !important;
+  border-radius: 12px;
+}
+
+#root :where(table, th, td, .initial-document__snapshot) {
+  border-color: #536174 !important;
+}
+
+#root :where(th, td) {
+  border: 1px solid #536174;
+  color: #C1CAD4;
+}
+
+#root :where(thead, .initial-document__snapshot caption) {
+  color: #F0F6FC;
+}
+
+#root :where(.initial-document__snapshot) {
+  scrollbar-color: #64748B #151B23;
+}
+
+#root :where(.static-snapshot__latest, .positive, .text-green-500, .text-green-600,
+  .text-emerald-500, .text-emerald-600, [data-change="positive"],
+  [class*="positive"], [class*="is-up"]) {
+  color: #16C784 !important;
+}
+
+#root :where(.negative, .text-red-500, .text-red-600, .text-rose-500,
+  .text-rose-600, [data-change="negative"], [class*="negative"], [class*="is-down"]) {
+  color: #FF6670 !important;
+}
+
+#root :where(.overview-hero__title, .overview-hero__title span,
+  .brand-wordmark, .brand-wordmark--footer) {
+  color: #F0F6FC !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+#root :where(.overview-hero__primary-action) {
+  min-height: 48px;
+  border: 1px solid #86AEFF !important;
+  color: #07111D !important;
+  background-color: #86AEFF !important;
+}
+
+#root :where(.overview-hero__secondary-action) {
+  min-height: 48px;
+  border: 1px solid #64748B !important;
+  color: #F0F6FC !important;
+  background-color: #1A222C !important;
+}
+
+#root :where(.desktop-navigation__link) {
+  min-height: 44px;
+  border-color: #536174 !important;
+  color: #C1CAD4 !important;
+  background-color: #151B23 !important;
+}
+
+#root :where(.desktop-navigation__link.is-active, .desktop-navigation__more-trigger) {
+  border-color: #86AEFF !important;
+  color: #AFC9FF !important;
+  background-color: #202B38 !important;
+}
+
+#root :where(.static-snapshot__chart img) {
+  border: 1px solid #536174;
+  border-radius: 8px;
+  background-color: #10161E;
+}
+
+#root :where(.page-signal-intro__path-label) {
+  color: #C1CAD4 !important;
+}
+
+#root :where(.page-signal-intro__path-label > span,
+  .freshness-dot--live, .movement-marker--positive) {
+  background-color: #16C784 !important;
+}
+
+#root :where(.freshness-dot--stale) {
+  background-color: #F0B84B !important;
+}
+
+#root :where(.freshness-dot--closed) {
+  background-color: #A1ACB8 !important;
+}
+
+#root :where(.movement-marker--negative) {
+  background-color: #EA3943 !important;
+}
+
+#root :where(.site-header, .static-snapshot, .market-desk, .overview-hero,
+  .page-signal-intro, .daily-brief, .daily-passport, .overview-topic-card) {
+  border-radius: 16px;
+}
+
+/* Reachable touch targets stay at least 44px without forcing inline prose links
+   into awkward boxes; the table remains the sole intentionally scrollable area. */
+#root :where(.site-header button, .site-header__mobile-toggle,
+  .site-header__mobile-link, .desktop-navigation__link,
+  .overview-hero__primary-action, .overview-hero__secondary-action,
+  .market-desk button, .market-desk select, .market-desk a,
+  .static-snapshot nav a) {
+  min-height: 44px;
+}
+
+@media (max-width: 760px) {
+  :root { --layout-gutter: 16px; }
+
+  #root :where(.static-snapshot, .market-desk, .daily-brief, .daily-passport) {
+    padding: 16px;
+  }
+
+  #root :where(.static-snapshot__charts) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #root :where(.static-snapshot__chart figcaption, .static-snapshot__coverage,
+    .static-snapshot__disclaimer, .static-snapshot__updated) {
+    font-size: 0.875rem;
+  }
+
+  #root :where(.site-header__inner) {
+    min-height: 64px;
+  }
+}
