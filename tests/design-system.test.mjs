@@ -29,12 +29,22 @@ test('live quote effect is an opacity-only 200ms animation and respects reduced 
   assert.match(heatmap, /key=\{value\}/);
 });
 
+test('readability styles soften dense weights and preserve the pale heatmap fill', async () => {
+  const visual = await readFile('src/visual-refresh.css', 'utf8');
+  assert.match(visual, /#root \.font-extrabold,[\s\S]*?font-weight:\s*650 !important/);
+  assert.match(visual, /#root \.font-bold\s*\{\s*font-weight:\s*600 !important/);
+  assert.match(visual, /\.market-heatmap \.heat-tile[\s\S]*?background-color:\s*var\(--heat-tile-bg, #FFFFFF\) !important/);
+  assert.match(visual, /\.heat-tile__price[\s\S]*?font-size:\s*clamp\(1\.5rem, 5vw, 2rem\)/);
+});
+
 test('route legend and period-basis note use existing displayed history endpoints', () => {
   const legend = 'Цвет маршрута — цвет раздела. Заполненный узел — вы здесь.';
   assert.ok(intro.includes(legend));
   assert.ok(dashboard.includes(legend));
   assert.match(intro, /<title>Вы здесь<\/title>/);
   assert.match(heatmap, /Процент периода считается по последним датированным точкам ряда/);
+  assert.match(heatmap, /function tileColor\(change: number, cap: number, paletteId: PaletteId\)/);
+  assert.match(heatmap, /Цвет показывает направление и силу изменения; процент — точное значение/);
   assert.match(heatmap, /formatDateLong\(firstVisibleHistoryPoint\.date\).*formatDateLong\(lastVisibleHistoryPoint\.date\)/s);
   assert.match(heatmap, /history && firstVisibleHistoryPoint && lastVisibleHistoryPoint/);
 });

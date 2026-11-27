@@ -21,10 +21,28 @@ await build({
 });
 const MarketHeatmap = createRequire(import.meta.url)(output).default;
 
+function contrastAgainstInk(background) {
+  const match = background.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  assert.ok(match, `expected a rendered RGB tile fill, received: ${background}`);
+  const luminance = channels => {
+    const [r, g, b] = channels.map(channel => {
+      const value = channel / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const light = luminance(match.slice(1).map(Number));
+  const dark = luminance([23, 32, 51]);
+  return (Math.max(light, dark) + 0.05) / (Math.min(light, dark) + 0.05);
+}
+
 test('heatmap change and scale wrap independently instead of clipping the scale in narrow mobile tiles', () => {
   const html = renderToStaticMarkup(React.createElement(MarketHeatmap, {
     loading: false,
-    assets: [{ id: 'btc', name: 'BTC', price: '$123 456', change: -12.34, sparkline: [100, 87.66], sparkDates: ['2026-10-26', '2026-10-27'], asOf: '2026-10-27' }],
+    assets: [
+      { id: 'btc', name: 'BTC', price: '$123 456', change: -12.34, sparkline: [100, 87.66], sparkDates: ['2026-10-26', '2026-10-27'], asOf: '2026-10-27' },
+      { id: 'sp500', name: 'S&P 500', price: '7 232', change: 1.5, sparkline: [100, 101.5], sparkDates: ['2026-10-26', '2026-10-27'], asOf: '2026-10-27' },
+    ],
   }));
   const dom = new JSDOM(html);
   const row = dom.window.document.querySelector('[data-testid="heat-tile-change-scale"]');
@@ -33,5 +51,19 @@ test('heatmap change and scale wrap independently instead of clipping the scale 
   assert.equal(row.children.length, 2);
   assert.match(row.children[0].textContent, /12,34/);
   assert.match(row.children[1].textContent, /шкала ±6/);
+  const tile = dom.window.document.querySelector('.heat-tile');
+  assert.ok(tile);
+  assert.match(tile.getAttribute('style') ?? '', /--heat-tile-bg:\s*rgb\(/,
+    'the heatmap renders a direction-and-intensity tint instead of neutral white tiles');
+  const tiles = [...dom.window.document.querySelectorAll('.heat-tile')];
+  assert.equal(tiles.length, 2);
+  for (const coloredTile of tiles) {
+    assert.ok(contrastAgainstInk(coloredTile.getAttribute('style') ?? '') >= 4.5,
+      'positive and negative fills keep dark text at WCAG AA contrast');
+  }
+  assert.ok(dom.window.document.querySelector('.heat-tile__price'));
+  assert.match(html, /grid-cols-1[^\"]*min-\[520px\]:grid-cols-2/,
+    'tiles use the full width on narrow phones before switching to a two-column layout');
+  assert.match(html, /Цвет показывает направление и силу изменения/);
   dom.window.close();
 });
