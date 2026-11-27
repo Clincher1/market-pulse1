@@ -55,12 +55,12 @@ type PaletteId = "standard" | "colorblind";
 type Rgb = [number, number, number];
 
 const PALETTE_STORAGE_KEY = "market-pulse-heatmap-palette";
-const TILE_NEUTRAL: Rgb = [255, 255, 255];
+const TILE_NEUTRAL: Rgb = [12, 30, 55];
 
 /**
  * Две палитры направления. Стандартная — красно-зелёная; альтернативная
  * сине-оранжевая различается при дейтеранопии/протанопии. Знак также всегда
- * продублирован числом и стрелкой, а светлая заливка оставляет текст читаемым.
+ * продублирован числом и стрелкой; насыщенные тёмные тона сохраняют контраст.
  */
 const PALETTES: Record<
   PaletteId,
@@ -138,9 +138,9 @@ function tileColor(change: number, cap: number, paletteId: PaletteId): string {
   const palette = PALETTES[paletteId];
   const intensity = Math.sqrt(Math.min(1, Math.abs(change) / Math.max(cap, 0.001)));
   const target = change >= 0 ? palette.tilePositive : palette.tileNegative;
-  // Keep the tint light enough for dark, readable text while retaining the
-  // original heat-map encoding: stronger moves get a visibly richer color.
-  const amount = intensity * 0.55;
+  // Blend toward the move color on a deep navy base. White labels remain
+  // readable while stronger moves become unmistakably more saturated.
+  const amount = intensity * 0.72;
   const color = TILE_NEUTRAL.map((channel, index) =>
     Math.round(channel + (target[index] - channel) * amount),
   );

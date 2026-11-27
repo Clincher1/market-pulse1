@@ -29,12 +29,27 @@ test('live quote effect is an opacity-only 200ms animation and respects reduced 
   assert.match(heatmap, /key=\{value\}/);
 });
 
-test('readability styles soften dense weights and preserve the pale heatmap fill', async () => {
+test('readability styles soften dense weights and keep the heatmap in the navy theme', async () => {
   const visual = await readFile('src/visual-refresh.css', 'utf8');
   assert.match(visual, /#root \.font-extrabold,[\s\S]*?font-weight:\s*650 !important/);
   assert.match(visual, /#root \.font-bold\s*\{\s*font-weight:\s*600 !important/);
-  assert.match(visual, /\.market-heatmap \.heat-tile[\s\S]*?background-color:\s*var\(--heat-tile-bg, #FFFFFF\) !important/);
+  assert.match(visual, /\.market-heatmap \.heat-tile[\s\S]*?background-color:\s*var\(--heat-tile-bg, #0C1E37\) !important/);
+  assert.match(visual, /--bg-page:\s*#07162D/);
   assert.match(visual, /\.heat-tile__price[\s\S]*?font-size:\s*clamp\(1\.5rem, 5vw, 2rem\)/);
+});
+
+test('buttons and navigation use one coherent navy-and-cyan control style', async () => {
+  const visual = await readFile('src/visual-refresh.css', 'utf8');
+  assert.match(visual, /#root button:not\(\.heat-tile\)[\s\S]*?background: linear-gradient\(145deg, #173B66 0%, #112B4B 100%\) !important/);
+  assert.match(visual, /#root button:not\(\.heat-tile\)\[aria-pressed="true"\][\s\S]*?linear-gradient\(110deg, #79E4E7 0%, #7BC9F2 58%, #9BC0FF 100%\)/);
+  assert.match(visual, /\.desktop-navigation__link\.is-active[\s\S]*?color: #91EAF0 !important/);
+  assert.match(visual, /#root \.overview-topic-card::after\s*\{\s*display: none !important/);
+  assert.match(visual, /@keyframes nav-active-breathe/);
+  assert.doesNotMatch(visual, /#root \.overview-topics a\s*\{\s*border-radius:\s*999px/);
+  assert.match(visual, /#root \.overview-topics \.overview-topic-card\s*\{\s*border-radius:\s*18px !important/);
+  assert.match(visual, /overview-topic-card__icon\[class\*="bg-emerald-"\][\s\S]*?linear-gradient\(145deg, #35DFA9, #078E6D\)/);
+  assert.match(visual, /desktop-navigation__link\[data-theme="brief"\][\s\S]*?linear-gradient\(145deg, #C39BFF, #784BDB\)/);
+  assert.match(visual, /#root \.page-signal-intro__title\s*\{\s*color: #F4F8FF !important/);
 });
 
 test('route legend and period-basis note use existing displayed history endpoints', () => {
