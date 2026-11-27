@@ -2,7 +2,7 @@ name: Update static snapshot
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Every 30 minutes
+    - cron: '*/30 * * * *'  # Every 30 minutes; refreshed after observed schedule delays (2026-11-27)
   workflow_dispatch:
 
 permissions:
