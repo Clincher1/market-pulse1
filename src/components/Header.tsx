@@ -45,6 +45,25 @@ const desktopPrimaryLinks = [
   })),
 ];
 const desktopMoreLinks = navLinks.filter((link) => !desktopPrimaryThemeIds.includes(link.themeId));
+const mobileNavigationLinks = [
+  ...desktopPrimaryLinks.map((link) => ({
+    ...link,
+    mobileLabel: link.themeId === null
+      ? 'Обзор'
+      : link.themeId === 'brief'
+        ? 'Бриф'
+        : SECTION_THEMES[link.themeId].navLabel,
+    accessibleLabel: link.themeId === null
+      ? 'Главная страница'
+      : SECTION_THEMES[link.themeId].label,
+  })),
+  ...desktopMoreLinks.map((link) => ({
+    ...link,
+    page: link.themeId as AppView,
+    mobileLabel: link.label,
+    accessibleLabel: link.fullLabel,
+  })),
+];
 
 type HeaderProps = {
   activeView: AppView;
@@ -137,6 +156,28 @@ export default function Header({ activeView }: HeaderProps) {
               );
               })}
             </div>
+          </div>
+
+          <div className="desktop-navigation__mobile-links" role="group" aria-label="Все разделы сайта">
+            {mobileNavigationLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = activeView === link.page;
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  data-theme={link.themeId ?? 'dashboard'}
+                  aria-label={link.accessibleLabel}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`desktop-navigation__mobile-link ${isActive ? 'is-active' : ''}`}
+                >
+                  <span className="desktop-navigation__mobile-icon-shell" aria-hidden="true">
+                    <Icon className="desktop-navigation__mobile-icon" />
+                  </span>
+                  <span aria-hidden="true">{link.mobileLabel}</span>
+                </a>
+              );
+            })}
           </div>
 
           <details
