@@ -106,3 +106,13 @@ export function observationLagLabel(asOf?: string | null, now = new Date()): str
   if (days === 0) return 'сегодня по календарю источника';
   return `отстаёт от сегодняшней даты на ${days} ${calendarDaysWord(days)}`;
 }
+
+/** Presentation tone derived only from the existing observation-date labels. */
+export type FreshnessTone = 'live' | 'closed' | 'stale';
+
+export function freshnessTone(asOf?: string | null, now = new Date()): FreshnessTone {
+  const lag = observationLagLabel(asOf, now);
+  if (lag.startsWith('отстаёт')) return 'stale';
+  if (observationLabel(asOf).startsWith('на ')) return 'live';
+  return 'closed';
+}

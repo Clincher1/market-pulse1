@@ -92,16 +92,16 @@ export default function Header({ activeView }: HeaderProps) {
       transition={reduceMotion ? { duration: 0 } : { duration: 0.42, ease: 'easeOut' }}
       className={`site-header ${scrolled ? 'is-scrolled' : ''}`}
     >
-      <div className="site-header__inner site-container flex items-center justify-between gap-3">
+      <div className="site-header__inner site-container flex items-center justify-between gap-[var(--space-2)]">
         <a
           href={PAGE_PATHS.dashboard}
-          className="site-brand group flex shrink-0 items-center gap-2.5 rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+          className="site-brand group flex shrink-0 items-center gap-[var(--space-1)] rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           aria-current={activeView === 'dashboard' ? 'page' : undefined}
         >
           <BrandMark className="site-brand__mark h-11 w-11" />
           <span className="flex flex-col">
             <span className="brand-wordmark">Market Pulse</span>
-            <span className="brand-tagline mt-1 hidden xl:block">
+            <span className="brand-tagline mt-[var(--space-1)] hidden xl:block">
               ФАКТЫ <i>·</i> ИСТОЧНИКИ <i>·</i> КОНТЕКСТ
             </span>
           </span>

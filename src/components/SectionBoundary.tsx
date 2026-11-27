@@ -43,16 +43,16 @@ export class SectionBoundary extends Component<
     return (
       <section
         id={id}
-        className={`mb-10 scroll-mt-24 rounded-2xl border border-amber-200 bg-amber-50 p-5 lg:mb-12 lg:p-6 ${className}`}
+        className={`mb-[var(--space-5)] scroll-mt-[var(--space-6)] rounded-2xl border border-amber-200 bg-amber-50 p-[var(--space-3)] lg:mb-[var(--space-6)] lg:p-[var(--space-3)] ${className}`}
         role="alert"
       >
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
+        <div className="flex items-start gap-[var(--space-2)]">
+          <AlertTriangle className="mt-[var(--space-1)] h-5 w-5 shrink-0 text-amber-800" />
           <div className="min-w-0">
             <p className="text-base font-extrabold text-amber-900">
               Раздел «{title}» не отрисовался
             </p>
-            <p className="mt-1 text-sm leading-relaxed text-amber-900">
+            <p className="mt-[var(--space-1)] text-sm leading-relaxed text-amber-900">
               В этом блоке произошла ошибка, поэтому он скрыт целиком — показывать
               его данные было бы нечестно. Остальная страница работает. Если ошибка
               повторяется, раздел стоит починить, а не обходить.
@@ -60,7 +60,7 @@ export class SectionBoundary extends Component<
             <button
               type="button"
               onClick={this.retry}
-              className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-100"
+              className="mt-[var(--space-2)] inline-flex min-h-11 items-center gap-[var(--space-1)] rounded-full border border-amber-300 bg-white px-[var(--space-2)] py-[var(--space-1)] text-xs font-extrabold text-amber-900 transition-colors hover:bg-amber-100"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Попробовать снова

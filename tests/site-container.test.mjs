@@ -24,7 +24,7 @@ test('dashboard sections share the existing content width and large-card radius 
   for (const [source, selector] of [[brand,'.overview-hero'],[css,'.overview-topics'],[css,'.static-snapshot'],[desk,'.market-desk']]) {
     const rule=source.split(`${selector} {`)[1]?.split('}')[0];
     assert.ok(rule,selector);
-    assert.match(rule,/border-radius:\s*var\(--radius-xl2\)/,selector);
+    assert.match(rule,/border-radius:\s*var\(--radius\)/,selector);
   }
   assert.match(app,/overview-hero[^\"]*dashboard-section-container/);
   assert.match(snapshot,/static-snapshot dashboard-section-container/);

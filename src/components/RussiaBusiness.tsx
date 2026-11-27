@@ -15,6 +15,7 @@ import MoneySpreads from './MoneySpreads';
 import OfzCurve from './OfzCurve';
 import RussiaHistory from './RussiaHistory';
 import { SectionThemeBadge } from './sectionThemes';
+import FreshnessDot from './FreshnessDot';
 import { formatPercent as formatPercentShared } from '@/lib/percent';
 import { startPolling } from '@/lib/polling';
 import { buildMoneySpreads } from '@/lib/spreads';
@@ -106,13 +107,11 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
   // и её дату тоже нужно печатать рядом: субботняя сделка иначе читалась бы
   // как движение за сутки.
   const hasCloseBase = isIndex || indicator.id === 'gold-moex';
-  const changeClass = !hasCloseBase
-    ? 'text-blue-800'
-    : change > 0
-      ? 'text-emerald-800'
-      : change < 0
-        ? 'text-red-800'
-        : 'text-text-secondary';
+  const changeClass = change > 0
+    ? 'text-positive'
+    : change < 0
+      ? 'text-negative'
+      : 'text-text-secondary';
   // Стрелка вверх у нулевого изменения — тоже утверждение о движении,
   // которого не было: при 0,00 % рисуется горизонтальная черта.
   const Icon = change === 0 ? Minus : change > 0 ? TrendingUp : TrendingDown;
@@ -122,24 +121,24 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
       href={indicator.sourceUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-bg-card p-4 shadow-lg transition-all hover:-translate-y-0.5 hover:border-accent/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+      className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-bg-card p-[var(--space-2)] shadow-lg transition-all hover:-translate-y-0.5 hover:border-accent/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
       title={`${indicator.provider}: ${indicator.basis}`}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-[var(--space-1)]">
         <div>
           <div className="text-sm font-extrabold tracking-wide text-text-primary">{indicator.name}</div>
-          <div className="mt-0.5 text-[11px] font-medium text-text-secondary">{indicator.label}</div>
+          <div className="mt-[var(--space-1)] text-[11px] font-medium text-text-secondary">{indicator.label}</div>
         </div>
         <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-800" />
       </div>
-      <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className="text-xl font-extrabold tabular-nums text-text-primary">
+      <div className="mt-[var(--space-2)] flex flex-wrap items-baseline gap-x-[var(--space-1)] gap-y-[var(--space-1)]">
+        <span className="text-4xl font-extrabold tabular-nums text-text-primary">
           {formatIndicatorValue(indicator)}
         </span>
         <span className="text-xs font-semibold text-text-secondary">{indicator.unit}</span>
         {indicator.changePct !== null ? (
           <span
-            className={`inline-flex items-center gap-1 text-sm font-extrabold tabular-nums ${changeClass}`}
+            className={`inline-flex items-center gap-[var(--space-1)] text-sm font-extrabold tabular-nums ${changeClass}`}
           >
             <Icon className="h-3.5 w-3.5" />
             {formatPercent(indicator.changePct)}
@@ -154,7 +153,7 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
           </span>
         ) : indicator.changeAbs !== null && indicator.changeAbs !== undefined ? (
           <span
-            className={`inline-flex items-center gap-1 text-sm font-extrabold tabular-nums ${changeClass}`}
+            className={`inline-flex items-center gap-[var(--space-1)] text-sm font-extrabold tabular-nums ${changeClass}`}
             title={`Разница с предыдущим опубликованным значением${
               indicator.previousDate ? ` за ${formatShortDate(indicator.previousDate)}` : ''
             }`}
@@ -177,18 +176,14 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
           </span>
         ) : null}
       </div>
-      <div className="mb-3 mt-3 border-t border-slate-200 pt-2.5 text-[11px] leading-relaxed text-text-secondary">
-        <span className="font-bold text-slate-700">{indicator.provider}</span> · {formatAsOf(indicator)}
-        <div className="mt-0.5">{indicator.basis}</div>
+      <div className="mb-[var(--space-2)] mt-[var(--space-2)] border-t border-slate-200 pt-[var(--space-1)] text-[11px] leading-relaxed text-text-secondary">
+        <div className="market-source"><FreshnessDot asOf={indicator.asOf} /><span className="font-bold text-slate-700">{indicator.provider}</span> · {formatAsOf(indicator)}</div>
+        <div className="mt-[var(--space-1)]">{indicator.basis}</div>
       </div>
       <span
         data-testid="russia-source-tile-hint"
-        className="mt-auto inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-blue-300/25 bg-blue-400/10 px-2.5 py-1.5 text-[11px] font-extrabold leading-none text-blue-800"
+        className="mt-auto inline-flex w-full items-center justify-center gap-[var(--space-1)] rounded-full border border-blue-300/25 bg-blue-400/10 px-[var(--space-1)] py-[var(--space-1)] text-[11px] font-extrabold leading-none text-blue-800"
       >
-        <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-300 opacity-50 [animation-duration:1.8s]" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-300" />
-        </span>
         Открыть источник
         <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       </span>
@@ -202,19 +197,19 @@ function HeadlineRow({ headline }: { headline: RussiaHeadline }) {
       href={headline.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 transition-colors hover:border-accent/50 hover:bg-accent/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+      className="group block rounded-xl border border-slate-200 bg-slate-50 px-[var(--space-2)] py-[var(--space-2)] transition-colors hover:border-accent/50 hover:bg-accent/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
     >
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-text-secondary">
+      <div className="flex flex-wrap items-center gap-x-[var(--space-1)] gap-y-[var(--space-1)] text-[11px] font-bold text-text-secondary">
         <span className="text-blue-800">{headline.source}</span>
         <span>{headline.section}</span>
         <time className="ml-auto shrink-0 font-medium" dateTime={headline.publishedAt}>
           {formatMoscowDateTime(headline.publishedAt)}
         </time>
       </div>
-      <h4 className="mt-1.5 text-sm font-bold leading-snug text-text-primary group-hover:text-blue-800">
+      <h4 className="mt-[var(--space-1)] text-sm font-bold leading-snug text-text-primary group-hover:text-blue-800">
         {headline.title}
       </h4>
-      <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-800">
+      <span className="mt-[var(--space-1)] inline-flex items-center gap-[var(--space-1)] text-[11px] font-semibold text-blue-800">
         Открыть публикацию <ExternalLink className="h-3 w-3" aria-hidden="true" />
       </span>
     </a>
@@ -368,23 +363,23 @@ export default function RussiaBusiness() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="mb-10 scroll-mt-24 lg:mb-12"
+      className="mb-[var(--space-5)] scroll-mt-[var(--space-6)] lg:mb-[var(--space-6)]"
     >
-      <div className="overflow-hidden rounded-[28px] border border-accent/25 bg-linear-to-br from-blue-50 via-white to-rose-50/70 shadow-2xl">
+      <div className="overflow-hidden rounded-[var(--radius)] border border-accent/25 shadow-2xl">
         <div className="flex h-1.5" aria-hidden="true">
           <div className="flex-1 bg-slate-100" />
           <div className="flex-1 bg-blue-600" />
-          <div className="flex-1 bg-red-600" />
+          <div className="flex-1" />
         </div>
 
-        <div className="p-5 sm:p-7 lg:p-8">
-          <div className="flex flex-wrap items-start gap-4">
+        <div className="p-[var(--space-3)] sm:p-[var(--space-4)] lg:p-[var(--space-4)]">
+          <div className="flex flex-wrap items-start gap-[var(--space-2)]">
             <div className="min-w-0 max-w-4xl">
               <SectionThemeBadge themeId="russia" />
-              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
+              <h2 className="mt-[var(--space-2)] text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
                 Пульс российского бизнеса
               </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary sm:text-base">
+              <p className="mt-[var(--space-1)] max-w-3xl text-sm leading-relaxed text-text-secondary sm:text-base">
                 Проверяемые курсы и биржевые значения с источниками и датами; отдельно — исходные
                 заголовки российских деловых лент со ссылками. Заголовки не используются для оценки
                 важности, тональности или предполагаемого влияния на цены.
@@ -393,32 +388,32 @@ export default function RussiaBusiness() {
             <GuideLink href="/guide#guide-russia" label="Как читать блок" mobileLabel="Справка" />
           </div>
 
-          <div className="mt-6">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.12em] text-blue-800">
+          <div className="mt-[var(--space-3)]">
+            <div className="mb-[var(--space-2)] flex flex-wrap items-center gap-[var(--space-1)]">
+              <div className="flex items-center gap-[var(--space-1)] text-sm font-extrabold uppercase tracking-[0.12em] text-blue-800">
                 <Banknote className="h-4 w-4" />
                 Российские рынки и официальные курсы
               </div>
-              <span className="ml-auto rounded-full border border-blue-300/25 bg-blue-400/10 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-800">
+              <span className="ml-auto rounded-full border border-blue-300/25 bg-blue-400/10 px-[var(--space-1)] py-[var(--space-1)] text-[11px] font-extrabold uppercase tracking-[0.12em] text-blue-800">
                 Российский контур
               </span>
             </div>
             {insightsLoading && indicators.length === 0 ? (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-[var(--space-2)] lg:grid-cols-5">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <div key={index} className="h-36 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
                 ))}
               </div>
             ) : indicators.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-[var(--space-2)] md:grid-cols-3 xl:grid-cols-5">
                   {mainIndicators.map((indicator) => (
                     <MarketTile key={indicator.id} indicator={indicator} />
                   ))}
                 </div>
                 {missingIndicators.length > 0 && (
-                  <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
-                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <div className="mt-[var(--space-2)] flex items-start gap-[var(--space-1)] rounded-xl border border-amber-400/25 bg-amber-400/10 px-[var(--space-2)] py-[var(--space-1)] text-xs leading-relaxed text-amber-900">
+                    <AlertTriangle className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0" />
                     <span>
                       Сейчас не получены: {missingIndicators.join(', ')}. Плитки нет до ответа
                       источника — число вместо неё не подставляется. Это не всегда поломка: у
@@ -429,10 +424,10 @@ export default function RussiaBusiness() {
                 )}
                 {moneyIndicators.length > 0 && (
                   <>
-                    <div className="mt-5 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+                    <div className="mt-[var(--space-3)] mb-[var(--space-1)] text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
                       Стоимость денег — ставка ЦБ, RUONIA, инфляция и кривая ОФЗ
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-[var(--space-2)] sm:grid-cols-2 lg:grid-cols-4">
                       {moneyIndicators.map((indicator) => (
                         <MarketTile key={indicator.id} indicator={indicator} />
                       ))}
@@ -443,25 +438,25 @@ export default function RussiaBusiness() {
                 )}
                 {reserveIndicator && (
                   <>
-                    <div className="mt-5 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
+                    <div className="mt-[var(--space-3)] mb-[var(--space-1)] text-[11px] font-extrabold uppercase tracking-[0.12em] text-text-secondary">
                       Внешний буфер — международные резервы ЦБ
                     </div>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-[var(--space-2)] md:grid-cols-3">
                       <MarketTile indicator={reserveIndicator} />
-                      <div className="rounded-2xl border border-slate-200 bg-bg-card p-4 text-xs leading-relaxed text-text-secondary md:col-span-2">
+                      <div className="rounded-2xl border border-slate-200 bg-bg-card p-[var(--space-2)] text-xs leading-relaxed text-text-secondary md:col-span-2">
                         <p className="font-semibold text-slate-700">
                           Валютные активы и монетарное золото Банка России — то, чем он проводит
                           операции на валютном рынке и отвечает по внешним обязательствам.
                         </p>
-                        <p className="mt-1.5">
+                        <p className="mt-[var(--space-1)]">
                           Ряд недельный: отчётная дата — пятница, публикация — на следующей неделе.
                           Последняя точка поэтому всегда за прошлую пятницу.
                         </p>
-                        <details className="mt-2 rounded-lg border border-slate-200 bg-bg-card px-2.5 py-1.5">
-                          <summary className="min-h-11 cursor-pointer select-none py-3 text-xs font-bold text-text-secondary transition-colors hover:text-slate-700">
+                        <details className="mt-[var(--space-1)] rounded-lg border border-slate-200 bg-bg-card px-[var(--space-1)] py-[var(--space-1)]">
+                          <summary className="min-h-11 cursor-pointer select-none py-[var(--space-2)] text-xs font-bold text-text-secondary transition-colors hover:text-slate-700">
                             Почему в млрд $, а не в процентах
                           </summary>
-                          <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
+                          <p className="mt-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
                             Изменение — то же число, что в первоисточнике, без пересчёта в проценты.
                             Из недельного ряда сайт берёт только итог: структуру (валюта, золото, СДР)
                             этот ряд не отдаёт, и разбирать её по частям сайт не станет.
@@ -474,8 +469,8 @@ export default function RussiaBusiness() {
                 <RussiaHistory />
               </>
             ) : (
-              <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-900">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="flex items-start gap-[var(--space-2)] rounded-2xl border border-amber-400/25 bg-amber-400/10 p-[var(--space-2)] text-sm text-amber-900">
+                <AlertTriangle className="mt-[var(--space-1)] h-5 w-5 shrink-0" />
                 Российские источники временно недоступны. Сайт не подставляет выдуманные значения вместо курсов и индексов.
               </div>
             )}
@@ -483,39 +478,39 @@ export default function RussiaBusiness() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-[28px] border border-accent/25 bg-linear-to-br from-blue-50 via-white to-rose-50/70 shadow-2xl">
-        <div className="p-5 sm:p-7 lg:p-8">
-          <div className="mb-4 flex items-center gap-2 border-b border-slate-200 pb-4">
+      <div className="mt-[var(--space-3)] overflow-hidden rounded-[var(--radius)] border border-accent/25 shadow-2xl">
+        <div className="p-[var(--space-3)] sm:p-[var(--space-4)] lg:p-[var(--space-4)]">
+          <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-1)] border-b border-slate-200 pb-[var(--space-2)]">
             <Newspaper className="h-5 w-5 text-blue-800" aria-hidden="true" />
             <div>
               <h3 className="text-lg font-extrabold text-text-primary">Российские деловые заголовки</h3>
-              <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">
+              <p className="mt-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
                 Заголовки, источник, время публикации и ссылка на материал. Список не ранжируется
                 по модельным оценкам и не связывает публикации с движением цен.
               </p>
             </div>
           </div>
           {insights.headlines.length > 0 ? (
-            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-[var(--space-1)] lg:grid-cols-2">
               {insights.headlines.map((headline) => (
                 <HeadlineRow key={headline.id} headline={headline} />
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-200 bg-bg-card p-5 text-sm text-text-secondary">
+            <div className="rounded-2xl border border-slate-200 bg-bg-card p-[var(--space-3)] text-sm text-text-secondary">
               {insightsLoading ? 'Загружаем заголовки из подключённых лент…' : 'Заголовки временно недоступны.'}
             </div>
           )}
-          <div className="mt-6 grid gap-2 border-t border-slate-200 pt-4 text-[11px] leading-relaxed text-text-secondary md:grid-cols-3">
+          <div className="mt-[var(--space-3)] grid gap-[var(--space-1)] border-t border-slate-200 pt-[var(--space-2)] text-[11px] leading-relaxed text-text-secondary md:grid-cols-3">
             {insights.notes.map((note) => (
-              <div key={note} className="flex items-start gap-1.5">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-800" />
+              <div key={note} className="flex items-start gap-[var(--space-1)]">
+                <Info className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0 text-blue-800" />
                 <span>{note}</span>
               </div>
             ))}
           </div>
           {insights.errors.length > 0 && (
-            <div className="mt-3 text-[11px] font-medium text-amber-900/80">
+            <div className="mt-[var(--space-2)] text-[11px] font-medium text-amber-900/80">
               Часть источников не ответила при последнем обновлении: {insights.errors.length}. Остальные данные показаны как есть, без заполнения пробелов оценками.
             </div>
           )}

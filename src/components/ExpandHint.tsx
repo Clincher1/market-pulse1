@@ -31,7 +31,7 @@ export default function ExpandHint({
   return (
     <span
       data-testid={testId}
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold leading-none ${className}`}
+      className={`inline-flex shrink-0 items-center gap-[var(--space-1)] rounded-full border px-[var(--space-1)] py-[var(--space-1)] text-[11px] font-extrabold leading-none ${className}`}
     >
       <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
         {showPing && (

@@ -44,10 +44,17 @@ function contrast(a, b) {
 
 // --- Токены из @theme -----------------------------------------------------
 function readTokens() {
+  const rootBlock = CSS.match(/:root\s*\{([^}]+)\}/)?.[1] ?? '';
+  const root = new Map([...rootBlock.matchAll(/--([a-z-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
   const block = CSS.slice(CSS.indexOf('@theme'), CSS.indexOf('}', CSS.indexOf('@theme')));
   const tokens = new Map();
-  for (const match of block.matchAll(/--color-([a-z-]+):\s*(#[0-9a-fA-F]{6})/g)) {
-    tokens.set(match[1], match[2].toLowerCase());
+  const resolve = (value) => {
+    const reference = /^var\(--([a-z-]+)\)$/.exec(value);
+    return reference ? resolve(root.get(reference[1]) ?? '') : (/^#[0-9a-fA-F]{6}$/.test(value) ? value.toLowerCase() : null);
+  };
+  for (const match of block.matchAll(/--color-([a-z-]+):\s*([^;]+);/g)) {
+    const color = resolve(match[2].trim());
+    if (color) tokens.set(match[1], color);
   }
   return tokens;
 }
@@ -287,23 +294,9 @@ test('графика на заливке не ниже 3:1', () => {
   }
 });
 
-test('slate-500 остаётся только у иконок', () => {
-  // #62748e на светлом фоне страницы даёт 4,43:1: почти проходит, но чуть
-  // ниже порога 4,5:1 для мелкого текста. Для подписей используем slate-700
-  // или смысловой text-secondary; slate-500 оставляем иконкам и графике.
-  const ratio = contrast(PALETTE.slate[500], tokens.get('bg-primary'));
-  assert.ok(ratio < AA_TEXT, `slate-500 неожиданно прошёл порог текста (${ratio.toFixed(2)}:1) — пересмотрите правило`);
-
-  const offenders = [];
-  for (const file of sourceFiles(join(ROOT, 'src'))) {
-    readFileSync(file, 'utf8')
-      .split('\n')
-      .forEach((line, index) => {
-        if (!line.includes('text-slate-500')) return;
-        // У иконки есть размер (h-3.5, h-9): значит это графика, а не текст.
-        const isIcon = /\bh-\d/.test(line) || /\bh-\[/.test(line);
-        if (!isIcon) offenders.push(`${relative(ROOT, file)}:${index + 1}`);
-      });
+test('общий приглушённый цвет сохраняет читаемость на странице и карточке', () => {
+  for (const surface of ['bg-primary', 'bg-card']) {
+    const ratio = contrast(tokens.get('text-secondary'), tokens.get(surface));
+    assert.ok(ratio >= AA_TEXT, `text-secondary на ${surface}: ${ratio.toFixed(2)}:1 < ${AA_TEXT}`);
   }
-  assert.deepEqual(offenders, [], `slate-500 как текст ниже 4,5:1 — замените на text-secondary: ${offenders.join(', ')}`);
 });

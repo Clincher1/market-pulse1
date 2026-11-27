@@ -89,25 +89,25 @@ export default function TrustStrip() {
   ];
 
   return (
-    <section aria-label="Что можно проверить на этом сайте" className="mb-8 lg:mb-10">
-      <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    <section aria-label="Что можно проверить на этом сайте" className="mb-[var(--space-4)] lg:mb-[var(--space-5)]">
+      <dl className="grid gap-[var(--space-1)] sm:grid-cols-2 lg:grid-cols-4">
         {cells.map((cell) => (
           <div
             key={cell.title}
-            className="rounded-xl border border-border-subtle bg-bg-card px-3.5 py-3"
+            className="rounded-xl border border-border-subtle bg-bg-card px-[var(--space-2)] py-[var(--space-2)]"
           >
-            <dt className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
+            <dt className="flex items-center gap-[var(--space-1)] text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
               <cell.icon className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
               {cell.title}
             </dt>
             <dd
-              className={`mt-1 text-2xl font-extrabold leading-none text-text-primary ${
+              className={`mt-[var(--space-1)] text-2xl font-extrabold leading-none text-text-primary ${
                 /^[\d—]/.test(cell.value) ? 'tabular-nums' : ''
               }`}
             >
               {cell.value}
             </dd>
-            <dd className="mt-1.5 text-[11px] leading-snug text-text-secondary">{cell.note}</dd>
+            <dd className="mt-[var(--space-1)] text-[11px] leading-snug text-text-secondary">{cell.note}</dd>
           </div>
         ))}
       </dl>

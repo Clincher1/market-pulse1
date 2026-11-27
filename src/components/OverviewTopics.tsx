@@ -8,7 +8,7 @@ export default function OverviewTopics() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <section aria-labelledby="page-links-title" className="overview-topics overview-topics--compact dashboard-section-container mb-7 lg:mb-10">
+    <section aria-labelledby="page-links-title" className="overview-topics overview-topics--compact dashboard-section-container mb-[var(--space-4)] lg:mb-[var(--space-5)]">
       <div className="overview-topics__heading">
         <div>
           <p className="overview-section-kicker">ВЫБЕРИТЕ СВОЙ МАРШРУТ</p>

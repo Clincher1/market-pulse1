@@ -19,26 +19,26 @@ export function SectionFallback({
   return (
     <section
       id={id}
-      className={`scroll-mt-24 overflow-hidden rounded-2xl border border-border-subtle bg-bg-card ${className}`}
+      className={`scroll-mt-[var(--space-6)] overflow-hidden rounded-2xl border border-border-subtle bg-bg-card ${className}`}
       aria-busy="true"
       aria-label={`Загрузка: ${title}`}
     >
-      <div className={`flex ${minHeightClass} flex-col justify-center p-5 sm:p-6`}>
-        <div className="flex items-center gap-3">
+      <div className={`flex ${minHeightClass} flex-col justify-center p-[var(--space-3)] sm:p-[var(--space-3)]`}>
+        <div className="flex items-center gap-[var(--space-2)]">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-800">
             <LoaderCircle className="h-5 w-5 animate-spin" />
           </span>
           <div>
             <p className="text-base font-extrabold text-text-primary">{title}</p>
-            <p className="mt-0.5 text-sm text-text-secondary">{message}</p>
+            <p className="mt-[var(--space-1)] text-sm text-text-secondary">{message}</p>
           </div>
         </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-3" aria-hidden="true">
+        <div className="mt-[var(--space-3)] grid gap-[var(--space-2)] sm:grid-cols-3" aria-hidden="true">
           <div className="h-20 animate-pulse rounded-2xl bg-slate-100" />
           <div className="h-20 animate-pulse rounded-2xl bg-slate-100 [animation-delay:120ms]" />
           <div className="h-20 animate-pulse rounded-2xl bg-slate-100 [animation-delay:240ms]" />
         </div>
-        <div className="mt-3 h-24 animate-pulse rounded-2xl bg-slate-100 [animation-delay:180ms]" aria-hidden="true" />
+        <div className="mt-[var(--space-2)] h-24 animate-pulse rounded-2xl bg-slate-100 [animation-delay:180ms]" aria-hidden="true" />
       </div>
     </section>
   );
@@ -174,18 +174,18 @@ export function ErrorNotice({
   return (
     <div
       role="alert"
-      className={`rounded-2xl border border-red-200 bg-red-50 p-5 text-left ${className}`}
+      className={`rounded-2xl border border-red-200 bg-red-50 p-[var(--space-3)] text-left ${className}`}
     >
-      <div className="flex items-start gap-3">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
+      <div className="flex items-start gap-[var(--space-2)]">
+        <AlertTriangle className="mt-[var(--space-1)] h-5 w-5 shrink-0 text-red-700" />
         <div className="min-w-0 flex-1">
           <p className="font-extrabold text-red-900">{title}</p>
-          <p className="mt-1 text-sm leading-relaxed text-red-800">{message}</p>
+          <p className="mt-[var(--space-1)] text-sm leading-relaxed text-red-800">{message}</p>
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
-              className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-extrabold text-red-800 transition-colors hover:bg-red-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500"
+              className="mt-[var(--space-2)] inline-flex min-h-11 items-center gap-[var(--space-1)] rounded-full border border-red-300 bg-white px-[var(--space-2)] py-[var(--space-1)] text-sm font-extrabold text-red-800 transition-colors hover:bg-red-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500"
             >
               <RotateCcw className="h-4 w-4" />
               {actionLabel}

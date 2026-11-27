@@ -1,0 +1,223 @@
+/* Single visual vocabulary for the light, editorial interface. */
+:root {
+  color-scheme: light;
+  font-variant-numeric: tabular-nums;
+}
+
+html,
+body,
+.site-shell {
+  background: var(--bg-page) !important;
+  background-image: none !important;
+  color: var(--ink);
+}
+
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+.site-header,
+.site-header.is-scrolled {
+  background: var(--card-bg) !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.site-header::after,
+.site-shell::after,
+.overview-hero::before,
+.overview-hero::after,
+.page-signal-intro::before,
+.page-signal-intro::after {
+  display: none !important;
+  content: none !important;
+}
+
+.overview-hero,
+.page-signal-intro {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  background: var(--card-bg) !important;
+  background-image: none !important;
+  box-shadow: var(--shadow-card) !important;
+  color: var(--ink);
+}
+
+.overview-hero__title,
+.overview-hero__title span,
+.brand-wordmark {
+  color: var(--ink) !important;
+  background: none !important;
+  background-image: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  animation: none !important;
+}
+
+.overview-hero__primary-action {
+  border-radius: var(--radius) !important;
+  background: var(--ink) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* No glass, glow, large shadows, or gradient fills in the interface. */
+*,
+*::before,
+*::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background-image: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+[class*="bg-red-"],
+[class*="bg-rose-"],
+[class*="bg-green-"],
+[class*="bg-emerald-"] {
+  background-color: var(--card-bg) !important;
+}
+
+[class*="border-red-"],
+[class*="border-rose-"],
+[class*="border-green-"],
+[class*="border-emerald-"] {
+  border-color: var(--line) !important;
+}
+
+[class*="text-red-"]:not(.tabular-nums),
+[class*="text-rose-"]:not(.tabular-nums),
+[class*="text-green-"]:not(.tabular-nums),
+[class*="text-emerald-"]:not(.tabular-nums) {
+  color: var(--ink-muted) !important;
+}
+
+button,
+[role="button"] {
+  border-radius: var(--radius) !important;
+}
+
+[class*="shadow-"] {
+  box-shadow: var(--shadow-card) !important;
+}
+
+.page-signal-intro__art {
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.page-signal-intro__runner,
+.page-signal-intro__thread,
+.page-signal-intro__node,
+.page-signal-intro__core {
+  animation: none !important;
+  filter: none !important;
+}
+
+.page-signal-intro__route-legend {
+  margin-top: var(--space-2);
+  color: var(--signal-ink, var(--ink-muted));
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Radius utilities all resolve to the one project radius. */
+[class*="rounded"] {
+  border-radius: var(--radius) !important;
+}
+
+.freshness-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: var(--radius);
+  vertical-align: middle;
+}
+
+.freshness-dot--live { background: var(--accent-live); }
+.freshness-dot--closed { background: var(--accent-closed); }
+.freshness-dot--stale { background: var(--accent-stale); }
+
+.market-source {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  color: var(--ink-muted);
+}
+
+.freshness-legend {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.movement-marker {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius);
+}
+.movement-marker--positive { background: var(--pos); }
+.movement-marker--negative { background: var(--neg); }
+
+.live-quote-value.is-changing {
+  animation: live-value-fade 200ms ease-out;
+}
+
+@keyframes live-value-fade {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-quote-value { animation: none !important; }
+}
+
+.period-basis-note {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-page);
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Numerical figures in tables and cards stay aligned as data refreshes. */
+table,
+[data-testid*="tile"],
+.market-desk,
+.daily-brief,
+.daily-passport {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Normalize the shared market desk around the same tokens. */
+.market-desk {
+  border-color: var(--line) !important;
+  border-radius: var(--radius) !important;
+  background: var(--card-bg) !important;
+  color: var(--ink) !important;
+}
+.market-desk .market-desk__eyebrow,
+.market-desk .market-desk__muted {
+  color: var(--ink-muted);
+}
+
+/* Keep the summary surface solid; section-specific badge hues remain untouched. */
+.static-snapshot__chart,
+.minute-grid article,
+.desk-watchlist article {
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-card) !important;
+}

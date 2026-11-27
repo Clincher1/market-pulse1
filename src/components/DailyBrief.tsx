@@ -74,15 +74,15 @@ function formatSeriesValue(value: number, sample: string): string {
 function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode }) {
   const sourceUrl = item.sourceUrl ? safeHttpUrl(item.sourceUrl) : null;
   return (
-    <li className="flex flex-wrap items-start gap-2.5 rounded-xl px-2 py-2 text-sm leading-relaxed text-text-secondary transition-colors hover:bg-slate-50">
+    <li className="flex flex-wrap items-start gap-[var(--space-1)] rounded-xl px-[var(--space-1)] py-[var(--space-1)] text-sm leading-relaxed text-text-secondary transition-colors hover:bg-slate-50">
       {marker}
       <a
         href={item.href}
-        className="group flex min-h-11 min-w-0 flex-1 items-start gap-2 text-text-secondary hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+        className="group flex min-h-11 min-w-0 flex-1 items-start gap-[var(--space-1)] text-text-secondary hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
       >
         <span className="min-w-0 flex-1">{item.body}</span>
         <ArrowRight
-          className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-violet-800"
+          className="mt-[var(--space-1)] h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-violet-800"
           aria-hidden="true"
         />
       </a>
@@ -91,7 +91,7 @@ function BriefLinkItem({ item, marker }: { item: BriefItem; marker: ReactNode })
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 basis-full items-center gap-1 pl-6 text-xs sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="inline-flex min-h-11 basis-full items-center gap-[var(--space-1)] pl-[var(--space-3)] text-xs sm:basis-auto sm:pl-0 font-bold text-violet-800 hover:text-violet-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
           aria-label={`Открыть источник: ${item.sourceLabel ?? 'первоисточник'}`}
         >
           {item.sourceLabel ?? 'Источник'}
@@ -367,27 +367,27 @@ export default function DailyBrief() {
   const changesHeading = 'Сравнение с сохранённым снимком';
 
   const changesSection = (
-    <div data-testid="brief-changes" className="mt-5 border-t border-slate-200 pt-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <div data-testid="brief-changes" className="mt-[var(--space-3)] border-t border-slate-200 pt-[var(--space-2)]">
+      <div className="flex flex-wrap items-center gap-[var(--space-1)]">
         <History className="h-4 w-4 text-violet-800" aria-hidden="true" />
         <h3 className="text-sm font-extrabold tracking-tight">{changesHeading}</h3>
         {baselineStamp && (
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-[var(--space-1)] py-[var(--space-1)] text-[11px] font-bold tabular-nums text-text-secondary">
             точка отсчёта: {baselineStamp}
           </span>
         )}
       </div>
 
       {snapshotError ? (
-        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] px-[var(--space-1)] text-sm leading-relaxed text-text-secondary">
           Не удалось загрузить снимок дня, поэтому сравнение не показываем.
         </p>
       ) : !snapshot ? (
-        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] px-[var(--space-1)] text-sm leading-relaxed text-text-secondary">
           Снимок на сегодня ещё не записан; без сохранённой точки отсчёта сравнение не выполняется.
         </p>
       ) : changeView.comparable === 0 ? (
-        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] px-[var(--space-1)] text-sm leading-relaxed text-text-secondary">
           Нет сопоставимых актуальных значений для сравнения.
         </p>
       ) : changeView.items.length > 0 ? (
@@ -395,11 +395,11 @@ export default function DailyBrief() {
           {(['relative', 'points'] as const).map((kind) => {
             const items = changeView.items.filter((item) => item.deltaKind === kind);
             return items.length > 0 && (
-              <div key={kind} className="mt-3">
-                <h4 className="px-2 text-xs font-bold text-text-secondary">
+              <div key={kind} className="mt-[var(--space-2)]">
+                <h4 className="px-[var(--space-1)] text-xs font-bold text-text-secondary">
                   {kind === 'points' ? 'Ставки и доходности · п.п.' : 'Цены и курсы · %'}
                 </h4>
-                <ul className="mt-1.5 space-y-0.5">
+                <ul className="mt-[var(--space-1)] space-y-[var(--space-1)]">
                   {items.map((item) => <BriefLinkItem key={item.id} item={item}
                     marker={<span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-300" aria-hidden="true" />} />)}
                 </ul>
@@ -408,20 +408,20 @@ export default function DailyBrief() {
           })}
         </div>
       ) : (
-        <p className="mt-2 px-1 text-sm leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] px-[var(--space-1)] text-sm leading-relaxed text-text-secondary">
           В сопоставимых рядах изменение не отличается от нуля на точности вывода 0,01 % или 0,01 п.п. для ставок.
         </p>
       )}
 
       {snapshot && changeView.renamed.length > 0 && (
-        <p className="mt-2 px-1 text-xs leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] px-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
           Для {changeView.renamed.join(', ')} сравнение не выполняется: с момента снимка сменился
           инструмент или источник.
         </p>
       )}
 
       {snapshot && changeView.comparable > 0 && (
-        <p className="mt-2 px-1 text-xs leading-relaxed text-text-secondary">
+        <p className="mt-[var(--space-1)] px-[var(--space-1)] text-xs leading-relaxed text-text-secondary">
           Цены и курсы: (текущее значение / значение в снимке − 1) × 100 %.
           Ставки и доходности: текущее значение − значение в снимке, в процентных пунктах.
           Точность — 0,01 % или 0,01 п.п. В каждой группе — до шести наибольших по модулю
@@ -437,13 +437,13 @@ export default function DailyBrief() {
   );
 
   return (
-    <section id="brief" className="mb-10 scroll-mt-24 lg:mb-12" aria-label="Бриф за 60 секунд">
-      <SectionThemeBadge themeId="brief" className="mb-4" />
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+    <section id="brief" className="mb-[var(--space-5)] scroll-mt-[var(--space-6)] lg:mb-[var(--space-6)]" aria-label="Бриф за 60 секунд">
+      <SectionThemeBadge themeId="brief" className="mb-[var(--space-2)]" />
+      <div className="mb-[var(--space-2)] flex flex-wrap items-center gap-[var(--space-2)]">
         <Zap className="h-5 w-5 text-violet-800" aria-hidden="true" />
         <h2 className="text-lg font-extrabold tracking-tight lg:text-xl">Бриф за 60 секунд</h2>
         {stamp && (
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold tabular-nums text-text-secondary">
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-[var(--space-1)] py-[var(--space-1)] text-[11px] font-bold tabular-nums text-text-secondary">
             обновлено {stamp}
           </span>
         )}
@@ -453,23 +453,23 @@ export default function DailyBrief() {
           download="market-pulse-brief.png"
           title="Серверная PNG-карточка с актуальными цифрами, без параметров отслеживания"
           aria-label="Снимок для Telegram — скачать PNG брифа"
-          className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-3.5 py-2 text-xs font-extrabold text-violet-800 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
+          className="ml-auto inline-flex min-h-11 items-center gap-[var(--space-1)] rounded-full border border-violet-300/25 bg-violet-400/[0.08] px-[var(--space-2)] py-[var(--space-1)] text-xs font-extrabold text-violet-800 transition-colors hover:border-violet-300/60 hover:bg-violet-400/[0.14] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-300"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
           Снимок для Telegram
         </a>
       </div>
 
-      <div className="rounded-xl2 border border-violet-300/25 bg-bg-card p-4 shadow-lg shadow-violet-950/20 sm:p-5">
+      <div className="rounded-[var(--radius)] border border-violet-300/25 bg-bg-card p-[var(--space-2)] shadow-lg shadow-violet-950/20 sm:p-[var(--space-3)]">
         {loading ? (
           <div aria-busy="true" aria-label="Собираем бриф">
             <div className="h-5 w-56 animate-pulse rounded-sm bg-slate-50" />
-            <div className="mt-4 space-y-2.5">
+            <div className="mt-[var(--space-2)] space-y-[var(--space-1)]">
               <div className="h-4 animate-pulse rounded-sm bg-slate-50" />
               <div className="h-4 w-11/12 animate-pulse rounded-sm bg-slate-50" />
               <div className="h-4 w-4/5 animate-pulse rounded-sm bg-slate-50" />
             </div>
-            <p className="mt-4 text-xs text-text-secondary">
+            <p className="mt-[var(--space-2)] text-xs text-text-secondary">
               Загружаем рыночные значения и сохранённую точку сравнения…
             </p>
           </div>
@@ -486,13 +486,13 @@ export default function DailyBrief() {
             <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-text-secondary">
               Рыночные значения
             </h3>
-            <ol data-testid="brief-facts" className="mt-1.5 space-y-0.5">
+            <ol data-testid="brief-facts" className="mt-[var(--space-1)] space-y-[var(--space-1)]">
               {brief.map((item, index) => (
                 <BriefLinkItem
                   key={item.id}
                   item={item}
                   marker={
-                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-extrabold text-white">
+                    <span className="mt-[var(--space-1)] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-extrabold text-white">
                       {index + 1}
                     </span>
                   }
@@ -500,7 +500,7 @@ export default function DailyBrief() {
               ))}
             </ol>
             {changesSection}
-            <p className="mt-3.5 text-xs leading-relaxed text-text-secondary">
+            <p className="mt-[var(--space-2)] text-xs leading-relaxed text-text-secondary">
               Сводка показывает загруженные значения и арифметические сравнения с сохранённым
               снимком. Совпадение по времени не объясняет причину изменения; рекомендации не
               выдаются.

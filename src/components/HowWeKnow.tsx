@@ -49,20 +49,20 @@ const STEPS = [
 
 export default function HowWeKnow() {
   return (
-    <section aria-labelledby="how-we-know-title" className="mb-8 lg:mb-10">
+    <section aria-labelledby="how-we-know-title" className="mb-[var(--space-4)] lg:mb-[var(--space-5)]">
       <h2
         id="how-we-know-title"
         className="text-xs font-extrabold uppercase tracking-[0.14em] text-text-secondary"
       >
         Откуда мы знаем
       </h2>
-      <ol className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+      <ol className="mt-[var(--space-1)] grid gap-[var(--space-1)] md:grid-cols-2 xl:grid-cols-4">
         {STEPS.map((step, index) => (
           <li
             key={step.title}
-            className="flex flex-col rounded-xl border border-slate-200 bg-bg-card p-5"
+            className="flex flex-col rounded-xl border border-slate-200 bg-bg-card p-[var(--space-3)]"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-[var(--space-1)]">
               {/* Номер остаётся тёмным на мягкой акцентной подложке, чтобы
                   сохранить читаемость в светлой теме. */}
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent/15 text-xs font-extrabold tabular-nums text-text-primary">
@@ -71,10 +71,10 @@ export default function HowWeKnow() {
               <step.icon className="h-4 w-4 text-accent" aria-hidden="true" />
               <h3 className="text-sm font-extrabold text-text-primary">{step.title}</h3>
             </div>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-text-secondary">{step.text}</p>
+            <p className="mt-[var(--space-1)] flex-1 text-sm leading-relaxed text-text-secondary">{step.text}</p>
             <a
               href={step.href}
-              className="mt-2 inline-flex min-h-11 w-fit items-center gap-1 text-xs font-bold text-accent underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
+              className="mt-[var(--space-1)] inline-flex min-h-11 w-fit items-center gap-[var(--space-1)] text-xs font-bold text-accent underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
             >
               {step.link}
               <ArrowRight className="h-3 w-3" aria-hidden="true" />

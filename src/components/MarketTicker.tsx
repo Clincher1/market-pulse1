@@ -21,8 +21,8 @@ export default function MarketTicker() {
   const { assets, loading, fallbackAssetIds } = useLiveAssets();
 
   return (
-    <section aria-labelledby="market-strip-title" className="mb-8 lg:mb-10">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <section aria-labelledby="market-strip-title" className="mb-[var(--space-4)] lg:mb-[var(--space-5)]">
+      <div className="flex flex-wrap items-baseline gap-x-[var(--space-2)] gap-y-[var(--space-1)]">
         <h2
           id="market-strip-title"
           className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-text-secondary"
@@ -34,7 +34,7 @@ export default function MarketTicker() {
         </p>
       </div>
 
-      <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <ul className="mt-[var(--space-1)] grid grid-cols-2 gap-[var(--space-1)] sm:grid-cols-3 lg:grid-cols-5">
         {assets.slice(0, 5).map((asset) => {
           const missing = asset.price === '—';
           const isFallback = fallbackAssetIds.includes(asset.id);
@@ -54,14 +54,14 @@ export default function MarketTicker() {
           return (
             <li
               key={asset.id}
-              className="rounded-xl border border-border-subtle bg-bg-card px-3 py-2.5"
+              className="rounded-xl border border-border-subtle bg-bg-card px-[var(--space-2)] py-[var(--space-1)]"
             >
-              <div className="flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline justify-between gap-[var(--space-1)]">
                 <span className="truncate text-[11px] font-bold text-text-secondary">
                   {asset.name}
                 </span>
                 {!missing && change !== null && (
-                  <span className={`inline-flex shrink-0 items-center gap-0.5 text-[11px] font-extrabold tabular-nums ${changeClass}`}>
+                  <span className={`inline-flex shrink-0 items-center gap-[var(--space-1)] text-[11px] font-extrabold tabular-nums ${changeClass}`}>
                     <Icon className="h-3 w-3" aria-hidden="true" />
                     {/* Ноль не подписывается знаком: «0,00 %» — это «не изменилось»,
                         а не рост, и стрелка рядом с ним врала бы. */}
@@ -69,10 +69,10 @@ export default function MarketTicker() {
                   </span>
                 )}
               </div>
-              <div className="mt-0.5 truncate text-lg font-extrabold tabular-nums text-text-primary">
+              <div className="mt-[var(--space-1)] truncate text-lg font-extrabold tabular-nums text-text-primary">
                 {missing ? '—' : formatPriceText(asset.price)}
               </div>
-              <div className="mt-0.5 text-[11px] leading-tight text-text-secondary">
+              <div className="mt-[var(--space-1)] text-[11px] leading-tight text-text-secondary">
                 {loading && !missing ? 'проверяем источник…' : stamp || 'момент не указан'}
                 {isFallback && !missing ? ' · резервное значение' : ''}
               </div>
