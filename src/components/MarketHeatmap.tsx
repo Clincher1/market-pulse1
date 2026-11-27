@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ExternalLink,
   Globe,
@@ -52,26 +52,34 @@ const HORIZON_OPTIONS = [
 
 type HorizonId = (typeof HORIZON_OPTIONS)[number]["id"];
 type PaletteId = "standard" | "colorblind";
+type Rgb = [number, number, number];
 
 const PALETTE_STORAGE_KEY = "market-pulse-heatmap-palette";
+const TILE_NEUTRAL: Rgb = [255, 255, 255];
 
 /**
  * Две палитры направления. Стандартная — красно-зелёная; альтернативная
- * сине-оранжевая различается при дейтеранопии/протанопии. Цвет применяется
- * только к проценту и линиям графиков, не к заливке карточек.
+ * сине-оранжевая различается при дейтеранопии/протанопии. Знак также всегда
+ * продублирован числом и стрелкой, а светлая заливка оставляет текст читаемым.
  */
 const PALETTES: Record<
   PaletteId,
   {
+    tilePositive: Rgb;
+    tileNegative: Rgb;
     linePositive: string;
     lineNegative: string;
   }
 > = {
   standard: {
-    linePositive: "var(--pos)",
-    lineNegative: "var(--neg)",
+    tilePositive: [4, 120, 87],
+    tileNegative: [185, 28, 28],
+    linePositive: "#047857",
+    lineNegative: "#b91c1c",
   },
   colorblind: {
+    tilePositive: [3, 105, 161],
+    tileNegative: [194, 65, 12],
     linePositive: "#0369a1",
     lineNegative: "#c2410c",
   },
@@ -124,6 +132,19 @@ function horizonCap(assetId: string, intervals: number): number {
 
 function formatCap(cap: number): string {
   return formatCapPercent(cap);
+}
+
+function tileColor(change: number, cap: number, paletteId: PaletteId): string {
+  const palette = PALETTES[paletteId];
+  const intensity = Math.sqrt(Math.min(1, Math.abs(change) / Math.max(cap, 0.001)));
+  const target = change >= 0 ? palette.tilePositive : palette.tileNegative;
+  // Keep the tint light enough for dark, readable text while retaining the
+  // original heat-map encoding: stronger moves get a visibly richer color.
+  const amount = intensity * 0.55;
+  const color = TILE_NEUTRAL.map((channel, index) =>
+    Math.round(channel + (target[index] - channel) * amount),
+  );
+  return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
 function observationsWord(n: number): string {
@@ -385,9 +406,14 @@ function HeatTile({
         aria-expanded={isSelected}
         aria-controls="asset-panel"
         onClick={() => onSelect(asset.id)}
-        className={`flex min-h-[202px] w-full cursor-pointer flex-col rounded-xl border p-[var(--space-2)] text-left text-ink transition-colors duration-200 hover:border-ink-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink-muted ${
+        className={`heat-tile flex min-h-[202px] w-full min-w-0 cursor-pointer flex-col rounded-xl border p-[var(--space-2)] text-left text-ink transition-colors duration-200 hover:border-ink-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink-muted ${
           isSelected ? "border-ink ring-2 ring-ink-muted" : "border-line"
         }`}
+        style={{
+          "--heat-tile-bg": isFallback
+            ? "#F1F5F9"
+            : tileColor(change, cap, paletteId),
+        } as CSSProperties}
       >
         <div className="flex items-start justify-between gap-[var(--space-1)]">
           <span className="text-sm font-extrabold tracking-wide">
@@ -415,7 +441,7 @@ function HeatTile({
           </span>
         )}
 
-        <div className="mt-[var(--space-2)] text-4xl font-extrabold tabular-nums leading-none text-text-primary">
+        <div className="heat-tile__price mt-[var(--space-2)] min-w-0 max-w-full font-bold tabular-nums leading-tight text-text-primary">
           {isFallback ? "—" : <LiveQuoteValue assetId={asset.id} value={formatPriceText(asset.price)} />}
         </div>
 
@@ -1517,7 +1543,7 @@ export default function MarketHeatmap({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[var(--radius)] border border-cyan-200 bg-white/95 p-[var(--space-2)] shadow-sm sm:p-[var(--space-3)]">
+    <div className="market-heatmap relative overflow-hidden rounded-[var(--radius)] border border-cyan-200 bg-white/95 p-[var(--space-2)] shadow-sm sm:p-[var(--space-3)]">
       <div
         className="absolute inset-x-0 top-0 h-1"
         aria-hidden="true"
@@ -1600,7 +1626,7 @@ export default function MarketHeatmap({
         <SkeletonTiles />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-[var(--space-2)] sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-[var(--space-2)] min-[520px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
             {assets.map((asset) => (
               <HeatTile
                 key={asset.id}
@@ -1630,7 +1656,7 @@ export default function MarketHeatmap({
         <div className="flex flex-wrap items-center gap-[var(--space-2)] text-[11px] font-semibold text-text-secondary">
           <span className="inline-flex items-center gap-[var(--space-1)]"><span className="movement-marker movement-marker--negative" aria-hidden="true" />Снижение</span>
           <span className="inline-flex items-center gap-[var(--space-1)]"><span className="movement-marker movement-marker--positive" aria-hidden="true" />Рост</span>
-          <span>Насыщенность обозначена числом, не заливкой плитки.</span>
+          <span>Цвет показывает направление и силу изменения; процент — точное значение.</span>
         </div>
         <p className="freshness-legend">
           Точка перед источником: зелёная — live-котировка; серая — дневное закрытие; янтарная — дата отстаёт на день и более.

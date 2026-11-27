@@ -1231,3 +1231,51 @@ select optgroup {
     animation: none !important;
   }
 }
+
+/* Readability pass: lower excessive weights without flattening the hierarchy. */
+#root .font-extrabold,
+#root .font-black {
+  font-weight: 650 !important;
+}
+
+#root .font-bold {
+  font-weight: 600 !important;
+}
+
+#root .brand-wordmark {
+  font-weight: 760;
+}
+
+#root .brand-tagline {
+  font-weight: 650;
+}
+
+/* Restore the heatmap's color encoding on a pale surface; dark copy stays AA
+   readable and the printed percentage remains the precise measurement. */
+#root .market-heatmap .heat-tile,
+#root .market-heatmap .heat-tile:hover {
+  background-color: var(--heat-tile-bg, #FFFFFF) !important;
+  color: #172033 !important;
+}
+
+#root .market-heatmap .heat-tile:hover {
+  border-color: #52647B !important;
+}
+
+#root .market-heatmap .heat-tile[aria-expanded="true"] {
+  border: 2px solid #172033 !important;
+}
+
+#root .market-heatmap .heat-tile__price {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 650 !important;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  #root .desktop-navigation__mobile-link {
+    font-size: 0.74rem;
+    font-weight: 650;
+  }
+}
