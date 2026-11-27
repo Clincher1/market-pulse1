@@ -331,7 +331,7 @@ test('задержка: дневная дата Brent сверяется с по
   const brent = quoteLagVerdict({ id: 'brent', as_of: '2026-11-06' }, sunday);
   assert.equal(brent.ok, true);
   assert.equal(brent.open, false);
-  assert.match(brent.note, /содержит последнюю завершённую сессию/);
+  assert.match(brent.note, /дата дневной серии 2026-11-06 не старше ожидаемой сессии 2026-11-06/);
 });
 
 test('задержка: свежая котировка проходит, ряд без «сейчас» не проверяется', () => {
@@ -351,7 +351,7 @@ test('задержка: Brent проверяется по дате заверш�
   assert.equal(brentFriday.applicable, true);
   assert.equal(brentFriday.ok, true);
   assert.equal(brentFriday.allowedMinutes, null);
-  assert.match(brentFriday.note, /содержит последнюю завершённую сессию/);
+  assert.match(brentFriday.note, /дата дневной серии 2026-11-13 не старше ожидаемой сессии 2026-11-13/);
   assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-12' }, beforeClose).ok, false);
   assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-16' }, afterClose).ok, true);
   const holidaySeries = quoteLagVerdict(
@@ -359,12 +359,35 @@ test('задержка: Brent проверяется по дате заверш�
     new Date('2026-11-26T07:25:00Z'),
   );
   assert.equal(holidaySeries.ok, true, 'the latest date can be in progress if the expected completed session is present');
-  const holidayMissingExpected = quoteLagVerdict(
+  const holidayNewerDate = quoteLagVerdict(
     { id: 'brent', as_of: '2026-11-26', spark_dates: ['2026-11-26'] },
     new Date('2026-11-26T07:25:00Z'),
   );
-  assert.equal(holidayMissingExpected.ok, false, 'a current label alone cannot replace the missing completed session');
-  assert.equal(holidayMissingExpected.allowedMinutes, null);
+  assert.equal(holidayNewerDate.ok, true, 'a series dated on or after the expected session is not stale');
+  assert.equal(holidayNewerDate.allowedMinutes, null);
+
+  const friday1825 = new Date('2026-11-27T18:25:00Z');
+  const fridayExpectedBar = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-26', spark_dates: ['2026-11-26'] },
+    friday1825,
+  );
+  assert.equal(fridayExpectedBar.open, true);
+  assert.equal(fridayExpectedBar.ok, true, 'the expected Thursday session itself passes');
+
+  const fridayCurrentBar = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-27', spark_dates: ['2026-11-27'] },
+    friday1825,
+  );
+  assert.equal(fridayCurrentBar.open, true, 'Friday 18:25 UTC is still within the Brent trading session');
+  assert.equal(fridayCurrentBar.ok, true, 'the forming Friday bar is newer than Thursday’s expected completed session');
+  assert.match(fridayCurrentBar.note, /2026-11-27 не старше ожидаемой сессии 2026-11-26/);
+
+  const fridayStaleBar = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-25', spark_dates: ['2026-11-25'] },
+    friday1825,
+  );
+  assert.equal(fridayStaleBar.open, true);
+  assert.equal(fridayStaleBar.ok, false, 'a series older than the expected Thursday session still fails');
 
   const inProgressSeries = quoteLagVerdict(
     { id: 'brent', as_of: '2026-11-27', spark_dates: ['2026-11-26', '2026-11-27'] },
