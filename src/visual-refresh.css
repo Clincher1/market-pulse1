@@ -1,0 +1,562 @@
+/* A bright, crisp market surface: white cards, clear dividers, and saturated
+   blue/green/red signals without turning the whole page into a dark slab. */
+:root {
+  color-scheme: light;
+  --bg-page: #FAFAF7;
+  --ink: #172033;
+  --ink-muted: #45566C;
+  --ink-faint: #63748A;
+  --line: #9AAABF;
+  --card-bg: #FFFFFF;
+  --pos: #16C784;
+  --neg: #EA3943;
+  --accent-live: #16C784;
+  --accent-closed: #718096;
+  --accent-stale: #C17A00;
+  --shadow-card: 0 2px 10px rgb(34 56 89 / 0.08);
+  --color-bg-card-hover: #EDF3FC;
+  --color-accent: #1D4ED8;
+  --color-accent-strong: #1D4ED8;
+  --color-accent-strong-hover: #173EA9;
+  --color-positive: #087A52;
+  --color-negative: #C42332;
+  --color-text-primary: #172033;
+  --color-text-secondary: #45566C;
+  --color-text-muted: #45566C;
+  --color-ink: #172033;
+  --color-ink-muted: #45566C;
+  --color-line: #9AAABF;
+}
+
+html,
+body,
+.site-shell,
+#root {
+  min-height: 100%;
+  background: #FAFAF7 !important;
+  color: #172033;
+}
+
+body {
+  color: #172033 !important;
+  color-scheme: light;
+}
+
+select,
+select option,
+select optgroup {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  color: #172033;
+}
+
+::selection {
+  color: #10213B;
+  background: #B9D0FF;
+}
+
+#root :where(h1, h2, h3, h4, strong, b, th, caption) {
+  color: #172033;
+}
+
+#root :where(p, li, small, dt, dd, label, figcaption, .market-desk__muted,
+  .overview-hero__description, .overview-hero__note, .brand-tagline,
+  .freshness-legend, .period-basis-note, .static-snapshot__updated,
+  .static-snapshot__coverage, .static-snapshot__disclaimer) {
+  color: #45566C !important;
+}
+
+#root a,
+#root a:visited {
+  color: #1D4ED8;
+}
+
+#root a:hover {
+  color: #173EA9;
+}
+
+#root a.sr-only:focus {
+  color: #FFFFFF;
+}
+
+#root :where(.brand-tagline i) {
+  color: #1D4ED8;
+}
+
+#root :where(button, [role="button"], input, select, textarea) {
+  border: 1px solid #71839B;
+  background-color: #FFFFFF;
+  color: #172033;
+}
+
+#root :where(button, [role="button"], input, select, textarea):focus-visible,
+#root a:focus-visible,
+#root [tabindex="0"]:focus-visible {
+  outline: 3px solid #1D4ED8;
+  outline-offset: 3px;
+}
+
+#root :where(button, [role="button"]):hover {
+  border-color: #1D4ED8;
+  background-color: #EDF3FC;
+}
+
+/* Normalize old utility-class surfaces to light, lightly tinted panels. */
+#root [class*="bg-slate-50"],
+#root [class*="bg-gray-50"],
+#root [class*="bg-slate-100"],
+#root [class*="bg-gray-100"],
+#root [class*="bg-neutral-50"],
+#root [class*="bg-neutral-100"] {
+  background-color: #FAFAF7 !important;
+}
+
+#root [class*="bg-green-"],
+#root [class*="bg-emerald-"],
+#root [class*="bg-teal-"] {
+  background-color: #E4F8F0 !important;
+}
+
+#root [class*="bg-red-"],
+#root [class*="bg-rose-"] {
+  background-color: #FFF0F1 !important;
+}
+
+#root [class*="bg-blue-"],
+#root [class*="bg-indigo-"],
+#root [class*="bg-sky-"] {
+  background-color: #EAF1FF !important;
+}
+
+#root [class*="bg-amber-"],
+#root [class*="bg-yellow-"] {
+  background-color: #FFF6DF !important;
+}
+
+#root [class*="bg-violet-"],
+#root [class*="bg-purple-"] {
+  background-color: #F4EEFF !important;
+}
+
+#root [class*="border"] {
+  border-color: #9AAABF !important;
+}
+
+#root [class*="border-green-"],
+#root [class*="border-emerald-"],
+#root [class*="border-teal-"] {
+  border-color: #16A875 !important;
+}
+
+#root [class*="border-red-"],
+#root [class*="border-rose-"] {
+  border-color: #D92F3D !important;
+}
+
+#root [class*="text-slate-900"],
+#root [class*="text-slate-800"],
+#root [class*="text-gray-900"],
+#root [class*="text-gray-800"],
+#root [class*="text-neutral-900"],
+#root [class*="text-neutral-800"] {
+  color: #172033 !important;
+}
+
+#root [class*="text-slate-700"],
+#root [class*="text-slate-600"],
+#root [class*="text-slate-500"],
+#root [class*="text-slate-400"],
+#root [class*="text-gray-700"],
+#root [class*="text-gray-600"],
+#root [class*="text-gray-500"],
+#root [class*="text-gray-400"],
+#root [class*="text-neutral-700"],
+#root [class*="text-neutral-600"],
+#root [class*="text-neutral-500"],
+#root [class*="text-neutral-400"] {
+  color: #45566C !important;
+}
+
+#root [class*="text-blue-"],
+#root [class*="text-indigo-"],
+#root [class*="text-sky-"] {
+  color: #1D4ED8 !important;
+}
+
+#root [class*="text-green-"],
+#root [class*="text-emerald-"],
+#root [class*="text-teal-"] {
+  color: #087A52 !important;
+}
+
+#root [class*="text-red-"],
+#root [class*="text-rose-"] {
+  color: #C42332 !important;
+}
+
+#root [class*="text-amber-"],
+#root [class*="text-yellow-"] {
+  color: #8A5700 !important;
+}
+
+#root [class*="text-violet-"],
+#root [class*="text-purple-"] {
+  color: #6332A8 !important;
+}
+
+/* Clear surfaces throughout the dashboard, with 1px boundaries that read on a phone. */
+#root :where(.site-header, .site-header.is-scrolled, .desktop-navigation,
+  .desktop-navigation__menu, .desktop-navigation__menu-item,
+  .overview-hero, .page-signal-intro, .overview-topics,
+  .overview-topic-card, .overview-status-link, .market-desk,
+  .minute-grid article, .desk-watchlist article, .desk-empty,
+  .static-snapshot, .static-snapshot__chart, .daily-brief,
+  .daily-passport, .market-heatmap, .market-ticker, .trust-strip,
+  .system-status, .news-feed, .guide-teaser, .about-project,
+  .section-boundary, .site-footer__panel, [class*="__card"],
+  [class*="__panel"], [class*="-card"]) {
+  border-color: #9AAABF !important;
+  background-color: #FFFFFF !important;
+  color: #172033;
+  box-shadow: 0 2px 10px rgb(34 56 89 / 0.08) !important;
+}
+
+#root :where(.site-header, .site-header.is-scrolled) {
+  background-color: #FFFFFF !important;
+}
+
+#root :where(.overview-hero, .page-signal-intro, .market-desk,
+  .static-snapshot, .daily-brief, .daily-passport, .market-heatmap,
+  .section-boundary, [class*="__card"], [class*="__panel"], [class*="-card"]) {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 16px;
+}
+
+#root :where(.static-snapshot__chart, .minute-grid article,
+  .desk-watchlist article, .period-basis-note, .desk-empty) {
+  border: 1px solid #B5C2D2 !important;
+  background-color: #F8FAFD !important;
+  border-radius: 12px;
+}
+
+#root :where(table, th, td, .initial-document__snapshot) {
+  border-color: #A8B6C7 !important;
+}
+
+#root :where(th, td) {
+  border: 1px solid #A8B6C7;
+  color: #33445A;
+}
+
+#root :where(.static-snapshot__latest, .positive, .text-green-500,
+  .text-green-600, .text-emerald-500, .text-emerald-600,
+  [data-change="positive"], [class*="positive"], [class*="is-up"]) {
+  color: #087A52 !important;
+}
+
+#root :where(.negative, .text-red-500, .text-red-600, .text-rose-500,
+  .text-rose-600, [data-change="negative"], [class*="negative"], [class*="is-down"]) {
+  color: #C42332 !important;
+}
+
+#root :where(.overview-hero__title, .overview-hero__title span,
+  .brand-wordmark, .brand-wordmark--footer) {
+  color: #172A49 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+#root :where(.overview-hero) {
+  border-color: #A8BEDF !important;
+  background-color: #F7FAFF !important;
+}
+
+#root :where(.overview-hero__backdrop, .overview-hero__backdrop::before,
+  .overview-hero__backdrop::after) {
+  background-color: #EFF5FF !important;
+}
+
+#root :where(.overview-hero__description, .overview-hero__note,
+  .overview-hero__eyebrow-subtitle) {
+  color: #45566C !important;
+}
+
+#root :where(.overview-hero__eyebrow) {
+  border-color: #9BD8BF !important;
+  color: #155B47 !important;
+  background-color: #E6F8F0 !important;
+}
+
+#root :where(.overview-hero__eyebrow-mark) {
+  color: #FFFFFF !important;
+  background-color: #087A52 !important;
+}
+
+#root :where(.overview-hero__eyebrow-divider) {
+  background-color: #A8B6C7 !important;
+}
+
+#root :where(.overview-hero__note-mark) {
+  color: #1D4ED8 !important;
+  background-color: #EAF1FF !important;
+}
+
+#root :where(.overview-hero__primary-action) {
+  min-height: 48px;
+  border: 1px solid #1D4ED8 !important;
+  color: #FFFFFF !important;
+  background-color: #2452CC !important;
+}
+
+#root :where(.overview-hero__secondary-action) {
+  min-height: 48px;
+  border: 1px solid #8EA4C2 !important;
+  color: #1D3760 !important;
+  background-color: #FFFFFF !important;
+}
+
+#root :where(.desktop-navigation__link) {
+  min-height: 44px;
+  border-color: #B5C2D2 !important;
+  color: #33445A !important;
+  background-color: #FFFFFF !important;
+}
+
+#root :where(.desktop-navigation__link.is-active,
+  .desktop-navigation__more-trigger) {
+  border-color: #7FA4E8 !important;
+  color: #1748B8 !important;
+  background-color: #EAF1FF !important;
+}
+
+#root :where(.desktop-navigation__active-bg) {
+  border: 1px solid #B9CDF4 !important;
+  background-color: #EAF1FF !important;
+}
+
+/* The mobile rail's fade used to stay white even when the rest of the theme
+   changed; keep it aligned to the actual light navigation surface. */
+#root .desktop-navigation__scroll-wrap::after {
+  background-color: #FFFFFF !important;
+  background-image: linear-gradient(90deg, rgb(255 255 255 / 0), #FFFFFF 92%) !important;
+}
+
+#root :where(.pulse-orbit__center, .pulse-orbit__center-halo) {
+  border-color: #A9C1E5 !important;
+  background-color: #E8F0FF !important;
+}
+
+#root :where(.pulse-orbit__center-label, .pulse-orbit__link-title,
+  .pulse-orbit__link, .pulse-orbit__link-icon, .pulse-orbit__link-arrow) {
+  color: #1D4ED8 !important;
+}
+
+#root :where(.pulse-orbit__center-caption, .pulse-orbit__link-detail,
+  .pulse-orbit__micro-label) {
+  color: #45566C !important;
+}
+
+#root :where(.pulse-orbit__status) {
+  border-color: #B6C8E4 !important;
+  color: #26456F !important;
+  background-color: #EDF3FF !important;
+}
+
+#root :where(.pulse-orbit__link) {
+  border-color: #B6C8E4 !important;
+  background-color: #FFFFFF !important;
+}
+
+#root :where(.static-snapshot__chart img) {
+  border: 1px solid #C6D0DE;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+}
+
+#root :where(.page-signal-intro__path-label) {
+  color: #33445A !important;
+}
+
+#root :where(.freshness-dot--live, .movement-marker--positive) {
+  background-color: #16C784 !important;
+}
+
+#root :where(.freshness-dot--stale) {
+  background-color: #E4A11B !important;
+}
+
+#root :where(.freshness-dot--closed) {
+  background-color: #718096 !important;
+}
+
+#root :where(.movement-marker--negative) {
+  background-color: #EA3943 !important;
+}
+
+#root svg.lucide {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 1.8 !important;
+  flex-shrink: 0;
+}
+
+#root :where(.site-header, .static-snapshot, .market-desk, .overview-hero,
+  .page-signal-intro, .daily-brief, .daily-passport, .overview-topic-card) {
+  border-radius: 16px;
+}
+
+/* Touch controls are explicit boxes; inline prose links retain natural wrapping. */
+#root :where(.site-header button, .site-header__mobile-toggle,
+  .site-header__mobile-link, .desktop-navigation__link,
+  .overview-hero__primary-action, .overview-hero__secondary-action,
+  .market-desk button, .market-desk select, .market-desk a,
+  .static-snapshot nav a) {
+  min-height: 44px;
+}
+
+@media (max-width: 760px) {
+  :root { --layout-gutter: 16px; }
+
+  html,
+  body,
+  #root,
+  .site-shell,
+  .site-shell > main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  #root :where(main, .site-container, .dashboard-section-container,
+    .overview-hero, .overview-topics, .static-snapshot, .section-boundary,
+    .market-desk, .daily-brief, .daily-passport) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  #root :where(img, video, canvas) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  #root :where(.overview-hero) {
+    overflow: clip;
+  }
+
+  #root :where(.overview-hero__visual) {
+    width: 100%;
+    min-width: 0;
+    margin: 12px 0 0 !important;
+    overflow: hidden;
+  }
+
+  #root :where(.pulse-orbit) {
+    display: grid;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    aspect-ratio: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    overflow: hidden;
+    padding: 12px;
+    border: 1px solid #B6C8E4;
+    border-radius: 12px;
+    background: #F7FAFF;
+  }
+
+  #root :where(.pulse-orbit__aura, .pulse-orbit__mesh,
+    .pulse-orbit__mobile-scene, .pulse-orbit__chart,
+    .pulse-orbit__center, .pulse-orbit__micro-label) {
+    display: none !important;
+  }
+
+  #root :where(.pulse-orbit__status) {
+    position: static;
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: center;
+    min-width: 0;
+    margin: 0 0 4px;
+    padding: 4px 8px;
+    border: 0 !important;
+    color: #33445A !important;
+    background: transparent !important;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    white-space: normal;
+    transform: none;
+  }
+
+  #root :where(.pulse-orbit__status-divider) {
+    display: block;
+    height: 12px;
+    background: #A8B6C7;
+  }
+
+  #root :where(.pulse-orbit__link) {
+    position: static;
+    display: flex;
+    width: auto;
+    min-width: 0;
+    min-height: 64px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border: 1px solid #B6C8E4 !important;
+    border-radius: 10px;
+    color: #1D4ED8 !important;
+    background: #FFFFFF !important;
+    text-align: center;
+    text-shadow: none;
+    transform: none !important;
+  }
+
+  #root :where(.pulse-orbit__link-icon) {
+    width: 20px;
+    height: 20px;
+    color: #1D4ED8 !important;
+  }
+
+  #root :where(.pulse-orbit__link-copy) {
+    min-width: 0;
+  }
+
+  #root :where(.pulse-orbit__link-title) {
+    color: #1D3760 !important;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  #root :where(.pulse-orbit__link-detail, .pulse-orbit__link-arrow) {
+    display: none !important;
+  }
+
+  #root :where(.static-snapshot, .market-desk, .daily-brief, .daily-passport) {
+    padding: 16px;
+  }
+
+  #root :where(.static-snapshot__charts) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #root :where(.static-snapshot__chart) {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  #root :where(.static-snapshot__chart figcaption, .static-snapshot__coverage,
+    .static-snapshot__disclaimer, .static-snapshot__updated) {
+    font-size: 0.875rem;
+  }
+
+  #root .desktop-navigation__scroll-wrap::after {
+    display: none !important;
+  }
+
+  #root :where(.site-header__inner) {
+    min-height: 64px;
+  }
+}
