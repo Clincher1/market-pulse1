@@ -132,7 +132,7 @@ function MarketTile({ indicator }: { indicator: RussiaMarketIndicator }) {
         <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-800" />
       </div>
       <div className="mt-[var(--space-2)] flex flex-wrap items-baseline gap-x-[var(--space-1)] gap-y-[var(--space-1)]">
-        <span className="text-4xl font-extrabold tabular-nums text-text-primary">
+        <span className="text-2xl font-extrabold tabular-nums text-text-primary sm:text-3xl lg:text-4xl">
           {formatIndicatorValue(indicator)}
         </span>
         <span className="text-xs font-semibold text-text-secondary">{indicator.unit}</span>
