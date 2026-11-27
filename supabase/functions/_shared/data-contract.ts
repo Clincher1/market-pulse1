@@ -528,7 +528,7 @@ function latestCompletedBrentSessionDate(now: Date): string {
  * У S&P 500 и ECB внутридневной котировки нет, поэтому проверка неприменима.
  */
 export function quoteLagVerdict(
-  row: { id: string; as_of?: string | null },
+  row: { id: string; as_of?: string | null; spark_dates?: unknown },
   now: Date,
 ): LagVerdict {
   const contract = contractFor(row.id);
@@ -540,26 +540,12 @@ export function quoteLagVerdict(
     const dateOnly = DATE_ONLY.test(asOf) || UTC_MIDNIGHT.test(asOf);
     if (dateOnly) {
       const observed = (DATE_ONLY.exec(asOf) ?? UTC_MIDNIGHT.exec(asOf))?.[1] ?? '';
-      const parsedDate = Date.parse(`${observed}T00:00:00.000Z`);
-      const validDate = /^\d{4}-\d{2}-\d{2}$/.test(observed)
-        && Number.isFinite(parsedDate)
-        && new Date(parsedDate).toISOString().slice(0, 10) === observed;
-      const fields = brentNewYorkParts(now);
-      const today = `${fields.year}-${fields.month}-${fields.day}`;
-      const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
-      const candidates = new Set([latestCompletedBrentSessionDate(now)]);
-      // A date-only bar may be labelled for the current weekday before the
-      // exchange close (and on exchange holidays); it is not a quote timestamp.
-      if (weekday >= 1 && weekday <= 5) candidates.add(today);
-      if (weekday === 0 && Number(fields.hour) >= 18) {
-        let nextDay = new Date(Date.parse(`${today}T12:00:00Z`) + DAY * 60_000).toISOString().slice(0, 10);
-        while ([0, 6].includes(new Date(`${nextDay}T12:00:00Z`).getUTCDay())) {
-          nextDay = new Date(Date.parse(`${nextDay}T12:00:00Z`) + DAY * 60_000).toISOString().slice(0, 10);
-        }
-        candidates.add(nextDay);
-      }
+      const expected = latestCompletedBrentSessionDate(now);
       const open = isTradingOpen(contract, now);
-      const ok = validDate && candidates.has(observed);
+      const seriesDates = Array.isArray(row.spark_dates) ? row.spark_dates : [observed];
+      // A newer in-progress label is not stale when the series also contains
+      // the last completed session. Fail only when that expected date is absent.
+      const ok = seriesDates.some((date) => typeof date === 'string' && date === expected);
       return {
         id: contract.id,
         applicable: true,
@@ -568,8 +554,8 @@ export function quoteLagVerdict(
         ageMinutes: asOfAgeMinutes(row.as_of, now, contract.dateOnlyAsOfTime),
         allowedMinutes: null,
         note: ok
-          ? `${contract.id}: дата дневной серии ${observed} совпадает с текущей или последней завершённой сессией`
-          : `${contract.id}: дата дневной серии ${observed || 'не указана'}, ожидалась текущая или последняя завершённая сессия ${[...candidates].join('/')}`,
+          ? `${contract.id}: дневная серия содержит последнюю завершённую сессию ${expected}`
+          : `${contract.id}: дата дневной серии ${observed || 'не указана'}, ожидалась сессия ${expected}`,
       };
     }
   }
