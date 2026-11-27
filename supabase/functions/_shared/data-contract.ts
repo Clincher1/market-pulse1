@@ -543,9 +543,14 @@ export function quoteLagVerdict(
       const expected = latestCompletedBrentSessionDate(now);
       const open = isTradingOpen(contract, now);
       const seriesDates = Array.isArray(row.spark_dates) ? row.spark_dates : [observed];
-      // A newer in-progress label is not stale when the series also contains
-      // the last completed session. Fail only when that expected date is absent.
-      const ok = seriesDates.some((date) => typeof date === 'string' && date === expected);
+      const validSeriesDates = seriesDates.filter(
+        (date): date is string => typeof date === 'string' && DATE_ONLY.test(date),
+      );
+      const latestSeriesDate = [...validSeriesDates].sort().at(-1) ?? '';
+      // A date-only daily bar may be for today's still-forming session. Accept
+      // it (or the completed session itself); flag only a series behind the
+      // latest completed session so genuine data lag remains visible.
+      const ok = latestSeriesDate !== '' && latestSeriesDate >= expected;
       return {
         id: contract.id,
         applicable: true,
@@ -554,8 +559,8 @@ export function quoteLagVerdict(
         ageMinutes: asOfAgeMinutes(row.as_of, now, contract.dateOnlyAsOfTime),
         allowedMinutes: null,
         note: ok
-          ? `${contract.id}: дневная серия содержит последнюю завершённую сессию ${expected}`
-          : `${contract.id}: дата дневной серии ${observed || 'не указана'}, ожидалась сессия ${expected}`,
+          ? `${contract.id}: дата дневной серии ${latestSeriesDate} не старше ожидаемой сессии ${expected}`
+          : `${contract.id}: дата дневной серии ${latestSeriesDate || observed || 'не указана'}, ожидалась сессия ${expected}`,
       };
     }
   }
