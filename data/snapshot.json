@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "exportedAt": "2026-11-27T09:37:25.505912Z",
+  "exportedAt": "2026-11-27T12:17:22.890496Z",
   "items": [
     {
       "ticker": "BZ=F",
@@ -29,9 +29,9 @@
     {
       "ticker": "XAU",
       "instrument": "Золото, спот XAU/USD",
-      "value": "3678.3500980000",
+      "value": "3669.1000980000",
       "unit": "USD за тройскую унцию",
-      "observedAt": "2026-11-27T09:34:50.000000Z",
+      "observedAt": "2026-11-27T12:09:50.000000Z",
       "basis": "Последнее сохранённое наблюдение gold-api.com за UTC-сутки; не официальный close. Время наблюдения взято из price_timestamp в Supabase. Точность числа сохранена из базы.",
       "source": {
         "name": "gold-api.com",
@@ -99,9 +99,9 @@
       },
       {
         "observedAt": "2026-11-27",
-        "value": "3678.3500980000"
+        "value": "3669.1000980000"
       }
     ]
   },
-  "lastSuccessfulHeartbeatAt": "2026-11-27T09:37:27.383Z"
+  "lastSuccessfulHeartbeatAt": "2026-11-27T12:18:24.780Z"
 }
