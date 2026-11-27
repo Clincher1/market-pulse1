@@ -51,9 +51,48 @@ test('Better Stack heartbeat reports missing configuration without making a requ
   assert.match(logs[0], /BETTERSTACK_HEARTBEAT_URL is not configured/);
 });
 
-test('Better Stack rejects non-HTTPS or foreign endpoints before sending', async () => {
-  assert.throws(() => redactBetterStackUrl('http://uptime.betterstack.com/api/v1/heartbeat/token'));
-  assert.throws(() => redactBetterStackUrl('https://example.com/api/v1/heartbeat/token'));
+test('Better Stack accepts both approved hosts and masks their heartbeat tokens', () => {
+  for (const host of ['incidents.betterstack.com', 'uptime.betterstack.com']) {
+    const safeUrl = redactBetterStackUrl(`https://${host}/api/v1/heartbeat/private-token`);
+    assert.equal(safeUrl, `https://${host}/api/v1/heartbeat/[REDACTED]`);
+    assert.doesNotMatch(safeUrl, /private-token/);
+  }
+});
+
+test('Better Stack incidents endpoint sends a real GET after validation', async () => {
+  const url = 'https://incidents.betterstack.com/api/v1/heartbeat/incidents-secret-token';
+  const logs = [];
+  let request;
+  const result = await sendBetterStackHeartbeat({
+    url,
+    fetchImpl: async (...args) => { request = args; return { ok: true, status: 200 }; },
+    now: () => new Date('2026-11-27T08:15:00.000Z'),
+    logger: line => logs.push(line),
+    outputFile: '',
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.status, 200);
+  assert.equal(request[0], url);
+  assert.equal(request[1].method, 'GET');
+  assert.ok(logs.every(line => !line.includes('incidents-secret-token')));
+  assert.ok(logs.some(line => line.includes('https://incidents.betterstack.com/api/v1/heartbeat/[REDACTED]')));
+});
+
+test('Better Stack rejects non-HTTPS, foreign hosts, or malformed heartbeat paths before sending', () => {
+  const invalidUrls = [
+    'http://uptime.betterstack.com/api/v1/heartbeat/token',
+    'https://example.com/api/v1/heartbeat/token',
+    'https://sub.uptime.betterstack.com/api/v1/heartbeat/token',
+    'https://incidents.betterstack.com/api/v1/heartbeat',
+    'https://uptime.betterstack.com/heartbeat/token',
+    'https://uptime.betterstack.com/api/v1/heartbeat/',
+    'https://incidents.betterstack.com/api/v1/heartbeat/token/extra',
+    'https://incidents.betterstack.com/api/v1/heartbeat/token/',
+    'https://uptime.betterstack.com/api/v1/heartbeat/token%2Fextra',
+    'https://incidents.betterstack.com:8443/api/v1/heartbeat/token',
+    'https://user:password@incidents.betterstack.com/api/v1/heartbeat/token',
+  ];
+  for (const url of invalidUrls) assert.throws(() => redactBetterStackUrl(url), url);
 });
 
 test('Better Stack CLI exits unsuccessfully and emits a safe annotation when its secret is absent', () => {
