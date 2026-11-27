@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -91,6 +91,23 @@ test('S&P 500 freshness follows the latest completed New York session', () => {
   }, new Date('2026-11-25T22:00:00.000Z'));
   assert.equal(stale.status, 'stale');
   assert.equal(stale.expectedSessionDate, '2026-11-25');
+});
+
+test('Thanksgiving and the 2026 post-holiday early close select only real S&P sessions', () => {
+  const beforeEarlyClose = new Date('2026-11-27T06:28:00.000Z'); // 01:28 EST; Thanksgiving was closed
+  assert.equal(latestCompletedNySessionDate(beforeEarlyClose), '2026-11-25');
+  const thanksgivingData = evaluateAsset('sp500', {
+    price: 6800,
+    as_of: '2026-11-25',
+    updated_at: '2026-11-27T06:00:00.000Z',
+  }, beforeEarlyClose);
+  assert.equal(thanksgivingData.status, 'ok');
+  assert.equal(thanksgivingData.expectedSessionDate, '2026-11-25');
+
+  assert.equal(latestCompletedNySessionDate(new Date('2026-11-27T17:59:00.000Z')), '2026-11-25',
+    'the shortened Friday session is still in progress before 13:00 EST');
+  assert.equal(latestCompletedNySessionDate(new Date('2026-11-27T18:01:00.000Z')), '2026-11-27',
+    'the shortened Friday session is complete after 13:00 EST');
 });
 
 test('Moscow hour helper returns the hour for the digest timezone', () => {
@@ -198,6 +215,16 @@ test('NYSE early-close sessions are complete from 13:00 local time', () => {
   assert.equal(latestCompletedNySessionDate(new Date('2025-12-24T18:01:00.000Z')), '2025-12-24');
 });
 
+test('selfcheck counter counts cron health results separately from runner cron-job outcomes', async () => {
+  const migration = await readFile(new URL('../supabase/migrations/20261127070000_monitor_selfcheck_counts.sql', import.meta.url), 'utf8');
+  assert.match(migration, /from public\.site_health h/);
+  assert.match(migration, /h\.trigger = 'cron'/);
+  assert.match(migration, /h\.checked_at >= p_since/);
+  assert.match(migration, /where h\.ok is true/);
+  assert.match(migration, /where h\.ok is false/);
+  assert.match(migration, /grant execute on function public\.monitor_selfcheck_counts\(timestamptz\) to service_role/);
+});
+
 test('digest gate uses Moscow time and date, retries pending same-day rows, and skips sent rows', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'scheduled-job-runner-'));
   const bundle = join(directory, 'index.mjs');
@@ -285,6 +312,9 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
       countCalls++;
       return Response.json([{ succeeded: 3, failed: 0 }]);
     }
+    if (url.pathname.endsWith('/rpc/monitor_selfcheck_counts')) {
+      return Response.json([{ succeeded: 14, failed: 2 }]);
+    }
     throw new Error(`Unexpected REST route: ${url.pathname}`);
   });
 
@@ -299,6 +329,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     const beforeDigestHour = await handler(request());
     assert.equal(beforeDigestHour.status, 200);
     assert.deepEqual(await beforeDigestHour.json(), { status: 'fresh' });
+    assert.deepEqual(healthcheckPings, ['/fixture-id'], 'every successful scheduled invocation pings, even before digest hour');
     assert.deepEqual(digestAttempts[0], {
       attempted_at: '2026-11-25T21:12:00.000Z',
       outcome: 'skipped',
@@ -324,7 +355,9 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.equal(historyUpdates[0].payload.freshness.brent, 'ok');
     assert.equal(digestAttempts[1].outcome, 'sent', 'successful Telegram delivery is recorded');
     assert.equal(digestAttempts[1].reason, null);
-    assert.deepEqual(healthcheckPings, ['/fixture-id'], 'success ping follows a fresh-data digest delivery');
+    assert.deepEqual(healthcheckPings, ['/fixture-id', '/fixture-id'], 'successful digest delivery adds its run ping');
+    assert.match(telegramMessages[0], /Самопроверка: 14 успешных запусков, 2 с ошибками за 24ч/,
+      'the digest separately counts red selfcheck runs rather than only scheduled-job-runner errors');
 
     historyStatus = 'pending';
     nowMs = NativeDate.parse('2026-11-26T07:12:00.000Z'); // 10:12 MSK; next hourly retry
@@ -333,7 +366,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.deepEqual(await retryResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
     assert.equal(telegramMessages.length, 2, 'a pending row is retried on the next hourly run that same MSK day');
     assert.equal(digestAttempts[2].outcome, 'sent', 'a successful retry is recorded as sent');
-    assert.deepEqual(healthcheckPings, ['/fixture-id', '/fixture-id']);
+    assert.deepEqual(healthcheckPings, ['/fixture-id', '/fixture-id', '/fixture-id']);
 
     nowMs = NativeDate.parse('2026-11-26T08:12:00.000Z'); // 11:12 MSK
     const sentResponse = await handler(request());
@@ -341,6 +374,8 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.deepEqual(await sentResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
     assert.equal(telegramMessages.length, 2, 'sent history must not be delivered twice');
     assert.equal(countCalls, 2, 'sent history returns before another previous-digest read/count');
+    assert.deepEqual(healthcheckPings, ['/fixture-id', '/fixture-id', '/fixture-id', '/fixture-id'],
+      'an already-sent digest does not suppress the successful runner heartbeat');
     assert.deepEqual(
       [digestAttempts[3].outcome, digestAttempts[3].reason],
       ['skipped', 'daily_digest_already_sent'],
@@ -357,7 +392,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.equal(telegramMessages.length, 2, 'timestamp validation failure must not send an alert or digest');
     assert.equal(digestAttempts[4].outcome, 'skipped', 'asset validation failures count as skipped digest attempts');
     assert.match(digestAttempts[4].reason, /http_503: Invalid sp500 as_of/);
-    assert.equal(healthcheckPings.length, 2, 'invalid source data is not reported as an infrastructure /fail');
+    assert.equal(healthcheckPings.length, 4, 'invalid source data returns 503 and does not add a success or /fail ping');
 
     failCachedAssets = true;
     const databaseFailure = await handler(request());
@@ -366,7 +401,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     healthcheckUrl = '';
     const databaseFailureWithoutMonitor = await handler(request());
     assert.equal(databaseFailureWithoutMonitor.status, 500);
-    assert.equal(healthcheckPings.length, 3, 'an unset optional URL is silently skipped');
+    assert.equal(healthcheckPings.length, 5, 'an unset optional URL is silently skipped');
   } finally {
     delete globalThis.__scheduledJobRunnerHandler;
     if (previousDeno === undefined) delete globalThis.Deno;

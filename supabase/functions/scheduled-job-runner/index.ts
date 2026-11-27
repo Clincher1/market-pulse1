@@ -258,6 +258,7 @@ function digestText(
   verdicts: Record<AssetId, Verdict>,
   previousPayload: AnyRecord | null,
   runCounts: { succeeded: number; failed: number },
+  selfcheckCounts: { succeeded: number; failed: number },
 ): { text: string; changes: Record<AssetId, number | null>; warnings: string[] } {
   const previousAssets = previousPayload?.assets as Record<string, { price?: number }> | undefined;
   const hasYesterday = previousPayload !== null;
@@ -273,7 +274,8 @@ function digestText(
     `• S&P 500: ${formattedPrice(rows.sp500)}${formattedChange(changes.sp500) ? ` (${formattedChange(changes.sp500)})` : ""} (закрытие ${formattedDate(verdicts.sp500.asOf)})`,
     `• Золото: ${formattedPrice(rows.gold)}${formattedChange(changes.gold) ? ` (${formattedChange(changes.gold)})` : ""}`,
     freshnessText(verdicts),
-    `Монитор: ${runCounts.succeeded} ок, ${runCounts.failed} сбоев за 24ч.`,
+    `Планировщик дайджеста: ${runCounts.succeeded} ок, ${runCounts.failed} сбоев за 24ч.`,
+    `Самопроверка: ${selfcheckCounts.succeeded} успешных запусков, ${selfcheckCounts.failed} с ошибками за 24ч.`,
   ];
   if (!hasYesterday) lines.push("первый отчёт — сравнение за 24ч появится завтра");
 
@@ -302,15 +304,23 @@ async function runDailyDigest(
 
   const previousRows = await restJson(previousDigestQuery(today)) as Array<{ payload?: AnyRecord }>;
   const previousPayload = previousRows[0]?.payload ?? null;
-  const counts = await restJson("rpc/monitor_cron_counts", {
+  const countQuery = {
     method: "POST",
     body: JSON.stringify({ p_since: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString() }),
-  }) as Array<{ succeeded?: number; failed?: number }>;
-  const runCounts = {
-    succeeded: Number(counts[0]?.succeeded ?? 0),
-    failed: Number(counts[0]?.failed ?? 0),
   };
-  const digest = digestText(today, rows, verdicts, previousPayload, runCounts);
+  const [scheduledRows, selfcheckRows] = await Promise.all([
+    restJson("rpc/monitor_cron_counts", countQuery) as Promise<Array<{ succeeded?: number; failed?: number }>>,
+    restJson("rpc/monitor_selfcheck_counts", countQuery) as Promise<Array<{ succeeded?: number; failed?: number }>>,
+  ]);
+  const runCounts = {
+    succeeded: Number(scheduledRows[0]?.succeeded ?? 0),
+    failed: Number(scheduledRows[0]?.failed ?? 0),
+  };
+  const selfcheckCounts = {
+    succeeded: Number(selfcheckRows[0]?.succeeded ?? 0),
+    failed: Number(selfcheckRows[0]?.failed ?? 0),
+  };
+  const digest = digestText(today, rows, verdicts, previousPayload, runCounts, selfcheckCounts);
   const payload = {
     digest_date: today,
     assets: Object.fromEntries(ASSET_IDS.map((id) => [id, {
@@ -330,7 +340,10 @@ async function runDailyDigest(
     }])),
     overall_status: overallVerdict(verdicts),
     freshness: Object.fromEntries(ASSET_IDS.map((id) => [id, verdicts[id].status])),
-    monitor_runs_24h: runCounts,
+    monitor_runs_24h: {
+      scheduled_job_runner: runCounts,
+      selfcheck: selfcheckCounts,
+    },
     warnings: digest.warnings,
   };
 
@@ -426,14 +439,15 @@ Deno.serve(async (req) => {
         delivery === "sent" ? "sent" : "skipped",
         delivery === "sent" ? null : "daily_digest_already_sent",
       );
-      if (delivery === "sent" && overallVerdict(verdicts) === "ok") {
-        await pingHealthcheck("success");
-      }
+      // The monitor tracks successful runner executions, including an already-sent
+      // digest retry and a run that completed while reporting stale market data.
+      await pingHealthcheck("success");
       return json({ status: "digest_sent", overall_status: overallVerdict(verdicts) });
     }
 
     if (overallVerdict(verdicts) === "ok") {
       await finishAttempt("skipped", "digest_window_not_open");
+      await pingHealthcheck("success");
       return json({ status: "fresh" });
     }
 
