@@ -276,6 +276,26 @@ jobs:
             exit "$code"
           fi
 
+      - name: Send Better Stack heartbeat after scheduled refresh
+        id: betterstack_heartbeat
+        if: success() && github.event_name == 'schedule'
+        env:
+          BETTERSTACK_HEARTBEAT_URL: ${{ secrets.BETTERSTACK_HEARTBEAT_URL }}
+        run: node scripts/send-betterstack-heartbeat.mjs
+
+      - name: Notify Telegram on successful snapshot update
+        if: success()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BETTERSTACK_RESULT: ${{ steps.betterstack_heartbeat.outputs.result }}
+        shell: bash
+        run: |
+          timestamp="$(TZ=Europe/Moscow date '+%Y-%m-%d %H:%M MSK')"
+          heartbeat_result="${BETTERSTACK_RESULT:-not sent for workflow_dispatch}"
+          message="✅ Static snapshot job finished successfully — ${timestamp}. Snapshot validation, tests, type checks and build passed. Better Stack heartbeat: ${heartbeat_result}. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          node scripts/send-telegram.js "$message"
+
       - name: Notify Telegram if snapshot update failed
         if: failure()
         continue-on-error: true
