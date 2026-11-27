@@ -57,7 +57,28 @@ jobs:
       # may trigger downstream Actions and the Vercel Git integration.
       - name: Test repository
         id: test_repository
-        run: npm test
+        shell: bash
+        run: |
+          set -uo pipefail
+          log_file="$RUNNER_TEMP/npm-test.log"
+          set +e
+          npm test 2>&1 | tee "$log_file"
+          test_status=${PIPESTATUS[0]}
+          set -e
+          failed_tests="$(grep -E '^not ok [0-9]+ - ' "$log_file" | sed -E 's/^not ok [0-9]+ - //' | paste -sd '; ' - || true)"
+          if [[ -z "$failed_tests" && "$test_status" -ne 0 ]]; then
+            failed_tests='No TAP test names captured; inspect the run log.'
+          fi
+          if [[ -n "$failed_tests" ]]; then
+            echo '### Failed repository tests' >> "$GITHUB_STEP_SUMMARY"
+            while IFS= read -r test_name; do printf -- '- %s\n' "${test_name# }"; done < <(printf '%s\n' "$failed_tests" | tr ';' '\n') >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '### Repository tests' >> "$GITHUB_STEP_SUMMARY"
+            echo 'All tests passed.' >> "$GITHUB_STEP_SUMMARY"
+            failed_tests='none'
+          fi
+          printf 'failed_tests=%s\n' "$failed_tests" >> "$GITHUB_OUTPUT"
+          exit "$test_status"
       - name: Type-check application
         id: typecheck_app
         run: npm run typecheck
@@ -268,6 +289,7 @@ jobs:
           OUTCOME_CHARTS: ${{ steps.generate_charts.outcome }}
           OUTCOME_INSTALL: ${{ steps.install_dependencies.outcome }}
           OUTCOME_TEST: ${{ steps.test_repository.outcome }}
+          TEST_FAILURES: ${{ steps.test_repository.outputs.failed_tests }}
           OUTCOME_TYPECHECK: ${{ steps.typecheck_app.outcome }}
           OUTCOME_LINT: ${{ steps.lint_repository.outcome }}
           OUTCOME_BUILD: ${{ steps.build_app.outcome }}
@@ -302,5 +324,10 @@ jobs:
             failed+=("step failure; inspect this run")
           fi
           error_summary="$(IFS=', '; echo "${failed[*]}")"
-          message="Бэкап/обновление снимка упали. Job: refresh. Краткая ошибка: ${error_summary}. Запуск: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ "$OUTCOME_TEST" == failure && -n "$TEST_FAILURES" && "$TEST_FAILURES" != none ]]; then
+            test_detail=" Тесты: ${TEST_FAILURES:0:240}."
+          else
+            test_detail=''
+          fi
+          message="Обновление снимка упало. Job: refresh. Шаг: ${error_summary}.${test_detail} Запуск: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           node scripts/send-telegram.js "$message"

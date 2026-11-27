@@ -221,6 +221,9 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
   const historyReadDates = [];
   const digestAttempts = [];
   const telegramMessages = [];
+  const healthcheckPings = [];
+  let healthcheckUrl = 'https://hc.example/fixture-id';
+  let failCachedAssets = false;
   let cachedAssetRowsOverride = null;
   let historyStatus = 'pending';
   let countCalls = 0;
@@ -232,6 +235,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
       DIGEST_HOUR_MSK: '09',
       TELEGRAM_BOT_TOKEN: 'fixture-token',
       TELEGRAM_CHAT_ID: 'fixture-chat',
+      HEALTHCHECK_PING_URL: healthcheckUrl,
     })[key] },
     serve: (handler) => { globalThis.__scheduledJobRunnerHandler = handler; },
   };
@@ -241,8 +245,13 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
       telegramMessages.push(JSON.parse(init.body).text);
       return Response.json({ ok: true });
     }
+    if (url.hostname === 'hc.example') {
+      healthcheckPings.push(url.pathname);
+      return new Response(null, { status: 200 });
+    }
     if (url.hostname !== 'db.example.test') throw new Error(`Unexpected fetch host: ${url.hostname}`);
     if (url.pathname.endsWith('/cached_assets')) {
+      if (failCachedAssets) return Response.json({ error: 'unavailable' }, { status: 503 });
       if (cachedAssetRowsOverride) return Response.json(cachedAssetRowsOverride);
       const updatedAt = new NativeDate(nowMs - 30 * 60 * 1000).toISOString();
       return Response.json([
@@ -315,6 +324,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.equal(historyUpdates[0].payload.freshness.brent, 'ok');
     assert.equal(digestAttempts[1].outcome, 'sent', 'successful Telegram delivery is recorded');
     assert.equal(digestAttempts[1].reason, null);
+    assert.deepEqual(healthcheckPings, ['/fixture-id'], 'success ping follows a fresh-data digest delivery');
 
     historyStatus = 'pending';
     nowMs = NativeDate.parse('2026-11-26T07:12:00.000Z'); // 10:12 MSK; next hourly retry
@@ -323,6 +333,7 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.deepEqual(await retryResponse.json(), { status: 'digest_sent', overall_status: 'ok' });
     assert.equal(telegramMessages.length, 2, 'a pending row is retried on the next hourly run that same MSK day');
     assert.equal(digestAttempts[2].outcome, 'sent', 'a successful retry is recorded as sent');
+    assert.deepEqual(healthcheckPings, ['/fixture-id', '/fixture-id']);
 
     nowMs = NativeDate.parse('2026-11-26T08:12:00.000Z'); // 11:12 MSK
     const sentResponse = await handler(request());
@@ -346,6 +357,16 @@ test('digest gate uses Moscow time and date, retries pending same-day rows, and 
     assert.equal(telegramMessages.length, 2, 'timestamp validation failure must not send an alert or digest');
     assert.equal(digestAttempts[4].outcome, 'skipped', 'asset validation failures count as skipped digest attempts');
     assert.match(digestAttempts[4].reason, /http_503: Invalid sp500 as_of/);
+    assert.equal(healthcheckPings.length, 2, 'invalid source data is not reported as an infrastructure /fail');
+
+    failCachedAssets = true;
+    const databaseFailure = await handler(request());
+    assert.equal(databaseFailure.status, 500);
+    assert.equal(healthcheckPings.at(-1), '/fixture-id/fail', 'database failures call the optional failure endpoint');
+    healthcheckUrl = '';
+    const databaseFailureWithoutMonitor = await handler(request());
+    assert.equal(databaseFailureWithoutMonitor.status, 500);
+    assert.equal(healthcheckPings.length, 3, 'an unset optional URL is silently skipped');
   } finally {
     delete globalThis.__scheduledJobRunnerHandler;
     if (previousDeno === undefined) delete globalThis.Deno;

@@ -331,7 +331,7 @@ test('задержка: дневная дата Brent сверяется с по
   const brent = quoteLagVerdict({ id: 'brent', as_of: '2026-11-06' }, sunday);
   assert.equal(brent.ok, true);
   assert.equal(brent.open, false);
-  assert.match(brent.note, /последней завершённой сессией/);
+  assert.match(brent.note, /содержит последнюю завершённую сессию/);
 });
 
 test('задержка: свежая котировка проходит, ряд без «сейчас» не проверяется', () => {
@@ -351,15 +351,31 @@ test('задержка: Brent проверяется по дате заверш�
   assert.equal(brentFriday.applicable, true);
   assert.equal(brentFriday.ok, true);
   assert.equal(brentFriday.allowedMinutes, null);
-  assert.match(brentFriday.note, /последней завершённой сессией/);
+  assert.match(brentFriday.note, /содержит последнюю завершённую сессию/);
   assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-12' }, beforeClose).ok, false);
   assert.equal(quoteLagVerdict({ id: 'brent', as_of: '2026-11-16' }, afterClose).ok, true);
-  const holidayMorning = quoteLagVerdict(
-    { id: 'brent', as_of: '2026-11-26T00:00:00+00:00' },
+  const holidaySeries = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-26T00:00:00+00:00', spark_dates: ['2026-11-25', '2026-11-26'] },
     new Date('2026-11-26T07:25:00Z'),
   );
-  assert.equal(holidayMorning.ok, true, 'a date-only Yahoo session label is not compared as a quote timestamp');
-  assert.equal(holidayMorning.allowedMinutes, null);
+  assert.equal(holidaySeries.ok, true, 'the latest date can be in progress if the expected completed session is present');
+  const holidayMissingExpected = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-26', spark_dates: ['2026-11-26'] },
+    new Date('2026-11-26T07:25:00Z'),
+  );
+  assert.equal(holidayMissingExpected.ok, false, 'a current label alone cannot replace the missing completed session');
+  assert.equal(holidayMissingExpected.allowedMinutes, null);
+
+  const inProgressSeries = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-27', spark_dates: ['2026-11-26', '2026-11-27'] },
+    new Date('2026-11-27T07:25:00Z'),
+  );
+  assert.equal(inProgressSeries.ok, true, 'series {26, 27 in progress} contains the expected 26 session');
+  const missingExpectedSession = quoteLagVerdict(
+    { id: 'brent', as_of: '2026-11-25', spark_dates: ['2026-11-25'] },
+    new Date('2026-11-27T07:25:00Z'),
+  );
+  assert.equal(missingExpectedSession.ok, false, 'series {25} is stale when completed session 26 is expected');
 
   const liveQuote = quoteLagVerdict(
     { id: 'brent', as_of: '2026-11-11T03:49:00Z' },
@@ -385,10 +401,17 @@ test('задержка: ряд без даты на открытом рынке 
   assert.match(verdict.note, /даты наблюдения нет/);
 });
 
-test('сторож: selfcheck применяет обе проверки — свежесть ряда и задержку цены', async () => {
+test('сторож: quote lag uses database timestamps, not the Edge host clock', async () => {
   const source = await readFile(new URL('../supabase/functions/selfcheck/index.ts', import.meta.url), 'utf8');
-  assert.match(source, /check\('asset_quote_lag'/);
-  assert.match(source, /quoteLagVerdict\(/);
+  const start = source.indexOf("check('asset_quote_lag'");
+  const end = source.indexOf("check('asset_contract'", start);
+  const checkSource = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(checkSource, /cached_assets\?select=id,as_of,updated_at,spark_dates/);
+  assert.match(checkSource, /Date\.parse\(row\.updated_at\)/);
+  assert.match(checkSource, /new Date\(referenceMs\)/);
+  assert.doesNotMatch(checkSource, /new Date\(\)|Date\.now\(\)/);
+  assert.match(checkSource, /quoteLagVerdict\(/);
 });
 
 test('gold uses only gold-api quotes and a distinct observed series', async () => {

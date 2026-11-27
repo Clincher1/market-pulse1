@@ -37,6 +37,36 @@
 наблюдаемость — серверная. Используются бесплатные тарифы; не добавляйте платный
 провайдер без явного решения владельца.
 
+### Реестр секретов и ротация
+
+Здесь перечислены только имена, назначение и место использования; значения секретов
+не должны попадать в README, логи или коммиты. Разделение GitHub Actions, Supabase
+Edge Functions и Vercel подтверждается workflow-файлами и исходниками; наличие,
+срок действия и актуальность каждого значения проверяются владельцем в соответствующей
+панели.
+
+| Секрет/настройка | Где хранится и используется | Действие / ротация |
+| --- | --- | --- |
+| `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` | GitHub Actions; `deploy-functions.yml` и `deploy-shadow.yml` для публикации Edge Functions | Владелец должен определить и записать политику срока действия access token. Старый `market-pulse-github-actions` token отзывать только после подтверждённого успешного запуска deploy с `main`. |
+| `SUPABASE_DB_URL` | GitHub Actions; только `backup-history.yml` для read-only backup | Считать production credential: минимальные права, ротация при утечке/смене владельца, не помещать в диагностические выводы. |
+| `SNAPSHOT_SUPABASE_READ_KEY` | GitHub Actions; snapshot update, watchdog и ограниченная PR-проверка доступа | Только read-only RPC-доступ; не использовать service-role ключ. |
+| `SNAPSHOT_APP_PRIVATE_KEY` (с `SNAPSHOT_APP_ID`) | GitHub Actions; финальный push snapshot-артефактов приложением GitHub App | Ограничить репозиторием и необходимыми правами; не расширять токен на тесты/сборку. `SNAPSHOT_APP_ID` — идентификатор, не секрет. |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TG_OWNER_CHAT_ID` | GitHub Actions; ошибки workflow, selfcheck и уведомления владельцу | Бот-токен и chat IDs не выводить в логи; сверять, что bot и получатель соответствуют нужной среде. |
+| `LINEAR_API_KEY` | GitHub Actions; только запись issue при ошибках deploy | Проверить, что integration и права остаются необходимыми; не использовать в приложении. |
+| `SUPABASE_SERVICE_ROLE_KEY` / `SERVICE_KEY` | Supabase Edge Function secrets; backend-функции с доступом к БД | Привилегированный серверный credential. В коде есть оба имени как runtime alias; браузерный `VITE_*` экспорт запрещён. |
+| `CRON_SECRET` | Supabase Edge Function secrets и отдельно в конфигурации вызывающего `pg_cron` HTTP-заголовка | Ротировать в обеих точках в одной согласованной операции: обновить вызывающую сторону и функции без промежутка с несовпадающими значениями. |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Supabase Edge Function secrets для selfcheck и `scheduled-job-runner` | Синхронизируются `deploy-functions.yml` из GitHub Actions; проверить доставку после ротации. |
+| `HEALTHCHECK_PING_URL` | Необязательный Supabase Edge Function secret для `scheduled-job-runner` | Пока внешний аккаунт не создавался. Если владелец задаст URL позже, код отправляет ping только после успешной свежей дневной доставки; `/fail` — при DB/Telegram 5xx; unset — тихо отключено. |
+| `SUPABASE_SERVICE_KEY` | В исходниках не найдено прямого чтения именно этого имени (не путать с `SERVICE_KEY`) | Владелец должен проверить Supabase Function secrets и удалить только после подтверждения, что ни одна активная функция/интеграция его не использует. |
+| `ADMIN_TRIGGER_KEY` | Ранее — Vercel для удалённого channel-trigger endpoint | Endpoint удалён. Три переменные Vercel `ADMIN_TRIGGER_KEY` (production, preview, development) были удалены; проверить, что конфигурация панели совпадает. |
+
+**Открытые действия владельца:** зафиксировать expiration policy для
+`SUPABASE_ACCESS_TOKEN`; дождаться подтверждённого deploy-запуска с `main` перед
+отзывом старого `market-pulse-github-actions`; проверить и при подтверждённой
+неиспользуемости удалить `SUPABASE_SERVICE_KEY`; согласовать и одновременно ротировать
+`CRON_SECRET` в Supabase и в caller-конфигурации. Эти административные проверки не
+можно достоверно выполнить только по коду репозитория.
+
 ## Локальный запуск
 
 Требуется Node.js 22.
@@ -111,10 +141,15 @@ repository secrets `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`. Общий отп
 `continue-on-error: true` и не меняет результат основной проверки.
 
 `deploy-functions.yml` переносит эти два секрета в Supabase Edge Function secrets для
-selfcheck. Функция отправляет сообщение только после успешной записи результата в
-`site_health` и только если он красный: в Telegram перечисляются упавшие проверки и их
-причины. При зелёном selfcheck уведомления нет; сбой доставки не меняет сохранённый
-результат.
+selfcheck. После успешной записи результата в `site_health` функция сообщает о новом
+или изменившемся красном результате и об устранении ошибки; точный повтор неизменной
+ошибки не дублируется. В устойчивом зелёном состоянии уведомления нет; сбой доставки
+не меняет сохранённый результат.
+
+Telegram-уведомления selfcheck дедуплицируются по имени проверки и точному тексту
+ошибки: одинаковый неустранённый сбой сообщает один раз, новый или изменившийся сбой
+сообщает сразу, восстановление всегда сообщает. Повторного периодического маркера для
+неизменной ошибки нет.
 
 Автоматические уведомления:
 

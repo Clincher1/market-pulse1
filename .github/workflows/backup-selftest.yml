@@ -2,11 +2,10 @@ name: Encrypted backup recovery regression
 
 on:
   push:
-    branches: ['arena/398deb1c-market-pulse1', main]
+    branches: [main]
     paths: ['scripts/*backup*', 'tests/backup-*', '.github/workflows/backup-*.yml', 'config/backup-recipient.pem']
   pull_request:
     paths: ['scripts/*backup*', 'tests/backup-*', '.github/workflows/backup-*.yml', 'config/backup-recipient.pem']
-  workflow_dispatch:
 
 permissions:
   contents: read

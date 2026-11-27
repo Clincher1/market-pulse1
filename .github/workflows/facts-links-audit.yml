@@ -1,11 +1,8 @@
 name: Read-only facts and every-link audit
 on:
-  push:
-    branches: ['arena/**']
-    paths: ['scripts/*audit.mjs', 'scripts/facts-links-check.mjs', 'scripts/wait-production-artifact.mjs', '.github/workflows/facts-links-audit.yml', '.github/workflows/production-audit.yml']
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: facts-links-audit
   cancel-in-progress: false
@@ -52,43 +49,7 @@ jobs:
       - name: Two independent live interaction, accessibility, math and rights rounds
         if: ${{ !cancelled() }}
         run: node scripts/production-audit.mjs
-      - name: Preserve compact public findings on this same unchanged work branch
-        if: always()
-        run: |
-          set -euo pipefail
-          case "$GITHUB_REF_NAME" in arena/*) ;; *) exit 1 ;; esac
-          git fetch origin "$GITHUB_REF_NAME"
-          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          for round in A B; do
-            mkdir -p "docs/audit-evidence/facts-links/$round"
-            if [ -f ".local/facts-links-audit/$round/report.json" ]; then
-              cp ".local/facts-links-audit/$round/report.json" "docs/audit-evidence/facts-links/$round/"
-            fi
-          done
-          mkdir -p docs/audit-evidence/technical-readiness
-          for round in A B; do
-            if [ -f ".local/production-audit/technical-$round/technical.json" ]; then
-              cp ".local/production-audit/technical-$round/technical.json" "docs/audit-evidence/technical-readiness/technical-$round.json"
-            fi
-          done
-          if [ -f .local/production-audit/technical-B/technical.json ]; then
-            cp .local/production-audit/technical-B/technical.json docs/audit-evidence/technical-readiness/technical.json
-          fi
-          for name in home world russia news passport brief guide about; do
-            if [ -f ".local/facts-links-audit/B/$name.png" ]; then
-              cp ".local/facts-links-audit/B/$name.png" docs/audit-evidence/facts-links/B/
-            fi
-          done
-          for name in summary.json http-A.json http-B.json; do
-            if [ -f ".local/production-audit/$name" ]; then
-              cp ".local/production-audit/$name" docs/audit-evidence/facts-links/
-            fi
-          done
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/audit-evidence/facts-links docs/audit-evidence/technical-readiness
-          git commit -m 'docs: save both post-fix fact, link and interaction audits'
-          git push origin "HEAD:$GITHUB_REF_NAME"
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:

@@ -4,9 +4,6 @@ on:
   schedule:
     - cron: '30 3 * * *'
   workflow_dispatch:
-  push:
-    branches: ['arena/398deb1c-market-pulse1']
-    paths: ['.github/workflows/backup-history.yml', 'scripts/history-backup.py', 'scripts/backup_diagnostics.py', 'scripts/backup-envelope.mjs', 'config/backup-recipient.pem']
 
 permissions:
   contents: read

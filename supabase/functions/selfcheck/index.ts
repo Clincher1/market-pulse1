@@ -7,6 +7,7 @@ import { politenessVerdict } from "../_shared/price-sources.ts";
 import { registryVerdict } from "../_shared/slots.ts";
 import { findForeignResourceHosts } from "../_shared/loaded-resource-hosts.mjs";
 import { backupTransitionNotification, getLatestBackupStatus } from "../_shared/backup-age.mjs";
+import { selfcheckFailureDelta } from "../_shared/selfcheck-alerts.mjs";
 import {
   calculateTensionIndex,
   selectTensionNews,
@@ -439,17 +440,25 @@ async function notifyTelegramFailure(
   previousChecks: Record<string, Check>,
 ): Promise<void> {
   const failed = Object.entries(results).filter(([name, value]) => name !== 'backup_history' && !value.ok);
+  const failureDelta = selfcheckFailureDelta(results, previousChecks);
   const backupTransition = backupTransitionNotification(previousChecks.backup_history, results.backup_history);
-  if (failed.length === 0 && !backupTransition) return;
+  // Exact same unresolved checks stay quiet. Changed/new failure details and any
+  // recovery always notify; there is no periodic repeat marker.
+  if (!failureDelta.shouldNotify && !backupTransition) return;
 
   const token = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? '';
   const chatId = Deno.env.get('TELEGRAM_CHAT_ID') ?? '';
   const lines = failed.map(([name, value]) => `• ${name}: ${value.detail}`);
+  for (const name of failureDelta.recovered) lines.push(`✅ ${name}: ошибка устранена`);
   if (backupTransition) lines.push(`• ${backupTransition}`);
   const maxLength = 3900;
-  const heading = results.backup_history?.ok && previousChecks.backup_history?.ok === false && failed.length === 0
+  const hasRecovery = failureDelta.recovered.length > 0 || Boolean(backupTransition);
+  const backupOnlyRecovery = failed.length === 0 && failureDelta.recovered.length === 0 && Boolean(backupTransition);
+  const heading = backupOnlyRecovery
     ? '✅ Резервная копия Market Pulse восстановлена'
-    : '🚨 Самопроверка Market Pulse завершилась с ошибками';
+    : failed.length === 0 && hasRecovery
+      ? '✅ Самопроверка Market Pulse восстановилась'
+      : '🚨 Самопроверка Market Pulse завершилась с ошибками';
   let text = `${heading} (${checkedAt}):\n${lines.join('\n')}`;
   if (text.length > maxLength) text = `${text.slice(0, maxLength - 24)}\n… список сокращён`;
 
@@ -758,10 +767,27 @@ serveWithErrorReporting("selfcheck", async (req: Request) => {
     // дефектом: золото с одиннадцатью часами отставания (11.11, 06:50 UTC)
     // проходило проверку, потому что было младше трёх суток.
     check('asset_quote_lag', async () => {
-      const rows = (await restJson('cached_assets?select=id,as_of')) as AnyRecord[];
+      const rows = (await restJson('cached_assets?select=id,as_of,updated_at,spark_dates')) as AnyRecord[];
       if (!rows.length) return { ok: false, detail: 'кэша котировок нет' };
-      const now = new Date();
-      const verdicts = rows.map((row) => quoteLagVerdict({ id: String(row.id ?? ''), as_of: row.as_of ? String(row.as_of) : null }, now));
+      // Anchor the completed-session calculation to the freshest DB data timestamp,
+      // never the Edge Runtime host clock. This keeps date-only labels and the
+      // expected exchange session on the same external time reference.
+      const referenceMs = rows
+        .map((row) => typeof row.updated_at === 'string' ? Date.parse(row.updated_at) : Number.NaN)
+        .filter(Number.isFinite)
+        .reduce((latest, value) => Math.max(latest, value), Number.NEGATIVE_INFINITY);
+      if (!Number.isFinite(referenceMs)) {
+        return { ok: false, detail: 'у кэша котировок нет пригодной метки времени для проверки сессии' };
+      }
+      const referenceAt = new Date(referenceMs);
+      const verdicts = rows.map((row) => quoteLagVerdict(
+        {
+          id: String(row.id ?? ''),
+          as_of: row.as_of ? String(row.as_of) : null,
+          spark_dates: row.spark_dates,
+        },
+        referenceAt,
+      ));
       const applicable = verdicts.filter((item) => item.applicable);
       const lagging = applicable.filter((item) => !item.ok);
       if (!applicable.length) return { ok: false, detail: 'ни один ряд не описан как «текущая цена»' };
