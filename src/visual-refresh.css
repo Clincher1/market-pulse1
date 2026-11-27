@@ -75,6 +75,10 @@ select optgroup {
   color: #173EA9;
 }
 
+#root a.text-white {
+  color: #FFFFFF !important;
+}
+
 #root a.sr-only:focus {
   color: #FFFFFF;
 }
