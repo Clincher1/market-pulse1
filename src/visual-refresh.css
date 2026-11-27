@@ -1279,3 +1279,148 @@ select optgroup {
     font-weight: 650;
   }
 }
+
+/* Polished interaction and responsive data surfaces. */
+#root :where(button, [role="button"], .overview-topic-card) {
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease,
+    box-shadow 180ms ease, transform 180ms ease;
+}
+
+#root :where(button, [role="button"]):active {
+  transform: translateY(1px);
+}
+
+#root :where(button, [role="button"]):disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+#root .overview-topic-card {
+  border-color: #C7D5E8;
+  box-shadow: 0 8px 24px rgb(23 32 51 / 0.07);
+}
+
+#root .overview-topic-card:hover,
+#root .overview-topic-card:focus-visible {
+  border-color: #5B84E8;
+  box-shadow: 0 14px 32px rgb(29 78 216 / 0.14);
+  transform: translateY(-3px);
+}
+
+#root .static-snapshot__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+#root .static-snapshot__chart {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #D5DFEC;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #FFFFFF 55%, #F2F7FF);
+  box-shadow: 0 6px 20px rgb(23 32 51 / 0.06);
+  padding: clamp(0.75rem, 2vw, 1.125rem);
+}
+
+#root .static-snapshot__chart img,
+#root .static-snapshot__chart svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+#root .static-snapshot__chart img {
+  border-radius: 0.65rem;
+}
+
+#root .market-desk,
+#root .market-heatmap,
+#root .static-snapshot {
+  min-width: 0;
+  box-shadow: 0 8px 28px rgb(23 32 51 / 0.07);
+}
+
+#root .market-desk button,
+#root .market-desk .desk-next,
+#root .overview-topics a {
+  border-radius: 999px;
+}
+
+#root .market-desk button[aria-pressed="true"] {
+  border-color: #1D4ED8;
+  background: #EAF1FF;
+  color: #173EA9;
+  box-shadow: inset 0 0 0 1px #1D4ED8;
+}
+
+#root .desk-chart {
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+#root .desk-table-wrap,
+#root .initial-document__snapshot {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: #8EA4C2 #EDF2F8;
+}
+
+#root .desk-table {
+  min-width: 620px;
+}
+
+#root .desk-table th,
+#root .desk-table td {
+  overflow-wrap: anywhere;
+}
+
+#root :where(.overview-topics, .static-snapshot, .market-desk, .market-heatmap) {
+  scroll-margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  #root .static-snapshot__charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #root .static-snapshot__chart {
+    padding: 0.75rem;
+  }
+
+  #root .market-desk {
+    padding: clamp(0.75rem, 4vw, 1.125rem);
+  }
+
+  #root .desk-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #root .desk-controls label,
+  #root .desk-controls select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #root .desk-favorites button {
+    flex: 1 1 auto;
+  }
+
+  #root .desk-table {
+    font-size: 0.76rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root :where(button, [role="button"], .overview-topic-card) {
+    transition: none !important;
+  }
+
+  #root .overview-topic-card:hover,
+  #root :where(button, [role="button"]):active {
+    transform: none;
+  }
+}
