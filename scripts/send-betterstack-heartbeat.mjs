@@ -1,3 +1,4 @@
 import { sendBetterStackHeartbeat } from './betterstack-heartbeat.mjs';
 
-await sendBetterStackHeartbeat();
+const result = await sendBetterStackHeartbeat();
+if (!result.ok) process.exitCode = 1;
