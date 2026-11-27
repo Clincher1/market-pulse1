@@ -1782,3 +1782,131 @@ body {
     transition: none !important;
   }
 }
+
+/* One deliberate control language: deep-blue secondary actions, cyan active
+   states, and no stray white/grey utility fills. */
+#root button:not(.heat-tile),
+#root [role="button"]:not(.heat-tile) {
+  color: #EAF4FF !important;
+  border: 1px solid #466B95 !important;
+  background: linear-gradient(145deg, #173B66 0%, #112B4B 100%) !important;
+  box-shadow: inset 0 1px 0 rgb(215 236 255 / 0.08), 0 5px 14px rgb(0 0 0 / 0.18) !important;
+}
+
+#root button:not(.heat-tile):hover:not(:disabled),
+#root [role="button"]:not(.heat-tile):hover:not(:disabled) {
+  color: #FFFFFF !important;
+  border-color: #74D7EA !important;
+  background: linear-gradient(145deg, #20517D 0%, #173A64 100%) !important;
+  box-shadow: 0 8px 22px rgb(32 150 190 / 0.2) !important;
+}
+
+#root button:not(.heat-tile)[aria-pressed="true"],
+#root [role="button"]:not(.heat-tile)[aria-pressed="true"] {
+  color: #082039 !important;
+  border-color: #8DE8F0 !important;
+  background: linear-gradient(110deg, #79E4E7 0%, #7BC9F2 58%, #9BC0FF 100%) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.52), 0 5px 18px rgb(76 197 222 / 0.24) !important;
+  font-weight: 750;
+}
+
+#root button:not(.heat-tile)[aria-pressed="true"]:hover,
+#root [role="button"]:not(.heat-tile)[aria-pressed="true"]:hover {
+  color: #06182D !important;
+  border-color: #C1F8F7 !important;
+  background: linear-gradient(110deg, #A2F2EE 0%, #9ADBF9 58%, #B9D1FF 100%) !important;
+}
+
+#root button:not(.heat-tile):disabled,
+#root [role="button"]:not(.heat-tile):disabled {
+  color: #9DB3CD !important;
+  border-color: #304B6D !important;
+  background: #122743 !important;
+  box-shadow: none !important;
+}
+
+#root .desktop-navigation {
+  border-color: #35547C !important;
+  background: rgb(11 31 57 / 0.9) !important;
+  box-shadow: inset 0 1px 0 rgb(182 213 247 / 0.06), 0 8px 24px rgb(0 0 0 / 0.2) !important;
+}
+
+#root .desktop-navigation__link,
+#root .desktop-navigation__more-trigger,
+#root .desktop-navigation__mobile-link {
+  border: 1px solid transparent !important;
+  border-radius: 999px;
+  color: #D8E8FA !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#root .desktop-navigation__link:hover,
+#root .desktop-navigation__more-trigger:hover,
+#root .desktop-navigation__mobile-link:hover {
+  color: #FFFFFF !important;
+  border-color: #355B83 !important;
+  background: #153253 !important;
+}
+
+#root .desktop-navigation__link.is-active,
+#root .desktop-navigation__more.is-active > .desktop-navigation__more-trigger,
+#root .desktop-navigation__more[open] > .desktop-navigation__more-trigger,
+#root .desktop-navigation__mobile-link.is-active {
+  color: #91EAF0 !important;
+  border-color: #3C7492 !important;
+  background: #153756 !important;
+}
+
+#root .desktop-navigation__active-bg {
+  border-color: #3C7492 !important;
+  background: linear-gradient(145deg, #173D62, #12304F) !important;
+  box-shadow: inset 0 1px 0 rgb(196 236 255 / 0.08) !important;
+}
+
+#root .desktop-navigation__menu {
+  border-color: #35547C !important;
+  background: linear-gradient(150deg, #102747, #0B1D38) !important;
+  box-shadow: 0 20px 48px rgb(0 0 0 / 0.42) !important;
+}
+
+#root .desktop-navigation__menu-item {
+  border-color: transparent !important;
+  color: #EAF4FF !important;
+  background: transparent !important;
+}
+
+#root .desktop-navigation__menu-item:hover,
+#root .desktop-navigation__menu-item.is-active {
+  border-color: #355B83 !important;
+  background: #153253 !important;
+}
+
+#root .desktop-navigation__menu-title {
+  color: #F2F7FF !important;
+}
+
+#root .desktop-navigation__menu-description,
+#root .desktop-navigation__menu-kicker {
+  color: #B8CBE4 !important;
+}
+
+#root .desktop-navigation__menu-icon {
+  color: #8DE8F0 !important;
+  background: #173B60 !important;
+}
+
+#root .desktop-navigation__mobile-icon-shell {
+  color: #8DE8F0 !important;
+  background: #173B60 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root button:not(.heat-tile),
+  #root [role="button"]:not(.heat-tile),
+  #root .desktop-navigation__link,
+  #root .desktop-navigation__mobile-link,
+  #root .desktop-navigation__menu-item {
+    transition: none !important;
+  }
+}

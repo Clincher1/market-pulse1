@@ -38,6 +38,13 @@ test('readability styles soften dense weights and keep the heatmap in the navy t
   assert.match(visual, /\.heat-tile__price[\s\S]*?font-size:\s*clamp\(1\.5rem, 5vw, 2rem\)/);
 });
 
+test('buttons and navigation use one coherent navy-and-cyan control style', async () => {
+  const visual = await readFile('src/visual-refresh.css', 'utf8');
+  assert.match(visual, /#root button:not\(\.heat-tile\)[\s\S]*?background: linear-gradient\(145deg, #173B66 0%, #112B4B 100%\) !important/);
+  assert.match(visual, /#root button:not\(\.heat-tile\)\[aria-pressed="true"\][\s\S]*?linear-gradient\(110deg, #79E4E7 0%, #7BC9F2 58%, #9BC0FF 100%\)/);
+  assert.match(visual, /\.desktop-navigation__link\.is-active[\s\S]*?color: #91EAF0 !important/);
+});
+
 test('route legend and period-basis note use existing displayed history endpoints', () => {
   const legend = 'Цвет маршрута — цвет раздела. Заполненный узел — вы здесь.';
   assert.ok(intro.includes(legend));
