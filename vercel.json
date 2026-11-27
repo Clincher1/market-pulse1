@@ -25,9 +25,6 @@
     "api/telegram-support-setup.js": {
       "maxDuration": 30
     },
-    "api/telegram/channel/trigger.js": {
-      "maxDuration": 30
-    },
     "api/telegram/channel/daily.js": {
       "maxDuration": 30
     }

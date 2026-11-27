@@ -62,6 +62,13 @@ test('authorized daily cron verifies bot rights and publishes the daily digest o
   assert.match(calls[2].body.text, /Brent/);
   assert.match(calls[2].body.text, /S&P 500/);
   assert.match(calls[2].body.text, /Золото XAU\/USD/);
+  const snapshot = JSON.parse(fs.readFileSync(new URL('../data/snapshot.json', import.meta.url), 'utf8'));
+  const normalizeSpaces = value => value.replace(/[\u00a0\u202f]/g, ' ');
+  for (const [ticker, label] of [['BZ=F', 'Brent'], ['^GSPC', 'S&P 500'], ['XAU', 'Золото XAU/USD']]) {
+    const value = Number(snapshot.items.find(item => item.ticker === ticker).value);
+    const formatted = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    assert.ok(normalizeSpaces(calls[2].body.text).includes(`${label}: ${normalizeSpaces(formatted)}`));
+  }
   assert.match(calls[2].body.text, /https:\/\/market-pulse1-eta\.vercel\.app\//);
   assert.match(calls[2].body.text, /Не является инвестиционной рекомендацией/);
   const brentIndex = postLines.findIndex((line) => line.includes('Brent:'));
@@ -125,6 +132,22 @@ test('sender stops when bot identity or posting rights do not match', async () =
   const permissionRes = await invoke(noRights);
   assert.equal(permissionRes.statusCode, 403);
   assert.deepEqual(permissionCalls, ['getMe', 'getChatMember']);
+});
+
+test('daily Telegram API errors redact the bot token in the returned error', async () => {
+  const handler = createTelegramChannelDailySender({
+    env: validEnv,
+    fetchImpl: async () => ({
+      ok: false,
+      status: 401,
+      json: async () => ({ ok: false, error_code: 401, description: `Unauthorized ${validEnv.TELEGRAM_BOT_TOKEN_DIGEST}` }),
+    }),
+  });
+  const res = await invoke(handler);
+  assert.equal(res.statusCode, 502);
+  assert.equal(res.body.step, 'getMe');
+  assert.equal(res.body.error, 'Unauthorized [redacted]');
+  assert.doesNotMatch(JSON.stringify(res.body), /digest-token-never-return-this/);
 });
 
 test('only GET is accepted and Vercel cron is configured for 09:00 Moscow time daily', () => {

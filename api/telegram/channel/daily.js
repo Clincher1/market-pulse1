@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { dailyPostText } from './trigger.js';
+import { dailyPostText } from './daily-message.js';
 
 const EXPECTED_BOT_USERNAME = '@pulsrynka_bot';
 
