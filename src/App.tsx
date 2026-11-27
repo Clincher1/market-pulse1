@@ -139,11 +139,11 @@ function DashboardPage() {
             <span className="overview-hero__note-mark" aria-hidden="true">01</span>
             <p>Без прогнозов и рекомендаций. Источники и даты — рядом с числами.</p>
           </motion.div>
-          <p className="page-signal-intro__route-legend">Цвет маршрута — цвет раздела. Заполненный узел — вы здесь.</p>
         </div>
 
         <motion.div className="overview-hero__visual" {...appear(0.14)}>
           <PulseOrbit />
+          <p className="page-signal-intro__route-legend">Цвет маршрута — цвет раздела. Заполненный узел — вы здесь.</p>
         </motion.div>
       </section>
 
