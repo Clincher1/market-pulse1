@@ -29,10 +29,10 @@ export default function OverviewTopics() {
               href={theme.href}
               data-testid={`overview-topic-${theme.id}`}
               className={`overview-topic-card group ${theme.cardClass}`}
-              initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
+              initial={false}
+              animate={{ y: 0, scale: 1 }}
               transition={
-                reduceMotion
+                reduceMotion || typeof IntersectionObserver === 'undefined'
                   ? { duration: 0 }
                   : { duration: 0.42, delay: 0.08 + index * 0.045, ease: 'easeOut' as const }
               }

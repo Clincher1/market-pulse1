@@ -87,8 +87,8 @@ export default function Header({ activeView }: HeaderProps) {
 
   return (
     <motion.header
-      initial={reduceMotion ? false : { y: -24, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+      initial={false}
+      animate={{ y: 0 }}
       transition={reduceMotion ? { duration: 0 } : { duration: 0.42, ease: 'easeOut' }}
       className={`site-header ${scrolled ? 'is-scrolled' : ''}`}
     >
@@ -108,8 +108,9 @@ export default function Header({ activeView }: HeaderProps) {
         </a>
 
         <nav aria-label="Основная навигация" className="desktop-navigation">
-          <div className="desktop-navigation__links">
-            {desktopPrimaryLinks.map((link) => {
+          <div className="desktop-navigation__scroll-wrap">
+            <div className="desktop-navigation__links">
+              {desktopPrimaryLinks.map((link) => {
               const Icon = link.icon;
               const isActive = activeView === link.page;
               return (
@@ -124,8 +125,8 @@ export default function Header({ activeView }: HeaderProps) {
                   {isActive && (
                     <motion.span
                       className="desktop-navigation__active-bg"
-                      initial={reduceMotion ? false : { opacity: 0.4, scale: 0.94 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={false}
+                      animate={{ scale: 1 }}
                       transition={{ duration: reduceMotion ? 0 : 0.2 }}
                       aria-hidden="true"
                     />
@@ -134,7 +135,8 @@ export default function Header({ activeView }: HeaderProps) {
                   <span className="relative z-10">{link.label}</span>
                 </a>
               );
-            })}
+              })}
+            </div>
           </div>
 
           <details

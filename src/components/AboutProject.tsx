@@ -54,8 +54,8 @@ export default function AboutProject() {
   return (
     <section id="about" className="scroll-mt-[var(--space-6)]" aria-labelledby="about-title">
       <motion.article
-        initial={{ opacity: 0, y: 22 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={false}
+        whileInView={{ y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
         transition={{ duration: 0.42, ease: 'easeOut' }}
         className="overflow-hidden rounded-[var(--radius)] border border-slate-300/25 shadow-[0_18px_48px_rgba(15,23,42,0.08)]"

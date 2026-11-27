@@ -172,8 +172,8 @@ export default function SystemStatus() {
         <>
           {/* Итог и кнопка */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={false}
+            animate={{ y: 0 }}
             transition={{ duration: 0.4 }}
             className={`mb-[var(--space-3)] rounded-[var(--radius)] border p-[var(--space-3)] sm:p-[var(--space-3)] ${
               allOk

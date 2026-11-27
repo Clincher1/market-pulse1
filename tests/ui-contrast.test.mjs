@@ -12,7 +12,10 @@ test('active routes retain section accent labels on a neutral surface without gr
   }
   assert.match(css, /\.desktop-navigation__link\.is-active\s*\{[^}]*color:\s*var\(--nav-color/);
   assert.match(css, /\.desktop-navigation__link\.is-active\s*\{[^}]*background-color:\s*var\(--bg-page\)/);
-  assert.doesNotMatch(`${css}\\n${design}\\n${vectorArtwork.join('\\n')}`, /linear-gradient|radial-gradient|<linearGradient|<radialGradient/);
+  const navFade = css.match(/\.desktop-navigation__scroll-wrap::after\s*\{[^}]*\}/)?.[0];
+  assert.match(navFade ?? '', /linear-gradient/, 'mobile navigation has a right-edge scroll cue');
+  const visualCss = navFade ? css.replace(navFade, '') : css;
+  assert.doesNotMatch(`${visualCss}\n${design}\n${vectorArtwork.join('\n')}`, /linear-gradient|radial-gradient|<linearGradient|<radialGradient/);
 });
 test('small path label uses a readable neutral on white and the page surface', () => {
   const block = css.match(/\.page-signal-intro__path-label\s*\{([^}]+)\}/)?.[1];

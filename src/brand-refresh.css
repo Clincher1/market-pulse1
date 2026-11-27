@@ -1988,3 +1988,133 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Reveal content stays fully readable in its base CSS state. Motion only moves
+   elements; an interrupted or unsupported animation can never leave faded text. */
+.overview-hero__eyebrow,
+.overview-hero__description,
+.overview-hero__actions,
+.overview-hero__note,
+.overview-hero__visual,
+.pulse-orbit__link,
+.overview-topic-card,
+#global-markets,
+#russia-business,
+#news {
+  opacity: 1;
+}
+
+/* The hero is a light card, so all copy and outlined actions use dark,
+   high-contrast colors rather than the pale palette from the former dark hero. */
+.overview-hero__eyebrow {
+  color: #263650;
+}
+
+.overview-hero__eyebrow-subtitle {
+  color: #475569;
+}
+
+.overview-hero__title {
+  color: #14213a;
+}
+
+.overview-hero__title span {
+  background: none;
+  color: #1d4ed8;
+  -webkit-text-fill-color: currentColor;
+}
+
+.overview-hero__description {
+  color: #334155;
+}
+
+.overview-hero__primary-action {
+  color: #fff;
+}
+
+.overview-hero__secondary-action {
+  border-color: #64748b;
+  color: #17365d;
+  background: #fff;
+}
+
+.overview-hero__secondary-action:hover {
+  border-color: #334155;
+  background: #f8fafc;
+}
+
+.overview-hero__primary-action {
+  border-color: #cbd5e1;
+}
+
+.overview-hero__note {
+  color: #475569;
+}
+
+.overview-hero__note-mark {
+  color: #17365d;
+}
+
+.pulse-orbit__center-label {
+  color: #1d4ed8;
+}
+
+.pulse-orbit__status {
+  border-color: #334155;
+  color: #f8fafc;
+  background: #17365d;
+}
+
+.pulse-orbit__center-caption {
+  color: #334155;
+}
+
+.pulse-orbit__link {
+  color: #172b4d;
+}
+
+.pulse-orbit__link-title {
+  color: #172b4d;
+}
+
+.pulse-orbit__link-detail {
+  color: #475569;
+}
+
+.pulse-orbit__link-icon,
+.pulse-orbit__link--world .pulse-orbit__link-icon,
+.pulse-orbit__link--news .pulse-orbit__link-icon {
+  color: #1d4ed8;
+}
+
+/* Keep horizontally scrollable primary nav usable on touch; the gradient is
+   a non-interactive cue that more destinations continue beyond the edge. */
+.desktop-navigation__scroll-wrap {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 639px) {
+  .desktop-navigation__links {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .desktop-navigation__scroll-wrap::after {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 24px;
+    background-color: #fff;
+    background-image: linear-gradient(90deg, rgb(255 255 255 / 0), #fff 92%) !important;
+    content: '';
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .pulse-orbit__status {
+    border-color: transparent;
+    color: #334155;
+    background: transparent;
+  }
+}
