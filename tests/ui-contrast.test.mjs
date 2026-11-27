@@ -40,4 +40,6 @@ test('small path label keeps WCAG AA contrast on page and card surfaces', () => 
     assert.ok(ratio(rgb('#FFFFFF'), rgb(background)) >= 4.5,
       `white text on ${background} must meet WCAG 2.1 AA`);
   }
+  assert.match(visual, /#root a\.text-white\s*\{\s*color:\s*#FFFFFF !important;/,
+    'inverse anchor labels must stay white over the blue accent');
 });
