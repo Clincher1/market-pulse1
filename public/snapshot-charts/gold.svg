@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 150" role="img" aria-labelledby="chart-title chart-desc">
-  <title id="chart-title">Золото, спот XAU/USD: 3 677,20, наблюдение 27.11</title>
+  <title id="chart-title">Золото, спот XAU/USD: 3 683,40, наблюдение 27.11</title>
   <desc id="chart-desc">Линейный график 7 фактических наблюдений за период 21.11 — 27.11. Последняя точка выделена.</desc>
   <line x1="16" x2="404" y1="124" y2="124" stroke="#cbd5e1" stroke-width="1" />
-  <polyline fill="none" stroke="#b7791f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="16.00,113.35 80.67,82.80 145.33,59.28 210.00,104.63 274.67,88.00 339.33,95.57 404.00,24.65" />
+  <polyline fill="none" stroke="#b7791f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="16.00,113.35 80.67,84.11 145.33,61.60 210.00,105.00 274.67,89.09 339.33,96.34 404.00,24.65" />
   <circle cx="16.00" cy="113.35" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
-  <circle cx="80.67" cy="82.80" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
-  <circle cx="145.33" cy="59.28" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
-  <circle cx="210.00" cy="104.63" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
-  <circle cx="274.67" cy="88.00" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
-  <circle cx="339.33" cy="95.57" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
+  <circle cx="80.67" cy="84.11" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
+  <circle cx="145.33" cy="61.60" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
+  <circle cx="210.00" cy="105.00" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
+  <circle cx="274.67" cy="89.09" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
+  <circle cx="339.33" cy="96.34" r="3.5" fill="white" stroke="#b7791f" stroke-width="2" />
   <circle cx="404.00" cy="24.65" r="8" fill="#b7791f" fill-opacity=".18" />
   <circle cx="404.00" cy="24.65" r="4.5" fill="#b7791f" stroke="white" stroke-width="2" />
   <text x="16" y="143" fill="#475569" font-family="Arial, sans-serif" font-size="12">21.11</text>
