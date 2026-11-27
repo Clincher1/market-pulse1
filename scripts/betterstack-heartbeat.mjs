@@ -1,20 +1,32 @@
 import { appendFile } from 'node:fs/promises';
 
-const BETTERSTACK_HOST = 'uptime.betterstack.com';
+const BETTERSTACK_HOSTS = new Set([
+  'incidents.betterstack.com',
+  'uptime.betterstack.com',
+]);
+const HEARTBEAT_PATH = /^\/api\/v1\/heartbeat\/([^/]+)$/;
 
 export function redactBetterStackUrl(value) {
   const url = new URL(value);
-  if (url.protocol !== 'https:' || url.hostname !== BETTERSTACK_HOST) {
-    throw new Error('Heartbeat URL must use the Better Stack HTTPS endpoint');
+  const pathMatch = url.pathname.match(HEARTBEAT_PATH);
+  if (
+    url.protocol !== 'https:'
+    || !BETTERSTACK_HOSTS.has(url.hostname)
+    || url.port
+    || url.username
+    || url.password
+    || !pathMatch
+    || pathMatch[1] === '.'
+    || pathMatch[1] === '..'
+    || /%2f/i.test(pathMatch[1])
+  ) {
+    throw new Error('Heartbeat URL must use an approved Better Stack HTTPS host and /api/v1/heartbeat/<token> path');
   }
 
   url.username = '';
   url.password = '';
   url.hash = '';
-  const path = url.pathname.split('/');
-  const heartbeatIndex = path.findIndex(segment => segment === 'heartbeat');
-  if (heartbeatIndex >= 0 && path[heartbeatIndex + 1]) path[heartbeatIndex + 1] = '[REDACTED]';
-  url.pathname = path.join('/');
+  url.pathname = '/api/v1/heartbeat/[REDACTED]';
   for (const key of url.searchParams.keys()) url.searchParams.set(key, '[REDACTED]');
   return url.toString();
 }
