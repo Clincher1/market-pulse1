@@ -43,6 +43,8 @@ test('buttons and navigation use one coherent navy-and-cyan control style', asyn
   assert.match(visual, /#root button:not\(\.heat-tile\)[\s\S]*?background: linear-gradient\(145deg, #173B66 0%, #112B4B 100%\) !important/);
   assert.match(visual, /#root button:not\(\.heat-tile\)\[aria-pressed="true"\][\s\S]*?linear-gradient\(110deg, #79E4E7 0%, #7BC9F2 58%, #9BC0FF 100%\)/);
   assert.match(visual, /\.desktop-navigation__link\.is-active[\s\S]*?color: #91EAF0 !important/);
+  assert.match(visual, /#root \.overview-topic-card::after\s*\{\s*display: none !important/);
+  assert.match(visual, /@keyframes nav-active-breathe/);
 });
 
 test('route legend and period-basis note use existing displayed history endpoints', () => {

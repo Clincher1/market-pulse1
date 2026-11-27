@@ -1910,3 +1910,149 @@ body {
     transition: none !important;
   }
 }
+
+/* Simplify the route cards: remove the oversized decorative discs that
+   obscured the copy, and use a clean card with a restrained lift/glow. */
+#root .overview-topic-card::after {
+  display: none !important;
+  content: none !important;
+}
+
+#root .overview-topic-card {
+  min-height: 158px;
+  padding: clamp(0.9rem, 1.6vw, 1.2rem);
+  border: 1px solid #355C85 !important;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #142F53 0%, #102747 72%, #0F2442 100%) !important;
+  box-shadow: 0 10px 26px rgb(0 0 0 / 0.2), inset 0 1px 0 rgb(199 226 255 / 0.06) !important;
+  transform-origin: center;
+  will-change: transform;
+}
+
+#root .overview-topic-card .overview-topic-card__title {
+  color: #F1F7FF !important;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  font-weight: 760;
+  letter-spacing: -0.015em;
+}
+
+#root .overview-topic-card .overview-topic-card__description {
+  color: #BDD0E8 !important;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+#root .overview-topic-card .overview-topic-card__index {
+  color: #91B4D8 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+#root .overview-topic-card .overview-topic-card__icon {
+  color: #082039 !important;
+  background: linear-gradient(145deg, #8CEBEA, #70C9F7) !important;
+  box-shadow: 0 5px 16px rgb(85 205 232 / 0.22);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+#root .overview-topic-card .overview-topic-card__open {
+  color: #9BEAF0 !important;
+}
+
+#root .overview-topic-card:hover,
+#root .overview-topic-card:focus-visible {
+  border-color: #70DCEB !important;
+  background: linear-gradient(145deg, #1A416D 0%, #143356 72%, #112B4B 100%) !important;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.32), 0 0 24px rgb(75 190 225 / 0.16) !important;
+}
+
+#root .overview-topic-card:hover .overview-topic-card__icon,
+#root .overview-topic-card:focus-visible .overview-topic-card__icon {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 7px 21px rgb(85 205 232 / 0.34);
+}
+
+/* The header navigation is a row of purposeful luminous tabs, not outlined
+   white pills. One active tab breathes gently; hover gives a quick cyan glow. */
+#root .desktop-navigation__link,
+#root .desktop-navigation__more-trigger,
+#root .desktop-navigation__mobile-link {
+  min-height: 44px;
+  padding: 0.55rem 0.9rem;
+  border: 0 !important;
+  border-radius: 999px;
+  color: #DBEAFB !important;
+  background: linear-gradient(145deg, #17395F, #112B4A) !important;
+  box-shadow: inset 0 1px 0 rgb(208 232 255 / 0.08), 0 4px 13px rgb(0 0 0 / 0.2) !important;
+  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+#root .desktop-navigation__link:hover,
+#root .desktop-navigation__more-trigger:hover,
+#root .desktop-navigation__mobile-link:hover,
+#root .desktop-navigation__link:focus-visible,
+#root .desktop-navigation__more-trigger:focus-visible,
+#root .desktop-navigation__mobile-link:focus-visible {
+  color: #FFFFFF !important;
+  background: linear-gradient(145deg, #205685, #17406B) !important;
+  box-shadow: 0 0 0 1px rgb(114 221 235 / 0.42), 0 0 22px rgb(74 192 225 / 0.28) !important;
+  transform: translateY(-1px);
+}
+
+#root .desktop-navigation__link.is-active,
+#root .desktop-navigation__more.is-active > .desktop-navigation__more-trigger,
+#root .desktop-navigation__more[open] > .desktop-navigation__more-trigger,
+#root .desktop-navigation__mobile-link.is-active {
+  color: #A6F3F2 !important;
+  background: linear-gradient(125deg, #20577B 0%, #174A70 54%, #243F78 100%) !important;
+  box-shadow: inset 0 1px 0 rgb(223 255 255 / 0.2), 0 0 0 1px rgb(113 222 237 / 0.38),
+    0 0 22px rgb(64 187 218 / 0.24) !important;
+  animation: nav-active-breathe 3.2s ease-in-out infinite;
+}
+
+#root .desktop-navigation__link.is-active .desktop-navigation__icon,
+#root .desktop-navigation__more.is-active .desktop-navigation__more-trigger svg,
+#root .desktop-navigation__mobile-link.is-active .desktop-navigation__mobile-icon {
+  color: #9DF4F0 !important;
+  filter: drop-shadow(0 0 5px rgb(117 229 239 / 0.42));
+}
+
+#root .desktop-navigation__active-bg {
+  inset: 0;
+  border: 0 !important;
+  border-radius: inherit;
+  background: linear-gradient(125deg, #20577B 0%, #174A70 54%, #243F78 100%) !important;
+  box-shadow: inset 0 1px 0 rgb(223 255 255 / 0.18) !important;
+}
+
+#root .desktop-navigation__mobile-icon-shell,
+#root .desktop-navigation__menu-icon {
+  color: #8DE8F0 !important;
+  background: #183E63 !important;
+  box-shadow: inset 0 1px 0 rgb(221 248 255 / 0.1), 0 0 14px rgb(74 192 225 / 0.12);
+}
+
+@keyframes nav-active-breathe {
+  0%, 100% { box-shadow: inset 0 1px 0 rgb(223 255 255 / 0.18), 0 0 0 1px rgb(113 222 237 / 0.32), 0 0 16px rgb(64 187 218 / 0.18); }
+  50% { box-shadow: inset 0 1px 0 rgb(223 255 255 / 0.24), 0 0 0 1px rgb(113 222 237 / 0.52), 0 0 25px rgb(64 187 218 / 0.32); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .desktop-navigation__link.is-active,
+  #root .desktop-navigation__more.is-active > .desktop-navigation__more-trigger,
+  #root .desktop-navigation__mobile-link.is-active {
+    animation: none !important;
+  }
+
+  #root .overview-topic-card,
+  #root .overview-topic-card .overview-topic-card__icon {
+    will-change: auto;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #root .overview-topic-card {
+    min-height: 142px;
+    padding: 0.85rem;
+  }
+}
