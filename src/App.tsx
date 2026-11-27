@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, BookOpen, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
@@ -88,12 +88,15 @@ const PAGE_INFO: Record<InnerPageView, PageInfo> = {
 
 function DashboardPage() {
   const reduceMotion = useReducedMotion();
+  const canAnimate = !reduceMotion && typeof IntersectionObserver !== 'undefined';
   const appear = (delay: number) => ({
-    initial: reduceMotion ? false : { opacity: 0, y: 18 },
-    animate: { opacity: 1, y: 0 },
-    transition: reduceMotion
-      ? { duration: 0 }
-      : { duration: 0.52, delay, ease: 'easeOut' as const },
+    // Keep the readable state in normal layout; only add a transform on top.
+    // Without IntersectionObserver (or with reduced motion), render immediately.
+    initial: false as const,
+    animate: { y: 0 },
+    transition: canAnimate
+      ? { duration: 0.52, delay, ease: 'easeOut' as const }
+      : { duration: 0 },
   });
 
   return (
@@ -263,8 +266,6 @@ function SectionPage({ view }: { view: SectionPageView }) {
 }
 
 function App() {
-  const firstView = useRef(true);
-  useEffect(() => { firstView.current = false; }, []);
   const reduceMotion = useReducedMotion();
   const [view, setView] = useState<AppView>(() =>
     typeof window === 'undefined' ? 'dashboard' : viewFromLocation(window.location.pathname, window.location.hash),
@@ -409,9 +410,9 @@ function App() {
       >
         <motion.div
           key={view}
-          initial={reduceMotion || firstView.current ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={reduceMotion ? { duration: 0 } : { duration: 0.34, ease: 'easeOut' }}
+          initial={false}
+          animate={{ y: 0 }}
+          transition={reduceMotion || typeof IntersectionObserver === 'undefined' ? { duration: 0 } : { duration: 0.34, ease: 'easeOut' }}
         >
           {view === 'status' ? (
             <>

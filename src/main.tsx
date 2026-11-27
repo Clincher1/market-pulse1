@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { LazyMotion, domAnimation } from 'framer-motion';
+import { LazyMotion, MotionConfig, domAnimation } from 'framer-motion';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
@@ -10,9 +10,11 @@ import { installTableScrollAffordances } from './lib/table-scroll-affordance';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <LazyMotion features={domAnimation} strict>
-      <App />
-    </LazyMotion>
+    <MotionConfig reducedMotion="user">
+      <LazyMotion features={domAnimation} strict>
+        <App />
+      </LazyMotion>
+    </MotionConfig>
   </StrictMode>
 );
 installTableScrollAffordances();

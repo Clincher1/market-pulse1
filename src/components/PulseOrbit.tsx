@@ -131,10 +131,10 @@ export default function PulseOrbit() {
             key={link.href}
             href={link.href}
             className={`pulse-orbit__link ${link.className}`}
-            initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={false}
+            animate={{ y: 0, scale: 1 }}
             transition={
-              reduceMotion
+              reduceMotion || typeof IntersectionObserver === 'undefined'
                 ? { duration: 0 }
                 : { duration: 0.54, delay: 0.2 + index * 0.11, ease: 'easeOut' }
             }

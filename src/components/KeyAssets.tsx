@@ -23,8 +23,8 @@ export default function KeyAssets() {
   return (
     <motion.section
       id="global-markets"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={false}
+      whileInView={{ y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className="my-[var(--space-3)] scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-cyan-300/25 bg-cyan-400/[0.04] p-[var(--space-2)] shadow-xl shadow-cyan-950/20 sm:p-[var(--space-3)]"

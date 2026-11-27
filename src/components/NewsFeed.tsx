@@ -40,9 +40,9 @@ function NewsCard({ item, index }: { item: NewsHeadline; index: number }) {
     <motion.article
       data-testid="news-card"
       layout
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98 }}
+      initial={false}
+      animate={{ y: 0 }}
+      exit={{ y: -4 }}
       transition={{ duration: 0.24, delay: Math.min(index * 0.035, 0.25) }}
       className="rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)] shadow-lg transition-colors hover:border-amber-300/40 hover:bg-bg-card-hover lg:p-[var(--space-3)]"
     >
@@ -129,9 +129,9 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
           <motion.div
             role="listbox"
             aria-label={label}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            initial={false}
+            animate={{ y: 0 }}
+            exit={{ y: -4 }}
             transition={{ duration: 0.14 }}
             className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-64 overflow-auto rounded-xl border border-slate-200 bg-bg-card p-[var(--space-1)] shadow-2xl shadow-black/50"
           >
@@ -214,8 +214,8 @@ export default function NewsFeed() {
   return (
     <motion.section
       id="news"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={false}
+      whileInView={{ y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="mb-[var(--space-5)] scroll-mt-[var(--space-6)] lg:mb-[var(--space-6)]"

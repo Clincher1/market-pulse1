@@ -43,8 +43,8 @@ function GuideSection({ id, eyebrow, title, icon: Icon, children }: GuideSection
   return (
     <motion.section
       id={id}
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={false}
+      whileInView={{ y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
       className="scroll-mt-[var(--space-6)] rounded-[var(--radius)] border border-border-subtle bg-bg-card p-[var(--space-3)] shadow-lg lg:p-[var(--space-4)]"
