@@ -82,6 +82,12 @@ test('four ordered stages retain read-only GITHUB_TOKEN and success gating', () 
   const notification = step('Notify Telegram if snapshot update failed');
   assert.match(notification, /continue-on-error: true/);
   assert.doesNotMatch(workflow.replace(notification, ''), /continue-on-error/);
+  const heartbeat = step('Send Better Stack heartbeat after scheduled refresh');
+  assert.match(heartbeat, /if: success\(\) && github\.event_name == 'schedule'/);
+  assert.match(heartbeat, /BETTERSTACK_HEARTBEAT_URL: \$\{\{ secrets\.BETTERSTACK_HEARTBEAT_URL \}\}/);
+  const successNotification = step('Notify Telegram on successful snapshot update');
+  assert.match(successNotification, /if: success\(\)/);
+  assert.match(successNotification, /steps\.betterstack_heartbeat\.outputs\.result/);
   assert.match(step(names[0]), /id: snapshot_changes/);
   for (const name of names.slice(1)) {
     assert.match(step(name), /if: steps.snapshot_changes.outputs.has_changes == 'true'/);

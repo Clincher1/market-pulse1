@@ -20,17 +20,24 @@ test('home snapshot preserves all supplied values, dates, units, source links an
   const exportedAt = [...section.querySelectorAll('time')].find(time => time.dateTime === snapshot.exportedAt);
   assert.equal(exportedAt.dateTime, snapshot.exportedAt);
   assert.equal(exportedAt.textContent, formatObservationTimestamp(snapshot.exportedAt));
+  const chartFiles = { 'BZ=F': 'brent.svg', '^GSPC': 'sp500.svg', XAU: 'gold.svg' };
+  const chartedItems = snapshot.items.filter(item =>
+    chartFiles[item.ticker] && (snapshot.series[item.ticker]?.length ?? 0) >= 3);
   const charts = [...section.querySelectorAll('.static-snapshot__chart')];
-  assert.equal(charts.length, snapshot.items.filter(item => snapshot.series[item.ticker].length >= 3).length);
-  assert.equal(charts.length, 3);
+  assert.equal(charts.length, chartedItems.length, 'only sourced histories with at least three observations have charts');
   charts.forEach((figure, index) => {
-    const item = snapshot.items[index];
-    assert.equal(figure.querySelector('img').getAttribute('src'), `/snapshot-charts/${['brent.svg', 'sp500.svg', 'gold.svg'][index]}`);
+    const item = chartedItems[index];
+    const observations = snapshot.series[item.ticker];
+    assert.equal(figure.querySelector('img').getAttribute('src'), `/snapshot-charts/${chartFiles[item.ticker]}`);
     assert.match(figure.querySelector('img').getAttribute('alt'), new RegExp(item.instrument));
     assert.ok(figure.textContent.includes(item.source.name));
     assert.ok(figure.textContent.includes(Number(item.value).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })));
+    if (observations.length < 7) {
+      assert.match(figure.textContent, /Период: .* наблюдений/);
+    } else {
+      assert.doesNotMatch(figure.textContent, /Период:/);
+    }
   });
-  assert.match(charts[2].textContent, /Период: .* наблюдений/);
   assert.equal(dom.window.document.querySelector('script'), null, 'the chart markup needs no client-side JavaScript');
   assert.equal(section.querySelectorAll('thead th[scope="col"]').length, 6);
   assert.ok(section.querySelector('caption').textContent.trim());
