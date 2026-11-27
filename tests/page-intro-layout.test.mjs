@@ -5,6 +5,13 @@ const css = await readFile('src/brand-refresh.css', 'utf8');
 function rules(selector) {
   return [...css.matchAll(new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]+)\\}', 'g'))].map(match => match[1]);
 }
+test('page intro content has a clear inset from its rounded frame at every breakpoint', () => {
+  const intro = rules('.page-signal-intro');
+  assert.match(intro[0], /padding:\s*var\(--space-3\) clamp\(16px, 2vw, 24px\)/,
+    'desktop intro content keeps a balanced inset from the border');
+  assert.match(css, /@media \(max-width: 639px\)\s*\{\s*\.page-signal-intro\s*\{[^}]*padding:\s*var\(--space-1\) 16px var\(--space-3\)/,
+    'phone intro content keeps at least a 16px inset');
+});
 test('inner-page artwork participates in layout; caption stays outside clipped animated SVG', () => {
   const art = rules('.page-signal-intro__art');
   assert.match(art[0], /position:\s*relative/);
