@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 150" role="img" aria-labelledby="chart-title chart-desc">
-  <title id="chart-title">Brent, фьючерс ближайшего месяца NYMEX: 94,61, наблюдение 25.11</title>
-  <desc id="chart-desc">Линейный график 4 фактических наблюдений за период 20.11 — 25.11. Подписаны шкалы значений и дат; последняя точка показывает 94,61.</desc>
+  <title id="chart-title">Brent, фьючерс ближайшего месяца NYMEX: 91,23, наблюдение 26.11</title>
+  <desc id="chart-desc">Линейный график 4 фактических наблюдений за период 23.11 — 26.11. Подписаны шкалы значений и дат; последняя точка показывает 91,23.</desc>
   <defs><linearGradient id="area-BZF" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16C784" stop-opacity=".38"/><stop offset="100%" stop-color="#16C784" stop-opacity=".025"/></linearGradient></defs>
   <line x1="96" x2="402" y1="18.00" y2="18.00" stroke="#536174" stroke-width="1"/><text x="88" y="23.00" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">95,24</text>
   <line x1="96" x2="402" y1="68.00" y2="68.00" stroke="#536174" stroke-width="1"/><text x="88" y="73.00" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">91,99</text>
   <line x1="96" x2="402" y1="118.00" y2="118.00" stroke="#536174" stroke-width="1"/><text x="88" y="123.00" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">88,74</text>
   <line x1="96" x2="96" y1="18" y2="118" stroke="#64748B" stroke-width="1.5" />
   <line x1="96" x2="402" y1="118" y2="118" stroke="#64748B" stroke-width="1.5" />
-  <polygon points="96,118 96.00,59.07 198.00,108.32 300.00,77.08 402.00,27.68 402,118" fill="url(#area-BZF)" />
-  <polyline fill="none" stroke="#16C784" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="96.00,59.07 198.00,108.32 300.00,77.08 402.00,27.68" />
-  <circle cx="96.00" cy="59.07" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
-  <circle cx="198.00" cy="108.32" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
-  <circle cx="300.00" cy="77.08" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
-  <circle cx="402.00" cy="27.68" r="8" fill="#16C784" fill-opacity=".18" />
-  <circle cx="402.00" cy="27.68" r="4.5" fill="#16C784" stroke="#F0F6FC" stroke-width="2" />
-  <text x="402" y="20.00" text-anchor="end" fill="#16C784" font-family="Arial, sans-serif" font-size="20" font-weight="700">94,61</text>
-  <text x="96" y="143" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">20.11</text>
-  <text x="402" y="143" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">25.11</text>
+  <polygon points="96,118 96.00,108.32 198.00,77.08 300.00,27.68 402.00,79.70 402,118" fill="url(#area-BZF)" />
+  <polyline fill="none" stroke="#16C784" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="96.00,108.32 198.00,77.08 300.00,27.68 402.00,79.70" />
+  <circle cx="96.00" cy="108.32" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
+  <circle cx="198.00" cy="77.08" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
+  <circle cx="300.00" cy="27.68" r="3.5" fill="#151B23" stroke="#16C784" stroke-width="2" />
+  <circle cx="402.00" cy="79.70" r="8" fill="#16C784" fill-opacity=".18" />
+  <circle cx="402.00" cy="79.70" r="4.5" fill="#16C784" stroke="#F0F6FC" stroke-width="2" />
+  <text x="402" y="69.70" text-anchor="end" fill="#16C784" font-family="Arial, sans-serif" font-size="20" font-weight="700">91,23</text>
+  <text x="96" y="143" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">23.11</text>
+  <text x="402" y="143" text-anchor="end" fill="#C1CAD4" font-family="Arial, sans-serif" font-size="20">26.11</text>
 </svg>
