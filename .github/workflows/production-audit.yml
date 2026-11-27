@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: read-only-production-acceptance
@@ -41,38 +41,7 @@ jobs:
       - name: Read-only HTTP, rights and math audit
         if: always()
         run: node scripts/audit-http.mjs
-      - name: Save compact evidence on this same audit branch
-        if: always()
-        run: |
-          set -euo pipefail
-          case "$GITHUB_REF_NAME" in arena/*) ;; *) exit 1 ;; esac
-          test "$GITHUB_REF" = "refs/heads/$GITHUB_REF_NAME"
-          git fetch origin "$GITHUB_REF_NAME"
-          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          mkdir -p docs/audit-evidence/technical-readiness
-          for round in A B; do
-            if [ -f ".local/production-audit/technical-$round/technical.json" ]; then
-              cp ".local/production-audit/technical-$round/technical.json" "docs/audit-evidence/technical-readiness/technical-$round.json"
-            fi
-          done
-          if [ -f ".local/production-audit/technical-B/technical.json" ]; then
-            cp .local/production-audit/technical-B/technical.json docs/audit-evidence/technical-readiness/technical.json
-          fi
-          for file in summary.json http-A.json http-B.json; do
-            if [ -f ".local/production-audit/$file" ]; then
-              cp ".local/production-audit/$file" docs/audit-evidence/technical-readiness/
-            fi
-          done
-          for page in home passport memory russia world brief gold; do
-            if [ -f ".local/production-audit/B-360-$page.png" ]; then
-              cp ".local/production-audit/B-360-$page.png" docs/audit-evidence/technical-readiness/
-            fi
-          done
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/audit-evidence/technical-readiness
-          git commit -m "docs: save current full production audit evidence"
-          git push origin "HEAD:$GITHUB_REF_NAME"
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
