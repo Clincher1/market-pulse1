@@ -5,6 +5,7 @@ const css = await readFile('src/brand-refresh.css', 'utf8');
 const design = await readFile('src/design-system.css', 'utf8');
 const visual = await readFile('src/visual-refresh.css', 'utf8');
 const header = await readFile('src/components/Header.tsx', 'utf8');
+const russiaBusiness = await readFile('src/components/RussiaBusiness.tsx', 'utf8');
 const vectorArtwork = await Promise.all(['src/components/PulseOrbit.tsx', 'src/components/BrandMark.tsx', 'src/components/MarketHeatmap.tsx'].map(path => readFile(path, 'utf8')));
 test('active routes retain section accent labels on a neutral surface without gradients', () => {
   for (const id of ['dashboard', 'brief', 'passport', 'russia', 'global', 'news']) {
@@ -24,6 +25,10 @@ test('active routes retain section accent labels on a neutral surface without gr
     'mobile navigation uses a visible icon grid instead of a clipped rail');
   assert.doesNotMatch(visual, /\[class\*="__card"\]/,
     'card surfaces must not style nested titles as pills');
+});
+test('Russia market values scale down on mobile and remain prominent on larger screens', () => {
+  assert.match(russiaBusiness, /text-2xl font-extrabold tabular-nums text-text-primary sm:text-3xl lg:text-4xl/,
+    'large market rates should not dominate a phone screen, while retaining desktop emphasis');
 });
 test('small path label keeps WCAG AA contrast on page and card surfaces', () => {
   const blocks = [...visual.matchAll(/#root\s+:where\(\.page-signal-intro__path-label\)\s*\{([^}]+)\}/g)];
