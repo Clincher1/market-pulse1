@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "exportedAt": "2026-11-28T04:30:15.098670Z",
+  "exportedAt": "2026-11-28T04:31:35.667011Z",
   "items": [
     {
       "ticker": "BZ=F",
@@ -111,5 +111,5 @@
       }
     ]
   },
-  "lastSuccessfulHeartbeatAt": "2026-11-28T04:30:16.485Z"
+  "lastSuccessfulHeartbeatAt": "2026-11-28T04:31:37.431Z"
 }
