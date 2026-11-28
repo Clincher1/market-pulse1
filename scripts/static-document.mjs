@@ -129,6 +129,7 @@ function renderSnapshotCharts(snapshot) {
       <figcaption>
         <strong>${escape(row.instrument)}</strong>
         <span class="static-snapshot__latest">${escape(snapshotNumberFormat.format(Number(row.value)))} ${escape(row.unit)}</span>
+        ${row.revision ? `<small class="static-snapshot__revision">Значение за дату пересмотрено источником${row.revision.status === 'pending review' ? ' · ожидает проверки' : ''}</small>` : ''}
         <span>Наблюдение: <time datetime="${escape(row.observedAt)}">${escape(snapshotDateLabel(row.observedAt))}</time></span>
         <span>Источник: <a href="${escape(row.source.url)}">${escape(row.source.name)}</a></span>
         ${observations.length < 7 && first && last
@@ -142,10 +143,13 @@ function renderSnapshotCharts(snapshot) {
 
 function renderSnapshot() {
   const snapshot = readSnapshot();
+  const revisionWarning = snapshot.revisionAnnotationsAvailable === false
+    ? '<p class="static-snapshot__revision-warning">Журнал пересмотров источника временно недоступен; снимок обновлён, но пометки ревизий могут быть неполными.</p>'
+    : '';
   const rows = snapshot.items.map(row => `
               <tr>
                 <th scope="row">${escape(row.ticker)} — ${escape(row.instrument)}</th>
-                <td>${escape(Number(row.value).toFixed(2))}</td>
+                <td>${escape(Number(row.value).toFixed(2))}${row.revision ? `<br><small class="static-snapshot__revision">Значение за дату пересмотрено источником${row.revision.status === 'pending review' ? ' · ожидает проверки' : ''}</small>` : ''}</td>
                 <td>${escape(row.unit)}</td>
                 <td class="static-snapshot__date"><time datetime="${escape(row.observedAt)}">${escape(formatObservationTimestamp(row.observedAt))}</time></td>
                 <td><a href="${escape(row.source.url)}">${escape(row.source.name)}</a></td>
@@ -154,6 +158,7 @@ function renderSnapshot() {
   return `
         <section aria-labelledby="static-snapshot-title">
           <h2 id="static-snapshot-title">Статический снимок данных</h2>
+          ${revisionWarning}
           <p>Данные актуальны на момент сборки. Это сохранённый снимок доступных данных,
           а не котировки в реальном времени; даты наблюдений указаны отдельно.</p>
           <p>Снимок выгружен:

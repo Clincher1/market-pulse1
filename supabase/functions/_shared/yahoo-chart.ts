@@ -18,7 +18,11 @@
 export interface YahooPoint {
   /** День бара в UTC, `YYYY-MM-DD`. */
   date: string;
+  /** Daily close; retained as value for existing consumers. */
   value: number;
+  open: number | null;
+  high: number | null;
+  low: number | null;
 }
 
 export interface YahooDailySeries {
@@ -30,7 +34,11 @@ export interface YahooDailySeries {
   sessionEnd: string | null;
   symbol: string | null;
   exchange: string | null;
+  exchangeName: string | null;
   instrumentType: string | null;
+  regularMarketPrice: number | null;
+  contractSymbol: string | null;
+  expireDate: number | null;
 }
 
 type Json = Record<string, unknown>;
@@ -80,18 +88,27 @@ export function parseYahooDaily(payload: unknown): YahooDailySeries {
     ? asArray((result.indicators as Json).quote as unknown[])[0] as Json
     : {};
   const closes = asArray(quote.close);
+  const opens = asArray(quote.open);
+  const highs = asArray(quote.high);
+  const lows = asArray(quote.low);
 
-  const byDay = new Map<string, number>();
+  const byDay = new Map<string, YahooPoint>();
   for (let index = 0; index < timestamps.length; index += 1) {
     const seconds = timestamps[index];
     if (!Number.isFinite(seconds) || seconds <= 0) continue;
     const value = positive(closes[index]);
     if (value === null) continue;
-    byDay.set(utcDay(seconds), value);
+    const date = utcDay(seconds);
+    byDay.set(date, {
+      date,
+      value,
+      open: positive(opens[index]),
+      high: positive(highs[index]),
+      low: positive(lows[index]),
+    });
   }
 
-  const points = [...byDay.entries()]
-    .map(([date, value]) => ({ date, value }))
+  const points = [...byDay.values()]
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   if (points.length < 2) throw new Error(`Yahoo chart: only ${points.length} daily closes`);
 
@@ -105,7 +122,11 @@ export function parseYahooDaily(payload: unknown): YahooDailySeries {
     sessionEnd: isoFromSeconds(regular.end),
     symbol: typeof meta.symbol === "string" ? meta.symbol : null,
     exchange: typeof meta.fullExchangeName === "string" ? meta.fullExchangeName : null,
+    exchangeName: typeof meta.exchangeName === "string" ? meta.exchangeName : null,
     instrumentType: typeof meta.instrumentType === "string" ? meta.instrumentType : null,
+    regularMarketPrice: positive(meta.regularMarketPrice),
+    contractSymbol: typeof meta.contractSymbol === "string" ? meta.contractSymbol : null,
+    expireDate: Number.isFinite(Number(meta.expireDate)) ? Number(meta.expireDate) : null,
   };
 }
 

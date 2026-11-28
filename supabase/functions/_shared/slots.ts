@@ -76,9 +76,12 @@ export const SLOTS: DataSlot[] = [
     title: 'Brent, фьючерс NYMEX BZ=F',
     columns: ['цена', 'изменение за день', 'линия 30 дней', 'дата наблюдения'],
     kind: 'price',
-    sources: [{ id: 'yahoo', label: 'Yahoo Finance (BZ=F)', note: 'два хоста: query1, при отказе query2' }],
+    sources: [
+      { id: 'yahoo', label: 'Yahoo Finance (BZ=F)', note: 'два хоста: query1, при отказе query2' },
+      { id: 'stooq', label: 'Stooq QA.F', note: 'автоматический резервный источник того же фьючерса NYMEX; отмечается как fallback' },
+    ],
     canChoose: false,
-    note: 'Замены с тем же инструментом нет: CNBC отдаёт ICE Brent другого месяца поставки. Молча подставлять другой контракт нельзя — это другая цена.',
+    note: 'Stooq QA.F — резерв для того же фьючерса NYMEX BZ=F, используется только при недоступности Yahoo Finance. Другие ряды Brent, включая ICE или спот EIA, не подставляются.',
   },
   {
     number: 2,

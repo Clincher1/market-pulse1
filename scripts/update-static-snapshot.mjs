@@ -1,6 +1,8 @@
 import { readFile, writeFile, rename, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { isStooqBrentDailyUrl } from '../supabase/functions/_shared/stooq-daily.mjs';
+import { compareDailyCloseRevision } from '../supabase/functions/_shared/price-revisions.mjs';
 
 const DAY = 86400000;
 const PROJECT_URL = 'https://hekzplfftannlzwvgwwm.supabase.co';
@@ -59,8 +61,10 @@ export function buildSnapshot(payload, previous, now = new Date()) {
     try {
       const row = payload.rows.find(row => row?.id === contract.id);
       const label = contract.symbol;
-      requireThat(row && ['symbol', 'provider', 'instrumentType', 'unit', 'sourceUrl']
+      const stooqFallback = contract.id === 'brent_yahoo_bzf' && isStooqBrentDailyUrl(row?.sourceUrl);
+      requireThat(row && ['symbol', 'provider', 'instrumentType', 'unit']
         .every(field => row[field] === contract[field])
+        && (row.sourceUrl === contract.sourceUrl || stooqFallback)
         && row.currency === 'USD' && row.frequency === 'daily', `${label}: instrument metadata mismatch`);
       requireThat(typeof row.value === 'string' && /^\d+(?:\.\d+)?$/.test(row.value)
         && Number.isFinite(Number(row.value)) && Number(row.value) > 0,
@@ -80,13 +84,86 @@ export function buildSnapshot(payload, previous, now = new Date()) {
       }
       requireThat(label !== 'XAU' || timestamp(row.priceTimestamp), `${label}: exact observation time is required`);
       const old = previous.items.find(item => item.ticker === label);
+      const sourceName = stooqFallback ? 'Stooq (fallback)' : contract.provider;
+      const oldSourceValid = old?.source?.url === contract.sourceUrl
+        || (contract.id === 'brent_yahoo_bzf' && isStooqBrentDailyUrl(old?.source?.url));
       requireThat(old?.instrument === contract.instrument && old.unit === contract.displayUnit
-        && old.source?.name === contract.provider && old.source.url === contract.sourceUrl
+        && old.source?.name && oldSourceValid
         && typeof old.basis === 'string' && old.basis.trim(), `${label}: existing display contract changed`);
+
+      const observationDate = label === 'XAU' ? row.priceTimestamp : row.observationDate;
+      let value = row.value;
+      let revision = null;
+      const sameClosedSession = ['brent_yahoo_bzf', 'sp500_yahoo_gspc'].includes(contract.id)
+        && old.observedAt === observationDate;
+      if (sameClosedSession && Number(old.value) !== Number(row.value)) {
+        const comparison = compareDailyCloseRevision({
+          instrumentId: contract.id,
+          observationDate,
+          utcToday: exportDay,
+          originalValue: old.value,
+          revisedValue: row.value,
+        });
+        if (comparison.isRevision) {
+          revision = {
+            status: comparison.action === 'pending_review' ? 'pending review' : 'accepted',
+            originalValue: old.value,
+            revisedValue: row.value,
+            deltaPct: comparison.deltaPct,
+            source: sourceName,
+            revisionSeenAt: payload.exportedAt,
+            note: comparison.action === 'pending_review'
+              ? 'Изменение закрытой точки превышает 2%; сохранено прежнее значение, новая версия ожидает проверки.'
+              : 'Изменение закрытой точки не превышает 2%; новая версия принята и помечена.',
+          };
+          // A large revision is published as an annotation, not as a silent
+          // replacement of the accepted historical value.
+          if (comparison.action === 'pending_review') value = old.value;
+        }
+      }
+
+      const storedRevision = (payload.revisions ?? []).find(candidate =>
+        candidate?.instrument === contract.id && candidate?.observation_date === observationDate
+        && candidate?.source === sourceName);
+      if (storedRevision) {
+        const stored = {
+          status: storedRevision.status,
+          originalValue: String(storedRevision.original_value),
+          revisedValue: String(storedRevision.revised_value),
+          deltaPct: Number(storedRevision.delta_pct),
+          source: storedRevision.source,
+          firstSeenAt: storedRevision.first_seen_at,
+          revisionSeenAt: storedRevision.revision_seen_at,
+          note: storedRevision.note ?? null,
+        };
+        const matchesCurrentRevision = revision
+          && revision.originalValue === stored.originalValue
+          && revision.revisedValue === stored.revisedValue;
+        // The live comparison is newer than the advisory view if it has
+        // detected another change during this export; don't mask it with an
+        // older, already-recorded revision for the same date.
+        if (!revision || matchesCurrentRevision) {
+          revision = stored;
+          if (revision.status === 'pending review') {
+            value = old.observedAt === observationDate ? old.value : revision.originalValue;
+          } else {
+            value = revision.revisedValue;
+          }
+        }
+      }
+
       return {
-        ticker: label, instrument: old.instrument, value: row.value, unit: old.unit,
-        observedAt: label === 'XAU' ? row.priceTimestamp : row.observationDate,
-        basis: contract.basis ?? old.basis, source: { name: contract.provider, url: row.sourceUrl },
+        ticker: label, instrument: old.instrument, value, unit: old.unit,
+        observedAt: observationDate,
+        ...(revision ? { revision } : {}),
+        basis: stooqFallback
+          ? 'Дневное наблюдение Stooq QA.F (NYMEX), резервный источник fallback; тот же ближайший фьючерс Brent, не спот EIA.'
+          : contract.basis ?? old.basis,
+        source: {
+          name: sourceName,
+          url: row.sourceUrl,
+          ...(stooqFallback ? { role: 'fallback' } : {}),
+        },
       };
     } catch (error) {
       instrumentFailures.push(error.message);
@@ -168,6 +245,37 @@ export async function fetchSnapshotHistory({ url, key, fetchImpl, snapshot }) {
   return series;
 }
 
+export async function fetchSnapshotRevisions({ url, key, fetchImpl, snapshot }) {
+  const observations = snapshot.items
+    .filter(item => item.ticker === 'BZ=F' || item.ticker === '^GSPC')
+    .map(item => item.observedAt.slice(0, 10));
+  if (!observations.length) return [];
+  const query = new URLSearchParams({
+    select: 'instrument,observation_date,original_value,revised_value,delta_pct,first_seen_at,revision_seen_at,source,status,note',
+    instrument: 'in.(brent_yahoo_bzf,sp500_yahoo_gspc)',
+    observation_date: `gte.${observations.sort()[0]}`,
+    order: 'revision_seen_at.desc',
+    limit: '100',
+  });
+  let response;
+  try {
+    response = await fetchImpl(`${url.replace(/\/$/, '')}/rest/v1/asset_price_revisions_public_v1?${query}`, {
+      method: 'GET', headers: { apikey: key, Accept: 'application/json' },
+      redirect: 'error', signal: AbortSignal.timeout(20000),
+    });
+  } catch {
+    throw new Error('revision annotation request failed or timed out');
+  }
+  const rows = await readJsonResponse(response, 'Price revision annotations query');
+  requireThat(Array.isArray(rows) && rows.every(row =>
+    ['brent_yahoo_bzf', 'sp500_yahoo_gspc'].includes(row?.instrument)
+    && calendar(row?.observation_date)
+    && ['accepted', 'pending review'].includes(row?.status)),
+  'Price revision query returned invalid annotations');
+  const dates = new Set(observations);
+  return rows.filter(row => dates.has(row.observation_date));
+}
+
 export async function updateSnapshot({
   file = new URL('../data/snapshot.json', import.meta.url),
   url = process.env.SUPABASE_URL, key = process.env.SNAPSHOT_SUPABASE_READ_KEY,
@@ -194,9 +302,20 @@ export async function updateSnapshot({
   requireThat(raw.length <= 65536, 'Snapshot RPC response is too large');
   let payload;
   try { payload = JSON.parse(raw); } catch { throw new Error('Snapshot RPC returned invalid JSON'); }
-  const latest = buildSnapshot(payload, previous, now());
+  const validated = buildSnapshot(payload, previous, now());
+  let revisions = [];
+  let revisionAnnotationsAvailable = true;
+  try {
+    revisions = await fetchSnapshotRevisions({ url: PROJECT_URL, key, fetchImpl, snapshot: validated });
+  } catch (error) {
+    // Revision lookup is advisory: a missing audit view must not block the
+    // independently validated static export or its other instruments.
+    revisionAnnotationsAvailable = false;
+    console.warn(`Revision annotations unavailable; publishing validated snapshot: ${error.message}`);
+  }
+  const latest = buildSnapshot({ ...payload, revisions }, previous, now());
   const series = await fetchSnapshotHistory({ url: PROJECT_URL, key, fetchImpl, snapshot: latest });
-  const snapshot = { ...latest, series };
+  const snapshot = { ...latest, series, ...(revisionAnnotationsAvailable ? {} : { revisionAnnotationsAvailable: false }) };
   const temp = new URL(`.snapshot-${randomUUID()}.tmp`, pathToFileURL(
     typeof file === 'string' ? file : file.pathname,
   ));

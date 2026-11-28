@@ -1,6 +1,8 @@
 // Stage 3 shadow price snapshots.
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 import { parseYahooDaily } from "../_shared/yahoo-chart.ts";
+import { compareDailyCloseRevision } from "../_shared/price-revisions.mjs";
+import { parseStooqDaily, stooqBrentDailyUrl } from "../_shared/stooq-daily.mjs";
 //
 // Writes numeric, provider-labelled observations to asset_price_snapshots_v2.
 // It does not touch cached_assets and does not publish forecasts/outcomes.
@@ -181,23 +183,71 @@ async function fetchFred(instrumentId: string, assetKey: string, series: string)
  * вместе со значениями; год глубины нужен, чтобы публичная панель не теряла
  * 180-дневный диапазон.
  */
-async function fetchYahoo(instrumentId: string, assetKey: string, symbol: string) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
-  const series = parseYahooDaily(JSON.parse(await fetchText(url)) as unknown);
+async function fetchStooqBrent(instrumentId: string, assetKey: string) {
+  const end = new Date();
+  const start = new Date(end.getTime() - activeLookbackDays * 86400000);
+  const day = (date: Date) => date.toISOString().slice(0, 10);
+  const url = stooqBrentDailyUrl(day(start), day(end));
+  const utcToday = new Date().toISOString().slice(0, 10);
+  const points = parseStooqDaily(await fetchText(url)).filter((point) => point.date < utcToday);
+  if (points.length < 2) throw new Error("Stooq returned fewer than two closed Brent daily bars");
   return dailyRows(
     instrumentId,
     assetKey,
-    series.points.map((point) => ({ date: point.date, value: point.value })),
+    points,
     url,
-    {
-      provider: "Yahoo Finance",
-      symbol,
-      exchange: series.exchange,
-      instrument_type: series.instrumentType,
-      quote_time: series.quoteTime,
-    },
+    { provider: "Stooq", symbol: "QA.F", exchange: "NYMEX", source_role: "fallback" },
     HISTORY_BACKFILL_ROWS,
   );
+}
+
+async function fetchYahooDaily(symbol: string) {
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  let lastError: Error | null = null;
+  for (const host of hosts) {
+    const url = `https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+    try {
+      const series = parseYahooDaily(JSON.parse(await fetchText(url)) as unknown);
+      return { series, url };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+  throw lastError ?? new Error(`Yahoo ${symbol} returned no response`);
+}
+
+async function fetchYahoo(instrumentId: string, assetKey: string, symbol: string) {
+  try {
+    const { series, url } = await fetchYahooDaily(symbol);
+    return dailyRows(
+      instrumentId,
+      assetKey,
+      series.points.map((point) => ({
+        date: point.date,
+        value: point.value,
+        open: point.open,
+        high: point.high,
+        low: point.low,
+      })),
+      url,
+      {
+        provider: "Yahoo Finance",
+        symbol: series.symbol ?? symbol,
+        exchange: series.exchange,
+        exchange_name: series.exchangeName,
+        instrument_type: series.instrumentType,
+        quote_time: series.quoteTime,
+        regular_market_price: series.regularMarketPrice,
+        contract_symbol: series.contractSymbol,
+        expire_date: series.expireDate,
+      },
+      HISTORY_BACKFILL_ROWS,
+    );
+  } catch (error) {
+    if (instrumentId !== "brent_yahoo_bzf") throw error;
+    console.warn(`Yahoo BZ=F unavailable on both hosts; trying same-contract Stooq QA.F fallback: ${error instanceof Error ? error.message.slice(0, 180) : "request failed"}`);
+    return fetchStooqBrent(instrumentId, assetKey);
+  }
 }
 
 async function fetchEcb() {
@@ -290,6 +340,146 @@ async function fetchKrakenDaily() {
 }
 
 
+type PriceSnapshotRow = Record<string, unknown>;
+
+function revisionValue(row: PriceSnapshotRow): number | null {
+  const value = Number(row.close ?? row.price);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+async function compareAgainstAcceptedRows(rows: PriceSnapshotRow[]) {
+  const protectedRows = rows.filter((row) =>
+    ["brent_yahoo_bzf", "sp500_yahoo_gspc"].includes(String(row.instrument_id ?? "")) &&
+    typeof row.observation_date === "string"
+  );
+  const utcToday = new Date().toISOString().slice(0, 10); // Supabase Edge runtime clock.
+  const historical = protectedRows.filter((row) => String(row.observation_date) < utcToday);
+  if (!historical.length) {
+    return { upsertRows: rows, revisionRows: [] as PriceSnapshotRow[], heldRows: [] as PriceSnapshotRow[] };
+  }
+
+  const instrumentIds = [...new Set(historical.map((row) => String(row.instrument_id)))].sort();
+  const earliestDate = historical.map((row) => String(row.observation_date)).sort()[0];
+  const query = new URLSearchParams({
+    select: "instrument_id,observation_date,price,close,created_at,retrieved_at,raw,source_url",
+    instrument_id: `in.(${instrumentIds.join(",")})`,
+    observation_date: `gte.${earliestDate}`,
+    order: "observation_date.asc",
+    limit: "1000",
+  });
+  const acceptedRows = await restJson(`asset_price_snapshots_v2?${query}`) as PriceSnapshotRow[];
+  const acceptedByKey = new Map(acceptedRows.map((row) => [
+    `${String(row.instrument_id)}|${String(row.observation_date)}`,
+    row,
+  ]));
+
+  const upsertRows: PriceSnapshotRow[] = [];
+  const revisionRows: PriceSnapshotRow[] = [];
+  const heldRows: PriceSnapshotRow[] = [];
+  for (const candidate of rows) {
+    const instrumentId = String(candidate.instrument_id ?? "");
+    const date = String(candidate.observation_date ?? "");
+    const accepted = acceptedByKey.get(`${instrumentId}|${date}`);
+    const oldValue = accepted ? revisionValue(accepted) : null;
+    const nextValue = revisionValue(candidate);
+    if (!accepted || oldValue === null || nextValue === null) {
+      upsertRows.push(candidate);
+      continue;
+    }
+
+    const comparison = compareDailyCloseRevision({
+      instrumentId,
+      observationDate: date,
+      utcToday,
+      originalValue: oldValue,
+      revisedValue: nextValue,
+    });
+    if (!comparison.isRevision) {
+      upsertRows.push(candidate);
+      continue;
+    }
+
+    const firstSeenAt = accepted.created_at ?? accepted.retrieved_at;
+    if (typeof firstSeenAt !== "string" || !Number.isFinite(Date.parse(firstSeenAt))) {
+      throw new Error(`Cannot log revision without Supabase first-seen timestamp: ${instrumentId}/${date}`);
+    }
+    const note = comparison.action === "pending_review"
+      ? `Closed daily close changed by ${comparison.deltaPct!.toFixed(4)}%; canonical value retained pending review.`
+      : `Closed daily close changed by ${comparison.deltaPct!.toFixed(4)}%; update accepted under the 2% threshold.`;
+    revisionRows.push({
+      instrument: instrumentId,
+      observation_date: date,
+      original_value: oldValue,
+      revised_value: nextValue,
+      first_seen_at: firstSeenAt,
+      source: String((candidate.raw as AnyRecord | undefined)?.provider ?? "unknown"),
+      raw_meta: {
+        previous: { raw: accepted.raw ?? {}, source_url: accepted.source_url ?? null },
+        revised: {
+          raw: candidate.raw ?? {},
+          source_url: candidate.source_url ?? null,
+          open: candidate.open ?? null,
+          high: candidate.high ?? null,
+          low: candidate.low ?? null,
+          close: candidate.close ?? candidate.price ?? null,
+        },
+      },
+      status: comparison.action === "pending_review" ? "pending review" : "accepted",
+      note,
+    });
+    if (comparison.action === "pending_review") heldRows.push(candidate);
+    else upsertRows.push(candidate);
+  }
+  return { upsertRows, revisionRows, heldRows };
+}
+
+async function recordRevisions(revisionRows: PriceSnapshotRow[]): Promise<PriceSnapshotRow[]> {
+  if (!revisionRows.length) return [];
+  const query = new URLSearchParams({
+    on_conflict: "instrument,observation_date,original_value,revised_value,status",
+  });
+  return await restJson(`asset_price_revisions_v1?${query}`, {
+    method: "POST",
+    headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
+    body: JSON.stringify(revisionRows),
+  }) as PriceSnapshotRow[];
+}
+
+async function sendRevisionAlert(rows: PriceSnapshotRow[]): Promise<void> {
+  if (!rows.length) return;
+  const token = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
+  const chatId = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
+  if (!token || !chatId) {
+    console.error("Price revision alert skipped: Telegram credentials are not configured");
+    return;
+  }
+  const details = rows.slice(0, 8).map((row) => {
+    const oldValue = Number(row.original_value);
+    const newValue = Number(row.revised_value);
+    const delta = ((newValue / oldValue) - 1) * 100;
+    return `${row.instrument} ${row.observation_date}: ${oldValue.toFixed(4)} → ${newValue.toFixed(4)} (${delta.toFixed(2)}%)`;
+  });
+  const suffix = rows.length > details.length ? `\n…ещё ${rows.length - details.length}` : "";
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: `⚠️ Пересмотр закрытых дневных цен (>2%); принятое значение не перезаписано:\n${details.join("\n")}${suffix}`,
+        disable_web_page_preview: true,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.ok !== true) {
+      console.error(`Price revision Telegram alert failed: HTTP ${response.status}`);
+    }
+  } catch {
+    console.error("Price revision Telegram alert failed before an HTTP response");
+  }
+}
+
 function clampInteger(value: number, min: number, max: number, fallback: number): number {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, Math.round(value)));
@@ -374,10 +564,16 @@ serveWithErrorReporting("update-prices-v2-shadow", async (request) => {
 
     // PostgreSQL cannot update the same conflict target twice in one
     // INSERT ... ON CONFLICT statement. Keep one row per deterministic
-    // snapshot key (last provider observation wins) before the bulk upsert.
-    const upsertRows = [...new Map(
+    // snapshot key before comparison and the bulk upsert.
+    const uniqueRows = [...new Map(
       allRows.map((row) => [String(row.snapshot_key ?? ""), row]),
     ).values()].filter((row) => String(row.snapshot_key ?? ""));
+    const comparison = await compareAgainstAcceptedRows(uniqueRows);
+    // Log first and fail closed if the audit write fails. Pending >2% rows are
+    // excluded from the canonical upsert; accepted small revisions proceed.
+    const insertedRevisions = await recordRevisions(comparison.revisionRows);
+    await sendRevisionAlert(insertedRevisions.filter((row) => row.status === "pending review"));
+    const upsertRows = comparison.upsertRows;
 
     if (upsertRows.length) {
       await restJson("asset_price_snapshots_v2?on_conflict=snapshot_key", {
@@ -399,7 +595,14 @@ serveWithErrorReporting("update-prices-v2-shadow", async (request) => {
           instruments_total: tasks.length,
           instruments_ok: instrumentsOk,
           snapshots_upserted: upsertRows.length,
-          stats: { instruments: instrumentResults, lookback_days: activeLookbackDays, max_rows_per_instrument: activeMaxRowsPerInstrument },
+          stats: {
+            instruments: instrumentResults,
+            lookback_days: activeLookbackDays,
+            max_rows_per_instrument: activeMaxRowsPerInstrument,
+            revisions_recorded: insertedRevisions.length,
+            revisions_pending_review: insertedRevisions.filter((row) => row.status === "pending review").length,
+            rows_held_for_review: comparison.heldRows.length,
+          },
         }),
       });
     }
@@ -411,6 +614,9 @@ serveWithErrorReporting("update-prices-v2-shadow", async (request) => {
       instruments_total: tasks.length,
       instruments_ok: instrumentsOk,
       snapshots_upserted: upsertRows.length,
+      revisions_recorded: insertedRevisions.length,
+      revisions_pending_review: insertedRevisions.filter((row) => row.status === "pending review").length,
+      rows_held_for_review: comparison.heldRows.length,
       lookback_days: activeLookbackDays,
       max_rows_per_instrument: activeMaxRowsPerInstrument,
       instruments: instrumentResults,

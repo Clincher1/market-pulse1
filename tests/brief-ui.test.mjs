@@ -56,6 +56,29 @@ test('rendered brief separates rates, uses point dates, labels missing snapshot 
   }
 });
 
+test('Brief comparison annotates a point recorded as revised by its source', async () => {
+  const original = globalThis.fetch;
+  const brent = { id: 'brent', name: 'Brent', price: '$105.00', change: 5,
+    sparkline: [100, 105], spark_dates: ['2026-10-26', '2026-10-27'],
+    as_of: '2026-10-27T00:00:00Z', source_label: 'Yahoo Finance', updated_at: '2026-10-28T04:00:00Z' };
+  const brentSnapshot = { captured_at: snapshot.capturedAt, assets: [{ id: 'brent', name: 'Brent',
+    last: 100, last_date: '2026-10-26', price: '$100.00', as_of: '2026-10-26T00:00:00Z' }],
+    russia: { markets: base } };
+  globalThis.fetch = async (url) => {
+    const address = String(url);
+    const payload = address.includes('asset_price_revisions_public_v1')
+      ? [{ instrument: 'brent_yahoo_bzf', observation_date: '2026-10-27',
+        source: 'Yahoo Finance', status: 'accepted', original_value: '100', revised_value: '105', delta_pct: '5' }]
+      : address.includes('daily_snapshots') ? [brentSnapshot]
+      : address.includes('cached_assets') ? [brent] : russia;
+    return new Response(JSON.stringify(payload), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    const card = await buildBriefCard();
+    assert.ok(card.changes.some(text => text.includes('значение за дату пересмотрено источником')));
+  } finally { globalThis.fetch = original; }
+});
+
 test('Telegram card uses the same units and dates as the browser', async () => {
   const original = globalThis.fetch;
   globalThis.fetch = async (url) => {

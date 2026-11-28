@@ -19,14 +19,14 @@ import { isFormingBar, parseYahooDaily } from '../supabase/functions/_shared/yah
  * за 28.10 — то есть индекс тот же, сменился только поставщик.
  */
 
-function chartPayload({ timestamps, closes, meta }) {
+function chartPayload({ timestamps, closes, open, high, low, meta }) {
   return {
     chart: {
       result: [
         {
           meta,
           timestamp: timestamps,
-          indicators: { quote: [{ close: closes }] },
+          indicators: { quote: [{ close: closes, open, high, low }] },
         },
       ],
       error: null,
@@ -98,6 +98,25 @@ test('дневные закрытия фьючерса Brent разбирают�
   assert.equal(series.points.at(-2).value, 114.87999725341797);
   assert.equal(series.instrumentType, 'FUTURE');
   assert.equal(series.exchange, 'NY Mercantile');
+});
+
+test('parser retains daily OHLC and available futures quote metadata for revision audit', () => {
+  const series = parseYahooDaily(chartPayload({
+    timestamps: [1795582800, 1795789800],
+    closes: [94.6100006104, 95.4400024414],
+    open: [90.9199981689, 94.5],
+    high: [94.7699966431, 98],
+    low: [89.5, 93.5400009155],
+    meta: { ...brentMeta, exchangeName: 'NYM', regularMarketPrice: 90.84,
+      contractSymbol: 'BZK27.NYM', expireDate: 1800000000 },
+  }));
+  assert.deepEqual(series.points.at(-1), {
+    date: '2026-11-27', value: 95.4400024414, open: 94.5, high: 98, low: 93.5400009155,
+  });
+  assert.equal(series.exchangeName, 'NYM');
+  assert.equal(series.regularMarketPrice, 90.84);
+  assert.equal(series.contractSymbol, 'BZK27.NYM');
+  assert.equal(series.expireDate, 1800000000);
 });
 
 test('бар сегодняшнего дня у индекса закрыт после конца сессии', () => {

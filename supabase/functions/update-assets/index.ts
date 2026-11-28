@@ -2,6 +2,7 @@
 import { GOLD_OBSERVED_INSTRUMENT, GOLD_OBSERVED_LABEL, goldQuote, goldHistory } from "../_shared/gold-observed.ts";
 import { closedHistory, previousClosedValue } from "../_shared/asset-history.ts";
 import { isFormingBar, parseYahooDaily } from "../_shared/yahoo-chart.ts";
+import { fetchBrentDaily, parseStooqDaily, stooqBrentDailyUrl } from "../_shared/stooq-daily.mjs";
 import { serveWithErrorReporting } from "../_shared/observability.ts";
 import { ASSET_CONTRACTS, contractFor } from "../_shared/data-contract.ts";
 import {
@@ -368,9 +369,11 @@ async function fetchYahooDaily(symbol: string): Promise<{
   formingBarDate: string | null;
   exchange: string | null;
   quoteTime: string | null;
+  sourceUrl: string;
 }> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3mo&interval=1d`;
   const chart = await fetchYahooChart(url);
+  const sourceUrl = url.replace("query1.finance.yahoo.com", chart.host);
   const series = parseYahooDaily(chart.payload);
   if (chart.retried) console.warn(`Yahoo: ${symbol} отдан резервным хостом ${chart.host}`);
   const now = new Date();
@@ -383,6 +386,7 @@ async function fetchYahooDaily(symbol: string): Promise<{
     formingBarDate: forming ? series.points.at(-1)?.date ?? null : null,
     exchange: series.exchange,
     quoteTime: series.quoteTime,
+    sourceUrl,
   };
 }
 
@@ -406,13 +410,44 @@ async function fetchSp500(updatedAt: string): Promise<AssetResult> {
   });
 }
 
-async function fetchBrent(updatedAt: string): Promise<AssetResult> {
-  const series = await fetchYahooDaily("BZ=F");
+async function fetchStooqBrentDaily() {
+  const end = new Date();
+  const start = new Date(end.getTime() - 90 * 86400000);
+  const day = (date: Date) => date.toISOString().slice(0, 10);
+  const sourceUrl = stooqBrentDailyUrl(day(start), day(end));
+  const csv = await fetchText(sourceUrl, { Accept: "text/csv" });
+  const utcToday = new Date().toISOString().slice(0, 10);
+  const points = parseStooqDaily(csv).filter((point) => point.date < utcToday);
+  if (points.length < 2) throw new Error("Stooq returned fewer than two closed Brent daily bars");
+  return {
+    points,
+    asOf: points.at(-1)?.date ?? null,
+    formingBarDate: null,
+    exchange: "NYMEX",
+    quoteTime: null,
+    sourceUrl,
+  };
+}
+
+async function fetchBrent(
+  updatedAt: string,
+  sourceId = "yahoo",
+  stooqAllowed = true,
+): Promise<AssetResult> {
+  const loaded = await fetchBrentDaily({
+    sourceId,
+    stooqAllowed,
+    fetchYahoo: () => fetchYahooDaily("BZ=F"),
+    fetchStooq: fetchStooqBrentDaily,
+  });
+  const series = loaded.series;
   return makeAsset({
     id: "brent",
     name: EXPECTED_NAMES.brent,
-    instrument: "Brent front-month futures (NYMEX BZ=F): live quote against the last closed daily point; history is daily closes — не спот EIA",
-    provider: "Yahoo Finance",
+    instrument: loaded.sourceRole === "fallback"
+      ? "Brent front-month futures (NYMEX BZ=F): Stooq QA.F fallback, last closed daily price only — не спот EIA"
+      : "Brent front-month futures (NYMEX BZ=F): live quote against the last closed daily point — не спот EIA",
+    provider: loaded.provider,
     points: series.points,
     asOf: series.asOf,
     formingBarDate: series.formingBarDate,
@@ -422,6 +457,9 @@ async function fetchBrent(updatedAt: string): Promise<AssetResult> {
       unit: "USD/barrel",
       exchange: series.exchange,
       quote_time: series.quoteTime,
+      source_url: series.sourceUrl ?? "https://query1.finance.yahoo.com/v8/finance/chart/BZ%3DF?range=3mo&interval=1d",
+      source_role: loaded.sourceRole,
+      ...(loaded.sourceOutcomes ? { source_outcomes: loaded.sourceOutcomes } : {}),
     },
   });
 }
@@ -913,7 +951,7 @@ serveWithErrorReporting("update-assets", async (request) => {
     const plans: Array<{ slotId: string; load: (sourceId: string) => Promise<AssetResult> }> = [
       { slotId: "price.usd-eur", load: (sourceId) => fetchUsdEurBySource(sourceId, updatedAt) },
       { slotId: "price.sp500", load: () => fetchSp500(updatedAt) },
-      { slotId: "price.brent", load: () => fetchBrent(updatedAt) },
+      { slotId: "price.brent", load: (sourceId) => fetchBrent(updatedAt, sourceId, decisions.get("stooq")?.allowed ?? false) },
       {
         slotId: "price.gold",
         load: () => fetchGold(updatedAt, { publish }),
@@ -1006,7 +1044,14 @@ serveWithErrorReporting("update-assets", async (request) => {
         errors.push({ id: task.assetId, slot_id: task.slotId, source: task.sourceId, error: reason.message.slice(0, 700) });
         const status = statusFromError(reason);
         const retryAfterSeconds = retryAfterFromError(reason);
-        recordAttempt(task.sourceId, false, status, reason.message, retryAfterSeconds);
+        const sourceOutcomes = (reason as Error & { sourceOutcomes?: Record<string, string> }).sourceOutcomes;
+        if (sourceOutcomes) {
+          for (const [sourceId, outcome] of Object.entries(sourceOutcomes)) {
+            recordAttempt(sourceId, outcome === "ok", outcome === "ok" ? 200 : status, outcome === "ok" ? null : reason.message, retryAfterSeconds);
+          }
+        } else {
+          recordAttempt(task.sourceId, false, status, reason.message, retryAfterSeconds);
+        }
       }
     });
     await writeSourceStates([...nextStates.values()]);
