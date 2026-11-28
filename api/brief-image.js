@@ -209,7 +209,7 @@ function formatSeriesValue(value, sample) {
 }
 export async function buildBriefCard() {
     const today = moscowDateKey();
-    const [assetsResult, snapshotResult, russia] = await Promise.all([
+    const [assetsResult, snapshotResult, russia, revisionsResult] = await Promise.all([
         Promise.allSettled([
             fetchSupabase('cached_assets?select=id,name,price,change,sparkline,spark_dates,as_of,source_label,updated_at&limit=20'),
         ]).then((items) => items[0]),
@@ -217,9 +217,17 @@ export async function buildBriefCard() {
             fetchSupabase(`daily_snapshots_public_v1?select=date,captured_at,assets,russia&date=eq.${today}&limit=1`),
         ]).then((items) => items[0]),
         fetchRussia(),
+        Promise.allSettled([
+            fetchSupabase('asset_price_revisions_public_v1?select=instrument,observation_date,source,status,original_value,revised_value,delta_pct&instrument=in.(brent_yahoo_bzf,sp500_yahoo_gspc)&order=revision_seen_at.desc&limit=100'),
+        ]).then((items) => items[0]),
     ]);
     const assetRows = rows(settledValue(assetsResult, []));
     const snapshotRow = firstRow(settledValue(snapshotResult, null));
+    const revisionRows = rows(settledValue(revisionsResult, []));
+    const revisionByKey = new Map(revisionRows.map((revision) => [
+        `${stringValue(revision.instrument)}|${stringValue(revision.observation_date)}`,
+        revision,
+    ]));
     const liveAssets = assetRows.filter((asset) => {
         const id = stringValue(asset.id);
         return KNOWN_ASSET_IDS.includes(id) &&
@@ -299,11 +307,20 @@ export async function buildBriefCard() {
             const deltaPct = (current / base - 1) * 100;
             if (Math.round(deltaPct * 100) === 0) return;
             const dateText = `; даты точек ${snapshotSeriesDateLabel(baseline.last_date)} → ${snapshotSeriesDateLabel(observation?.date)}`;
+            const revisionInstrument = stringValue(asset.id) === 'brent' ? 'brent_yahoo_bzf'
+                : stringValue(asset.id) === 'sp500' ? 'sp500_yahoo_gspc' : '';
+            const comparedRevision = [baseline.last_date, observation?.date]
+                .filter(Boolean)
+                .map((date) => revisionByKey.get(`${revisionInstrument}|${date}`))
+                .find((revision) => revision && (!asset.source_label || revision.source === asset.source_label));
+            const revisionNote = comparedRevision
+                ? `; значение за дату пересмотрено источником${comparedRevision.status === 'pending review' ? ' (новая версия ожидает проверки)' : ''}`
+                : '';
             candidates.push({
                 kind: 'relative',
                 item: { id: stringValue(asset.id) },
                 magnitude: Math.abs(deltaPct),
-                text: `${currentName || stringValue(asset.id)}: ${formatSeriesValue(current, asset.price)} против ${formatSeriesValue(base, stringValue(baseline.price) || stringValue(asset.price))} в снимке; ${formatPct(deltaPct)} = (последняя точка ряда / точка снимка − 1) × 100${asset.source_label ? `; источник ${stringValue(asset.source_label)}` : ''}${dateText}.`,
+                text: `${currentName || stringValue(asset.id)}: ${formatSeriesValue(current, asset.price)} против ${formatSeriesValue(base, stringValue(baseline.price) || stringValue(asset.price))} в снимке; ${formatPct(deltaPct)} = (последняя точка ряда / точка снимка − 1) × 100${asset.source_label ? `; источник ${stringValue(asset.source_label)}` : ''}${dateText}${revisionNote}.`,
             });
         });
 

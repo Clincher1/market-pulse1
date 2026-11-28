@@ -76,6 +76,21 @@ export const PRICE_SOURCES: PriceSourceSpec[] = [
     fallback: 'второй хост query2.finance.yahoo.com; независимая сверка — FRED (только при наличии ключа)',
   },
   {
+    id: 'stooq',
+    host: 'stooq.com',
+    tier: 'undocumented-api',
+    assets: ['brent'],
+    endpoint: 'q/d/l/?s=qa.f&i=d',
+    // Used only after Yahoo's two hosts fail. A 120-request daily cap stays
+    // above the regular 15-minute schedule while containing fallback traffic.
+    dailyBudget: 120,
+    minIntervalMinutes: 10,
+    pauseAfterFailures: 2,
+    pauseMinutes: 60,
+    onFailure: 'Brent keeps the last known NYMEX BZ=F price and its observation date; Stooq is a backup only',
+    fallback: 'Yahoo Finance BZ=F (query1/query2); no different Brent benchmark is substituted',
+  },
+  {
     id: 'kraken',
     host: 'api.kraken.com',
     tier: 'first-party',

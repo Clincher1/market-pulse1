@@ -28,6 +28,78 @@ function payload() {
 }
 const build = data => buildSnapshot(data, structuredClone(previous), now);
 
+test('static export accepts a same-session revision at or below 2% and marks it', () => {
+  const prior = structuredClone(previous);
+  prior.items[0].observedAt = '2026-11-20';
+  prior.items[0].value = '100.0000000000';
+  const data = payload();
+  data.rows.find(row => row.id === 'brent_yahoo_bzf').value = '102.0000000000';
+  const result = buildSnapshot(data, prior, now);
+  assert.equal(result.items[0].value, '102.0000000000');
+  assert.equal(result.items[0].revision.status, 'accepted');
+  assert.equal(result.items[0].revision.originalValue, '100.0000000000');
+  assert.equal(result.items[0].revision.deltaPct, 2);
+});
+
+test('static export publishes other instruments but retains the accepted value for a >2% revision', () => {
+  const prior = structuredClone(previous);
+  prior.items[0].observedAt = '2026-11-20';
+  prior.items[0].value = '100.0000000000';
+  const data = payload();
+  data.rows.find(row => row.id === 'brent_yahoo_bzf').value = '103.0000000000';
+  const result = buildSnapshot(data, prior, now);
+  assert.equal(result.items[0].value, '100.0000000000');
+  assert.equal(result.items[0].revision.status, 'pending review');
+  assert.equal(result.items[0].revision.revisedValue, '103.0000000000');
+  assert.equal(result.items[1].value, '6910.3901367188');
+  assert.equal(result.items[2].value, '3539.0000000000');
+});
+
+test('static export renders an existing Supabase revision annotation even when canonical value is retained', () => {
+  const prior = structuredClone(previous);
+  prior.items[0].observedAt = '2026-11-20';
+  prior.items[0].value = '100.0000000000';
+  const data = payload();
+  data.rows.find(row => row.id === 'brent_yahoo_bzf').value = '100.0000000000';
+  data.revisions = [{ instrument: 'brent_yahoo_bzf', observation_date: '2026-11-20',
+    original_value: '100.0000000000', revised_value: '105.0000000000', delta_pct: '5.00000000',
+    first_seen_at: '2026-11-20T05:20:00Z', revision_seen_at: '2026-11-21T05:20:00Z',
+    source: 'Yahoo Finance', status: 'pending review', note: 'Pending' }];
+  const result = buildSnapshot(data, prior, now);
+  assert.equal(result.items[0].value, '100.0000000000');
+  assert.equal(result.items[0].revision.status, 'pending review');
+  assert.equal(result.items[0].revision.revisedValue, '105.0000000000');
+});
+
+test('static export does not let an older audit annotation hide a newer detected revision', () => {
+  const prior = structuredClone(previous);
+  prior.items[0].observedAt = '2026-11-20';
+  prior.items[0].value = '100.0000000000';
+  const data = payload();
+  data.rows.find(row => row.id === 'brent_yahoo_bzf').value = '102.0000000000';
+  data.revisions = [{ instrument: 'brent_yahoo_bzf', observation_date: '2026-11-20',
+    original_value: '100.0000000000', revised_value: '101.0000000000', delta_pct: '1.00000000',
+    first_seen_at: '2026-11-20T05:20:00Z', revision_seen_at: '2026-11-21T05:20:00Z',
+    source: 'Yahoo Finance', status: 'accepted', note: 'Older accepted revision' }];
+  const result = buildSnapshot(data, prior, now);
+  assert.equal(result.items[0].value, '102.0000000000');
+  assert.equal(result.items[0].revision.revisedValue, '102.0000000000');
+});
+
+test('static export compares the same Brent session across Yahoo and its Stooq fallback', () => {
+  const prior = structuredClone(previous);
+  prior.items[0].observedAt = '2026-11-20';
+  prior.items[0].value = '100.0000000000';
+  const data = payload();
+  const row = data.rows.find(candidate => candidate.id === 'brent_yahoo_bzf');
+  row.sourceUrl = 'https://stooq.com/q/d/l/?s=qa.f&i=d&d1=20260101&d2=20261128';
+  row.value = '103.0000000000';
+  const result = buildSnapshot(data, prior, now);
+  assert.equal(result.items[0].value, '100.0000000000');
+  assert.equal(result.items[0].revision.status, 'pending review');
+  assert.equal(result.items[0].source.name, 'Stooq (fallback)');
+});
+
 test('exports exact numeric strings, date-only Yahoo sessions, gold time and unchanged display metadata', () => {
   const data = payload();
   data.rows.reverse();
@@ -142,6 +214,7 @@ const historyFixtures = {
 };
 const fetchAll = async (url, options) => {
   if (url === `${config.url}/rest/v1/rpc/export_static_snapshot_v2`) return jsonResponse(payload());
+  if (url.includes('/rest/v1/asset_price_revisions_public_v1?')) return jsonResponse([]);
   assert.equal(options.method, 'GET');
   assert.equal(options.headers.apikey, config.key);
   assert.equal(options.headers.Authorization, undefined);
@@ -154,6 +227,24 @@ const fetchAll = async (url, options) => {
   assert.equal(query.get('select'), 'instrument_id,observation_date,price');
   return jsonResponse(historyFixtures[id]);
 };
+
+test('revision-view failure does not block snapshot publication and leaves an explicit warning flag', async () => {
+  await withFile(async ({ file }) => {
+    let calls = 0;
+    const result = await updateSnapshot({ ...config, file, fetchImpl: async url => {
+      calls += 1;
+      if (String(url).includes('/rpc/export_static_snapshot_v2')) return jsonResponse(payload());
+      if (String(url).includes('asset_price_revisions_public_v1')) return new Response('', { status: 503 });
+      const query = new URL(url).searchParams;
+      return jsonResponse(historyFixtures[query.get('instrument_id')?.slice(3)]);
+    } });
+    const saved = JSON.parse(await readFile(file, 'utf8'));
+    assert.equal(calls, 5);
+    assert.equal(saved.revisionAnnotationsAvailable, false);
+    assert.equal(result.revisionAnnotationsAvailable, false);
+    assert.equal(saved.items.length, 3);
+  });
+});
 
 test('atomic success fetches the validated snapshot and 7-row histories with publishable apikey only', async () => {
   await withFile(async ({ dir, file }) => {
@@ -199,6 +290,7 @@ test('history failure or malformed rows preserve the previous complete snapshot'
     await assert.rejects(updateSnapshot({ ...config, file, fetchImpl: async () => {
       calls += 1;
       if (calls === 1) return jsonResponse(payload());
+      if (calls === 2) return jsonResponse([]);
       return new Response('sensitive details', { status: 503 });
     } }), /history query failed: HTTP 503/);
     assert.equal(await readFile(file, 'utf8'), bytes);
@@ -208,6 +300,7 @@ test('history failure or malformed rows preserve the previous complete snapshot'
     await assert.rejects(updateSnapshot({ ...config, file, fetchImpl: async () => {
       calls += 1;
       if (calls === 1) return jsonResponse(payload());
+      if (calls === 2) return jsonResponse([]);
       return jsonResponse([{ ...historyFixtures.brent_yahoo_bzf[0], observation_date: '2026-11-21' }]);
     } }), /invalid or future history date/);
     assert.equal(await readFile(file, 'utf8'), bytes);

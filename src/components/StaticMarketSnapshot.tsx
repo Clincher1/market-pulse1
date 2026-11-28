@@ -16,15 +16,23 @@ function dateLabel(value: string) {
 }
 
 export default function StaticMarketSnapshot() {
+  const annotationsAvailable = (snapshot as typeof snapshot & { revisionAnnotationsAvailable?: boolean }).revisionAnnotationsAvailable;
   return <section className="static-snapshot dashboard-section-container" aria-labelledby="static-snapshot-title">
     <div className="static-snapshot__intro">
       <p className="market-desk__eyebrow">Датированные наблюдения</p>
       <h2 id="static-snapshot-title">Статический снимок данных</h2>
+      {annotationsAvailable === false
+        ? <p className="static-snapshot__revision-warning">Журнал пересмотров источника временно недоступен; снимок обновлён, но пометки ревизий могут быть неполными.</p>
+        : null}
       <p>Данные актуальны на момент сборки; это сохранённый снимок, а не котировки в реальном времени. Источник и дата наблюдения указаны отдельно.</p>
       <p className="static-snapshot__updated">Снимок выгружен: <time dateTime={snapshot.exportedAt}>{formatObservationTimestamp(snapshot.exportedAt)}</time></p>
     </div>
     <div className="static-snapshot__charts" aria-label="Динамика последних дневных наблюдений">
       {snapshot.items.map(item => {
+        const revision = (item as typeof item & { revision?: { status?: string } }).revision;
+        const revisionLabel = revision
+          ? `Значение за дату пересмотрено источником${revision.status === 'pending review' ? ' · ожидает проверки' : ''}`
+          : null;
         const observations = (snapshot.series as Record<string, Array<{ observedAt: string; value: string }>>)[item.ticker] ?? [];
         const chartFile = chartFiles[item.ticker];
         const hasChart = Boolean(chartFile && observations.length >= 3);
@@ -41,6 +49,7 @@ export default function StaticMarketSnapshot() {
           <figcaption>
             <strong>{item.instrument}</strong>
             <span className="static-snapshot__latest">{valueFormat.format(Number(item.value))} {item.unit}</span>
+            {revisionLabel ? <small className="static-snapshot__revision">{revisionLabel}</small> : null}
             <span>Наблюдение: <time dateTime={item.observedAt}>{dateLabel(item.observedAt)}</time></span>
             <span>Источник: <a href={item.source.url} rel="noreferrer">{item.source.name}</a></span>
             {observations.length < 7 && firstDate && lastDate
@@ -64,14 +73,20 @@ export default function StaticMarketSnapshot() {
           <th scope="col">Источник</th>
           <th scope="col">Основание значения</th>
         </tr></thead>
-        <tbody>{snapshot.items.map(item => <tr key={item.ticker}>
+        <tbody>{snapshot.items.map(item => {
+          const revision = (item as typeof item & { revision?: { status?: string } }).revision;
+          const revisionLabel = revision
+            ? `Значение за дату пересмотрено источником${revision.status === 'pending review' ? ' · ожидает проверки' : ''}`
+            : null;
+          return <tr key={item.ticker}>
           <th scope="row">{item.ticker} — {item.instrument}</th>
-          <td>{Number(item.value).toFixed(2)}</td>
+          <td>{Number(item.value).toFixed(2)}{revisionLabel ? <><br /><small className="static-snapshot__revision">{revisionLabel}</small></> : null}</td>
           <td>{item.unit}</td>
           <td className="static-snapshot__date"><time dateTime={item.observedAt}>{formatObservationTimestamp(item.observedAt)}</time></td>
           <td><a href={item.source.url} rel="noreferrer">{item.source.name}</a></td>
           <td>{item.basis}</td>
-        </tr>)}</tbody>
+        </tr>;
+        })}</tbody>
         </table>
         </div>
       </div>

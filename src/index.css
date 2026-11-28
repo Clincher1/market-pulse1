@@ -1501,6 +1501,8 @@
 .static-snapshot__chart figcaption { display: grid; gap: var(--space-1); font-size: 0.8rem; line-height: 1.5; overflow-wrap: anywhere; }
 .static-snapshot__chart figcaption strong { font-size: 0.92rem; }
 .static-snapshot__latest { color: #0f172a; font-size: 0.95rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.static-snapshot__revision { display: block; color: #9a3412; font-size: 0.75rem; font-weight: 700; line-height: 1.4; }
+.static-snapshot__revision-warning { color: #9a3412; font-size: 0.82rem; font-weight: 700; }
 .static-snapshot__coverage { color: #475569; }
 .static-snapshot__disclaimer { color: #475569; font-size: 0.8rem; }
 
