@@ -11,6 +11,11 @@ function decimal10(value) {
   return Math.round(Number(value) * 1e10) / 1e10;
 }
 
+function scaled10Integer(value) {
+  const [whole, fraction] = value.toFixed(10).split('.');
+  return BigInt(`${whole}${fraction}`);
+}
+
 /**
  * Compare a newly fetched point with the accepted value for the same instrument
  * and session date. The caller supplies utcToday from its runner (Edge/Actions),
@@ -38,8 +43,18 @@ export function compareDailyCloseRevision({
     return { action: 'write', isRevision: false, deltaPct: 0, reason: 'unchanged' };
   }
 
-  const deltaPct = Math.round((((revised / original) - 1) * 100) * 1e8) / 1e8;
-  if (Math.abs(deltaPct) > thresholdPct) {
+  if (!Number.isFinite(thresholdPct) || thresholdPct < 0) {
+    throw new TypeError('Revision threshold must be a finite non-negative percentage');
+  }
+  const exactDeltaPct = ((revised / original) - 1) * 100;
+  const deltaPct = Math.round(exactDeltaPct * 1e8) / 1e8;
+  const differenceScaled = scaled10Integer(revised) - scaled10Integer(original);
+  const thresholdScaled = BigInt(Math.round(thresholdPct * 1e8));
+  // Compare decimal-scaled integers, not a floating percentage. This keeps
+  // an exact 2% at the boundary while catching any representable overage.
+  const isOverThreshold = (differenceScaled < 0n ? -differenceScaled : differenceScaled)
+    * 10_000_000_000n > scaled10Integer(original) * thresholdScaled;
+  if (isOverThreshold) {
     return { action: 'pending_review', isRevision: true, deltaPct, reason: 'over_threshold' };
   }
 

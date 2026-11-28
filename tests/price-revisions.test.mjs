@@ -29,6 +29,12 @@ test('closed daily close revision above two percent is held for review', () => {
   assert.ok(result.deltaPct > 2);
 });
 
+test('threshold compares the unrounded percentage so a tiny overage cannot round down to 2%', () => {
+  const result = compareDailyCloseRevision({ ...base, revisedValue: 102.000000001 });
+  assert.equal(result.action, 'pending_review');
+  assert.equal(result.deltaPct, 2);
+});
+
 test('ordinary Kraken crypto candle updates are not treated as immutable close revisions', () => {
   const result = compareDailyCloseRevision({
     ...base,
